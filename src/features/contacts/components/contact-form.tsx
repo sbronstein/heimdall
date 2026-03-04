@@ -29,7 +29,8 @@ const formSchema = z.object({
   howMet: z.string().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
   tags: z.string().optional().or(z.literal('')),
-  followUpNotes: z.string().optional().or(z.literal(''))
+  followUpNotes: z.string().optional().or(z.literal('')),
+  nextFollowUpDate: z.date().optional().nullable()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -61,7 +62,8 @@ export default function ContactForm({
       howMet: initialData?.howMet || '',
       notes: initialData?.notes || '',
       tags: initialData?.tags?.join(', ') || '',
-      followUpNotes: initialData?.followUpNotes || ''
+      followUpNotes: initialData?.followUpNotes || '',
+      nextFollowUpDate: initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate) : undefined
     }
   });
 
@@ -74,6 +76,9 @@ export default function ContactForm({
       companyId: values.companyId || null,
       tags: values.tags
         ? values.tags.split(',').map((t) => t.trim()).filter(Boolean)
+        : null,
+      nextFollowUpDate: values.nextFollowUpDate
+        ? values.nextFollowUpDate.toISOString()
         : null
     };
 
@@ -133,6 +138,7 @@ export default function ContactForm({
             />
             <FormInput control={form.control} name='howMet' label='How Met' placeholder='Intro from...' />
             <FormInput control={form.control} name='tags' label='Tags' placeholder='Comma-separated' />
+            <FormDatePicker control={form.control} name='nextFollowUpDate' label='Next Follow-up Date' />
           </div>
           <FormTextarea control={form.control} name='notes' label='Notes' placeholder='Notes about this contact...' config={{ rows: 4 }} />
           <FormTextarea control={form.control} name='followUpNotes' label='Follow-up Notes' placeholder='What to follow up on...' config={{ rows: 2 }} />
