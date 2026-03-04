@@ -50,9 +50,17 @@ All files for Phases 1–7 have been **created** (118 files, 22k+ lines) and the
 - [x] Task completion: sets status=done, completedAt=now(), logs timeline event
 - [x] Dashboard metrics: returns real counts (activeApplications, companiesTracked, pipelineByStage, etc.)
 
+### Component audit (2026-03-04)
+- [x] Pipeline board: drag-and-drop with optimistic updates, client+server validation, revert on failure
+- [x] Company components: listing, table, form, detail page — all clean
+- [x] Contact components: listing, table, form (now with nextFollowUpDate date picker), detail page — all clean
+- [x] Task components: listing, table with checkbox toggle, form with entity linking — all clean
+- [x] Note components: listing, table, form, detail page — all clean
+- [x] Search command (Cmd+K): debounced cross-entity search with abort controller — clean
+- [x] Missing planned files (entity-linker.tsx, task-quick-add.tsx) confirmed not imported anywhere — non-blocking
+
 ### What still needs verification
-- [ ] Test each page in the browser (requires Clerk auth session)
-- [ ] Test pipeline drag-and-drop with real data
+- [ ] Visual testing in browser (requires Clerk auth session — all pages behind auth middleware)
 
 ---
 
