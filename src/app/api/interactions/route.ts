@@ -17,10 +17,10 @@ const createInteractionSchema = z.object({
   subject: z.string().optional().nullable(),
   content: z.string().optional().nullable(),
   sentiment: z.enum(interactionSentimentValues).optional().nullable(),
-  occurredAt: z.string().datetime().optional(),
+  occurredAt: z.union([z.string().date(), z.string().datetime()]).optional(),
   durationMinutes: z.number().int().optional().nullable(),
   followUpRequired: z.boolean().optional(),
-  followUpDate: z.string().datetime().optional().nullable(),
+  followUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   tags: z.array(z.string()).optional().nullable()
 });
 

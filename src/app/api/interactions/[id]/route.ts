@@ -15,7 +15,7 @@ const updateInteractionSchema = z.object({
   sentiment: z.enum(interactionSentimentValues).optional().nullable(),
   durationMinutes: z.number().int().optional().nullable(),
   followUpRequired: z.boolean().optional(),
-  followUpDate: z.string().datetime().optional().nullable(),
+  followUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   followUpCompleted: z.boolean().optional(),
   tags: z.array(z.string()).optional().nullable()
 });

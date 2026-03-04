@@ -23,7 +23,7 @@ const createContactSchema = z.object({
   notes: z.string().optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
   howMet: z.string().optional().nullable(),
-  nextFollowUpDate: z.string().datetime().optional().nullable(),
+  nextFollowUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   followUpNotes: z.string().optional().nullable()
 });
 

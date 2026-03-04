@@ -41,12 +41,18 @@ All files for Phases 1–7 have been **created** (118 files, 22k+ lines) and the
 - `ApiResponse.meta.cursor` type: added `| null` to match paginated() usage
 - `PRIORITY_OPTIONS`: removed emoji string `icon` (type expects SVG component)
 - Seed script: `dotenv/config` → `config({ path: '.env.local' })`
+- Date fields: `z.string().datetime()` → `z.union([z.string().date(), z.string().datetime()])` for CLI-friendly input (accepts `2026-03-10` or `2026-03-10T00:00:00Z`)
+
+### Additional verifications (2026-03-04)
+- [x] Dashboard overview already wired to real data (all parallel slots use Drizzle queries)
+- [x] Cross-entity linking: company→contacts, company→applications, contact→interactions all working
+- [x] Interaction auto-updates: creating interaction sets contact.lastContactDate + nextFollowUpDate
+- [x] Task completion: sets status=done, completedAt=now(), logs timeline event
+- [x] Dashboard metrics: returns real counts (activeApplications, companiesTracked, pipelineByStage, etc.)
 
 ### What still needs verification
 - [ ] Test each page in the browser (requires Clerk auth session)
 - [ ] Test pipeline drag-and-drop with real data
-- [ ] Wire dashboard overview to real data (currently still mock charts)
-- [ ] Verify cross-entity linking in the UI (company → contacts, applications, etc.)
 
 ---
 

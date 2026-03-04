@@ -15,7 +15,7 @@ const updateTaskSchema = z.object({
   companyId: z.string().uuid().optional().nullable(),
   contactId: z.string().uuid().optional().nullable(),
   applicationId: z.string().uuid().optional().nullable(),
-  dueDate: z.string().datetime().optional().nullable(),
+  dueDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   tags: z.array(z.string()).optional().nullable()
 });
 
