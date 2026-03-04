@@ -24,12 +24,12 @@ const createCompanySchema = z.object({
   employeeCount: z.number().int().optional().nullable(),
   location: z.string().optional().nullable(),
   remotePolicy: z.enum(remotePolicyValues).optional().nullable(),
-  fundingInfo: z.record(z.unknown()).optional().nullable(),
+  fundingInfo: z.record(z.string(), z.unknown()).optional().nullable(),
   priority: z.enum(companyPriorityValues).optional(),
   tags: z.array(z.string()).optional().nullable(),
   dataMaturity: z.string().optional().nullable(),
   ceoBackground: z.string().optional().nullable(),
-  techLeadership: z.record(z.unknown()).optional().nullable(),
+  techLeadership: z.record(z.string(), z.unknown()).optional().nullable(),
   researchNotes: z.string().optional().nullable(),
   status: z.string().optional()
 });
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     return created(company);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return validationError(err.errors[0].message);
+      return validationError(err.issues[0].message);
     }
     return serverError(err);
   }

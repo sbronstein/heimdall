@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
     return created(note);
   } catch (err) {
-    if (err instanceof z.ZodError) return validationError(err.errors[0].message);
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
     return serverError(err);
   }
 }

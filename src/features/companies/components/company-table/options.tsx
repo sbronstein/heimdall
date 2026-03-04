@@ -1,9 +1,9 @@
 export const PRIORITY_OPTIONS = [
-  { value: 'dream', label: 'Dream', icon: '🟢' },
-  { value: 'strong', label: 'Strong', icon: '🔵' },
-  { value: 'interested', label: 'Interested', icon: '🟣' },
-  { value: 'exploring', label: 'Exploring', icon: '⚪' },
-  { value: 'backburner', label: 'Backburner', icon: '🔴' }
+  { value: 'dream', label: 'Dream' },
+  { value: 'strong', label: 'Strong' },
+  { value: 'interested', label: 'Interested' },
+  { value: 'exploring', label: 'Exploring' },
+  { value: 'backburner', label: 'Backburner' }
 ];
 
 export const STAGE_OPTIONS = [

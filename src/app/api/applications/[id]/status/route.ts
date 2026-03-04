@@ -70,7 +70,7 @@ export async function PATCH(
     return success(updated);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return validationError(err.errors[0].message);
+      return validationError(err.issues[0].message);
     }
     return serverError(err);
   }

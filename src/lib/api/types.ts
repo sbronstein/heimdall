@@ -4,7 +4,7 @@ export type ApiResponse<T> = {
   error?: string;
   meta?: {
     total?: number;
-    cursor?: string;
+    cursor?: string | null;
     hasMore?: boolean;
   };
 };

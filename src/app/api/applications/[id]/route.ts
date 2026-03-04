@@ -24,7 +24,7 @@ const updateApplicationSchema = z.object({
   fitScore: z.number().int().min(1).max(10).optional().nullable(),
   fitNotes: z.string().optional().nullable(),
   compensationNotes: z.string().optional().nullable(),
-  compensationDetails: z.record(z.unknown()).optional().nullable(),
+  compensationDetails: z.record(z.string(), z.unknown()).optional().nullable(),
   resumeVersion: z.string().optional().nullable(),
   outcomeNotes: z.string().optional().nullable(),
   rejectionReason: z.string().optional().nullable(),
@@ -76,7 +76,7 @@ export async function PUT(
     return success(application);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return validationError(err.errors[0].message);
+      return validationError(err.issues[0].message);
     }
     return serverError(err);
   }

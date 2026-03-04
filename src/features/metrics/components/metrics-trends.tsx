@@ -22,7 +22,7 @@ import {
 
 interface MetricsTrendsProps {
   data: {
-    weekStarting: string;
+    weekStarting: string | Date;
     applicationsSubmitted: number | null;
     networkingConversations: number | null;
     interviewsCompleted: number | null;

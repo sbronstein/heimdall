@@ -14,7 +14,7 @@ import { MetricsTrends } from './metrics-trends';
 
 type MetricSnapshot = {
   id: string;
-  weekStarting: string;
+  weekStarting: Date | string;
   applicationsSubmitted: number | null;
   networkingConversations: number | null;
   interviewsCompleted: number | null;
@@ -27,6 +27,8 @@ type MetricSnapshot = {
   energyLevel: number | null;
   weeklyReflection: string | null;
   jscNotes: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 interface MetricsPageProps {

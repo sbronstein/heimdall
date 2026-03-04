@@ -2,15 +2,55 @@
 
 ## Context
 
-Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The Drizzle schema (10 tables) is migrated to Neon Postgres, and the app shell exists as a Next.js 16 starter template with Clerk auth, shadcn/ui, and mock data. This plan transforms the template into a fully functional job search command center across 7 phases, each delivering a usable increment.
-
-**Current state**: Sidebar shows template nav (Product, Kanban, etc.), dashboard has mock charts, no API routes, no domain pages, no database queries.
+Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. Built on Next.js 16 (App Router), Neon Postgres with Drizzle ORM, shadcn/ui, Tailwind v4, and Clerk auth.
 
 **Target state**: Companies, contacts, applications, interactions, tasks, notes — all with CRUD, data tables, forms, a real pipeline kanban board, activity timeline dashboard, cross-entity search, and weekly metrics.
 
 ---
 
-## Phase 1: Foundation — API Layer, Navigation, Seed Data
+## Progress Summary
+
+All files for Phases 1–7 have been **created** (118 files, 22k+ lines) and the backend has been **verified end-to-end**.
+
+### What's done
+- Drizzle schema (10 tables, 13 enums) migrated to Neon Postgres
+- All API routes created (companies, contacts, applications, interactions, tasks, notes, metrics, recruiters, pipeline stages, timeline, search)
+- All feature components created (listings, tables, forms, detail pages, pipeline board, dashboard widgets, search command)
+- API helpers (`types.ts`, `errors.ts`, `filters.ts`), timeline logger, pipeline transition validation, domain types
+- Nav config updated with Heimdall domain routes
+- Domain icons added
+- Pipeline seed script created
+- `DataTable` supports `onRowClick` for row-click navigation
+- Sentry removed for lighter dev footprint
+- Dev server configured on port 4000
+
+### Verified (2026-03-04)
+- [x] `npm run build` — passes with zero TypeScript errors
+- [x] `npm run db:seed` — 13 pipeline stages populated
+- [x] All 11 API routes return correct envelope format (`{ success, data, meta }`)
+- [x] CRUD flow tested: create company → create application → transition status → timeline events logged
+- [x] Pipeline transition validation: valid moves succeed, invalid moves rejected with error message
+- [x] Search API: cross-entity ILIKE search returns matching companies/contacts/applications/notes
+- [x] Dashboard metrics API: returns aggregated stats (activeApplications, companiesTracked, etc.)
+- [x] Timeline events: every write operation creates timeline entries
+
+### Build fixes applied
+- Zod 4 compatibility: `z.record(z.unknown())` → `z.record(z.string(), z.unknown())` (5 files)
+- Zod 4 compatibility: `err.errors[0].message` → `err.issues[0].message` (16 API routes)
+- `MetricSnapshot` type: `weekStarting: string` → `string | Date` to match Drizzle output
+- `ApiResponse.meta.cursor` type: added `| null` to match paginated() usage
+- `PRIORITY_OPTIONS`: removed emoji string `icon` (type expects SVG component)
+- Seed script: `dotenv/config` → `config({ path: '.env.local' })`
+
+### What still needs verification
+- [ ] Test each page in the browser (requires Clerk auth session)
+- [ ] Test pipeline drag-and-drop with real data
+- [ ] Wire dashboard overview to real data (currently still mock charts)
+- [ ] Verify cross-entity linking in the UI (company → contacts, applications, etc.)
+
+---
+
+## Phase 1: Foundation — API Layer, Navigation, Seed Data ✅
 
 **Outcome**: Sidebar shows Heimdall nav, API helpers ready, pipeline stages seeded.
 
@@ -49,7 +89,7 @@ Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The
 
 ---
 
-## Phase 2: Companies — CRUD, Data Table, Detail View
+## Phase 2: Companies — CRUD, Data Table, Detail View ✅ (files created, needs testing)
 
 **Outcome**: Full company tracker with listing, filtering, create/edit, detail page.
 
@@ -93,7 +133,7 @@ Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The
 
 ---
 
-## Phase 3: Pipeline — Kanban Board, Status Transitions
+## Phase 3: Pipeline — Kanban Board, Status Transitions ✅ (files created, needs testing)
 
 **Outcome**: Real pipeline kanban with drag-and-drop status changes, validated transitions.
 
@@ -138,7 +178,7 @@ Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The
 
 ---
 
-## Phase 4: Contacts & Interactions — Relationship Tracking
+## Phase 4: Contacts & Interactions — Relationship Tracking ✅ (files created, needs testing)
 
 **Outcome**: Contact directory with warmth tracking, interaction logging, follow-up reminders.
 
@@ -175,7 +215,7 @@ Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The
 
 ---
 
-## Phase 5: Tasks & Notes — To-Do System, Research Notes
+## Phase 5: Tasks & Notes — To-Do System, Research Notes ✅ (files created, needs testing)
 
 **Outcome**: Prioritized task list with "what to do today" view, markdown notes linked to entities.
 
@@ -214,7 +254,7 @@ Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The
 
 ---
 
-## Phase 6: Dashboard — Real KPIs, Activity Feed, Charts
+## Phase 6: Dashboard — Real KPIs, Activity Feed, Charts ✅ (files created, needs wiring)
 
 **Outcome**: Landing page with pipeline funnel, activity timeline, upcoming tasks, follow-up reminders.
 
@@ -249,7 +289,7 @@ Heimdall is a personal CRM and pipeline tracker for a VP Data/AI job search. The
 
 ---
 
-## Phase 7: Search, Metrics & Polish
+## Phase 7: Search, Metrics & Polish ✅ (files created, needs wiring)
 
 **Outcome**: Cross-entity search via Cmd+K, weekly JSC metrics, recruiter tracking.
 
@@ -295,15 +335,24 @@ Each phase is independently deployable. The app is usable for real job search tr
 
 ---
 
+## Infrastructure Changes
+
+- **Sentry removed** — stripped `@sentry/nextjs` to reduce dev server memory footprint (~1GB savings). `instrumentation.ts`, `instrumentation-client.ts`, `global-error.tsx`, and `next.config.ts` cleaned.
+- **Dev server** — runs on port 4000 (`npm run dev`), using Turbopack. Requires ~4GB container memory (Colima `--memory 4`).
+- **DataTable `onRowClick`** — added to `src/components/ui/table/data-table.tsx` so clicking any row navigates to its detail page.
+- **Git identity** — Stephen Bronstein <steve@bronstein.org>
+
+---
+
 ## File Count Summary
 
-| Phase | New | Modified | Total |
-|-------|-----|----------|-------|
-| 1. Foundation | ~15 | ~4 | ~19 |
-| 2. Companies | ~12 | ~2 | ~14 |
-| 3. Pipeline | ~11 | ~2 | ~13 |
-| 4. Contacts | ~14 | ~2 | ~16 |
-| 5. Tasks & Notes | ~14 | ~3 | ~17 |
-| 6. Dashboard | ~8 | ~5 | ~13 |
-| 7. Search & Polish | ~10 | ~3 | ~13 |
-| **Total** | **~84** | **~21** | **~105** |
+| Phase | Files Created | Status |
+|-------|--------------|--------|
+| 1. Foundation | 15 | ✅ Done |
+| 2. Companies | 12 | ✅ Created, needs testing |
+| 3. Pipeline | 11 | ✅ Created, needs testing |
+| 4. Contacts | 14 | ✅ Created, needs testing |
+| 5. Tasks & Notes | 12 | ✅ Created, needs testing |
+| 6. Dashboard | 8 | ✅ Created, needs wiring to real data |
+| 7. Search & Polish | 10 | ✅ Created, needs wiring |
+| **Total** | **118 files committed** | **Next: verify & fix** |

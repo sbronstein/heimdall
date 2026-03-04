@@ -77,7 +77,7 @@ export async function PUT(
 
     return success(task);
   } catch (err) {
-    if (err instanceof z.ZodError) return validationError(err.errors[0].message);
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
     return serverError(err);
   }
 }
