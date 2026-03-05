@@ -1,10 +1,17 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
+const ALLOWED_EMAIL = 'steve@bronstein.org';
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)']);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  if (isProtectedRoute(req)) await auth.protect();
+  if (isProtectedRoute(req)) {
+    const { userId, sessionClaims } = await auth.protect();
+    const email = sessionClaims?.email as string | undefined;
+    if (email && email !== ALLOWED_EMAIL) {
+      return NextResponse.redirect(new URL('/auth/sign-in', req.url));
+    }
+  }
 });
 export const config = {
   matcher: [
