@@ -22,6 +22,7 @@ export default function Providers({
           appearance={{
             baseTheme: resolvedTheme === 'dark' ? dark : undefined
           }}
+          afterSignOutUrl='/auth/sign-in'
         >
           {children}
         </ClerkProvider>

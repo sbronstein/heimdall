@@ -79,9 +79,7 @@ export default function SignInViewPage({ stars }: { stars: number }) {
             </div>
           </Link>
           <ClerkSignInForm
-            initialValues={{
-              emailAddress: 'your_mail+clerk_test@example.com'
-            }}
+            forceRedirectUrl='/dashboard/overview'
           />
           <div className='text-muted-foreground space-y-2 px-8 text-center text-xs'>
             <p>
