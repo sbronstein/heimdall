@@ -53,6 +53,17 @@ export function ApplicationDetailSheet({
               <p>{app.source.replace(/_/g, ' ')}</p>
             </div>
           )}
+          {app.referredByName && (
+            <div>
+              <p className='text-muted-foreground text-sm'>Referred By</p>
+              <Link
+                href={`/dashboard/contacts/${app.referredById}`}
+                className='font-medium text-blue-600 hover:underline'
+              >
+                {app.referredByName}
+              </Link>
+            </div>
+          )}
           <div className='flex gap-2 pt-4'>
             <Button variant='outline' size='sm' asChild>
               <Link href={`/dashboard/companies/${app.companyId}`}>

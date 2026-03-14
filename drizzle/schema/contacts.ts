@@ -1,5 +1,10 @@
 import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
-import { contactRelationshipEnum, contactWarmthEnum } from './enums';
+import {
+  contactRelationshipEnum,
+  contactWarmthEnum,
+  contactClosenessEnum,
+  outreachStatusEnum
+} from './enums';
 import { companies } from './companies';
 
 export const contacts = pgTable('contacts', {
@@ -18,12 +23,21 @@ export const contacts = pgTable('contacts', {
   companyId: uuid('company_id').references(() => companies.id),
   relationship: contactRelationshipEnum('relationship').default('other'),
   warmth: contactWarmthEnum('warmth').default('cold'),
+  closeness: contactClosenessEnum('closeness').default('acquaintance'),
+  outreachStatus: outreachStatusEnum('outreach_status').default('not_reached_out'),
+  outreachDate: timestamp('outreach_date'),
   introducedBy: uuid('introduced_by'),
+
+  // Import tracking
+  linkedinConnectionDate: timestamp('linkedin_connection_date'),
+  importSource: text('import_source'),
+  importedAt: timestamp('imported_at'),
 
   // Context
   notes: text('notes'),
   tags: text('tags').array(),
   howMet: text('how_met'),
+  metDate: timestamp('met_date'),
 
   // Follow-up tracking
   lastContactDate: timestamp('last_contact_date'),

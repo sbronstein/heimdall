@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     const [interaction] = await db.insert(interactions).values(values).returning();
 
-    // Auto-update contact's lastContactDate and nextFollowUpDate
+    // Auto-update contact's lastContactDate, nextFollowUpDate, and outreach status
     if (validated.contactId) {
       const contactUpdate: Record<string, unknown> = {
         lastContactDate: new Date(),
@@ -80,6 +80,26 @@ export async function POST(request: Request) {
       if (validated.followUpRequired && validated.followUpDate) {
         contactUpdate.nextFollowUpDate = new Date(validated.followUpDate);
       }
+
+      // Auto-update outreach status based on interaction type
+      const meetingTypes = ['coffee_chat', 'phone_call', 'video_call'];
+      const outreachTypes = ['email_sent', 'linkedin_message_sent'];
+
+      if (meetingTypes.includes(validated.type)) {
+        contactUpdate.outreachStatus = 'meeting_completed';
+        if (!contactUpdate.outreachDate) contactUpdate.outreachDate = new Date();
+      } else if (outreachTypes.includes(validated.type)) {
+        // Only auto-set to reached_out if currently not_reached_out
+        const [currentContact] = await db
+          .select({ outreachStatus: contacts.outreachStatus })
+          .from(contacts)
+          .where(eq(contacts.id, validated.contactId));
+        if (currentContact?.outreachStatus === 'not_reached_out') {
+          contactUpdate.outreachStatus = 'reached_out';
+          contactUpdate.outreachDate = new Date();
+        }
+      }
+
       await db
         .update(contacts)
         .set(contactUpdate)

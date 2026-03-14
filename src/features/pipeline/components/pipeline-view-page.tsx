@@ -4,19 +4,21 @@ import { useState } from 'react';
 import { PipelineBoard } from './pipeline-board';
 import { ApplicationDetailSheet } from './application-detail-sheet';
 import type { PipelineApplication } from '../utils/store';
-import type { PipelineStage, Company } from '@/lib/domain/types';
+import type { PipelineStage, Company, Contact } from '@/lib/domain/types';
 import { NewApplicationDialog } from './new-application-dialog';
 
 interface PipelineViewPageProps {
   stages: PipelineStage[];
   applications: PipelineApplication[];
   companies: Company[];
+  contacts?: Contact[];
 }
 
 export function PipelineViewPage({
   stages,
   applications,
-  companies
+  companies,
+  contacts = []
 }: PipelineViewPageProps) {
   const [selectedApp, setSelectedApp] = useState<PipelineApplication | null>(
     null
@@ -31,7 +33,7 @@ export function PipelineViewPage({
   return (
     <>
       <div className='mb-4 flex justify-end'>
-        <NewApplicationDialog companies={companies} />
+        <NewApplicationDialog companies={companies} contacts={contacts} />
       </div>
       <PipelineBoard
         stages={stages}

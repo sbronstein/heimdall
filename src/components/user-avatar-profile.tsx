@@ -16,7 +16,7 @@ export function UserAvatarProfile({
   user
 }: UserAvatarProfileProps) {
   return (
-    <div className='flex items-center gap-2'>
+    <span className='flex items-center gap-2'>
       <Avatar className={className}>
         <AvatarImage src={user?.imageUrl || ''} alt={user?.fullName || ''} />
         <AvatarFallback className='rounded-lg'>
@@ -25,13 +25,13 @@ export function UserAvatarProfile({
       </Avatar>
 
       {showInfo && (
-        <div className='grid flex-1 text-left text-sm leading-tight'>
+        <span className='grid flex-1 text-left text-sm leading-tight'>
           <span className='truncate font-semibold'>{user?.fullName || ''}</span>
           <span className='truncate text-xs'>
             {user?.emailAddresses[0].emailAddress || ''}
           </span>
-        </div>
+        </span>
       )}
-    </div>
+    </span>
   );
 }

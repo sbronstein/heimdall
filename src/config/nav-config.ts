@@ -26,6 +26,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Networking',
+    url: '/dashboard/networking',
+    icon: 'teams',
+    isActive: false,
+    shortcut: ['n', 'w'],
+    items: []
+  },
+  {
     title: 'Contacts',
     url: '/dashboard/contacts',
     icon: 'addressBook',

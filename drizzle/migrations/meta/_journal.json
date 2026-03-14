@@ -8,6 +8,27 @@
       "when": 1772423812735,
       "tag": "0000_luxuriant_redwing",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772913672024,
+      "tag": "0001_volatile_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772978517884,
+      "tag": "0002_shocking_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773106221669,
+      "tag": "0003_neat_silver_sable",
+      "breakpoints": true
     }
   ]
 }

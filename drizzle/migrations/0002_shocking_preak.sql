@@ -1,0 +1,1 @@
+ALTER TYPE "public"."contact_closeness" ADD VALUE 'career_contact' BEFORE 'acquaintance';

@@ -130,6 +130,24 @@ export const taskPriorityEnum = pgEnum('task_priority', [
   'low'
 ]);
 
+export const contactClosenessEnum = pgEnum('contact_closeness', [
+  'friend',
+  'close_colleague',
+  'colleague',
+  'career_contact',
+  'acquaintance',
+  'linkedin_only',
+  'never_met'
+]);
+
+export const outreachStatusEnum = pgEnum('outreach_status', [
+  'not_reached_out',
+  'reached_out',
+  'meeting_scheduled',
+  'meeting_completed',
+  'ongoing'
+]);
+
 export const excitementLevelEnum = pgEnum('excitement_level', [
   '5_dream_role',
   '4_very_excited',

@@ -21,18 +21,23 @@ import { IconPlus } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { Company } from '@/lib/domain/types';
+import type { Company, Contact } from '@/lib/domain/types';
 
 interface NewApplicationDialogProps {
   companies: Company[];
+  contacts?: Contact[];
 }
 
-export function NewApplicationDialog({ companies }: NewApplicationDialogProps) {
+export function NewApplicationDialog({
+  companies,
+  contacts = []
+}: NewApplicationDialogProps) {
   const [open, setOpen] = useState(false);
   const [companyId, setCompanyId] = useState('');
   const [roleTitle, setRoleTitle] = useState('');
   const [source, setSource] = useState('');
   const [excitementLevel, setExcitementLevel] = useState('');
+  const [referredBy, setReferredBy] = useState('');
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -48,8 +53,9 @@ export function NewApplicationDialog({ companies }: NewApplicationDialogProps) {
       body: JSON.stringify({
         companyId,
         roleTitle,
-        source: source || undefined,
-        excitementLevel: excitementLevel || undefined
+        source: source || (referredBy ? 'referral' : undefined),
+        excitementLevel: excitementLevel || undefined,
+        referredBy: referredBy || undefined
       })
     });
 
@@ -61,6 +67,7 @@ export function NewApplicationDialog({ companies }: NewApplicationDialogProps) {
       setRoleTitle('');
       setSource('');
       setExcitementLevel('');
+      setReferredBy('');
       router.refresh();
     } else {
       toast.error(json.error || 'Failed to create application');
@@ -122,6 +129,30 @@ export function NewApplicationDialog({ companies }: NewApplicationDialogProps) {
               </SelectContent>
             </Select>
           </div>
+          {contacts.length > 0 && (
+            <div>
+              <Label>Referred By</Label>
+              <Select
+                value={referredBy}
+                onValueChange={(v) => {
+                  setReferredBy(v);
+                  if (v && !source) setSource('referral');
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select contact (optional)' />
+                </SelectTrigger>
+                <SelectContent>
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName}
+                      {c.currentCompany ? ` (${c.currentCompany})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label>Excitement Level</Label>
             <Select value={excitementLevel} onValueChange={setExcitementLevel}>

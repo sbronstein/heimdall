@@ -5,7 +5,12 @@ import { success } from '@/lib/api/types';
 import { notFound, serverError, validationError } from '@/lib/api/errors';
 import { logTimeline } from '@/lib/db/timeline';
 import { z } from 'zod';
-import { contactRelationshipValues, contactWarmthValues } from '@/lib/domain/types';
+import {
+  contactRelationshipValues,
+  contactWarmthValues,
+  contactClosenessValues,
+  outreachStatusValues
+} from '@/lib/domain/types';
 
 const updateContactSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
@@ -18,10 +23,16 @@ const updateContactSchema = z.object({
   companyId: z.string().uuid().optional().nullable(),
   relationship: z.enum(contactRelationshipValues).optional(),
   warmth: z.enum(contactWarmthValues).optional(),
+  closeness: z.enum(contactClosenessValues).optional(),
+  outreachStatus: z.enum(outreachStatusValues).optional(),
+  outreachDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   introducedBy: z.string().uuid().optional().nullable(),
+  linkedinConnectionDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
+  importSource: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
   howMet: z.string().optional().nullable(),
+  metDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   lastContactDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   nextFollowUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   followUpNotes: z.string().optional().nullable()
@@ -53,6 +64,9 @@ export async function PUT(
     const values: Record<string, unknown> = { ...validated, updatedAt: new Date() };
     if (validated.lastContactDate) values.lastContactDate = new Date(validated.lastContactDate);
     if (validated.nextFollowUpDate) values.nextFollowUpDate = new Date(validated.nextFollowUpDate);
+    if (validated.outreachDate) values.outreachDate = new Date(validated.outreachDate);
+    if (validated.linkedinConnectionDate) values.linkedinConnectionDate = new Date(validated.linkedinConnectionDate);
+    if (validated.metDate) values.metDate = new Date(validated.metDate);
 
     const [contact] = await db
       .update(contacts)

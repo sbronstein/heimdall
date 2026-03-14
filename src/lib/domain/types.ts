@@ -173,3 +173,21 @@ export const taskPriorityValues = [
   'medium',
   'low'
 ] as const;
+
+export const contactClosenessValues = [
+  'friend',
+  'close_colleague',
+  'colleague',
+  'career_contact',
+  'acquaintance',
+  'linkedin_only',
+  'never_met'
+] as const;
+
+export const outreachStatusValues = [
+  'not_reached_out',
+  'reached_out',
+  'meeting_scheduled',
+  'meeting_completed',
+  'ongoing'
+] as const;

@@ -9,6 +9,8 @@ export type PipelineApplication = {
   excitementLevel: string | null;
   statusChangedAt: Date | string | null;
   source: string | null;
+  referredById: string | null;
+  referredByName: string | null;
 };
 
 type PipelineState = {

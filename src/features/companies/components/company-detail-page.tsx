@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Company, Contact, Application } from '@/lib/domain/types';
 import { IconExternalLink, IconEdit } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -70,6 +71,7 @@ export default function CompanyDetailPage({
       <Tabs defaultValue='overview'>
         <TabsList>
           <TabsTrigger value='overview'>Overview</TabsTrigger>
+          <TabsTrigger value='network'>Network</TabsTrigger>
           <TabsTrigger value='contacts'>
             Contacts ({contacts.length})
           </TabsTrigger>
@@ -143,6 +145,10 @@ export default function CompanyDetailPage({
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value='network'>
+          <NetworkConnections companyName={company.name} companyId={company.id} />
         </TabsContent>
 
         <TabsContent value='contacts'>
@@ -244,6 +250,124 @@ function DetailRow({
     <div className='flex justify-between'>
       <span className='text-muted-foreground text-sm'>{label}</span>
       <span className='text-sm font-medium'>{value || '-'}</span>
+    </div>
+  );
+}
+
+const closenessColors: Record<string, string> = {
+  friend: 'bg-emerald-100 text-emerald-800',
+  close_colleague: 'bg-teal-100 text-teal-800',
+  colleague: 'bg-cyan-100 text-cyan-800',
+  career_contact: 'bg-indigo-100 text-indigo-800',
+  acquaintance: 'bg-slate-100 text-slate-800',
+  linkedin_only: 'bg-sky-100 text-sky-800',
+  never_met: 'bg-gray-100 text-gray-800'
+};
+
+function NetworkConnections({
+  companyName,
+  companyId
+}: {
+  companyName: string;
+  companyId: string;
+}) {
+  const [data, setData] = useState<{
+    direct: Contact[];
+    introducers: Contact[];
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/contacts/connections?companyId=${companyId}&company=${encodeURIComponent(companyName)}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setData(json.data);
+      })
+      .finally(() => setLoading(false));
+  }, [companyId, companyName]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className='py-8 text-center'>
+          <p className='text-muted-foreground animate-pulse'>Loading connections...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || (data.direct.length === 0 && data.introducers.length === 0)) {
+    return (
+      <Card>
+        <CardContent className='py-8 text-center'>
+          <p className='text-muted-foreground'>No network connections found for this company.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className='space-y-4'>
+      {data.direct.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Contacts at {companyName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-2'>
+              {data.direct.map((c) => (
+                <div key={c.id} className='flex items-center justify-between'>
+                  <div>
+                    <Link
+                      href={`/dashboard/contacts/${c.id}`}
+                      className='font-medium hover:underline'
+                    >
+                      {c.firstName} {c.lastName}
+                    </Link>
+                    <p className='text-muted-foreground text-sm'>{c.title}</p>
+                  </div>
+                  {c.closeness && (
+                    <Badge className={closenessColors[c.closeness] || ''} variant='outline'>
+                      {c.closeness.replace(/_/g, ' ')}
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {data.introducers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>People Who Could Introduce You</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-2'>
+              {data.introducers.map((c) => (
+                <div key={c.id} className='flex items-center justify-between'>
+                  <div>
+                    <Link
+                      href={`/dashboard/contacts/${c.id}`}
+                      className='font-medium hover:underline'
+                    >
+                      {c.firstName} {c.lastName}
+                    </Link>
+                    <p className='text-muted-foreground text-sm'>
+                      {c.title} at {c.currentCompany}
+                    </p>
+                  </div>
+                  {c.closeness && (
+                    <Badge className={closenessColors[c.closeness] || ''} variant='outline'>
+                      {c.closeness.replace(/_/g, ' ')}
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

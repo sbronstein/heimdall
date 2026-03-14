@@ -13,7 +13,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import { RELATIONSHIP_OPTIONS, WARMTH_OPTIONS } from './contact-table/options';
+import {
+  RELATIONSHIP_OPTIONS,
+  WARMTH_OPTIONS,
+  CLOSENESS_OPTIONS,
+  OUTREACH_STATUS_OPTIONS
+} from './contact-table/options';
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -26,7 +31,11 @@ const formSchema = z.object({
   companyId: z.string().optional(),
   relationship: z.string().optional(),
   warmth: z.string().optional(),
+  closeness: z.string().optional(),
+  outreachStatus: z.string().optional(),
   howMet: z.string().optional().or(z.literal('')),
+  metDate: z.date().optional().nullable(),
+  linkedinConnectionDate: z.date().optional().nullable(),
   notes: z.string().optional().or(z.literal('')),
   tags: z.string().optional().or(z.literal('')),
   followUpNotes: z.string().optional().or(z.literal('')),
@@ -59,7 +68,11 @@ export default function ContactForm({
       companyId: initialData?.companyId || undefined,
       relationship: initialData?.relationship || undefined,
       warmth: initialData?.warmth || undefined,
+      closeness: initialData?.closeness || undefined,
+      outreachStatus: initialData?.outreachStatus || undefined,
       howMet: initialData?.howMet || '',
+      metDate: initialData?.metDate ? new Date(initialData.metDate) : undefined,
+      linkedinConnectionDate: initialData?.linkedinConnectionDate ? new Date(initialData.linkedinConnectionDate) : undefined,
       notes: initialData?.notes || '',
       tags: initialData?.tags?.join(', ') || '',
       followUpNotes: initialData?.followUpNotes || '',
@@ -79,6 +92,12 @@ export default function ContactForm({
         : null,
       nextFollowUpDate: values.nextFollowUpDate
         ? values.nextFollowUpDate.toISOString()
+        : null,
+      metDate: values.metDate
+        ? values.metDate.toISOString()
+        : null,
+      linkedinConnectionDate: values.linkedinConnectionDate
+        ? values.linkedinConnectionDate.toISOString()
         : null
     };
 
@@ -136,7 +155,23 @@ export default function ContactForm({
               placeholder='Select warmth'
               options={WARMTH_OPTIONS}
             />
-            <FormInput control={form.control} name='howMet' label='How Met' placeholder='Intro from...' />
+            <FormSelect
+              control={form.control}
+              name='closeness'
+              label='Closeness'
+              placeholder='Select closeness'
+              options={CLOSENESS_OPTIONS}
+            />
+            <FormSelect
+              control={form.control}
+              name='outreachStatus'
+              label='Outreach Status'
+              placeholder='Select status'
+              options={OUTREACH_STATUS_OPTIONS}
+            />
+            <FormInput control={form.control} name='howMet' label='Known From' placeholder='Andover, Penn, WebYes...' />
+            <FormDatePicker control={form.control} name='metDate' label='Met Date' />
+            <FormDatePicker control={form.control} name='linkedinConnectionDate' label='LinkedIn Connected On' />
             <FormInput control={form.control} name='tags' label='Tags' placeholder='Comma-separated' />
             <FormDatePicker control={form.control} name='nextFollowUpDate' label='Next Follow-up Date' />
           </div>

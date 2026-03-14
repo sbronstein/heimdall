@@ -83,9 +83,14 @@ export function ApplicationCard({ app, isOverlay, onClick }: ApplicationCardProp
         </span>
       </CardHeader>
       <CardContent className='px-3 pb-3'>
-        <p className='text-muted-foreground mb-2 truncate text-xs'>
+        <p className='text-muted-foreground mb-1 truncate text-xs'>
           {app.roleTitle}
         </p>
+        {app.referredByName && (
+          <p className='mb-1 truncate text-xs text-blue-600'>
+            via {app.referredByName}
+          </p>
+        )}
         <div className='flex items-center justify-between'>
           {app.excitementLevel && (
             <Badge variant='outline' className='text-xs'>
