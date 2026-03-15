@@ -103,6 +103,7 @@ export const LastContactYear = forwardRef<LastContactYearHandle, LastContactYear
                 )}
                 onClick={() => {
                   selectOption(option);
+                  setFocusedIndex(i);
                   containerRef.current?.focus();
                 }}
               >
