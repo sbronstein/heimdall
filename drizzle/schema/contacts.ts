@@ -44,6 +44,9 @@ export const contacts = pgTable('contacts', {
   nextFollowUpDate: timestamp('next_follow_up_date'),
   followUpNotes: text('follow_up_notes'),
 
+  // Triage
+  triagedAt: timestamp('triaged_at'),
+
   // Metadata
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

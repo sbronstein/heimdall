@@ -35,7 +35,8 @@ const updateContactSchema = z.object({
   metDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   lastContactDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   nextFollowUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
-  followUpNotes: z.string().optional().nullable()
+  followUpNotes: z.string().optional().nullable(),
+  triagedAt: z.union([z.string().date(), z.string().datetime()]).optional().nullable()
 });
 
 export async function GET(
@@ -67,6 +68,8 @@ export async function PUT(
     if (validated.outreachDate) values.outreachDate = new Date(validated.outreachDate);
     if (validated.linkedinConnectionDate) values.linkedinConnectionDate = new Date(validated.linkedinConnectionDate);
     if (validated.metDate) values.metDate = new Date(validated.metDate);
+    if (validated.triagedAt) values.triagedAt = new Date(validated.triagedAt);
+    else if (validated.triagedAt === null) values.triagedAt = null;
 
     const [contact] = await db
       .update(contacts)

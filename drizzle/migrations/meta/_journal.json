@@ -29,6 +29,13 @@
       "when": 1773106221669,
       "tag": "0003_neat_silver_sable",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773454227906,
+      "tag": "0004_bright_shen",
+      "breakpoints": true
     }
   ]
 }

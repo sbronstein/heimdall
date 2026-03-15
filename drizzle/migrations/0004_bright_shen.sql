@@ -1,0 +1,1 @@
+ALTER TABLE "contacts" ADD COLUMN "triaged_at" timestamp;

@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { closenessColors } from '@/features/contacts/lib/closeness-colors';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -254,15 +255,6 @@ function DetailRow({
   );
 }
 
-const closenessColors: Record<string, string> = {
-  friend: 'bg-emerald-100 text-emerald-800',
-  close_colleague: 'bg-teal-100 text-teal-800',
-  colleague: 'bg-cyan-100 text-cyan-800',
-  career_contact: 'bg-indigo-100 text-indigo-800',
-  acquaintance: 'bg-slate-100 text-slate-800',
-  linkedin_only: 'bg-sky-100 text-sky-800',
-  never_met: 'bg-gray-100 text-gray-800'
-};
 
 function NetworkConnections({
   companyName,

@@ -14,6 +14,7 @@ import type { Contact } from '@/lib/domain/types';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { closenessColors, outreachStatusColors as outreachColors } from '@/features/contacts/lib/closeness-colors';
 
 const closenessRank: Record<string, number> = {
   friend: 0,
@@ -23,24 +24,6 @@ const closenessRank: Record<string, number> = {
   acquaintance: 4,
   linkedin_only: 5,
   never_met: 6
-};
-
-const closenessColors: Record<string, string> = {
-  friend: 'bg-emerald-100 text-emerald-800',
-  close_colleague: 'bg-teal-100 text-teal-800',
-  colleague: 'bg-cyan-100 text-cyan-800',
-  career_contact: 'bg-indigo-100 text-indigo-800',
-  acquaintance: 'bg-slate-100 text-slate-800',
-  linkedin_only: 'bg-sky-100 text-sky-800',
-  never_met: 'bg-gray-100 text-gray-800'
-};
-
-const outreachColors: Record<string, string> = {
-  not_reached_out: 'bg-gray-100 text-gray-800',
-  reached_out: 'bg-blue-100 text-blue-800',
-  meeting_scheduled: 'bg-amber-100 text-amber-800',
-  meeting_completed: 'bg-green-100 text-green-800',
-  ongoing: 'bg-purple-100 text-purple-800'
 };
 
 export function OutreachList({ contacts }: { contacts: Contact[] }) {
