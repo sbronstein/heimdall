@@ -175,8 +175,9 @@ export const taskPriorityValues = [
 ] as const;
 
 export const contactClosenessValues = [
-  'friend',
+  'close_friend',
   'close_colleague',
+  'friend',
   'colleague',
   'career_contact',
   'acquaintance',

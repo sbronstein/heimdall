@@ -17,13 +17,14 @@ import { useMemo, useState } from 'react';
 import { closenessColors, outreachStatusColors as outreachColors } from '@/features/contacts/lib/closeness-colors';
 
 const closenessRank: Record<string, number> = {
-  friend: 0,
+  close_friend: 0,
   close_colleague: 1,
-  colleague: 2,
-  career_contact: 3,
-  acquaintance: 4,
-  linkedin_only: 5,
-  never_met: 6
+  friend: 2,
+  colleague: 3,
+  career_contact: 4,
+  acquaintance: 5,
+  linkedin_only: 6,
+  never_met: 7
 };
 
 export function OutreachList({ contacts }: { contacts: Contact[] }) {
@@ -78,8 +79,9 @@ export function OutreachList({ contacts }: { contacts: Contact[] }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>All Closeness</SelectItem>
-              <SelectItem value='friend'>Friend</SelectItem>
+              <SelectItem value='close_friend'>Close Friend</SelectItem>
               <SelectItem value='close_colleague'>Close Colleague</SelectItem>
+              <SelectItem value='friend'>Friend</SelectItem>
               <SelectItem value='colleague'>Colleague</SelectItem>
               <SelectItem value='career_contact'>Career Contact</SelectItem>
               <SelectItem value='acquaintance'>Acquaintance</SelectItem>

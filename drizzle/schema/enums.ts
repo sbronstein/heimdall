@@ -131,8 +131,9 @@ export const taskPriorityEnum = pgEnum('task_priority', [
 ]);
 
 export const contactClosenessEnum = pgEnum('contact_closeness', [
-  'friend',
+  'close_friend',
   'close_colleague',
+  'friend',
   'colleague',
   'career_contact',
   'acquaintance',

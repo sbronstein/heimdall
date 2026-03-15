@@ -8,8 +8,9 @@ import { OutreachList } from './outreach-list';
 import { ConnectionFinder } from './connection-finder';
 
 const closenessOrder = [
-  'friend',
+  'close_friend',
   'close_colleague',
+  'friend',
   'colleague',
   'career_contact',
   'acquaintance',
@@ -60,7 +61,7 @@ export function NetworkingDashboard({ contacts }: { contacts: Contact[] }) {
           <CardTitle>By Closeness Tier</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6'>
+          <div className='grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8'>
             {closenessStats.map((s) => (
               <div key={s.level} className='rounded-lg border p-3 text-center'>
                 <p className='text-muted-foreground text-xs capitalize'>{s.label}</p>

@@ -5,8 +5,9 @@ import { success } from '@/lib/api/types';
 import { serverError, validationError } from '@/lib/api/errors';
 
 const closenessOrder = [
-  'friend',
+  'close_friend',
   'close_colleague',
+  'friend',
   'colleague',
   'career_contact',
   'acquaintance',

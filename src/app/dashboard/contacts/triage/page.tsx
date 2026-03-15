@@ -25,7 +25,10 @@ export default async function TriagePage() {
     );
 
   const howMetRows = await db
-    .selectDistinct({ howMet: contacts.howMet })
+    .select({
+      howMet: contacts.howMet,
+      count: sql<number>`count(*)::int`.as('count')
+    })
     .from(contacts)
     .where(
       and(
@@ -33,11 +36,12 @@ export default async function TriagePage() {
         ne(contacts.howMet, '')
       )
     )
-    .orderBy(asc(contacts.howMet));
+    .groupBy(contacts.howMet)
+    .orderBy(sql`count(*) DESC`);
 
   const howMetSuggestions = howMetRows
-    .map((r) => r.howMet)
-    .filter((v): v is string => v !== null);
+    .filter((r): r is { howMet: string; count: number } => r.howMet !== null)
+    .map((r) => ({ value: r.howMet, count: r.count }));
 
   return (
     <PageContainer scrollable pageTitle='Contact Triage'>

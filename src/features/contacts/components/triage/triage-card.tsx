@@ -37,9 +37,11 @@ export function TriageCard({ contact }: TriageCardProps) {
               href={contact.linkedinUrl}
               target='_blank'
               rel='noopener noreferrer'
-              className='text-muted-foreground hover:text-foreground'
+              tabIndex={-1}
+              className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-accent'
             >
-              <IconBrandLinkedin className='h-5 w-5' />
+              <IconBrandLinkedin className='h-4 w-4' />
+              <span>LinkedIn</span>
             </a>
           )}
         </div>

@@ -36,6 +36,13 @@
       "when": 1773454227906,
       "tag": "0004_bright_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773582617944,
+      "tag": "0005_closed_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }

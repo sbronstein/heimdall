@@ -6,8 +6,9 @@ export const WARMTH_OPTIONS = [
 ];
 
 export const CLOSENESS_OPTIONS = [
-  { value: 'friend', label: 'Friend' },
+  { value: 'close_friend', label: 'Close Friend' },
   { value: 'close_colleague', label: 'Close Colleague' },
+  { value: 'friend', label: 'Friend' },
   { value: 'colleague', label: 'Colleague' },
   { value: 'career_contact', label: 'Career Contact' },
   { value: 'acquaintance', label: 'Acquaintance' },

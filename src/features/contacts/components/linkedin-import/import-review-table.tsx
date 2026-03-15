@@ -69,8 +69,9 @@ export function ImportReviewTable({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='friend'>Friend</SelectItem>
+                    <SelectItem value='close_friend'>Close Friend</SelectItem>
                     <SelectItem value='close_colleague'>Close Colleague</SelectItem>
+                    <SelectItem value='friend'>Friend</SelectItem>
                     <SelectItem value='colleague'>Colleague</SelectItem>
                     <SelectItem value='career_contact'>Career Contact</SelectItem>
                     <SelectItem value='acquaintance'>Acquaintance</SelectItem>

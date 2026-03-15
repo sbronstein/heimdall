@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Contact } from '@/lib/domain/types';
 import { TriageCard } from './triage-card';
-import { ClosenessButtonBar } from './closeness-button-bar';
-import { HowMetInput } from './how-met-input';
+import { ClosenessButtonBar, type ClosenessButtonBarHandle } from './closeness-button-bar';
+import { HowMetInput, type HowMetInputHandle, type HowMetSuggestion } from './how-met-input';
+import { LastContactYear, type LastContactYearHandle } from './last-contact-year';
 import { TriageProgress } from './triage-progress';
 import { IconArrowRight, IconArrowBackUp, IconX, IconCheck } from '@tabler/icons-react';
 
@@ -16,37 +17,58 @@ interface HistoryEntry {
   previousCloseness: string | null;
   previousHowMet: string | null;
   previousTriagedAt: Date | null;
+  previousLastContactDate: Date | null;
   index: number;
 }
 
 interface TriageWorkflowProps {
   contacts: Contact[];
-  howMetSuggestions: string[];
+  howMetSuggestions: HowMetSuggestion[];
 }
 
 export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [howMet, setHowMet] = useState('');
+  const [lastContactYear, setLastContactYear] = useState(new Date().getFullYear());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [skipped, setSkipped] = useState(0);
   const [triaged, setTriaged] = useState(0);
   const [startTime] = useState(Date.now());
-  const howMetInputRef = useRef<HTMLInputElement>(null);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  const howMetInputRef = useRef<HowMetInputHandle>(null);
+  const yearButtonsRef = useRef<LastContactYearHandle>(null);
+  const closenessRef = useRef<ClosenessButtonBarHandle>(null);
 
   const total = contacts.length;
   const current = contacts[currentIndex] as Contact | undefined;
 
-  const isInputFocused = useCallback(() => {
-    const active = document.activeElement;
-    return (
-      active instanceof HTMLInputElement ||
-      active instanceof HTMLTextAreaElement ||
-      active?.getAttribute('role') === 'combobox' ||
-      active?.getAttribute('cmdk-input') !== null
-    );
+  // Pre-snap year from existing lastContactDate
+  useEffect(() => {
+    if (current?.lastContactDate) {
+      setLastContactYear(new Date(current.lastContactDate).getFullYear());
+    } else {
+      setLastContactYear(new Date().getFullYear());
+    }
+    setHowMet(current?.howMet ?? '');
+  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-focus howMet input on each new contact
+  useEffect(() => {
+    if (current) {
+      // Small delay to ensure DOM is ready
+      const t = setTimeout(() => howMetInputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [currentIndex, current]);
+
+  const handleHowMetTab = useCallback(() => {
+    yearButtonsRef.current?.focus();
+  }, []);
+
+  const handleYearEnter = useCallback(() => {
+    closenessRef.current?.focus();
   }, []);
 
   const submitCloseness = useCallback(
@@ -61,6 +83,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
           body: JSON.stringify({
             closeness,
             howMet: howMet || current.howMet || undefined,
+            lastContactDate: new Date(lastContactYear, 0, 1).toISOString(),
             triagedAt: new Date().toISOString()
           })
         });
@@ -74,6 +97,9 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
             previousCloseness: current.closeness,
             previousHowMet: current.howMet,
             previousTriagedAt: current.triagedAt,
+            previousLastContactDate: current.lastContactDate
+              ? new Date(current.lastContactDate)
+              : null,
             index: currentIndex
           }
         ]);
@@ -85,7 +111,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
         setIsSubmitting(false);
       }
     },
-    [current, currentIndex, howMet, isSubmitting]
+    [current, currentIndex, howMet, lastContactYear, isSubmitting]
   );
 
   const undo = useCallback(async () => {
@@ -100,6 +126,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
         body: JSON.stringify({
           closeness: last.previousCloseness,
           howMet: last.previousHowMet,
+          lastContactDate: last.previousLastContactDate?.toISOString() ?? null,
           triagedAt: last.previousTriagedAt?.toISOString() ?? null
         })
       });
@@ -127,40 +154,29 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
     router.push('/dashboard/contacts');
   }, [router]);
 
+  // Global keyboard shortcuts (only when not in text input)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (isInputFocused()) return;
+      const active = document.activeElement;
+      const isInput =
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement;
 
-      const key = e.key;
+      if (isInput) return;
 
-      if (key >= '1' && key <= '7') {
-        e.preventDefault();
-        const closenessValues = [
-          'friend',
-          'close_colleague',
-          'colleague',
-          'career_contact',
-          'acquaintance',
-          'linkedin_only',
-          'never_met'
-        ];
-        submitCloseness(closenessValues[parseInt(key) - 1]);
-        return;
-      }
-
-      if (key === 'u' || key === 'U' || (e.ctrlKey && key === 'z')) {
+      if (e.key === 'u' || e.key === 'U' || (e.ctrlKey && e.key === 'z')) {
         e.preventDefault();
         undo();
         return;
       }
 
-      if (key === 's' || key === 'S' || key === 'ArrowRight') {
+      if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
         skip();
         return;
       }
 
-      if (key === 'Escape') {
+      if (e.key === 'Escape') {
         e.preventDefault();
         exit();
         return;
@@ -169,7 +185,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [submitCloseness, undo, skip, exit, isInputFocused]);
+  }, [undo, skip, exit]);
 
   if (currentIndex >= total) {
     const elapsed = Math.round((Date.now() - startTime) / 1000);
@@ -220,13 +236,25 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
       <TriageCard contact={current!} />
 
       <HowMetInput
+        ref={howMetInputRef}
         value={howMet}
         onChange={setHowMet}
         suggestions={howMetSuggestions}
-        inputRef={howMetInputRef}
+        onTab={handleHowMetTab}
       />
 
-      <ClosenessButtonBar onSelect={submitCloseness} disabled={isSubmitting} />
+      <LastContactYear
+        ref={yearButtonsRef}
+        value={lastContactYear}
+        onChange={setLastContactYear}
+        onEnter={handleYearEnter}
+      />
+
+      <ClosenessButtonBar
+        ref={closenessRef}
+        onSelect={submitCloseness}
+        disabled={isSubmitting}
+      />
 
       <div className='flex items-center gap-2'>
         <Button
@@ -248,7 +276,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
           <IconArrowRight className='ml-1 h-4 w-4' />
         </Button>
         <div className='text-muted-foreground ml-auto text-xs'>
-          Keys: 1-7 closeness, U undo, S skip, Esc exit
+          Tab&rarr;Year&rarr;Enter&rarr;Closeness
         </div>
       </div>
     </div>

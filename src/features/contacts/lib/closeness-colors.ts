@@ -1,4 +1,5 @@
 export const closenessColors: Record<string, string> = {
+  close_friend: 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
   friend: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
   close_colleague: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
   colleague: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',

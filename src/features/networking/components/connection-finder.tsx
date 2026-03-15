@@ -11,13 +11,14 @@ import { useMemo, useState } from 'react';
 import { closenessColors } from '@/features/contacts/lib/closeness-colors';
 
 const closenessRank: Record<string, number> = {
-  friend: 0,
+  close_friend: 0,
   close_colleague: 1,
-  colleague: 2,
-  career_contact: 3,
-  acquaintance: 4,
-  linkedin_only: 5,
-  never_met: 6
+  friend: 2,
+  colleague: 3,
+  career_contact: 4,
+  acquaintance: 5,
+  linkedin_only: 6,
+  never_met: 7
 };
 
 export function ConnectionFinder({ contacts }: { contacts: Contact[] }) {
