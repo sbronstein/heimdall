@@ -24,9 +24,10 @@ interface HistoryEntry {
 interface TriageWorkflowProps {
   contacts: Contact[];
   howMetSuggestions: HowMetSuggestion[];
+  exitUrl?: string;
 }
 
-export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowProps) {
+export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageWorkflowProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [howMet, setHowMet] = useState('');
@@ -151,8 +152,8 @@ export function TriageWorkflow({ contacts, howMetSuggestions }: TriageWorkflowPr
   }, [currentIndex, total]);
 
   const exit = useCallback(() => {
-    router.push('/dashboard/contacts');
-  }, [router]);
+    router.push(exitUrl ?? '/dashboard/contacts');
+  }, [router, exitUrl]);
 
   // Global keyboard shortcuts (only when not in text input)
   useEffect(() => {

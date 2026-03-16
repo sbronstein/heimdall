@@ -43,6 +43,13 @@
       "when": 1773582617944,
       "tag": "0005_closed_cassandra_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773868800000,
+      "tag": "0006_add_job_leads",
+      "breakpoints": true
     }
   ]
 }

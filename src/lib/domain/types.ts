@@ -8,7 +8,10 @@ import type {
   timelineEvents,
   pipelineStages,
   recruiters,
-  searchMetrics
+  searchMetrics,
+  jobLeads,
+  prospects,
+  prospectBridges
 } from '../../../drizzle/schema';
 
 // Inferred select types (what you get back from queries)
@@ -22,6 +25,9 @@ export type TimelineEvent = typeof timelineEvents.$inferSelect;
 export type PipelineStage = typeof pipelineStages.$inferSelect;
 export type Recruiter = typeof recruiters.$inferSelect;
 export type SearchMetric = typeof searchMetrics.$inferSelect;
+export type JobLead = typeof jobLeads.$inferSelect;
+export type Prospect = typeof prospects.$inferSelect;
+export type ProspectBridge = typeof prospectBridges.$inferSelect;
 
 // Inferred insert types (what you pass to create)
 export type NewCompany = typeof companies.$inferInsert;
@@ -34,6 +40,9 @@ export type NewTimelineEvent = typeof timelineEvents.$inferInsert;
 export type NewPipelineStage = typeof pipelineStages.$inferInsert;
 export type NewRecruiter = typeof recruiters.$inferInsert;
 export type NewSearchMetric = typeof searchMetrics.$inferInsert;
+export type NewJobLead = typeof jobLeads.$inferInsert;
+export type NewProspect = typeof prospects.$inferInsert;
+export type NewProspectBridge = typeof prospectBridges.$inferInsert;
 
 // Enum value arrays for zod schemas and filter options
 export const companyStageValues = [
@@ -192,3 +201,28 @@ export const outreachStatusValues = [
   'meeting_completed',
   'ongoing'
 ] as const;
+
+export const jobLeadStatusValues = [
+  'pending',
+  'scraping',
+  'scraped',
+  'searching',
+  'found',
+  'ready',
+  'actioned',
+  'archived'
+] as const;
+
+export const seniorityLevelValues = [
+  'c_suite',
+  'vp',
+  'director',
+  'senior_manager',
+  'manager',
+  'senior_ic',
+  'ic',
+  'entry_level',
+  'unknown'
+] as const;
+
+export type SeniorityLevel = (typeof seniorityLevelValues)[number];

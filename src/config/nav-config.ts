@@ -34,6 +34,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Job Leads',
+    url: '/dashboard/job-leads',
+    icon: 'target',
+    isActive: false,
+    shortcut: ['j', 'l'],
+    items: []
+  },
+  {
     title: 'Contacts',
     url: '/dashboard/contacts',
     icon: 'addressBook',

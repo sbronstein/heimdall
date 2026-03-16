@@ -1,6 +1,6 @@
 # Heimdall — Project Summary
 
-> Last updated: 2026-03-10
+> Last updated: 2026-03-16
 
 ## What It Is
 
@@ -18,12 +18,13 @@ Personal CRM and pipeline tracker for an executive job search targeting VP Data/
 | State | Zustand (pipeline board), nuqs (URL state) |
 | DnD | @dnd-kit (pipeline kanban) |
 | Forms | React Hook Form + Zod v4 |
+| Scraping | Cheerio (HTML parsing) + Playwright (browser automation) |
 
 ## Current State
 
 **Fully built and verified.** All core features are live with real data flowing through Neon Postgres. The app runs on port 4000.
 
-### Database: 10 Tables, 15 Enums, 4 Migrations
+### Database: 13 Tables, 17 Enums, 7 Migrations
 
 | Table | Purpose |
 |-------|---------|
@@ -37,14 +38,20 @@ Personal CRM and pipeline tracker for an executive job search targeting VP Data/
 | timeline_events | Denormalized activity feed for dashboard |
 | recruiters | Recruiter tracking linked to contacts |
 | search_metrics | Weekly snapshots for JSC reporting |
+| job_leads | LinkedIn job URLs with scrape status, company match, prospect counts |
+| prospects | 2nd-degree connections found at target companies via LinkedIn |
+| prospect_bridges | Junction linking prospects to user's contacts (mutual connections) with priority scores |
 
 **Migrations applied:**
 1. `0000_luxuriant_redwing.sql` — initial schema (10 tables, 13 enums)
 2. `0001_volatile_mastermind.sql` — networking enhancement (closeness, outreach status, import fields)
 3. `0002_shocking_preak.sql` — add career_contact closeness tier
 4. `0003_neat_silver_sable.sql` — add met_date column to contacts
+5. `0004_*` — triage workflow fields (triagedAt, howMet on contacts)
+6. `0005_closed_cassandra_nova.sql` — add close_friend closeness tier
+7. `0006_add_job_leads.sql` — job_leads, prospects, prospect_bridges tables + job_lead_status and seniority_level enums
 
-### API: 26 Routes
+### API: 34 Routes
 
 **Core CRUD:**
 - Companies: GET/POST `/api/companies`, GET/PUT/DELETE `/api/companies/[id]`
@@ -69,17 +76,26 @@ Personal CRM and pipeline tracker for an executive job search targeting VP Data/
 - `GET /api/search` — cross-entity search
 - `GET/POST /api/recruiters`, GET/PUT/DELETE `/api/recruiters/[id]`
 
+**Job Leads:**
+- `GET/POST /api/job-leads` — list and create (POST scrapes job page via cheerio)
+- `GET/PUT /api/job-leads/[id]` — get and update lead
+- `POST /api/job-leads/[id]/search` — trigger Playwright 2nd-degree connection scrape (async)
+- `GET /api/job-leads/[id]/status` — poll scrape progress
+- `GET /api/job-leads/[id]/recommendations` — scored & ranked intro paths
+- `POST /api/job-leads/linkedin-setup` — launch headed browser for LinkedIn login
+
 **All routes follow the standard envelope:** `{ success, data, error, meta }`
 
-### Dashboard Pages: 9 Sections
+### Dashboard Pages: 10 Sections
 
 | Page | Features |
 |------|----------|
 | Overview | KPI cards, pipeline funnel chart, activity timeline, source breakdown pie chart |
 | Companies | Data table with priority/stage filters, detail pages with tabs |
 | Pipeline | Drag-and-drop kanban board, validated transitions, excitement badges, days-in-stage |
+| **Job Leads** | **Paste LinkedIn URL → scrape job → find 2nd-degree connections → triage → prioritized intro recommendations** |
 | Networking | KPI cards, closeness tier stats, outreach tracker, connection finder |
-| Contacts | Data table with warmth/closeness/outreach filters, Known From/Connected On/Met columns, LinkedIn import, detail pages |
+| Contacts | Data table with warmth/closeness/outreach filters, Known From/Connected On/Met columns, LinkedIn import, detail pages, **triage workflow** |
 | Tasks | Data table with checkbox toggle, priority filters, entity linking |
 | Notes | Data table with category filters, markdown content, entity linking |
 | Metrics | Weekly snapshots, trend charts |
@@ -87,17 +103,18 @@ Personal CRM and pipeline tracker for an executive job search targeting VP Data/
 
 ### Navigation
 
-Dashboard → Companies → Pipeline → **Networking** → Contacts → Tasks → Notes → Metrics → Account
+Dashboard → Companies → Pipeline → **Job Leads** → **Networking** → Contacts → Tasks → Notes → Metrics → Account
 
-## Networking Features (New — 2026-03-09)
+## Networking Features (2026-03-09)
 
-### Closeness Hierarchy
+### Closeness Hierarchy (8 tiers)
 Orthogonal to warmth (engagement heat). Measures underlying relationship strength:
 
 | Tier | Color | Description |
 |------|-------|-------------|
-| Friend | Emerald | Personal friends |
+| Close Friend | Rose | Closest personal friends |
 | Close Colleague | Teal | Worked closely together |
+| Friend | Emerald | Personal friends |
 | Colleague | Cyan | Same company/team |
 | Career Contact | Indigo | Coaches, salespeople, professional services |
 | Acquaintance | Slate | Met once or twice |
@@ -133,6 +150,45 @@ Every contact has an outreach status that auto-updates from interactions:
 - Sorted by closeness tier
 - Also available as "Network" tab on company detail pages
 
+### Contact Triage Workflow (2026-03-16)
+Keyboard-driven bulk triage for classifying imported contacts:
+- **Flow:** howMet input (auto-focused) → Tab → year buttons → Enter → closeness buttons (1-8)
+- **howMet autocomplete:** frequency-sorted suggestions (prefix-first, then contains, by count desc), first match auto-highlighted so Tab accepts immediately
+- **Last Contact Year:** fixed buttons (2026, 2021, 2018, 2013, 2011, Earlier) with arrow key navigation
+- **Closeness buttons:** 8 tiers, press 1-8 or Enter to submit + advance to next contact
+- **Undo (U / Ctrl+Z):** restores previous closeness, howMet, lastContactDate, triagedAt
+- **Skip (S):** advance without saving
+- **Progress bar** with count and percentage
+- **LinkedIn profile link** on each triage card (opens in new tab)
+
+## Job Leads Feature (2026-03-16)
+
+Automated intro-path finder: paste a LinkedIn job URL → get a prioritized list of who to ask for an intro.
+
+### Flow
+1. **Paste URL** — auto-submits on paste, scrapes job page with cheerio for company name, role title, location
+2. **Find Connections** — Playwright scrapes LinkedIn for 2nd-degree connections at the target company (people search with `network=["S"]`)
+3. **Match & Triage** — mutual connection names fuzzy-matched to contacts in DB; untriaged contacts routed through existing triage workflow
+4. **Recommendations** — scored and ranked by composite formula: `0.40 × seniority + 0.35 × closeness + 0.25 × recency`
+
+### Seniority Inference
+Title keyword matching (first match wins): C-Suite (100) → VP (85) → Director (70) → Senior Manager (55) → Manager (40) → Senior IC (30) → IC (20) → Entry Level (10) → Unknown (15)
+
+### Prioritization Score
+- **Seniority weight** — from the prospect's title (higher = better intro target)
+- **Closeness weight** — from your relationship to the mutual connection (close_friend=100 → never_met=5)
+- **Recency weight** — days since last contact, decaying over ~1 year
+
+### Recommendation Grouping
+Results grouped by mutual connection (the person you'd reach out to), each showing the prospects they can connect you to with seniority badges. "Request Intro" button creates an `intro_requested` interaction.
+
+### LinkedIn Browser Profile
+Persistent Playwright context at `~/.heimdall/linkedin-profile/` — one-time login via `/api/job-leads/linkedin-setup`, then headless reuse for scraping.
+
+### Dependencies Added
+- `cheerio` — server-side HTML parsing for job page scraping
+- `playwright` — browser automation for LinkedIn connection search
+
 ### Lead Attribution
 - Applications show "via [Contact Name]" on pipeline cards when referred
 - "Referred By" field on application detail sheet links to contact
@@ -164,10 +220,10 @@ npm run db:seed       # Seed pipeline stages
 
 | Area | Count |
 |------|-------|
-| Feature directories | 14 |
-| Feature component files | ~80 |
-| API routes | 26 |
-| Dashboard pages | ~23 |
-| Database tables | 10 |
-| Database enums | 15 |
-| Migrations | 4 |
+| Feature directories | 15 |
+| Feature component files | ~95 |
+| API routes | 34 |
+| Dashboard pages | ~26 |
+| Database tables | 13 |
+| Database enums | 17 |
+| Migrations | 7 |

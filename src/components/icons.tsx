@@ -42,7 +42,8 @@ import {
   IconAddressBook,
   IconNotebook,
   IconTimeline,
-  IconChartBar
+  IconChartBar,
+  IconTarget
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -91,5 +92,6 @@ export const Icons = {
   addressBook: IconAddressBook,
   notebook: IconNotebook,
   timeline: IconTimeline,
-  metrics: IconChartBar
+  metrics: IconChartBar,
+  target: IconTarget
 };

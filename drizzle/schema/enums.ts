@@ -156,3 +156,26 @@ export const excitementLevelEnum = pgEnum('excitement_level', [
   '2_lukewarm',
   '1_not_interested'
 ]);
+
+export const jobLeadStatusEnum = pgEnum('job_lead_status', [
+  'pending',
+  'scraping',
+  'scraped',
+  'searching',
+  'found',
+  'ready',
+  'actioned',
+  'archived'
+]);
+
+export const seniorityLevelEnum = pgEnum('seniority_level', [
+  'c_suite',
+  'vp',
+  'director',
+  'senior_manager',
+  'manager',
+  'senior_ic',
+  'ic',
+  'entry_level',
+  'unknown'
+]);
