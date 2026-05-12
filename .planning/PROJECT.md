@@ -48,7 +48,9 @@ A personal CRM and pipeline tracker for an executive job search targeting VP Dat
 - [ ] **DEBT-A1**: Strip Next.js starter-template residue — delete `src/features/products/`, `src/app/dashboard/{product,overview-old,exclusive,workspaces,billing}/`, the 805-line unused `infobar.tsx`, the no-op GitHub auth button, the external `api.github.com/repos/...` star fetch on auth pages, and the `__CLEANUP__/` directory
 - [ ] **PERF-A1**: Eliminate N+1 patterns — bulk-insert prospects in `/api/job-leads/[id]/search`, bulk-insert prospect bridges in `match-connections.ts`, batch update closeness in `/api/contacts/import/categorize`
 - [ ] **PERF-A2**: Add indexes on hot-path columns — `contacts(archived_at)`, `contacts(linkedin_url)`, `contacts(company_id)`, `contacts(linkedin_connection_date)`, `companies(name)`; investigate `pg_trgm` GIN for search
-- [ ] **TEST-A1**: Stand up a test harness (Vitest) and cover the load-bearing logic — API envelope shape, `canTransition()` pipeline graph, `logTimeline()` side-effect, LinkedIn CSV parsing, bridge-score computation
+- ✓ **TEST-A1**: Vitest harness with PGlite-backed Drizzle DB shipped in Phase 2. `npm run test:run` exits 0 in ~6s. Pre-push hook runs build + tests. (`vitest.config.ts`, `src/test-utils/{pglite,call-route}.ts`, `.husky/pre-push` — completed 2026-05-12)
+- ✓ **TEST-A2**: Load-bearing logic coverage shipped in Phase 2 — API envelope shape (`types.test.ts`), `canTransition()` pipeline graph (`pipeline.test.ts`), `logTimeline()` side-effect verified via real `timeline_events` rows in PGlite (`applications/[id]/status/route.test.ts`), LinkedIn CSV parsing (`contacts/import/route.test.ts`), `computeBridgeScore` (`prioritization.test.ts`). Plus adjacent surfaces `parseCursor`/`parseLimit` (`filters.test.ts`) and `inferSeniority` (`seniority.test.ts`). 79 tests passing across 10 files. (completed 2026-05-12)
+- ✓ **TEST-A3**: BUG-01 regression pinned in Phase 2 — SSR structural test asserts no `<div>` inside `<button>` and `UserAvatarProfile` rendered unconditionally (`app-sidebar.ssr.test.tsx`); hydration mount test catches severe SSR/CSR divergences via DOM-shape comparison (`app-sidebar.hydration.test.tsx`). (completed 2026-05-12)
 
 ### Out of Scope
 
@@ -111,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-12 after initialization*
+*Last updated: 2026-05-12 after Phase 2 (Test Infrastructure) completion — TEST-A1, TEST-A2, TEST-A3 shipped*
