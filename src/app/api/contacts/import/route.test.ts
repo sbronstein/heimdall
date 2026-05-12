@@ -7,7 +7,7 @@ import { contacts, timelineEvents } from '../../../../../drizzle/schema';
 const { dbRef } = vi.hoisted(() => ({ dbRef: { current: null as Awaited<ReturnType<typeof createTestDb>> | null } }));
 
 vi.mock('@/lib/db', () => ({
-  db: new Proxy({}, { get: (_: object, prop: string | symbol) => (dbRef.current as Record<string | symbol, unknown>)[prop] })
+  db: new Proxy({}, { get: (_: object, prop: string | symbol) => (dbRef.current as unknown as Record<string | symbol, unknown>)[prop] })
 }));
 
 describe('POST /api/contacts/import', () => {

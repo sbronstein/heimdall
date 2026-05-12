@@ -6,7 +6,7 @@ import { applications, companies, timelineEvents } from '../../../../../../drizz
 const { dbRef } = vi.hoisted(() => ({ dbRef: { current: null as Awaited<ReturnType<typeof createTestDb>> | null } }));
 
 vi.mock('@/lib/db', () => ({
-  db: new Proxy({}, { get: (_: object, prop: string | symbol) => (dbRef.current as Record<string | symbol, unknown>)[prop] })
+  db: new Proxy({}, { get: (_: object, prop: string | symbol) => (dbRef.current as unknown as Record<string | symbol, unknown>)[prop] })
 }));
 
 describe('PATCH /api/applications/[id]/status', () => {
@@ -39,7 +39,8 @@ describe('PATCH /api/applications/[id]/status', () => {
   it('valid transition (researching -> applied): returns 200, updates status, sets appliedDate, writes timeline row', async () => {
     const { PATCH } = await import('@/app/api/applications/[id]/status/route');
 
-    const { status, body } = await callRoute(PATCH, {
+    // Cast needed: PATCH has narrower params type than RouteHandler's generic Record<string,string>
+    const { status, body } = await callRoute(PATCH as unknown as Parameters<typeof callRoute>[0], {
       method: 'PATCH',
       body: { status: 'applied' },
       params: { id: appId }
@@ -61,6 +62,7 @@ describe('PATCH /api/applications/[id]/status', () => {
     // Timeline side-effect: exactly one row must exist
     const rows = await dbRef.current!.select().from(timelineEvents);
     expect(rows).toHaveLength(1);
+    expect(rows[0].eventType).toBe('application_status_changed');
     expect(rows[0]).toMatchObject({
       eventType: 'application_status_changed',
       applicationId: appId,
@@ -78,7 +80,7 @@ describe('PATCH /api/applications/[id]/status', () => {
   it('invalid transition (researching -> offer): returns 400 with transition error, writes NO timeline row', async () => {
     const { PATCH } = await import('@/app/api/applications/[id]/status/route');
 
-    const { status, body } = await callRoute(PATCH, {
+    const { status, body } = await callRoute(PATCH as unknown as Parameters<typeof callRoute>[0], {
       method: 'PATCH',
       body: { status: 'offer' },
       params: { id: appId }
@@ -99,7 +101,7 @@ describe('PATCH /api/applications/[id]/status', () => {
     const { PATCH } = await import('@/app/api/applications/[id]/status/route');
 
     const randomId = crypto.randomUUID();
-    const { status, body } = await callRoute(PATCH, {
+    const { status, body } = await callRoute(PATCH as unknown as Parameters<typeof callRoute>[0], {
       method: 'PATCH',
       body: { status: 'applied' },
       params: { id: randomId }
@@ -115,7 +117,7 @@ describe('PATCH /api/applications/[id]/status', () => {
   it('Zod validation failure (invalid status value): returns 400 with error string', async () => {
     const { PATCH } = await import('@/app/api/applications/[id]/status/route');
 
-    const { status, body } = await callRoute(PATCH, {
+    const { status, body } = await callRoute(PATCH as unknown as Parameters<typeof callRoute>[0], {
       method: 'PATCH',
       body: { status: 'made_up_status' },
       params: { id: appId }
