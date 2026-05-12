@@ -42,6 +42,13 @@ Plans:
   1. `npm test` runs a Vitest suite against the TypeScript codebase and exits 0 on a clean checkout
   2. Tests assert the `{ success, data, error, meta }` API envelope shape, valid/invalid `canTransition()` pipeline moves, `logTimeline()` side-effect on writes, LinkedIn CSV parsing, and bridge-score computation
   3. A regression test fails if the `app-sidebar.tsx` hydration mismatch from BUG-01 is reintroduced
+**Plans**: 5 plans
+Plans:
+- [ ] 02-01-PLAN.md — Vitest + PGlite harness foundation (config, scripts, createTestDb, callRoute)
+- [ ] 02-02-PLAN.md — Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score)
+- [ ] 02-03-PLAN.md — DB-backed API route coverage (status transition + CSV import with timeline side-effect via PGlite)
+- [ ] 02-04-PLAN.md — BUG-01 regression tests (SSR structural + jsdom hydration mount)
+- [ ] 02-05-PLAN.md — Husky pre-push integration (gated on <10s suite runtime per CD-01)
 
 ### Phase 3: Security Hardening
 **Goal**: No `/api/*` route is reachable without a valid Clerk session, and starter-template auth artifacts are removed
@@ -91,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Critical Bug Fix | 0/1 | Planned | - |
-| 2. Test Infrastructure | 0/TBD | Not started | - |
+| 2. Test Infrastructure | 0/5 | Planned | - |
 | 3. Security Hardening | 0/TBD | Not started | - |
 | 4. Starter-Template Cleanup | 0/TBD | Not started | - |
 | 5. Job Leads Completion | 0/TBD | Not started | - |

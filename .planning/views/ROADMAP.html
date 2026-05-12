@@ -166,6 +166,15 @@
     <li>Tests assert the <code>{ success, data, error, meta }</code> API envelope shape, valid/invalid <code>canTransition()</code> pipeline moves, <code>logTimeline()</code> side-effect on writes, LinkedIn CSV parsing, and bridge-score computation</li>
     <li>A regression test fails if the <code>app-sidebar.tsx</code> hydration mismatch from BUG-01 is reintroduced</li>
   </ol>
+  <div style="margin-top:14px;"><strong>Plans (5):</strong>
+    <ul style="margin-top:6px;">
+      <li>☐ <code>02-01-PLAN.md</code> &mdash; Vitest + PGlite harness foundation (config, scripts, <code>createTestDb</code>, <code>callRoute</code>) <span class="badge badge-pending">Pending</span></li>
+      <li>☐ <code>02-02-PLAN.md</code> &mdash; Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score) <span class="badge badge-pending">Pending</span></li>
+      <li>☐ <code>02-03-PLAN.md</code> &mdash; DB-backed API route coverage (status transition + CSV import with <code>logTimeline</code> side-effect via PGlite) <span class="badge badge-pending">Pending</span></li>
+      <li>☐ <code>02-04-PLAN.md</code> &mdash; BUG-01 regression tests (SSR structural + jsdom hydration mount) <span class="badge badge-pending">Pending</span></li>
+      <li>☐ <code>02-05-PLAN.md</code> &mdash; Husky pre-push integration (gated on &lt;10s suite runtime per CD-01) <span class="badge badge-pending">Pending</span></li>
+    </ul>
+  </div>
 </div>
 
 <div class="phase-card phase-3">
@@ -232,7 +241,7 @@
   <table class="progress-table">
     <tr><th>Phase</th><th>Plans Complete</th><th>Status</th><th>Completed</th></tr>
     <tr><td>1. Critical Bug Fix</td><td>0 / 1</td><td><span class="badge badge-planned">Planned</span></td><td>—</td></tr>
-    <tr><td>2. Test Infrastructure</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
+    <tr><td>2. Test Infrastructure</td><td>0 / 5</td><td><span class="badge badge-pending">Planned</span></td><td>—</td></tr>
     <tr><td>3. Security Hardening</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>4. Starter-Template Cleanup</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
