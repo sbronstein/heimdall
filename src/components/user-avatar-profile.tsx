@@ -19,16 +19,18 @@ export function UserAvatarProfile({
     <span className='flex items-center gap-2'>
       <Avatar className={className}>
         <AvatarImage src={user?.imageUrl || ''} alt={user?.fullName || ''} />
-        <AvatarFallback className='rounded-lg'>
+        <AvatarFallback className='rounded-lg' suppressHydrationWarning>
           {user?.fullName?.slice(0, 2)?.toUpperCase() || 'CN'}
         </AvatarFallback>
       </Avatar>
 
       {showInfo && (
         <span className='grid flex-1 text-left text-sm leading-tight'>
-          <span className='truncate font-semibold'>{user?.fullName || ''}</span>
-          <span className='truncate text-xs'>
-            {user?.emailAddresses[0].emailAddress || ''}
+          <span className='truncate font-semibold' suppressHydrationWarning>
+            {user?.fullName || ''}
+          </span>
+          <span className='truncate text-xs' suppressHydrationWarning>
+            {user?.emailAddresses[0]?.emailAddress ?? ''}
           </span>
         </span>
       )}
