@@ -13,7 +13,7 @@ Heimdall is brownfield — the executive job-search CRM is already shipped and i
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Critical Bug Fix** - Eliminate the sidebar hydration crash that breaks navigation after LinkedIn imports
-- [ ] **Phase 2: Test Infrastructure** - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01
+- [x] **Phase 2: Test Infrastructure** - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01 (completed 2026-05-12)
 - [ ] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts
 - [ ] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports
 - [ ] **Phase 5: Job Leads Completion** - Finish the LinkedIn scraper (bug fixes, timeouts, error surfacing)
@@ -53,7 +53,7 @@ Plans:
 - [x] 02-04-PLAN.md — BUG-01 regression tests (SSR structural + jsdom hydration mount)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 02-05-PLAN.md — Husky pre-push integration (gated on <10s suite runtime per CD-01)
+- [x] 02-05-PLAN.md — Husky pre-push integration (gated on <10s suite runtime per CD-01)
 
 ### Phase 3: Security Hardening
 **Goal**: No `/api/*` route is reachable without a valid Clerk session, and starter-template auth artifacts are removed
@@ -103,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
-| 2. Test Infrastructure | 4/5 | In Progress|  |
+| 2. Test Infrastructure | 5/5 | Complete   | 2026-05-12 |
 | 3. Security Hardening | 0/TBD | Not started | - |
 | 4. Starter-Template Cleanup | 0/TBD | Not started | - |
 | 5. Job Leads Completion | 0/TBD | Not started | - |

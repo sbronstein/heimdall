@@ -136,7 +136,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 |-------------|-------|--------|
 | BUG-01 | Phase 1 | Pending |
 | BUG-02 | Phase 1 | Pending |
-| TEST-A1 | Phase 2 | Pending |
+| TEST-A1 | Phase 2 | Complete |
 | TEST-A2 | Phase 2 | Complete |
 | TEST-A3 | Phase 2 | Complete |
 | SEC-A1 | Phase 3 | Pending |
