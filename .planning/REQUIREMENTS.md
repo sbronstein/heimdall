@@ -130,38 +130,38 @@ These are the requirements GSD will track to completion. The roadmap will group 
 
 ## Traceability
 
-> Phase mapping is populated by `gsd-roadmapper` after this file is committed.
+> Phase mapping populated by `gsd-roadmapper` on 2026-05-12.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUG-01 | TBD | Pending |
-| BUG-02 | TBD | Pending |
-| JL-A1 | TBD | Pending |
-| JL-A2 | TBD | Pending |
-| JL-A3 | TBD | Pending |
-| JL-A4 | TBD | Pending |
-| JL-A5 | TBD | Pending |
-| SEC-A1 | TBD | Pending |
-| SEC-A2 | TBD | Pending |
-| DEBT-A1 | TBD | Pending |
-| DEBT-A2 | TBD | Pending |
-| DEBT-A3 | TBD | Pending |
-| DEBT-A4 | TBD | Pending |
-| DEBT-A5 | TBD | Pending |
-| PERF-A1 | TBD | Pending |
-| PERF-A2 | TBD | Pending |
-| PERF-A3 | TBD | Pending |
-| PERF-A4 | TBD | Pending |
-| PERF-A5 | TBD | Pending |
-| TEST-A1 | TBD | Pending |
-| TEST-A2 | TBD | Pending |
-| TEST-A3 | TBD | Pending |
+| BUG-01 | Phase 1 | Pending |
+| BUG-02 | Phase 1 | Pending |
+| TEST-A1 | Phase 2 | Pending |
+| TEST-A2 | Phase 2 | Pending |
+| TEST-A3 | Phase 2 | Pending |
+| SEC-A1 | Phase 3 | Pending |
+| SEC-A2 | Phase 3 | Pending |
+| DEBT-A1 | Phase 4 | Pending |
+| DEBT-A2 | Phase 4 | Pending |
+| DEBT-A3 | Phase 4 | Pending |
+| DEBT-A4 | Phase 4 | Pending |
+| DEBT-A5 | Phase 4 | Pending |
+| JL-A1 | Phase 5 | Pending |
+| JL-A2 | Phase 5 | Pending |
+| JL-A3 | Phase 5 | Pending |
+| JL-A4 | Phase 5 | Pending |
+| JL-A5 | Phase 5 | Pending |
+| PERF-A1 | Phase 6 | Pending |
+| PERF-A2 | Phase 6 | Pending |
+| PERF-A3 | Phase 6 | Pending |
+| PERF-A4 | Phase 6 | Pending |
+| PERF-A5 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 Active requirements: 22 total
-- Mapped to phases: 0 (populated by roadmapper)
-- Unmapped: 22 ⚠️ (expected — roadmap not yet run)
+- Mapped to phases: 22 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-12*
-*Last updated: 2026-05-12 after initial definition*
+*Last updated: 2026-05-12 after roadmap creation — traceability populated*
