@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — Phase 1 Discussion Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 4px; font-size: 30px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 12px 0; }
+  .audit-banner {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-style: italic;
+    font-size: 14px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  td.selected { background: #f1f5ee; }
+  .check { color: var(--accent); font-weight: 700; }
+  .notes { color: var(--muted); font-size: 14px; font-style: italic; margin-top: 6px; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Phase 1: Critical Bug Fix — Discussion Log</h1>
+  <p class="tagline">Heimdall · audit trail · 2026-05-12</p>
+</header>
+
+<div class="audit-banner">
+  <strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents. Decisions live in <code>01-CONTEXT.md</code>; this log preserves the alternatives considered.
+</div>
+
+<p><strong>Areas discussed:</strong> Sweep scope · Verification approach · Pre-existing edits · Dirty-tree handling</p>
+
+<h2>Sweep Scope</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Option</th><th>Description</th><th style="width:80px">Selected</th></tr></thead>
+    <tbody>
+      <tr class="selected"><td><strong>Two files only</strong></td><td>Fix only <code>user-avatar-profile.tsx:31</code> and <code>user-nav.tsx:38</code>. Smallest surface, matches REQUIREMENTS exactly.</td><td class="check">✓</td></tr>
+      <tr><td>Email sweep</td><td>Also grep for any other unguarded Clerk user.* property chains and fix any unsafe ones found.</td><td></td></tr>
+      <tr><td>Full hydration audit</td><td>Two files + grep for any other <code>useUser()</code>/<code>useAuth()</code> conditional renders that could cause SSR/CSR mismatches.</td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="notes">Phase scope is intentionally narrow. Wider sweeps belong in a different audit phase if needed.</p>
+</div>
+
+<h2>Verification Approach</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Option</th><th>Description</th><th style="width:80px">Selected</th></tr></thead>
+    <tbody>
+      <tr class="selected"><td><strong>Smoke + targeted</strong></td><td>Start dev server, load <code>/dashboard/overview</code> and <code>/dashboard/networking</code>, confirm no React hydration warnings + sidebar links navigate. Don't need to repro the 1500-import.</td><td class="check">✓</td></tr>
+      <tr><td>Repro the broken state</td><td>Reproduce the original crash by manually invoking a no-email Clerk user state and confirm <code>UserAvatarProfile</code> renders cleanly.</td><td></td></tr>
+      <tr><td>Trust the fix</td><td>Structural fix is mechanical. No browser verification — ship it. Phase 2 adds the regression test anyway.</td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="notes">Regression test (TEST-A3) is owned by Phase 2 — this phase is verified by hand.</p>
+</div>
+
+<h2>Pre-Existing Edits</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Option</th><th>Description</th><th style="width:80px">Selected</th></tr></thead>
+    <tbody>
+      <tr class="selected"><td><strong>Audit then accept</strong></td><td>Read the current state of <code>user-avatar-profile.tsx</code> and <code>app-sidebar.tsx</code>, confirm the <code>&lt;span&gt;</code> migration and guard removal match the fix <code>bug.md</code> prescribed, then keep them.</td><td class="check">✓</td></tr>
+      <tr><td>Revert and redo</td><td><code>git restore</code> the two files, re-apply the full fix from scratch. Cleaner history; throws away working changes.</td><td></td></tr>
+      <tr><td>Trust and complete</td><td>Don't re-audit — assume the working-tree edits are correct, just add the BUG-02 guards and commit everything together.</td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="notes">Cheap insurance — a quick read confirms the existing edits match the <code>bug.md</code> prescription before they ride into a commit.</p>
+</div>
+
+<h2>Dirty-Tree Handling</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Option</th><th>Description</th><th style="width:80px">Selected</th></tr></thead>
+    <tbody>
+      <tr class="selected"><td><strong>Surgical commits</strong></td><td>Phase 1 only stages and commits the BUG-01/BUG-02 files. Leave the others untouched in the working tree.</td><td class="check">✓</td></tr>
+      <tr><td>Stash unrelated</td><td><code>git stash push</code> the unrelated files, do the fix, then <code>git stash pop</code> after.</td><td></td></tr>
+      <tr><td>Commit unrelated first</td><td>Separate WIP commit on the dirty Job Leads / package changes first, then start Phase 1.</td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="notes">Phase 5 (Job Leads) owns the scrape-related dirty files; <code>package.json</code>/<code>lock</code> and <code>docs/summary.md</code> are unclear ownership but stay untouched this phase.</p>
+</div>
+
+<h2>Claude's Discretion</h2>
+<div class="card">
+  <ul>
+    <li>Commit message wording.</li>
+    <li>Whether to combine BUG-01 and BUG-02 into one commit or split (recommended: split per requirement for clean revert).</li>
+    <li>Order of edits within the patch.</li>
+  </ul>
+</div>
+
+<h2>Deferred Ideas</h2>
+<div class="card">
+  <ul>
+    <li>Codebase-wide hydration audit of <code>useUser()</code> / <code>useAuth()</code> conditional renders.</li>
+    <li>Codebase-wide unsafe Clerk-property sweep (<code>firstName</code>, <code>primaryEmailAddress</code>, etc.).</li>
+    <li>Programmatic no-email user repro harness for Phase 2 testing.</li>
+    <li>Hydration regression test (TEST-A3) — owned by Phase 2.</li>
+    <li>Unrelated dirty files: Job Leads scrape work (Phase 5), <code>package.json</code>/<code>lock</code> changes (owner TBD), <code>docs/summary.md</code>, <code>.planning/config.json</code>.</li>
+  </ul>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/phases/01-critical-bug-fix/01-DISCUSSION-LOG.md</code>. This HTML companion may lag behind.
+</footer>
+
+</body>
+</html>
