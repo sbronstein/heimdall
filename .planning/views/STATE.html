@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — State</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 4px; font-size: 32px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin-top: 24px; font-size: 17px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px 24px; margin: 12px 0; }
+  .core-value {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-size: 16px;
+    font-style: italic;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-pending { background: #f0e5d0; color: #8a6a3a; }
+  .badge-current { background: #d9e2ef; color: #3a5a8a; }
+  .badge-blocked { background: #fdd6cf; color: #8a3a2a; }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
+  .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--ink); }
+  .stat-value.small { font-size: 16px; }
+  .progress-bar { background: var(--code-bg); border-radius: 6px; height: 18px; overflow: hidden; margin: 8px 0; position: relative; }
+  .progress-fill { background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%); height: 100%; transition: width 0.3s; }
+  .progress-label { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 11px; line-height: 18px; font-weight: 600; color: var(--ink); }
+  .phase-rail { display: flex; align-items: center; justify-content: space-between; margin: 16px 0; gap: 4px; }
+  .phase-dot {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--code-bg);
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .phase-dot.current { background: var(--accent); color: white; border-color: var(--accent); }
+  .phase-dot.done { background: var(--accent); color: white; opacity: 0.6; }
+  .blocker-row {
+    background: linear-gradient(135deg, #fff0e8 0%, #fce0d0 100%);
+    border-left: 4px solid var(--warn);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Project State</h1>
+  <p class="tagline">Heimdall · current-state dashboard · 2026-05-12</p>
+</header>
+
+<h2>Project Reference</h2>
+<div class="card core-value">
+  <strong>Core value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
+</div>
+<div class="card">
+  See <code>.planning/PROJECT.md</code> (updated 2026-05-12) for full context, constraints, and key decisions.<br>
+  <strong>Current focus:</strong> Phase 1 — Critical Bug Fix (hydration crash blocking sidebar navigation)
+</div>
+
+<h2>Current Position</h2>
+
+<div class="stat-grid">
+  <div class="stat">
+    <div class="stat-label">Phase</div>
+    <div class="stat-value">1 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
+    <div class="meta">Critical Bug Fix</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Plan</div>
+    <div class="stat-value">0 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of TBD</span></div>
+    <div class="meta">Not yet planned</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Status</div>
+    <div class="stat-value small"><span class="badge badge-current">Ready to plan</span></div>
+    <div class="meta">Awaiting <code>/gsd-plan-phase 1</code></div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Last activity</div>
+    <div class="stat-value small">2026-05-12</div>
+    <div class="meta">Roadmap created</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="meta" style="margin-bottom: 4px;">Overall progress (plans completed across all phases)</div>
+  <div class="progress-bar">
+    <div class="progress-fill" style="width: 0%;"></div>
+    <div class="progress-label">0%</div>
+  </div>
+  <div class="phase-rail">
+    <div class="phase-dot current">PHASE 1<br>Bug Fix</div>
+    <div class="phase-dot">PHASE 2<br>Tests</div>
+    <div class="phase-dot">PHASE 3<br>Security</div>
+    <div class="phase-dot">PHASE 4<br>Cleanup</div>
+    <div class="phase-dot">PHASE 5<br>Job Leads</div>
+    <div class="phase-dot">PHASE 6<br>Performance</div>
+  </div>
+</div>
+
+<div class="blocker-row">
+  <strong>Active blocker:</strong> Phase 1 is breaking daily use right now. After importing 1500+ LinkedIn contacts the sidebar nav becomes unclickable due to a React hydration mismatch in <code>app-sidebar.tsx</code>. Highest priority to plan and ship.
+</div>
+
+<h2>Performance Metrics</h2>
+<div class="card">
+  <strong>Velocity</strong>
+  <ul>
+    <li>Total plans completed: <strong>0</strong></li>
+    <li>Average duration: <em>—</em></li>
+    <li>Total execution time: <strong>0 hours</strong></li>
+  </ul>
+
+  <strong>By Phase</strong>
+  <table>
+    <tr><th>Phase</th><th>Plans</th><th>Total</th><th>Avg/Plan</th></tr>
+    <tr><td colspan="4" style="text-align: center; color: var(--muted); font-style: italic;">No plans completed yet</td></tr>
+  </table>
+
+  <p class="meta"><em>Updated after each plan completion.</em></p>
+</div>
+
+<h2>Accumulated Context</h2>
+
+<h3>Recent Decisions</h3>
+<div class="card">
+  <p class="meta">Full decision log lives in <code>PROJECT.md</code> &middot; Key Decisions table. Recent decisions affecting current work:</p>
+  <ul>
+    <li>Roadmap mode: <strong>standard (horizontal layers)</strong> — active work is horizontal improvements to an already-vertical shipped product, not new end-to-end user features</li>
+    <li>Phase 1 = BUG-01 + BUG-02 — shortest path to value; user is currently blocked from daily use after large imports</li>
+    <li>Phase 2 = Test infrastructure placed before security / cleanup / perf so subsequent phases land safely; TEST-A3 pins the BUG-01 regression specifically</li>
+    <li>Workflow config: YOLO mode &middot; parallel execution &middot; balanced model profile &middot; research <em>off</em> (codebase already mapped) &middot; plan-check + verifier <em>on</em></li>
+  </ul>
+</div>
+
+<h3>Pending Todos</h3>
+<div class="card">
+  <p style="color: var(--muted); font-style: italic;">None yet.</p>
+</div>
+
+<h3>Blockers / Concerns</h3>
+<div class="card">
+  <ul>
+    <li><strong>BUG-01 is actively breaking daily use</strong> — Phase 1 should be planned and executed immediately. <span class="badge badge-blocked">Blocker</span></li>
+    <li><strong>Playwright as a production dependency</strong> — Not handled by v1; deferred to v2 as <code>JL2-02</code> (move to <code>devDependencies</code> or use <code>serverExternalPackages</code>)</li>
+    <li><strong>LinkedIn scraping is local-dev / Docker only</strong> — Cannot run on Vercel serverless; acknowledged out-of-scope for v1, addressed in <code>JL2-01</code></li>
+  </ul>
+</div>
+
+<h2>Deferred Items</h2>
+<div class="card">
+  <p style="color: var(--muted); font-style: italic;">No items carried forward yet (this is the first GSD milestone for the project).</p>
+</div>
+
+<h2>Session Continuity</h2>
+<div class="card">
+  <table>
+    <tr><th>Last session</th><td>2026-05-12</td></tr>
+    <tr><th>Stopped at</th><td>ROADMAP.md and STATE.md initialized; REQUIREMENTS.md traceability populated; ready for <code>/gsd-plan-phase 1</code></td></tr>
+    <tr><th>Resume file</th><td><em>None</em></td></tr>
+  </table>
+</div>
+
+<footer>
+  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after initialization.</p>
+</footer>
+
+</body>
+</html>
