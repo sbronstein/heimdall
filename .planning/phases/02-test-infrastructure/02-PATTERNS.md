@@ -557,18 +557,22 @@ errorSpy.mockRestore();
 
 **Apply to:** Every test that exercises an API route or `logTimeline`.
 
+**Canonical pattern: `vi.hoisted` + Proxy indirection.** Mandated by 02-03 (all tasks). Do NOT use `vi.doMock` — it requires `afterEach(() => vi.resetModules())` for isolation and is not the canonical pattern here.
+
 ```ts
 import { createTestDb } from '@/test-utils/pglite';
 
-let db: Awaited<ReturnType<typeof createTestDb>>;
+const dbRef = vi.hoisted(() => ({ current: null as Awaited<ReturnType<typeof createTestDb>> | null }));
+
+vi.mock('@/lib/db', () => ({
+  get db() {
+    if (!dbRef.current) throw new Error('createTestDb() must run before any @/lib/db access');
+    return dbRef.current;
+  }
+}));
 
 beforeEach(async () => {
-  db = await createTestDb();
-  vi.doMock('@/lib/db', () => ({ db }));
-});
-
-afterEach(() => {
-  vi.resetModules();
+  dbRef.current = await createTestDb();
 });
 ```
 
