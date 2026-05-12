@@ -49,6 +49,7 @@
   .badge-pending { background: #f0e5d0; color: #8a6a3a; }
   .badge-current { background: #d9e2ef; color: #3a5a8a; }
   .badge-blocked { background: #fdd6cf; color: #8a3a2a; }
+  .badge-good    { background: #d6e8d6; color: #3a6a3a; }
   .stat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -99,7 +100,7 @@
 </div>
 <div class="card">
   See <code>.planning/PROJECT.md</code> (updated 2026-05-12) for full context, constraints, and key decisions.<br>
-  <strong>Current focus:</strong> Phase 1 — Critical Bug Fix (hydration crash blocking sidebar navigation)
+  <strong>Current focus:</strong> Phase 1 — complete. Ready to start Phase 2 (Test Infrastructure).
 </div>
 
 <h2>Current Position</h2>
@@ -108,34 +109,34 @@
   <div class="stat">
     <div class="stat-label">Phase</div>
     <div class="stat-value">1 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
-    <div class="meta">Critical Bug Fix</div>
+    <div class="meta">Critical Bug Fix — complete</div>
   </div>
   <div class="stat">
     <div class="stat-label">Plan</div>
-    <div class="stat-value">0 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of TBD</span></div>
-    <div class="meta">Not yet planned</div>
+    <div class="stat-value">1 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 1</span></div>
+    <div class="meta">01-01 — shipped</div>
   </div>
   <div class="stat">
     <div class="stat-label">Status</div>
-    <div class="stat-value small"><span class="badge badge-current">Ready to plan</span></div>
-    <div class="meta">Awaiting <code>/gsd-plan-phase 1</code></div>
+    <div class="stat-value small"><span class="badge badge-good">Phase 1 complete</span></div>
+    <div class="meta">Verified PARTIAL (criterion 2 has a scoped-out residual)</div>
   </div>
   <div class="stat">
     <div class="stat-label">Last activity</div>
     <div class="stat-value small">2026-05-12</div>
-    <div class="meta">Roadmap created</div>
+    <div class="meta">Phase 1 commit <code>265fc6f</code></div>
   </div>
 </div>
 
 <div class="card">
   <div class="meta" style="margin-bottom: 4px;">Overall progress (plans completed across all phases)</div>
   <div class="progress-bar">
-    <div class="progress-fill" style="width: 0%;"></div>
-    <div class="progress-label">0%</div>
+    <div class="progress-fill" style="width: 17%;"></div>
+    <div class="progress-label">17%</div>
   </div>
   <div class="phase-rail">
-    <div class="phase-dot current">PHASE 1<br>Bug Fix</div>
-    <div class="phase-dot">PHASE 2<br>Tests</div>
+    <div class="phase-dot done">PHASE 1<br>Bug Fix</div>
+    <div class="phase-dot current">PHASE 2<br>Tests</div>
     <div class="phase-dot">PHASE 3<br>Security</div>
     <div class="phase-dot">PHASE 4<br>Cleanup</div>
     <div class="phase-dot">PHASE 5<br>Job Leads</div>
@@ -144,22 +145,22 @@
 </div>
 
 <div class="blocker-row">
-  <strong>Active blocker:</strong> Phase 1 is breaking daily use right now. After importing 1500+ LinkedIn contacts the sidebar nav becomes unclickable due to a React hydration mismatch in <code>app-sidebar.tsx</code>. Highest priority to plan and ship.
+  <strong>Phase 1 closure:</strong> BUG-01 hydration crash resolved — original <code>{user && ...}</code> guard removed (commit <code>954c39d</code>) plus residual <code>AvatarFallback</code> CN/ST text mismatch closed via <code>suppressHydrationWarning</code> (commit <code>265fc6f</code>). BUG-02 optional-chain guards applied at both known sites. Playwright smoke verified <code>/dashboard/overview</code> and <code>/dashboard/networking</code> produce zero hydration pageerrors. Residual Radix <code>useId()</code> attribute mismatch on other routes traced to <code>useTheme()</code> in <code>providers.tsx</code> — pre-existing, scoped out per D-02, filed for follow-up.
 </div>
 
 <h2>Performance Metrics</h2>
 <div class="card">
   <strong>Velocity</strong>
   <ul>
-    <li>Total plans completed: <strong>0</strong></li>
+    <li>Total plans completed: <strong>1</strong></li>
     <li>Average duration: <em>—</em></li>
-    <li>Total execution time: <strong>0 hours</strong></li>
+    <li>Total execution time: <em>—</em></li>
   </ul>
 
   <strong>By Phase</strong>
   <table>
     <tr><th>Phase</th><th>Plans</th><th>Total</th><th>Avg/Plan</th></tr>
-    <tr><td colspan="4" style="text-align: center; color: var(--muted); font-style: italic;">No plans completed yet</td></tr>
+    <tr><td>1 — Bug Fix</td><td>1</td><td>—</td><td>—</td></tr>
   </table>
 
   <p class="meta"><em>Updated after each plan completion.</em></p>
@@ -186,7 +187,8 @@
 <h3>Blockers / Concerns</h3>
 <div class="card">
   <ul>
-    <li><strong>BUG-01 is actively breaking daily use</strong> — Phase 1 should be planned and executed immediately. <span class="badge badge-blocked">Blocker</span></li>
+    <li><strong>BUG-01 resolved</strong> — hydration crash closed in commit <code>265fc6f</code>. <span class="badge badge-good">Shipped</span></li>
+    <li><strong>Radix <code>useId()</code> cascade via <code>useTheme()</code> in <code>providers.tsx</code></strong> — pre-existing hydration warning on attributes throughout the dashboard; out of Phase 1 scope per D-02. Needs structural fix to <code>ClerkProvider</code>'s <code>baseTheme</code> prop. <span class="badge badge-pending">Follow-up</span></li>
     <li><strong>Playwright as a production dependency</strong> — Not handled by v1; deferred to v2 as <code>JL2-02</code> (move to <code>devDependencies</code> or use <code>serverExternalPackages</code>)</li>
     <li><strong>LinkedIn scraping is local-dev / Docker only</strong> — Cannot run on Vercel serverless; acknowledged out-of-scope for v1, addressed in <code>JL2-01</code></li>
   </ul>
@@ -201,13 +203,13 @@
 <div class="card">
   <table>
     <tr><th>Last session</th><td>2026-05-12</td></tr>
-    <tr><th>Stopped at</th><td>Phase 1 context gathered; ready for <code>/gsd-plan-phase 1</code></td></tr>
-    <tr><th>Resume file</th><td><code>.planning/phases/01-critical-bug-fix/01-CONTEXT.md</code></td></tr>
+    <tr><th>Stopped at</th><td>Phase 1 complete — ready for <code>/gsd-execute-phase 2</code> (Test Infrastructure)</td></tr>
+    <tr><th>Resume file</th><td><code>.planning/phases/01-critical-bug-fix/01-01-SUMMARY.md</code></td></tr>
   </table>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 1 context capture.</p>
+  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 1 completion (commit <code>265fc6f</code>).</p>
 </footer>
 
 </body>

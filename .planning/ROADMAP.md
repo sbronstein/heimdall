@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `UserAvatarProfile` renders correctly inside `SidebarMenuButton` for both signed-in users and edge-case users with no email addresses (no runtime crash on `emailAddresses[0]` access)
 **Plans**: 1 plan
 Plans:
-- [ ] 01-01-PLAN.md — Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement
+- [x] 01-01-PLAN.md — Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement
 **UI hint**: yes
 
 ### Phase 2: Test Infrastructure

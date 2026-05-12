@@ -41,6 +41,7 @@
   .badge-blocked { background: #fdd6cf; color: #8a3a2a; }
   .badge-planned { background: #d9e2ef; color: #3a5a8a; }
   .badge-ui { background: #d9e2ef; color: #3a5a8a; }
+  .badge-good { background: #d6e8d6; color: #3a6a3a; }
   .phase-card {
     background: var(--card);
     border: 1px solid var(--line);
@@ -109,7 +110,7 @@
 </header>
 
 <div class="urgency">
-  <strong>Active blocker:</strong> Phase 1 (BUG-01 / BUG-02) is currently breaking daily use of the app — after importing 1500+ LinkedIn contacts the sidebar nav becomes unclickable. Plan and ship Phase 1 immediately.
+  <strong>Phase 1 status:</strong> Shipped <span class="badge badge-good">Complete</span>. BUG-01 hydration crash and BUG-02 optional-chain guards resolved (commits <code>954c39d</code> + <code>265fc6f</code>). Next: <code>/gsd-execute-phase 2</code> (Test Infrastructure).
 </div>
 
 <h2>Overview</h2>
@@ -120,7 +121,7 @@
 <h2>Phases at a Glance</h2>
 <table>
   <tr><th>#</th><th>Phase</th><th>Goal</th><th>Requirements</th><th>UI hint</th></tr>
-  <tr><td><strong>1</strong></td><td>Critical Bug Fix</td><td>Restore reliable dashboard navigation after large LinkedIn imports</td><td><span class="req-pill">BUG-01</span><span class="req-pill">BUG-02</span></td><td><span class="badge badge-ui">yes</span></td></tr>
+  <tr><td><strong>1</strong> ✓</td><td>Critical Bug Fix</td><td>Restore reliable dashboard navigation after large LinkedIn imports</td><td><span class="req-pill">BUG-01</span><span class="req-pill">BUG-02</span></td><td><span class="badge badge-ui">yes</span></td></tr>
   <tr><td><strong>2</strong></td><td>Test Infrastructure</td><td>Working Vitest harness covering load-bearing logic + BUG-01 regression</td><td><span class="req-pill">TEST-A1</span><span class="req-pill">TEST-A2</span><span class="req-pill">TEST-A3</span></td><td>—</td></tr>
   <tr><td><strong>3</strong></td><td>Security Hardening</td><td>Every <code>/api/*</code> route requires a valid Clerk session; starter auth artifacts removed</td><td><span class="req-pill">SEC-A1</span><span class="req-pill">SEC-A2</span></td><td>—</td></tr>
   <tr><td><strong>4</strong></td><td>Starter-Template Cleanup</td><td>Dead starter code removed; repo contains only Heimdall code</td><td><span class="req-pill">DEBT-A1</span><span class="req-pill">DEBT-A2</span><span class="req-pill">DEBT-A3</span><span class="req-pill">DEBT-A4</span><span class="req-pill">DEBT-A5</span></td><td><span class="badge badge-ui">yes</span></td></tr>
@@ -146,8 +147,11 @@
   </ol>
   <div style="margin-top:14px;"><strong>Plans (1):</strong>
     <ul style="margin-top:6px;">
-      <li><code>01-01-PLAN.md</code> &mdash; Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement</li>
+      <li>✓ <code>01-01-PLAN.md</code> &mdash; Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement <span class="badge badge-good">Complete</span></li>
     </ul>
+  </div>
+  <div style="margin-top:14px; font-size: 13px; color: var(--muted);">
+    <strong>Outcome:</strong> Shipped in commit <code>265fc6f</code> on top of pre-existing <code>954c39d</code>. Smoke verified <code>/dashboard/overview</code> and <code>/dashboard/networking</code> hydration-clean; residual Radix <code>useId()</code> cascade from <code>useTheme()</code> in <code>providers.tsx</code> filed as follow-up (out of D-02 scope).
   </div>
 </div>
 
@@ -239,7 +243,7 @@
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 1 plan creation.</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 1 completion (commit <code>265fc6f</code>).</p>
 </footer>
 
 </body>
