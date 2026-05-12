@@ -92,7 +92,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 
 ### Test Infrastructure
 - [x] **TEST-A1**: Stand up Vitest with TypeScript + Drizzle-compatible test DB harness
-- [ ] **TEST-A2**: Cover the load-bearing logic — API response envelope shape, `canTransition()` pipeline graph, `logTimeline()` side-effect, LinkedIn CSV parsing, bridge-score computation
+- [x] **TEST-A2**: Cover the load-bearing logic — API response envelope shape, `canTransition()` pipeline graph, `logTimeline()` side-effect, LinkedIn CSV parsing, bridge-score computation
 - [ ] **TEST-A3**: Add a regression test for the hydration sidebar crash (BUG-01)
 
 ## v2 (deferred)
@@ -137,7 +137,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | BUG-01 | Phase 1 | Pending |
 | BUG-02 | Phase 1 | Pending |
 | TEST-A1 | Phase 2 | Pending |
-| TEST-A2 | Phase 2 | Pending |
+| TEST-A2 | Phase 2 | Complete |
 | TEST-A3 | Phase 2 | Pending |
 | SEC-A1 | Phase 3 | Pending |
 | SEC-A2 | Phase 3 | Pending |
