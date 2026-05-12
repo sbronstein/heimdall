@@ -29,7 +29,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. After importing 1500+ LinkedIn contacts, every sidebar nav link on every dashboard page remains clickable and routes correctly
   2. Loading any `/dashboard/*` page produces no React hydration warnings or errors in the browser console
   3. `UserAvatarProfile` renders correctly inside `SidebarMenuButton` for both signed-in users and edge-case users with no email addresses (no runtime crash on `emailAddresses[0]` access)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement
 **UI hint**: yes
 
 ### Phase 2: Test Infrastructure
@@ -88,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Critical Bug Fix | 0/TBD | Not started | - |
+| 1. Critical Bug Fix | 0/1 | Planned | - |
 | 2. Test Infrastructure | 0/TBD | Not started | - |
 | 3. Security Hardening | 0/TBD | Not started | - |
 | 4. Starter-Template Cleanup | 0/TBD | Not started | - |

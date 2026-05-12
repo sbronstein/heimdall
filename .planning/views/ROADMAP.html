@@ -39,6 +39,7 @@
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
   .badge-pending { background: #f0e5d0; color: #8a6a3a; }
   .badge-blocked { background: #fdd6cf; color: #8a3a2a; }
+  .badge-planned { background: #d9e2ef; color: #3a5a8a; }
   .badge-ui { background: #d9e2ef; color: #3a5a8a; }
   .phase-card {
     background: var(--card);
@@ -143,6 +144,11 @@
     <li>Loading any <code>/dashboard/*</code> page produces no React hydration warnings or errors in the browser console</li>
     <li><code>UserAvatarProfile</code> renders correctly inside <code>SidebarMenuButton</code> for both signed-in users and edge-case users with no email addresses (no runtime crash on <code>emailAddresses[0]</code> access)</li>
   </ol>
+  <div style="margin-top:14px;"><strong>Plans (1):</strong>
+    <ul style="margin-top:6px;">
+      <li><code>01-01-PLAN.md</code> &mdash; Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement</li>
+    </ul>
+  </div>
 </div>
 
 <div class="phase-card phase-2">
@@ -221,7 +227,7 @@
   <p class="meta" style="margin-top: 0;">Execution order: Phases run in numeric order 1 → 2 → 3 → 4 → 5 → 6.</p>
   <table class="progress-table">
     <tr><th>Phase</th><th>Plans Complete</th><th>Status</th><th>Completed</th></tr>
-    <tr><td>1. Critical Bug Fix</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
+    <tr><td>1. Critical Bug Fix</td><td>0 / 1</td><td><span class="badge badge-planned">Planned</span></td><td>—</td></tr>
     <tr><td>2. Test Infrastructure</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>3. Security Hardening</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>4. Starter-Template Cleanup</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
@@ -233,7 +239,7 @@
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after initialization.</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 1 plan creation.</p>
 </footer>
 
 </body>
