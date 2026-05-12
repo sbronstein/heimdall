@@ -60,6 +60,7 @@ Stand up a Vitest test harness against the TypeScript codebase, pin the load-bea
     - No `<div>` element appears inside any `<button>` element.
     - `UserAvatarProfile`'s markup appears in the SSR output (catches re-introduction of `{user && <UserAvatarProfile />}` gating).
   - **Hydration mount test** (jsdom environment, opted in via pragma): SSR-render `<AppSidebar />`, then `hydrateRoot` it into a jsdom `<div>`. Spy on `console.error`; assert no call matches React's hydration warning patterns (`/hydrat/i`, `/did not match/i`).
+  - **(Implementation: the two tests live in two separate files — `src/components/layout/app-sidebar.ssr.test.tsx` and `src/components/layout/app-sidebar.hydration.test.tsx` — because `@vitest-environment` is file-scope only; a single file cannot mix `node` and `jsdom` environments. The "one file" wording above predates this constraint being verified; the substantive contract — two assertions, both required to call TEST-A3 done — is unchanged. See 02-04-PLAN.md objective for rationale.)**
 - **D-15:** The hydration test relies on React's warning text being reasonably stable. If React ever changes the warning format, the test should be updated — flakiness is acceptable cost; the structural test gives the deterministic backstop.
 - **D-16:** Mock Clerk's `useUser()` in the BUG-01 test via `vi.mock('@clerk/nextjs')` — return a fixed user object. Do not pull in the Clerk runtime.
 
@@ -142,7 +143,7 @@ Stand up a Vitest test harness against the TypeScript codebase, pin the load-bea
 <specifics>
 ## Specific Ideas
 
-- TEST-A3 should be **one test file** (e.g., `src/components/layout/app-sidebar.test.tsx`) with two `describe` blocks — one for SSR structural, one for hydration mount. The hydration block opens with `// @vitest-environment jsdom`. This keeps the BUG-01 fence visible in one place.
+- TEST-A3 should be **one test file** (e.g., `src/components/layout/app-sidebar.test.tsx`) with two `describe` blocks — one for SSR structural, one for hydration mount. The hydration block opens with `// @vitest-environment jsdom`. This keeps the BUG-01 fence visible in one place. *(Superseded by D-14's implementation note: the `@vitest-environment` pragma is file-scope only, so the two tests live in two files. The contract — two assertions, both required — is unchanged.)*
 - The PGlite harness setup file should live at `src/test-utils/pglite.ts` (or `src/lib/test-utils/`) and export a single helper: `async function createTestDb(): Promise<DbInstance>`. Tests `import { createTestDb } from '@/test-utils/pglite'` and use it in `beforeAll` or `beforeEach`.
 - For API-route tests, the harness should also offer a small helper to call a route handler: `async function callRoute(handler, { method, body, params })`. Eliminates `new Request(...)` boilerplate in every test.
 - The `parseCursor` / `parseLimit` tests should be a separate `filters.test.ts` file with ~5 cases each — keep it small.
