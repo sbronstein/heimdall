@@ -113,6 +113,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.4.5",
     "@faker-js/faker": "^9.9.0",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "22.10.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "^19.0.2",
@@ -122,6 +123,7 @@
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.9",
     "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
     "lint-staged": "^15.2.11",
     "prettier": "3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
