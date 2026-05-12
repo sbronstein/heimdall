@@ -49,7 +49,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [x] 02-02-PLAN.md — Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score)
-- [ ] 02-03-PLAN.md — DB-backed API route coverage (status transition + CSV import with timeline side-effect via PGlite)
+- [x] 02-03-PLAN.md — DB-backed API route coverage (status transition + CSV import with timeline side-effect via PGlite)
 - [ ] 02-04-PLAN.md — BUG-01 regression tests (SSR structural + jsdom hydration mount)
 
 **Wave 3** *(blocked on Wave 2 completion)*
