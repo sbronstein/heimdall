@@ -159,6 +159,30 @@ None — no new network endpoints, auth paths, or file access patterns introduce
 - `--reporter=basic` flag is not valid in Vitest 4.1.6; used default reporter for all verification runs.
 - Shell bracket escaping makes direct `npx vitest run "src/app/api/applications/[id]/..."` fail; used `npm run test:run -- "status/route.test"` pattern instead.
 
+## Self-Check: PASSED
+
+All files confirmed present:
+- `src/app/api/applications/[id]/status/route.test.ts` — FOUND
+- `src/app/api/contacts/import/route.test.ts` — FOUND
+- `src/app/api/contacts/import/__fixtures__/linkedin-connections.csv` — FOUND
+- `src/app/api/contacts/route.test.ts` — FOUND
+- `.planning/phases/02-test-infrastructure/02-03-SUMMARY.md` — FOUND
+
+All commits confirmed:
+- `7613beb` — test(02-03): applications status PATCH + timeline side-effect — FOUND
+- `505f22c` — test(02-03): contacts/import CSV + timeline + envelope — FOUND
+- `bfbb587` — test(02-03): contacts GET pagination envelope + soft-delete — FOUND
+- `d772841` — docs(02-03): complete DB-backed API route integration tests plan — FOUND
+
+All plan verification checks passed:
+- 74 tests pass (`npm run test:run` exits 0)
+- `npx tsc --noEmit` 0 new errors
+- No real env/name/key references in test files (count: 0)
+- `eventType` occurrences in status test: 2 (>=2 required)
+- `contacts_imported` occurrences in import test: 2 (>=1 required)
+- `archivedAt` occurrences in contacts GET test: 2 (>=1 required)
+- `vi.doMock` occurrences in any test file: 0 (must be 0)
+
 ## Next Phase Readiness
 
 - All TEST-A2 DB-integration surfaces covered (D-11.1 read path, D-11.2 canTransition enforcement, D-11.3 logTimeline side-effect, D-11.4 CSV parsing)
