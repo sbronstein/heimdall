@@ -44,10 +44,15 @@ Plans:
   3. A regression test fails if the `app-sidebar.tsx` hydration mismatch from BUG-01 is reintroduced
 **Plans**: 5 plans
 Plans:
+**Wave 1**
 - [ ] 02-01-PLAN.md — Vitest + PGlite harness foundation (config, scripts, createTestDb, callRoute)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 02-02-PLAN.md — Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score)
 - [ ] 02-03-PLAN.md — DB-backed API route coverage (status transition + CSV import with timeline side-effect via PGlite)
 - [ ] 02-04-PLAN.md — BUG-01 regression tests (SSR structural + jsdom hydration mount)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 02-05-PLAN.md — Husky pre-push integration (gated on <10s suite runtime per CD-01)
 
 ### Phase 3: Security Hardening
