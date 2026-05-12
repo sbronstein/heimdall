@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 02 Plan 04 Summary — BUG-01 Regression Tests</title>
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, sans-serif; font-size: 15px; line-height: 1.6; padding: 2rem; }
+  .container { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--ink); border-bottom: 1px solid var(--line); padding-bottom: 0.25rem; }
+  h3 { font-size: 0.95rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--accent-2); }
+  .one-liner { font-style: italic; color: var(--muted); margin-bottom: 1.5rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .card-accent { border-left: 4px solid var(--accent-2); }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+  .metric { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 0.6rem 0.9rem; }
+  .metric-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric-value { font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-good { background: #e8f4e8; color: #2d6a2d; }
+  .badge-test { background: #e8eef8; color: #2d4a8a; }
+  ul { padding-left: 1.25rem; }
+  li { margin-bottom: 0.3rem; }
+  code { background: var(--code-bg); border-radius: 3px; padding: 0.1rem 0.3rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; }
+  table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+  th { background: var(--code-bg); text-align: left; padding: 0.4rem 0.75rem; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; }
+  td { padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+  .deviation { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
+  .footer { margin-top: 2rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Phase 02 Plan 04: BUG-01 Regression Test Suite</h1>
+  <p class="one-liner">Two-file regression harness pinning the BUG-01 fix: JSDOM-parsed SSR structural assertion (no div-in-button) + hydrateRoot console.error spy (no hydration warnings) for AppSidebar</p>
+
+  <div class="metrics-grid">
+    <div class="metric"><div class="metric-label">Duration</div><div class="metric-value">~25 min</div></div>
+    <div class="metric"><div class="metric-label">Tasks</div><div class="metric-value">2 / 2</div></div>
+    <div class="metric"><div class="metric-label">Tests Added</div><div class="metric-value">5</div></div>
+    <div class="metric"><div class="metric-label">Total Suite</div><div class="metric-value">79 passing</div></div>
+    <div class="metric"><div class="metric-label">Completed</div><div class="metric-value">2026-05-12</div></div>
+  </div>
+
+  <div class="card card-accent">
+    <strong>Requirement Completed:</strong> <span class="badge badge-good">TEST-A3</span>
+    BUG-01 regression fence active — any future re-introduction of <code>&lt;div&gt;</code> inside <code>&lt;button&gt;</code> or <code>{user &amp;&amp; ...}</code> gating in AppSidebar will be caught automatically.
+  </div>
+
+  <h2>Task Commits</h2>
+  <table>
+    <tr><th>#</th><th>Task</th><th>Commit</th><th>Type</th></tr>
+    <tr><td>1</td><td>SSR structural regression test (node env)</td><td><code>4e091c9</code></td><td><span class="badge badge-test">test</span></td></tr>
+    <tr><td>2</td><td>Hydration mount regression test (jsdom env)</td><td><code>d9c9ca0</code></td><td><span class="badge badge-test">test</span></td></tr>
+    <tr><td>—</td><td>Plan metadata + SUMMARY + REQUIREMENTS</td><td><code>edf06e5</code></td><td>docs</td></tr>
+  </table>
+
+  <h2>Files Created</h2>
+  <ul>
+    <li><code>src/components/layout/app-sidebar.ssr.test.tsx</code> — 4 it-blocks; node env; JSDOM structural assertions</li>
+    <li><code>src/components/layout/app-sidebar.hydration.test.tsx</code> — 1 it-block; jsdom env (pragma); hydrateRoot + console.error spy</li>
+    <li><code>package.json</code> — jsdom + @types/jsdom added to devDependencies (not a transitive dep)</li>
+  </ul>
+
+  <h2>SSR Test Coverage (app-sidebar.ssr.test.tsx)</h2>
+  <ul>
+    <li>SSR renders without throwing</li>
+    <li>No <code>&lt;div&gt;</code> inside any <code>&lt;button&gt;</code> — walks JSDOM DOM, checks every button's descendants</li>
+    <li>UserAvatarProfile markup present (<code>flex items-center gap-2</code>) — catches <code>{user &amp;&amp; ...}</code> gating regression</li>
+    <li>Mocked user fullName (<code>Steve Bronstein</code>) and email (<code>steve@bronstein.org</code>) appear in SSR HTML</li>
+  </ul>
+
+  <h2>Hydration Test Coverage (app-sidebar.hydration.test.tsx)</h2>
+  <ul>
+    <li>Renders SSR HTML → mounts into jsdom container → <code>hydrateRoot</code> → microtask flush</li>
+    <li>Spy on <code>console.error</code>; filter for <code>/hydrat/i</code> and <code>/did not match/i</code> only (D-15)</li>
+    <li>Asserts zero matching calls; failure message includes offending error strings for debugging</li>
+    <li><code>afterEach</code> restores mocks and clears <code>document.body</code></li>
+  </ul>
+
+  <h2>Regression Sanity Check</h2>
+  <div class="card">
+    Temporarily changed <code>user-avatar-profile.tsx</code> outer <code>&lt;span&gt;</code> to <code>&lt;div&gt;</code>. SSR test <strong>FAILED</strong> on
+    "contains no &lt;div&gt; inside any &lt;button&gt;" with offending outerHTML in message. Reverted; 79 tests pass.
+    The regression fence is confirmed effective.
+  </div>
+
+  <h2>Deviations from Plan</h2>
+
+  <div class="deviation">
+    <h3>[Rule 1 — Bug] SidebarMenuButton mock needed asChild awareness</h3>
+    <p>Plan specified a simple <code>&lt;button&gt;</code> mock. Header area uses <code>asChild=true</code> + Link with <code>&lt;div&gt;</code> children, creating false-positive div-in-button failures. Fix: render <code>&lt;span&gt;</code> when <code>asChild=true</code>, <code>&lt;button&gt;</code> otherwise.</p>
+  </div>
+
+  <div class="deviation">
+    <h3>[Rule 1 — Bug] SidebarMenuSubButton mock caused nested &lt;a&gt; hydration warning</h3>
+    <p>Initial <code>&lt;a&gt;</code> mock + next/link rendering as <code>&lt;a&gt;</code> created <code>&lt;a&gt; inside &lt;a&gt;</code>. React emits a warning matching <code>/did not match/i</code>, causing the hydration test to fail for the wrong reason. Fix: render <code>&lt;span&gt;</code> instead.</p>
+  </div>
+
+  <h2>Key Decisions</h2>
+  <ul>
+    <li>jsdom installed explicitly (not a transitive dep) — confirmed via <code>node -e require.resolve</code> before and after</li>
+    <li>All custom sidebar props (<code>isActive</code>, <code>tooltip</code>, <code>asChild</code>) explicitly destructured and discarded to suppress React unknown-prop warnings</li>
+    <li>Real Clerk runtime never imported — confirmed via grep for <code>@clerk/</code> imports outside <code>vi.mock</code> blocks</li>
+  </ul>
+
+  <div class="footer">
+    Source of truth: <code>.planning/phases/02-test-infrastructure/02-04-SUMMARY.md</code> — this HTML may lag behind.
+  </div>
+</div>
+</body>
+</html>
