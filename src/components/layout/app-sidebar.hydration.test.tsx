@@ -1,7 +1,8 @@
+// @vitest-environment jsdom
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { JSDOM } from 'jsdom';
-import { describe, it, beforeAll, vi, expect } from 'vitest';
+import { hydrateRoot } from 'react-dom/client';
+import { describe, it, afterEach, vi, expect } from 'vitest';
 
 vi.mock('@clerk/nextjs', () => ({
   useUser: () => ({
@@ -32,15 +33,12 @@ vi.mock('next/link', () => ({
     React.createElement('a', { href }, children)
 }));
 
-// Mock the sidebar UI components so AppSidebar renders without SidebarProvider context.
-// The structural assertions (no <div> in <button>, UserAvatarProfile markup) are still
-// exercised because the mocks pass children through.
+// Mock the sidebar UI components — same strategy as ssr.test.tsx.
+// SidebarMenuButton uses asChild to avoid rendering real <button> around children with <div>s.
 vi.mock('@/components/ui/sidebar', () => {
   const passThrough = ({ children, asChild: _asChild, isActive: _isActive, tooltip: _tooltip, ...rest }: { children?: React.ReactNode; asChild?: boolean; isActive?: boolean; tooltip?: unknown; [key: string]: unknown }) => (
     <div {...(rest as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>
   );
-  // When asChild=true, SidebarMenuButton renders as the child element (e.g. <a>), not <button>.
-  // We use a <span> passthrough for asChild to avoid false positives in the no-div-in-button assertion.
   const SidebarMenuButton = ({ children, asChild, size: _size, isActive: _isActive, tooltip: _tooltip, ...rest }: { children?: React.ReactNode; asChild?: boolean; size?: string; isActive?: boolean; tooltip?: unknown; [key: string]: unknown }) => (
     asChild
       ? <span {...(rest as React.HTMLAttributes<HTMLSpanElement>)}>{children}</span>
@@ -100,38 +98,35 @@ vi.mock('@/components/icons', () => ({
 
 import AppSidebar from '@/components/layout/app-sidebar';
 
-describe('AppSidebar SSR structural (BUG-01 regression)', () => {
-  let html: string;
-  let dom: JSDOM;
-
-  beforeAll(() => {
-    html = renderToString(React.createElement(AppSidebar));
-    dom = new JSDOM(html, { url: 'http://localhost/' });
+describe('AppSidebar hydration mount (BUG-01 regression)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    document.body.innerHTML = '';
   });
 
-  it('SSR renders without throwing', () => {
-    expect(() => renderToString(React.createElement(AppSidebar))).not.toThrow();
-  });
+  it('hydrates without React hydration warnings', async () => {
+    const html = renderToString(React.createElement(AppSidebar));
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    document.body.appendChild(container);
 
-  it('contains no <div> inside any <button>', () => {
-    const { document } = dom.window;
-    const buttons = document.querySelectorAll('button');
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    buttons.forEach((btn) => {
-      const nestedDiv = btn.querySelector('div');
-      expect(
-        nestedDiv,
-        `Found a <div> inside a <button>. Button outerHTML (truncated):\n${btn.outerHTML.slice(0, 500)}`
-      ).toBeNull();
-    });
-  });
+    hydrateRoot(container, React.createElement(AppSidebar));
 
-  it('renders UserAvatarProfile markup (no {user && ...} gating)', () => {
-    expect(html).toContain('flex items-center gap-2');
-  });
+    // Flush so React commits and any hydration mismatch errors surface.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-  it('renders the mocked user fullName and email', () => {
-    expect(html).toContain('Steve Bronstein');
-    expect(html).toContain('steve@bronstein.org');
+    const hydrationCalls = errorSpy.mock.calls.filter(([firstArg]) =>
+      typeof firstArg === 'string' &&
+      (/hydrat/i.test(firstArg) || /did not match/i.test(firstArg))
+    );
+
+    expect(
+      hydrationCalls,
+      `Unexpected hydration warnings:\n${hydrationCalls.map((c) => c.join(' ')).join('\n')}`
+    ).toEqual([]);
+
+    errorSpy.mockRestore();
   });
 });
