@@ -12,7 +12,7 @@ Heimdall is brownfield — the executive job-search CRM is already shipped and i
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Critical Bug Fix** - Eliminate the sidebar hydration crash that breaks navigation after LinkedIn imports
+- [x] **Phase 1: Critical Bug Fix** - Eliminate the sidebar hydration crash that breaks navigation after LinkedIn imports
 - [ ] **Phase 2: Test Infrastructure** - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01
 - [ ] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts
 - [ ] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports
@@ -45,7 +45,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 **Wave 1**
-- [ ] 02-01-PLAN.md — Vitest + PGlite harness foundation (config, scripts, createTestDb, callRoute)
+- [x] 02-01-PLAN.md — Vitest + PGlite harness foundation (config, scripts, createTestDb, callRoute)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 02-02-PLAN.md — Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score)
@@ -102,8 +102,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Critical Bug Fix | 0/1 | Planned | - |
-| 2. Test Infrastructure | 0/5 | Planned | - |
+| 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
+| 2. Test Infrastructure | 1/5 | In Progress | - |
 | 3. Security Hardening | 0/TBD | Not started | - |
 | 4. Starter-Template Cleanup | 0/TBD | Not started | - |
 | 5. Job Leads Completion | 0/TBD | Not started | - |

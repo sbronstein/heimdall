@@ -91,7 +91,7 @@
 
 <header>
   <h1>Project State</h1>
-  <p class="tagline">Heimdall · current-state dashboard · 2026-05-12</p>
+  <p class="tagline">Heimdall · current-state dashboard · 2026-05-12 (Phase 2 Plan 1 complete)</p>
 </header>
 
 <h2>Project Reference</h2>
@@ -100,7 +100,7 @@
 </div>
 <div class="card">
   See <code>.planning/PROJECT.md</code> (updated 2026-05-12) for full context, constraints, and key decisions.<br>
-  <strong>Current focus:</strong> Phase 1 — complete. Ready to start Phase 2 (Test Infrastructure).
+  <strong>Current focus:</strong> Phase 2 — Test Infrastructure (Plan 1 complete, Plans 2-4 next).
 </div>
 
 <h2>Current Position</h2>
@@ -108,23 +108,23 @@
 <div class="stat-grid">
   <div class="stat">
     <div class="stat-label">Phase</div>
-    <div class="stat-value">1 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
-    <div class="meta">Critical Bug Fix — complete</div>
+    <div class="stat-value">2 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
+    <div class="meta">Test Infrastructure — in progress</div>
   </div>
   <div class="stat">
     <div class="stat-label">Plan</div>
-    <div class="stat-value">1 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 1</span></div>
-    <div class="meta">01-01 — shipped</div>
+    <div class="stat-value">1 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 4</span></div>
+    <div class="meta">02-01 — shipped</div>
   </div>
   <div class="stat">
     <div class="stat-label">Status</div>
-    <div class="stat-value small"><span class="badge badge-good">Phase 1 complete</span></div>
-    <div class="meta">Verified PARTIAL (criterion 2 has a scoped-out residual)</div>
+    <div class="stat-value small"><span class="badge badge-current">Plan 1 complete</span></div>
+    <div class="meta">Vitest + PGlite harness ready</div>
   </div>
   <div class="stat">
     <div class="stat-label">Last activity</div>
     <div class="stat-value small">2026-05-12</div>
-    <div class="meta">Phase 1 commit <code>265fc6f</code></div>
+    <div class="meta">Phase 2 Plan 1 commit <code>d7208df</code></div>
   </div>
 </div>
 
@@ -152,15 +152,16 @@
 <div class="card">
   <strong>Velocity</strong>
   <ul>
-    <li>Total plans completed: <strong>1</strong></li>
-    <li>Average duration: <em>—</em></li>
-    <li>Total execution time: <em>—</em></li>
+    <li>Total plans completed: <strong>2</strong></li>
+    <li>Average duration: ~15 min</li>
+    <li>Total execution time: ~15 min (Phase 2 Plan 1)</li>
   </ul>
 
   <strong>By Phase</strong>
   <table>
     <tr><th>Phase</th><th>Plans</th><th>Total</th><th>Avg/Plan</th></tr>
     <tr><td>1 — Bug Fix</td><td>1</td><td>—</td><td>—</td></tr>
+    <tr><td>2 — Test Infrastructure</td><td>1/4</td><td>~15 min</td><td>~15 min</td></tr>
   </table>
 
   <p class="meta"><em>Updated after each plan completion.</em></p>
@@ -176,6 +177,8 @@
     <li>Phase 1 = BUG-01 + BUG-02 — shortest path to value; user is currently blocked from daily use after large imports</li>
     <li>Phase 2 = Test infrastructure placed before security / cleanup / perf so subsequent phases land safely; TEST-A3 pins the BUG-01 regression specifically</li>
     <li>Workflow config: YOLO mode &middot; parallel execution &middot; balanced model profile &middot; research <em>off</em> (codebase already mapped) &middot; plan-check + verifier <em>on</em></li>
+    <li>Vitest 4 exits code 1 on no test files — <code>passWithNoTests: true</code> added to <code>vitest.config.ts</code></li>
+    <li>PGlite bootstrap = raw SQL replay of <code>drizzle/migrations/*.sql</code> (CD-04); each <code>createTestDb()</code> call returns a fresh in-memory DB (CD-05)</li>
   </ul>
 </div>
 
@@ -203,13 +206,13 @@
 <div class="card">
   <table>
     <tr><th>Last session</th><td>2026-05-12</td></tr>
-    <tr><th>Stopped at</th><td>Phase 2 planning complete — 5 plans in 3 waves, ready for <code>/gsd-execute-phase 2</code></td></tr>
-    <tr><th>Resume file</th><td><code>.planning/phases/02-test-infrastructure/02-01-PLAN.md</code></td></tr>
+    <tr><th>Stopped at</th><td>Phase 2 Plan 1 complete — Vitest + PGlite harness, vitest.config.ts, createTestDb(), callRoute()</td></tr>
+    <tr><th>Resume file</th><td><code>.planning/phases/02-test-infrastructure/02-02-PLAN.md</code></td></tr>
   </table>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 2 context capture (commit <code>fd656ef</code>).</p>
+  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 2 Plan 1 completion.</p>
 </footer>
 
 </body>

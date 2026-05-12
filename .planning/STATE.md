@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-05-12T22:12:53.668Z"
-last_activity: 2026-05-12 -- Phase 2 planning complete
+stopped_at: Phase 2 Plan 1 complete
+last_updated: "2026-05-12T22:30:00.000Z"
+last_activity: 2026-05-12 -- Phase 2 Plan 01 complete (Vitest + PGlite harness)
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
   percent: 17
 ---
 
@@ -21,35 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-**Current focus:** Phase 01 — critical-bug-fix
+**Current focus:** Phase 02 — test-infrastructure
 
 ## Current Position
 
-Phase: 01 — COMPLETE
-Plan: 1 of 1
-Status: Ready to execute
-Last activity: 2026-05-12 -- Phase 2 planning complete
+Phase: 02 — IN PROGRESS
+Plan: 1 of 4 COMPLETE
+Status: Executing
+Last activity: 2026-05-12 -- Phase 2 Plan 01 complete (Vitest + PGlite harness)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [##░░░░░░░░] 17%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 2
+- Average duration: ~15 min
+- Total execution time: ~15 min (phase 2, plan 1)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 02-test-infrastructure | 1/4 | ~15 min | ~15 min |
 
 **Recent Trend:**
 
-- Last 5 plans: —
-- Trend: —
+- Last 5 plans: 02-01 (15 min)
+- Trend: On target
 
 *Updated after each plan completion*
 
@@ -63,6 +63,8 @@ Recent decisions affecting current work:
 - Roadmap mode: standard (horizontal layers) — active work is horizontal improvements to an already-vertical shipped product, not new end-to-end user features
 - Phase 1 = BUG-01 + BUG-02 (shortest path to value; user is currently blocked from daily use after large imports)
 - Phase 2 = Test infrastructure placed before security/cleanup/perf so subsequent phases land safely; TEST-A3 pins the BUG-01 regression
+- Vitest 4 exits code 1 on no test files — passWithNoTests: true added to vitest.config.ts to satisfy clean-checkout exit-0 contract
+- PGlite bootstrap = raw SQL replay of drizzle/migrations/*.sql (CD-04); each createTestDb() call returns a fresh in-memory DB (CD-05)
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-12T21:36:25.519Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-test-infrastructure/02-CONTEXT.md
+Last session: 2026-05-12T22:30:00.000Z
+Stopped at: Completed Phase 2 Plan 01 (Vitest + PGlite test harness)
+Resume file: .planning/phases/02-test-infrastructure/02-02-PLAN.md

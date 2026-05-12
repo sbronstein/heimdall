@@ -59,11 +59,11 @@
 These are the requirements GSD will track to completion. The roadmap will group them into phases.
 
 ### Bug Fix (P0 — blocks daily use after large imports)
-- [ ] **BUG-01**: Eliminate React hydration crash in `app-sidebar.tsx` so sidebar navigation stays alive after LinkedIn import
+- [x] **BUG-01**: Eliminate React hydration crash in `app-sidebar.tsx` so sidebar navigation stays alive after LinkedIn import
   - Remove `{user && ...}` guard around `UserAvatarProfile` (lines 148, 166)
   - Verify `<span>` migration in `user-avatar-profile.tsx` is complete
   - Add a smoke check that catches the regression
-- [ ] **BUG-02**: Guard `emailAddresses[0]` access — change `user?.emailAddresses[0].emailAddress` to `user?.emailAddresses[0]?.emailAddress ?? ''` in `user-avatar-profile.tsx:31` and `user-nav.tsx:38`
+- [x] **BUG-02**: Guard `emailAddresses[0]` access — change `user?.emailAddresses[0].emailAddress` to `user?.emailAddresses[0]?.emailAddress ?? ''` in `user-avatar-profile.tsx:31` and `user-nav.tsx:38`
 
 ### Job Leads Completion
 - [ ] **JL-A1**: Replace hardcoded `'point'` company name in `scrape-connections.ts:62` with the lead's actual `companyName`
@@ -91,7 +91,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [ ] **PERF-A5**: Replace the full `SELECT * FROM contacts` scans in `/api/contacts/import` and `match-connections.ts` with DB-side dedup (`ON CONFLICT DO NOTHING`) and server-side fuzzy matching
 
 ### Test Infrastructure
-- [ ] **TEST-A1**: Stand up Vitest with TypeScript + Drizzle-compatible test DB harness
+- [x] **TEST-A1**: Stand up Vitest with TypeScript + Drizzle-compatible test DB harness
 - [ ] **TEST-A2**: Cover the load-bearing logic — API response envelope shape, `canTransition()` pipeline graph, `logTimeline()` side-effect, LinkedIn CSV parsing, bridge-score computation
 - [ ] **TEST-A3**: Add a regression test for the hydration sidebar crash (BUG-01)
 

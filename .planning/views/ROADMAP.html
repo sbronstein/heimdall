@@ -110,7 +110,7 @@
 </header>
 
 <div class="urgency">
-  <strong>Phase 1 status:</strong> Shipped <span class="badge badge-good">Complete</span>. BUG-01 hydration crash and BUG-02 optional-chain guards resolved (commits <code>954c39d</code> + <code>265fc6f</code>). Next: <code>/gsd-execute-phase 2</code> (Test Infrastructure).
+  <strong>Phase 2, Plan 1 status:</strong> Shipped <span class="badge badge-good">Complete</span>. Vitest + PGlite harness foundation complete (commit <code>d7208df</code>). TEST-A1 satisfied. Plans 02-02 through 02-05 next.
 </div>
 
 <h2>Overview</h2>
@@ -168,7 +168,7 @@
   </ol>
   <div style="margin-top:14px;"><strong>Plans (5):</strong>
     <ul style="margin-top:6px;">
-      <li>☐ <code>02-01-PLAN.md</code> &mdash; Vitest + PGlite harness foundation (config, scripts, <code>createTestDb</code>, <code>callRoute</code>) <span class="badge badge-pending">Pending</span></li>
+      <li>✓ <code>02-01-PLAN.md</code> &mdash; Vitest + PGlite harness foundation (config, scripts, <code>createTestDb</code>, <code>callRoute</code>) <span class="badge badge-good">Complete</span></li>
       <li>☐ <code>02-02-PLAN.md</code> &mdash; Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score) <span class="badge badge-pending">Pending</span></li>
       <li>☐ <code>02-03-PLAN.md</code> &mdash; DB-backed API route coverage (status transition + CSV import with <code>logTimeline</code> side-effect via PGlite) <span class="badge badge-pending">Pending</span></li>
       <li>☐ <code>02-04-PLAN.md</code> &mdash; BUG-01 regression tests (SSR structural + jsdom hydration mount) <span class="badge badge-pending">Pending</span></li>
@@ -240,19 +240,19 @@
   <p class="meta" style="margin-top: 0;">Execution order: Phases run in numeric order 1 → 2 → 3 → 4 → 5 → 6.</p>
   <table class="progress-table">
     <tr><th>Phase</th><th>Plans Complete</th><th>Status</th><th>Completed</th></tr>
-    <tr><td>1. Critical Bug Fix</td><td>0 / 1</td><td><span class="badge badge-planned">Planned</span></td><td>—</td></tr>
-    <tr><td>2. Test Infrastructure</td><td>0 / 5</td><td><span class="badge badge-pending">Planned</span></td><td>—</td></tr>
+    <tr><td>1. Critical Bug Fix</td><td>1 / 1</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
+    <tr><td>2. Test Infrastructure</td><td>1 / 5</td><td><span class="badge badge-planned">In Progress</span></td><td>—</td></tr>
     <tr><td>3. Security Hardening</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>4. Starter-Template Cleanup</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>6. Performance</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
   </table>
   <p class="meta">Overall progress (plans completed across all phases)</p>
-  <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+  <div class="progress-bar"><div class="progress-fill" style="width: 17%;"></div></div>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 1 completion (commit <code>265fc6f</code>).</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 2 Plan 1 completion (commit <code>d7208df</code>).</p>
 </footer>
 
 </body>
