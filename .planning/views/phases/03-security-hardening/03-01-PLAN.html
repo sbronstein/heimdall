@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — Phase 3 Plan 01</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 4px; font-size: 28px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 36px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 20px; }
+  h3 { margin-top: 24px; font-size: 16px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; margin: 12px 0; }
+  .objective {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-style: italic;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 5px; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-pending { background: #f0e5d0; color: #8a6a3a; }
+  .badge-good { background: #d8e8d8; color: #3a6a3a; }
+  .badge-current { background: #d9e2ef; color: #3a5a8a; }
+  .badge-low { background: #d8e8d8; color: #3a6a3a; }
+  .badge-med { background: #f0e5d0; color: #8a6a3a; }
+  .badge-high { background: #fdd6cf; color: #8a3a2a; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  .task {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    background: var(--card);
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .task h3 { margin-top: 0; color: var(--ink); }
+  .task .field-label { display: inline-block; min-width: 110px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); font-weight: 600; }
+  .meta-row { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .frontmatter { background: var(--code-bg); border-radius: 6px; padding: 12px 16px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  .frontmatter-key { color: var(--accent-2); font-weight: 600; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Phase 3 · Plan 01: Activate middleware + gate <code>/api/*</code></h1>
+  <p class="tagline">Heimdall · planned 2026-05-12 · <span class="badge badge-pending">Pending execution</span> · <span class="badge badge-current">Wave 1</span> · Requirement: <code>SEC-A1</code></p>
+</header>
+
+<h2>Objective</h2>
+<div class="card objective">
+  Activate the dead <code>clerkMiddleware()</code> file by renaming <code>src/proxy.ts</code> to <code>src/middleware.ts</code> (which Next.js auto-loads), expand the protected-route matcher to cover <code>/api/(.*)</code> in addition to <code>/dashboard(.*)</code>, and add an explicit 401-envelope short-circuit for unauthenticated <code>/api/*</code> requests so the API-V1 <code>{ success, data, error, meta }</code> contract is preserved for CLI consumers.
+</div>
+
+<div class="card">
+  <strong>Purpose.</strong> Close SEC-A1 — every <code>/api/*</code> route currently authenticates against zero callers. After this plan, the middleware is the single chokepoint enforcing both Clerk session presence and the <code>steve@bronstein.org</code> email lock on every API path. Per D-06, no per-route <code>auth()</code> calls are added inside <code>src/app/api/**/route.ts</code> — middleware-only enforcement to avoid drift across 32 route files.
+</div>
+
+<h2>Frontmatter</h2>
+<div class="frontmatter">
+<span class="frontmatter-key">phase:</span> 03-security-hardening<br>
+<span class="frontmatter-key">plan:</span> 01<br>
+<span class="frontmatter-key">type:</span> execute<br>
+<span class="frontmatter-key">wave:</span> 1<br>
+<span class="frontmatter-key">depends_on:</span> []<br>
+<span class="frontmatter-key">autonomous:</span> true<br>
+<span class="frontmatter-key">requirements:</span> [SEC-A1]<br>
+<span class="frontmatter-key">files_modified:</span><br>
+&nbsp;&nbsp;- src/proxy.ts (deleted)<br>
+&nbsp;&nbsp;- src/middleware.ts (created via git mv)<br>
+&nbsp;&nbsp;- src/middleware.test.ts (new)
+</div>
+
+<h2>Must-Haves (Goal-Backward)</h2>
+<div class="card">
+  <strong>Truths the plan must make true:</strong>
+  <ul>
+    <li>Next.js auto-loads middleware at <code>src/middleware.ts</code> (file rename activates enforcement for the first time per PD-01).</li>
+    <li>The protected-route matcher list inside <code>clerkMiddleware</code> covers both <code>/dashboard(.*)</code> and <code>/api/(.*)</code>.</li>
+    <li>An unauthenticated request to any <code>/api/*</code> path returns HTTP 401 with body <code>{ success: false, error: 'Unauthorized' }</code> (API-V1 envelope preserved per CD-02).</li>
+    <li>An authenticated request whose Clerk session email is not <code>steve@bronstein.org</code> is redirected to <code>/auth/sign-in</code> (single-user lock applied to both route classes per D-03).</li>
+    <li>Public auth pages under <code>/auth/*</code> remain reachable without a session (the protected matcher list is <code>[dashboard, api]</code> only — D-05).</li>
+    <li>Every <code>route.ts</code> under <code>src/app/api/**</code> has a URL path that matches the protected matcher pattern <code>/api/(.*)</code> (route-enumeration assertion — D-07 layer 2).</li>
+    <li><code>npm run test:run</code> exits 0 with the new middleware tests passing.</li>
+    <li><code>npm run build</code> still succeeds after the rename + matcher expansion.</li>
+  </ul>
+</div>
+
+<h2>Tasks</h2>
+
+<div class="task">
+  <h3>Task 1: Rename proxy.ts → middleware.ts, expand matcher, add /api/* 401 envelope short-circuit</h3>
+  <p><span class="field-label">Files</span> <code>src/proxy.ts</code> (deleted) → <code>src/middleware.ts</code> (created via <code>git mv</code>)</p>
+  <p><span class="field-label">Action</span> Use <code>git mv src/proxy.ts src/middleware.ts</code> (CD-01 — preserves blame). Expand <code>createRouteMatcher(['/dashboard(.*)'])</code> → <code>createRouteMatcher(['/dashboard(.*)', '/api/(.*)'])</code> (D-02). Add an explicit <code>/api/*</code> envelope short-circuit at the top of the <code>clerkMiddleware</code> async callback: detect <code>req.nextUrl.pathname.startsWith('/api/')</code>, call <code>await auth()</code> first (NOT <code>.protect()</code>), if <code>userId</code> is falsy return <code>NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })</code>. For <code>/dashboard/*</code>, preserve existing <code>auth.protect()</code> redirect-to-sign-in behavior. Apply the existing email-lock check to both classes (D-03). Per D-06, do NOT add <code>auth()</code> calls to any <code>route.ts</code>.</p>
+  <p><span class="field-label">Verify</span> <code>npm run build</code> exits 0 · <code>test -f src/middleware.ts &amp;&amp; test ! -f src/proxy.ts</code> · matcher contains <code>/api/(.*)</code> · file contains <code>success: false</code> + <code>status: 401</code> + <code>startsWith('/api/')</code>.</p>
+</div>
+
+<div class="task">
+  <h3>Task 2: Write src/middleware.test.ts (two-layer verification per D-07)</h3>
+  <p><span class="field-label">Files</span> <code>src/middleware.test.ts</code> (new)</p>
+  <p><span class="field-label">Action</span> Vitest test, node env (default in <code>vitest.config.ts</code>; no <code>@vitest-environment</code> pragma needed). Five <code>describe</code> blocks:</p>
+  <ol>
+    <li>Unauthenticated <code>/api/*</code> → response is <code>status 401</code> + JSON body <code>{ success: false, error: 'Unauthorized' }</code>.</li>
+    <li>Unauthenticated <code>/dashboard/*</code> → <code>auth.protect()</code> mock is invoked (recorded via spy).</li>
+    <li>Wrong-email session → <code>NextResponse.redirect</code> to <code>/auth/sign-in</code> for BOTH <code>/api/*</code> and <code>/dashboard/*</code>.</li>
+    <li>Public <code>/auth/*</code> → passthrough; <code>auth.protect()</code> not called.</li>
+    <li>Route-enumeration assertion: <code>readdirSync('src/app/api', { recursive: true })</code> → filter to <code>route.ts</code> → derive URL paths → assert each matches <code>/^\/api\/(.*)/</code> and that count <code>>= 32</code>.</li>
+  </ol>
+  <p>Mock <code>@clerk/nextjs/server</code> with <code>vi.mock</code> following the Phase 2 pattern from <code>src/components/layout/app-sidebar.ssr.test.tsx</code>. Per D-08, do NOT attempt per-route HTTP sweep tests.</p>
+  <p><span class="field-label">Verify</span> <code>npm run test:run -- src/middleware.test.ts</code> exits 0 with all five describes passing; full suite <code>npm run test:run</code> still green.</p>
+</div>
+
+<h2>Threat Model (STRIDE / ASVS L1)</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Threat</th><th>Mitigation</th><th>Residual</th></tr>
+  <tr><td>T1 (T-03-01)</td><td>S / I / T</td><td>Unauthenticated access to data-mutating API routes (currently 0/32 routes authenticate)</td><td>Middleware activation + matcher expansion + 401 envelope short-circuit; single chokepoint per D-06.</td><td><span class="badge badge-low">low</span></td></tr>
+  <tr><td>T2 (T-03-02)</td><td>S / EoP</td><td>Wrong-user access (any authenticated non-owner Clerk session)</td><td><code>ALLOWED_EMAIL</code> check preserved in the rename; explicitly applies to both <code>/dashboard/*</code> and <code>/api/*</code> per D-03.</td><td><span class="badge badge-low">low</span></td></tr>
+  <tr><td>T3 (T-03-03)</td><td>S / Auth bypass</td><td>Matcher gap — a new route added under a path that escapes <code>/api/(.*)</code></td><td>Route-enumeration assertion in <code>middleware.test.ts</code> globs <code>src/app/api/**/route.ts</code> and fails on any non-matching path. Pre-push hook (Phase 2) catches drift before remote.</td><td><span class="badge badge-low">low</span></td></tr>
+  <tr><td>T6 (T-03-06)</td><td>Information Disclosure</td><td>Clerk's default <code>auth.protect()</code> emits HTML redirect on <code>/api/*</code> — leaks app structure to CLI, breaks API-V1 envelope</td><td>Explicit <code>/api/*</code> short-circuit returns JSON 401 envelope before Clerk's default redirect fires (CD-02).</td><td><span class="badge badge-low">low</span></td></tr>
+</table>
+<p class="meta-row"><strong>Block-on-high count:</strong> 0. ASVS L1 gate clears.</p>
+
+<h2>Success Criteria</h2>
+<div class="card">
+  <ul>
+    <li>Middleware is active (rename done; Next.js auto-loads <code>src/middleware.ts</code>).</li>
+    <li>Every <code>/api/*</code> route is gated by Clerk session + <code>steve@bronstein.org</code> email lock.</li>
+    <li>Unauthenticated <code>/api/*</code> callers receive <code>{ success: false, error: 'Unauthorized' }</code> with HTTP 401.</li>
+    <li>Two-layer automated verification ships in <code>src/middleware.test.ts</code> (behavior + enumeration).</li>
+    <li><code>npm run build</code> and <code>npm run test:run</code> both exit 0.</li>
+    <li>No per-route <code>auth()</code> calls added (D-06).</li>
+  </ul>
+</div>
+
+<footer>
+  <p>Source-of-truth: <code>.planning/phases/03-security-hardening/03-01-PLAN.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 at plan creation time.</p>
+</footer>
+
+</body>
+</html>

@@ -42,6 +42,7 @@
   .badge-planned { background: #d9e2ef; color: #3a5a8a; }
   .badge-ui { background: #d9e2ef; color: #3a5a8a; }
   .badge-good { background: #d6e8d6; color: #3a6a3a; }
+  .badge-current { background: #c9dff0; color: #2a4a6a; }
   .phase-card {
     background: var(--card);
     border: 1px solid var(--line);
@@ -110,7 +111,7 @@
 </header>
 
 <div class="urgency">
-  <strong>Phase 2, Plan 3 status:</strong> Shipped <span class="badge badge-good">Complete</span>. DB-backed API route integration tests complete (commit <code>bfbb587</code>). Plans 02-02, 02-03 done. Plans 02-04 (BUG-01 regression) and 02-05 (Husky) remain.
+  <strong>Phase 3 status:</strong> <span class="badge badge-current">Planned</span>. Phase 2 (Test Infrastructure) shipped 5/5 plans. Phase 3 (Security Hardening) is planned: 2 parallel plans in a single wave covering SEC-A1 (activate <code>src/middleware.ts</code> + gate <code>/api/*</code>) and SEC-A2 (strip starter-template auth artifacts). Ready to execute via <code>/gsd-execute-phase 3</code>.
 </div>
 
 <h2>Overview</h2>
@@ -122,7 +123,7 @@
 <table>
   <tr><th>#</th><th>Phase</th><th>Goal</th><th>Requirements</th><th>UI hint</th></tr>
   <tr><td><strong>1</strong> ✓</td><td>Critical Bug Fix</td><td>Restore reliable dashboard navigation after large LinkedIn imports</td><td><span class="req-pill">BUG-01</span><span class="req-pill">BUG-02</span></td><td><span class="badge badge-ui">yes</span></td></tr>
-  <tr><td><strong>2</strong></td><td>Test Infrastructure</td><td>Working Vitest harness covering load-bearing logic + BUG-01 regression</td><td><span class="req-pill">TEST-A1</span><span class="req-pill">TEST-A2</span><span class="req-pill">TEST-A3</span></td><td>—</td></tr>
+  <tr><td><strong>2</strong> ✓</td><td>Test Infrastructure</td><td>Working Vitest harness covering load-bearing logic + BUG-01 regression</td><td><span class="req-pill">TEST-A1</span><span class="req-pill">TEST-A2</span><span class="req-pill">TEST-A3</span></td><td>—</td></tr>
   <tr><td><strong>3</strong></td><td>Security Hardening</td><td>Every <code>/api/*</code> route requires a valid Clerk session; starter auth artifacts removed</td><td><span class="req-pill">SEC-A1</span><span class="req-pill">SEC-A2</span></td><td>—</td></tr>
   <tr><td><strong>4</strong></td><td>Starter-Template Cleanup</td><td>Dead starter code removed; repo contains only Heimdall code</td><td><span class="req-pill">DEBT-A1</span><span class="req-pill">DEBT-A2</span><span class="req-pill">DEBT-A3</span><span class="req-pill">DEBT-A4</span><span class="req-pill">DEBT-A5</span></td><td><span class="badge badge-ui">yes</span></td></tr>
   <tr><td><strong>5</strong></td><td>Job Leads Completion</td><td>LinkedIn scraper runs cleanly end-to-end and surfaces failures</td><td><span class="req-pill">JL-A1</span><span class="req-pill">JL-A2</span><span class="req-pill">JL-A3</span><span class="req-pill">JL-A4</span><span class="req-pill">JL-A5</span></td><td>—</td></tr>
@@ -171,8 +172,8 @@
       <li>✓ <code>02-01-PLAN.md</code> &mdash; Vitest + PGlite harness foundation (config, scripts, <code>createTestDb</code>, <code>callRoute</code>) <span class="badge badge-good">Complete</span></li>
       <li>✓ <code>02-02-PLAN.md</code> &mdash; Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score) <span class="badge badge-good">Complete</span></li>
       <li>✓ <code>02-03-PLAN.md</code> &mdash; DB-backed API route coverage (status transition + CSV import with <code>logTimeline</code> side-effect via PGlite) <span class="badge badge-good">Complete</span></li>
-      <li>☐ <code>02-04-PLAN.md</code> &mdash; BUG-01 regression tests (SSR structural + jsdom hydration mount) <span class="badge badge-pending">Pending</span></li>
-      <li>☐ <code>02-05-PLAN.md</code> &mdash; Husky pre-push integration (gated on &lt;10s suite runtime per CD-01) <span class="badge badge-pending">Pending</span></li>
+      <li>✓ <code>02-04-PLAN.md</code> &mdash; BUG-01 regression tests (SSR structural + jsdom hydration mount) <span class="badge badge-good">Complete</span></li>
+      <li>✓ <code>02-05-PLAN.md</code> &mdash; Husky pre-push integration (gated on &lt;10s suite runtime per CD-01) <span class="badge badge-good">Complete</span></li>
     </ul>
   </div>
 </div>
@@ -188,6 +189,15 @@
     <li>The "Continue with GitHub" no-op button no longer appears on the sign-in or sign-up pages</li>
     <li>Sign-in and sign-up pages no longer issue an outbound fetch to <code>api.github.com/repos/...</code> on render</li>
   </ol>
+  <div style="margin-top:14px;"><strong>Plans (2 — Wave 1, both parallel; disjoint file sets):</strong>
+    <ul style="margin-top:6px;">
+      <li>☐ <code>03-01-PLAN.md</code> &mdash; Activate <code>src/middleware.ts</code> (rename from <code>src/proxy.ts</code> via <code>git mv</code>), expand matcher to <code>/api/(.*)</code>, explicit <code>{ success: false, error: 'Unauthorized' }</code> 401 envelope short-circuit, two-layer verification test in <code>src/middleware.test.ts</code> (middleware unit + route-enumeration assertion). <span class="badge badge-pending">Pending</span> · <span class="req-pill">SEC-A1</span></li>
+      <li>☐ <code>03-02-PLAN.md</code> &mdash; Delete <code>github-auth-button.tsx</code>, remove its references from <code>user-auth-form.tsx</code>, strip <code>api.github.com</code> fetch + <code>stars</code> prop + dead Star-on-GitHub <code>&lt;Link&gt;</code> block from both auth <code>page.tsx</code> + view files; convert auth pages to sync per CD-05. <span class="badge badge-pending">Pending</span> · <span class="req-pill">SEC-A2</span></li>
+    </ul>
+  </div>
+  <div style="margin-top:14px; font-size: 13px; color: var(--muted);">
+    <strong>Critical anchor (PD-01):</strong> <code>src/proxy.ts</code> is currently NOT loaded by Next.js — middleware is dead code. Phase 3 activates it for the first time by renaming. The "Clerk middleware enforces single-user lock" claim in PROJECT.md / ARCHITECTURE.md / CLAUDE.md is currently inaccurate; flagged for post-phase doc correction.
+  </div>
 </div>
 
 <div class="phase-card phase-4">
@@ -241,18 +251,18 @@
   <table class="progress-table">
     <tr><th>Phase</th><th>Plans Complete</th><th>Status</th><th>Completed</th></tr>
     <tr><td>1. Critical Bug Fix</td><td>1 / 1</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
-    <tr><td>2. Test Infrastructure</td><td>3 / 5</td><td><span class="badge badge-planned">In Progress</span></td><td>—</td></tr>
-    <tr><td>3. Security Hardening</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
+    <tr><td>2. Test Infrastructure</td><td>5 / 5</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
+    <tr><td>3. Security Hardening</td><td>0 / 2</td><td><span class="badge badge-current">Planned</span></td><td>—</td></tr>
     <tr><td>4. Starter-Template Cleanup</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>6. Performance</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
   </table>
-  <p class="meta">Overall progress (plans completed across all phases)</p>
-  <div class="progress-bar"><div class="progress-fill" style="width: 67%;"></div></div>
+  <p class="meta">Overall progress (plans completed across all phases — 6 of 8 known plans done; phases 4–6 still to plan)</p>
+  <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 2 Plan 3 completion (commit <code>bfbb587</code>).</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 3 planning (<code>03-01-PLAN.md</code> + <code>03-02-PLAN.md</code>).</p>
 </footer>
 
 </body>

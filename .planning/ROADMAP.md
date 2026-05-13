@@ -63,6 +63,11 @@ Plans:
   1. Every `/api/*` route returns 401 when called without a valid Clerk session (verified by automated test against all 34 routes)
   2. The "Continue with GitHub" no-op button no longer appears on the sign-in or sign-up pages
   3. Sign-in and sign-up pages no longer issue an outbound fetch to `api.github.com/repos/...` on render
+**Plans**: 2 plans
+Plans:
+**Wave 1** *(both plans parallel — disjoint file sets)*
+- [ ] 03-01-PLAN.md — Activate `src/middleware.ts` (rename from `src/proxy.ts`), expand matcher to `/api/(.*)`, explicit 401 envelope short-circuit, two-layer verification test (SEC-A1)
+- [ ] 03-02-PLAN.md — Delete `github-auth-button.tsx`, remove its references, strip `api.github.com` fetch + `stars` prop + dead Link block from auth pages/views (SEC-A2)
 
 ### Phase 4: Starter-Template Cleanup
 **Goal**: Dead starter-template code is gone — the repo contains only Heimdall code
@@ -104,7 +109,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
 | 2. Test Infrastructure | 5/5 | Complete    | 2026-05-12 |
-| 3. Security Hardening | 0/TBD | Not started | - |
+| 3. Security Hardening | 0/2 | Not started | - |
 | 4. Starter-Template Cleanup | 0/TBD | Not started | - |
 | 5. Job Leads Completion | 0/TBD | Not started | - |
 | 6. Performance | 0/TBD | Not started | - |
