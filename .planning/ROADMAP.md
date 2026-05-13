@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Critical Bug Fix** - Eliminate the sidebar hydration crash that breaks navigation after LinkedIn imports
 - [x] **Phase 2: Test Infrastructure** - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01 (completed 2026-05-12)
-- [ ] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts
+- [x] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts (completed 2026-05-13)
 - [ ] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports
 - [ ] **Phase 5: Job Leads Completion** - Finish the LinkedIn scraper (bug fixes, timeouts, error surfacing)
 - [ ] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes
@@ -66,8 +66,8 @@ Plans:
 **Plans**: 2 plans
 Plans:
 **Wave 1** *(both plans parallel — disjoint file sets)*
-- [ ] 03-01-PLAN.md — Activate `src/middleware.ts` (rename from `src/proxy.ts`), expand matcher to `/api/(.*)`, explicit 401 envelope short-circuit, two-layer verification test (SEC-A1)
-- [ ] 03-02-PLAN.md — Delete `github-auth-button.tsx`, remove its references, strip `api.github.com` fetch + `stars` prop + dead Link block from auth pages/views (SEC-A2)
+- [x] 03-01-PLAN.md — Activate `src/middleware.ts` (rename from `src/proxy.ts`), expand matcher to `/api/(.*)`, explicit 401 envelope short-circuit, two-layer verification test (SEC-A1)
+- [x] 03-02-PLAN.md — Delete `github-auth-button.tsx`, remove its references, strip `api.github.com` fetch + `stars` prop + dead Link block from auth pages/views (SEC-A2)
 
 ### Phase 4: Starter-Template Cleanup
 **Goal**: Dead starter-template code is gone — the repo contains only Heimdall code
@@ -109,7 +109,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
 | 2. Test Infrastructure | 5/5 | Complete    | 2026-05-12 |
-| 3. Security Hardening | 0/2 | Not started | - |
+| 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
 | 4. Starter-Template Cleanup | 0/TBD | Not started | - |
 | 5. Job Leads Completion | 0/TBD | Not started | - |
 | 6. Performance | 0/TBD | Not started | - |
