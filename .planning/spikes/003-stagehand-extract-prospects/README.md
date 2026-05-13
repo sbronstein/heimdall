@@ -12,7 +12,7 @@ tags: [stagehand, extract, cost]
 
 ## What This Validates
 
-**Given** Stagehand attached via the CDP flow and starting on a LinkedIn people-search URL (`/search/results/people/?currentCompany=[...]&network=["S"]`),
+**Given** Stagehand attached/launched (same headed-launch flow as spike 001) and on a LinkedIn people-search URL (`/search/results/people/?currentCompany=[...]&network=["S"]`),
 **when** `extract(instruction, schema)` runs with a Zod schema matching the existing `ScrapedProspect` type,
 **then** it returns an array of `{ name, title, linkedinUrl, mutualConnectionNames[] }` matching the shape, with per-run token cost captured for cost-vs.-toil comparison.
 
@@ -41,14 +41,17 @@ export type ScrapedProspect = {
 
 ```bash
 cd .planning/spikes/_pkg
-npm install   # first time only
+npm install                       # first time only
+npx playwright install chromium   # first time only
 
 # Pre-built people-search URL with currentCompany + 2nd-degree filter.
 # The URL has square brackets that need quoting in the shell.
 npm run spike:003 -- 'https://www.linkedin.com/search/results/people/?currentCompany=%5B%22<company-id>%22%5D&network=%5B%22S%22%5D' 5
 ```
 
-The third argument is the number of runs (default 1). Use **5** for the real reliability measurement; **1** for a quick smoke test.
+The trailing `5` is the number of runs (default 1). Use **5** for the real reliability measurement; **1** for a quick smoke test.
+
+Headed-Chromium-with-persistent-profile flow: same as spike 001. Interactive login pause on first run if needed.
 
 ## What to Expect
 

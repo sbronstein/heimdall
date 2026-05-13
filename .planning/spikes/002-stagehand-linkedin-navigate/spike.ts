@@ -1,6 +1,6 @@
 import '../_pkg/lib/env.ts';
 import { Stagehand } from '@browserbasehq/stagehand';
-import { resolveWebSocketDebuggerUrl } from '../_pkg/lib/cdp.ts';
+import { ensureLinkedInLogin, getStagehandConfig } from '../_pkg/lib/browser.ts';
 
 const jobUrl = process.argv[2];
 if (!jobUrl) {
@@ -8,12 +8,8 @@ if (!jobUrl) {
   console.error('Example: npm run spike:002 -- https://www.linkedin.com/jobs/view/3955123456');
   process.exit(1);
 }
-if (!process.env.BROWSER_CDP_ENDPOINT) {
-  console.error('BROWSER_CDP_ENDPOINT not set.');
-  process.exit(1);
-}
 if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('ANTHROPIC_API_KEY not set.');
+  console.error('ANTHROPIC_API_KEY not set. Get one at https://console.anthropic.com.');
   process.exit(1);
 }
 
@@ -28,19 +24,14 @@ let landedOnEmployeeSearch = false;
 let finalUrl = '';
 
 try {
-  const wsUrl = await resolveWebSocketDebuggerUrl(process.env.BROWSER_CDP_ENDPOINT);
-  log('init', `WS URL resolved.`);
-
-  stagehand = new Stagehand({
-    env: 'LOCAL',
-    localBrowserLaunchOptions: { cdpUrl: wsUrl },
-    model: 'anthropic/claude-sonnet-4-5',
-    verbose: 1,
-  });
+  const config = await getStagehandConfig();
+  stagehand = new Stagehand(config);
   await stagehand.init();
   log('init', 'Stagehand attached.');
 
   const page = stagehand.context.pages()[0] ?? (await stagehand.context.newPage());
+
+  await ensureLinkedInLogin(page, log);
 
   // Step 1: Go to the job posting.
   log('nav', `Navigating to job posting: ${jobUrl}`);
@@ -51,7 +42,7 @@ try {
   // Step 2: Navigate to the company page. Use observe→act pattern (recommended for resilience).
   log('act', 'observe(): locating the company link on the job posting...');
   const companyCandidates = await stagehand.observe(
-    'the link to the company\'s LinkedIn page (usually the company name near the top of the job posting)'
+    "the link to the company's LinkedIn page (usually the company name near the top of the job posting)"
   );
   log('act', `observe() returned ${companyCandidates.length} candidate(s).`);
   if (companyCandidates.length === 0) {
@@ -92,8 +83,6 @@ try {
   log('nav', `After employees click: ${afterEmployees}`);
 
   // Step 4: Apply 2nd-degree connections filter.
-  // The current Playwright path appends ?network=%5B%22S%22%5D directly; we ask Stagehand
-  // to do it natively so this spike tests the filter-application path too.
   log('act', 'observe(): locating the 2nd-degree connections filter...');
   const filterCandidates = await stagehand.observe(
     'the filter or chip that narrows results to 2nd-degree connections (sometimes labeled "Connections" with options for 1st / 2nd / 3rd+)'
@@ -104,12 +93,10 @@ try {
     const filterResult = await stagehand.act(filterCandidates[0]);
     log('act', `filterResult.success=${filterResult.success}, msg="${filterResult.message}"`);
 
-    // Filters usually open a popover; ask Stagehand to pick "2nd".
     log('act', 'act(): selecting the 2nd-degree option...');
     const pickSecond = await stagehand.act('select the option for 2nd degree connections');
     log('act', `pickSecond.success=${pickSecond.success}, msg="${pickSecond.message}"`);
 
-    // Confirm the filter (LinkedIn typically requires a "Show results" click).
     log('act', 'act(): applying the filter...');
     const apply = await stagehand.act('apply or show the filtered results');
     log('act', `apply.success=${apply.success}, msg="${apply.message}"`);
@@ -125,7 +112,7 @@ try {
   finalUrl = page.url();
   log('nav', `Final URL: ${finalUrl}`);
 
-  // Success criteria: ended up on a people-search URL with currentCompany + a network filter applied.
+  // Success criteria: ended up on a people-search URL with currentCompany applied.
   const isPeopleSearch =
     finalUrl.includes('/search/results/people') || finalUrl.includes('/people');
   const hasCompanyFilter = finalUrl.includes('currentCompany');
@@ -146,10 +133,7 @@ try {
       'PARTIAL — Reached the company-filtered people search, but the 2nd-degree network filter is not visible in the URL. May still be applied client-side; inspect manually.'
     );
   } else {
-    log(
-      'verdict',
-      `FAIL — Did not reach a company-filtered people search. Final URL: ${finalUrl}`
-    );
+    log('verdict', `FAIL — Did not reach a company-filtered people search. Final URL: ${finalUrl}`);
   }
 } catch (err) {
   log('error', (err as Error).stack ?? String(err));

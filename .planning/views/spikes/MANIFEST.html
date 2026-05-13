@@ -57,7 +57,7 @@
 <body>
 <header>
   <h1>Spike Manifest</h1>
-  <p class="tagline">Replace fragile Playwright LinkedIn scraping with Stagehand's a11y-tree-with-refs approach (local-only)</p>
+  <p class="tagline">Replace fragile Playwright LinkedIn scraping with Stagehand's a11y-tree-with-refs approach (local-only, headed-by-default)</p>
 </header>
 
 <h2>Idea</h2>
@@ -72,11 +72,12 @@
 
 <h2>Requirements</h2>
 <ul>
-  <li>Must reuse the existing <code>BROWSER_CDP_ENDPOINT</code> flow — no new auth path or separate Chrome session</li>
+  <li>Must reuse the existing <code>~/.heimdall/linkedin-profile/</code> user-data dir — same Chrome profile <code>src/features/job-leads/lib/linkedin-browser.ts</code> uses, so LinkedIn login persists across both</li>
+  <li>Must support <strong>interactive login on first run</strong> in a visible Chrome window (not a headless re-auth)</li>
   <li>Must extract prospects in the same <code>ScrapedProspect</code> shape as today: <code>{ name, title, linkedinUrl, mutualConnectionNames[] }</code></li>
   <li>Must work without a Browserbase account (<code>env: "LOCAL"</code>)</li>
-  <li>Must measure LLM token cost per scrape (Stagehand exposes per-primitive token counts via <code>stagehand.metrics</code>)</li>
-  <li>Must default to a Claude Anthropic model (consistent with the rest of the codebase's Anthropic-first preference)</li>
+  <li>Must measure LLM token cost per scrape (via <code>stagehand.metrics</code>)</li>
+  <li>Must default to a Claude Anthropic model (consistent with the codebase's Anthropic-first preference)</li>
 </ul>
 
 <h2>Spikes</h2>
@@ -87,40 +88,46 @@
   <tbody>
     <tr>
       <td>001</td><td>stagehand-cdp-auth</td><td>standard</td>
-      <td>Given Chrome with logged-in LinkedIn at <code>BROWSER_CDP_ENDPOINT</code>, when Stagehand initializes, then it attaches and reaches <code>/feed</code> without re-auth.</td>
+      <td>Stagehand launches headed Chromium, persists/reuses the LinkedIn profile, interactively pauses for login if needed, and reaches <code>/feed</code>.</td>
       <td><span class="badge badge-pending">PENDING</span></td>
-      <td>stagehand, cdp, auth</td>
+      <td>stagehand, auth, headed</td>
     </tr>
     <tr>
       <td>002</td><td>stagehand-linkedin-navigate</td><td>standard</td>
-      <td>Given an authenticated Stagehand session on a job posting, when <code>act()</code> runs natural-language steps, then the browser lands on a 2nd-degree employee search filtered to that company.</td>
+      <td><code>observe()</code> / <code>act()</code> walk job → company → employees → 2nd-degree filter, landing on a company-filtered people search.</td>
       <td><span class="badge badge-pending">PENDING</span></td>
       <td>stagehand, navigation, linkedin</td>
     </tr>
     <tr>
       <td>003</td><td>stagehand-extract-prospects</td><td>standard</td>
-      <td>Given Stagehand on a people-search results page, when <code>extract()</code> runs with a Zod prospect schema, then it returns the <code>ScrapedProspect</code> shape with measured token cost across 5+ runs.</td>
+      <td><code>extract()</code> returns the <code>ScrapedProspect</code> shape with measured per-run token cost across 5+ runs (≥80% success).</td>
       <td><span class="badge badge-pending">PENDING</span></td>
       <td>stagehand, extract, cost</td>
     </tr>
   </tbody>
 </table>
-<p>Spikes are ordered by risk. 001 is gating. 002 is the core test. 003 only matters if 001 and 002 pass.</p>
+<p>Risk-ordered. 001 is gating. 002 is the core test. 003 only matters if 001 and 002 pass.</p>
 
 <h2>How to Run</h2>
 <pre><code># One-time setup
 cd .planning/spikes/_pkg
 npm install
+npx playwright install chromium   # downloads the headed Chromium binary
 
-# Make sure your Chrome is running with --remote-debugging-port=&lt;port&gt;
-# and BROWSER_CDP_ENDPOINT is set (e.g. http://localhost:3005) — same flow
-# as the existing scraper. ANTHROPIC_API_KEY also required.
+# Make sure ANTHROPIC_API_KEY is in .env.local (only required env var).
+# A Chrome window will open on first run — sign into LinkedIn there.
+# Cookies persist at ~/.heimdall/linkedin-profile/ for subsequent runs.
 
-# Run sequentially. Stop and fix if any verdict is FAIL.
 npm run spike:001
 npm run spike:002 -- &lt;linkedin-job-url&gt;
-npm run spike:003 -- &lt;linkedin-people-search-url&gt;</code></pre>
-<p>Each spike prints a <code>[verdict]</code> line and the post-run <code>stagehand.metrics</code> token counts. Update the corresponding README's <strong>Results</strong> section with what you observed, then flip the verdict in the table above.</p>
+npm run spike:003 -- &lt;linkedin-people-search-url&gt; 5</code></pre>
+<p>If <code>BROWSER_CDP_ENDPOINT</code> is set (e.g. you already have Chrome running for the project's main scraper), the spikes will attach to that endpoint instead of launching a new browser.</p>
+
+<h2>Notes on auth</h2>
+<div class="card">
+  <p>Stagehand uses the standard Anthropic SDK and reads <code>ANTHROPIC_API_KEY</code>. There's <strong>no first-class browser/OAuth/Claude-sub path</strong> in Stagehand 3.x. Community proxies bridge Claude Pro/Max to OpenAI-compatible endpoints (<code>claude-pro-proxy</code>-style) but are unofficial and add a moving piece — kept out of scope for this spike.</p>
+  <p>Total token cost across all three spikes with Sonnet 4.5 should land in the low single-digit dollars.</p>
+</div>
 
 <footer>
   Source of truth: <code>.planning/spikes/MANIFEST.md</code> — this HTML may lag behind.

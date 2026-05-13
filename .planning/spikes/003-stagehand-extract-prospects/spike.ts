@@ -1,21 +1,19 @@
 import '../_pkg/lib/env.ts';
 import { Stagehand } from '@browserbasehq/stagehand';
 import { z } from 'zod';
-import { resolveWebSocketDebuggerUrl } from '../_pkg/lib/cdp.ts';
+import { ensureLinkedInLogin, getStagehandConfig } from '../_pkg/lib/browser.ts';
 
 const searchUrl = process.argv[2];
 const runsArg = Number(process.argv[3] ?? '1');
 if (!searchUrl) {
+  console.error('Usage: npm run spike:003 -- <linkedin-people-search-url> [runs]');
   console.error(
-    'Usage: npm run spike:003 -- <linkedin-people-search-url> [runs]'
-  );
-  console.error(
-    'Example: npm run spike:003 -- \'https://www.linkedin.com/search/results/people/?currentCompany=%5B%22123456%22%5D&network=%5B%22S%22%5D\' 5'
+    "Example: npm run spike:003 -- 'https://www.linkedin.com/search/results/people/?currentCompany=%5B%22123456%22%5D&network=%5B%22S%22%5D' 5"
   );
   process.exit(1);
 }
-if (!process.env.BROWSER_CDP_ENDPOINT || !process.env.ANTHROPIC_API_KEY) {
-  console.error('BROWSER_CDP_ENDPOINT and ANTHROPIC_API_KEY must both be set.');
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('ANTHROPIC_API_KEY not set. Get one at https://console.anthropic.com.');
   process.exit(1);
 }
 
@@ -42,7 +40,12 @@ const prospectSchema = z.object({
 type RunResult = {
   run: number;
   count: number;
-  sample: Array<{ name: string; title: string | null; linkedinUrl: string | null; mutualConnectionNames: string[] }>;
+  sample: Array<{
+    name: string;
+    title: string | null;
+    linkedinUrl: string | null;
+    mutualConnectionNames: string[];
+  }>;
   metricsAtEnd: unknown;
   errored: boolean;
   errMsg?: string;
@@ -53,17 +56,14 @@ let stagehand: Stagehand | undefined;
 const results: RunResult[] = [];
 
 try {
-  const wsUrl = await resolveWebSocketDebuggerUrl(process.env.BROWSER_CDP_ENDPOINT);
-  stagehand = new Stagehand({
-    env: 'LOCAL',
-    localBrowserLaunchOptions: { cdpUrl: wsUrl },
-    model: 'anthropic/claude-sonnet-4-5',
-    verbose: 1,
-  });
+  const config = await getStagehandConfig();
+  stagehand = new Stagehand(config);
   await stagehand.init();
   log('init', 'Stagehand attached.');
 
   const page = stagehand.context.pages()[0] ?? (await stagehand.context.newPage());
+
+  await ensureLinkedInLogin(page, log);
 
   const runs = Math.max(1, runsArg);
   log('plan', `Running extract() ${runs} time(s) against ${searchUrl}`);
@@ -73,7 +73,6 @@ try {
     log('run', `Starting run ${i}/${runs}...`);
 
     try {
-      // Reload to dodge any client-side caching that would skew per-run cost.
       await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await page.waitForTimeout(2_500);
 
@@ -107,7 +106,6 @@ try {
     }
   }
 
-  // Verdict
   const successCount = results.filter((r) => !r.errored && r.count > 0).length;
   const total = results.length;
   const ratio = successCount / total;
