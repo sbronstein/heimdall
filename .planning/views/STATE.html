@@ -91,7 +91,7 @@
 
 <header>
   <h1>Project State</h1>
-  <p class="tagline">Heimdall &middot; current-state dashboard &middot; 2026-05-12 (Phase 2 Plan 2 complete)</p>
+  <p class="tagline">Heimdall &middot; current-state dashboard &middot; 2026-05-12 (Phase 3 context gathered)</p>
 </header>
 
 <h2>Project Reference</h2>
@@ -100,7 +100,7 @@
 </div>
 <div class="card">
   See <code>.planning/PROJECT.md</code> (updated 2026-05-12) for full context, constraints, and key decisions.<br>
-  <strong>Current focus:</strong> Phase 2 — Test Infrastructure (Plans 1–3 complete, Plans 4–5 next).
+  <strong>Current focus:</strong> Phase 3 — Security Hardening (context captured, ready to plan).
 </div>
 
 <h2>Current Position</h2>
@@ -108,36 +108,36 @@
 <div class="stat-grid">
   <div class="stat">
     <div class="stat-label">Phase</div>
-    <div class="stat-value">2 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
-    <div class="meta">Test Infrastructure — in progress</div>
+    <div class="stat-value">3 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
+    <div class="meta">Security Hardening — ready to plan</div>
   </div>
   <div class="stat">
     <div class="stat-label">Plan</div>
-    <div class="stat-value">3 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 4</span></div>
-    <div class="meta">02-03 — shipped</div>
+    <div class="stat-value small">Not started</div>
+    <div class="meta">Context captured (<code>03-CONTEXT.md</code>)</div>
   </div>
   <div class="stat">
     <div class="stat-label">Status</div>
-    <div class="stat-value small"><span class="badge badge-current">Plan 3 complete</span></div>
-    <div class="meta">74 tests passing (11 new DB-integration)</div>
+    <div class="stat-value small"><span class="badge badge-current">Planning</span></div>
+    <div class="meta">Phase 2 complete (5/5 plans, 79 tests passing)</div>
   </div>
   <div class="stat">
     <div class="stat-label">Last activity</div>
     <div class="stat-value small">2026-05-12</div>
-    <div class="meta">Phase 2 Plan 3 commit <code>bfbb587</code></div>
+    <div class="meta">Phase 3 context — <code>--auto</code> discuss</div>
   </div>
 </div>
 
 <div class="card">
   <div class="meta" style="margin-bottom: 4px;">Overall progress (plans completed across all phases)</div>
   <div class="progress-bar">
-    <div class="progress-fill" style="width: 67%;"></div>
-    <div class="progress-label">67%</div>
+    <div class="progress-fill" style="width: 33%;"></div>
+    <div class="progress-label">2 of 6 phases complete</div>
   </div>
   <div class="phase-rail">
     <div class="phase-dot done">PHASE 1<br>Bug Fix</div>
-    <div class="phase-dot current">PHASE 2<br>Tests</div>
-    <div class="phase-dot">PHASE 3<br>Security</div>
+    <div class="phase-dot done">PHASE 2<br>Tests</div>
+    <div class="phase-dot current">PHASE 3<br>Security</div>
     <div class="phase-dot">PHASE 4<br>Cleanup</div>
     <div class="phase-dot">PHASE 5<br>Job Leads</div>
     <div class="phase-dot">PHASE 6<br>Performance</div>
@@ -145,7 +145,7 @@
 </div>
 
 <div class="blocker-row">
-  <strong>Phase 1 closure:</strong> BUG-01 hydration crash resolved — original <code>{user &amp;&amp; ...}</code> guard removed (commit <code>954c39d</code>) plus residual <code>AvatarFallback</code> CN/ST text mismatch closed via <code>suppressHydrationWarning</code> (commit <code>265fc6f</code>). BUG-02 optional-chain guards applied at both known sites. Playwright smoke verified <code>/dashboard/overview</code> and <code>/dashboard/networking</code> produce zero hydration pageerrors. Residual Radix <code>useId()</code> attribute mismatch on other routes traced to <code>useTheme()</code> in <code>providers.tsx</code> — pre-existing, scoped out per D-02, filed for follow-up.
+  <strong>Phase 3 critical pre-discovery:</strong> <code>src/proxy.ts</code> is misnamed and currently <strong>not loaded by Next.js</strong> — there is no <code>middleware.ts</code> anywhere in the repo. The "Clerk middleware enforces single-user lock" claim in <code>PROJECT.md</code>, <code>ARCHITECTURE.md</code>, and <code>CLAUDE.md</code> is inaccurate today. <code>/dashboard/*</code> is enforced only by page-level <code>auth()</code> calls in <code>src/app/page.tsx</code> and <code>src/app/dashboard/page.tsx</code>. Phase 3 pivots on renaming <code>src/proxy.ts</code> → <code>src/middleware.ts</code> before expanding the matcher to <code>/api/*</code>. See <code>03-CONTEXT.md</code> PD-01.
 </div>
 
 <h2>Performance Metrics</h2>
@@ -226,13 +226,13 @@
 <div class="card">
   <table>
     <tr><th>Last session</th><td>2026-05-12</td></tr>
-    <tr><th>Stopped at</th><td>Phase 2 Plan 2 complete — pure-logic coverage: 63 tests, 5 files, all passing</td></tr>
-    <tr><th>Resume file</th><td><code>.planning/phases/02-test-infrastructure/02-03-PLAN.md</code></td></tr>
+    <tr><th>Stopped at</th><td>Phase 3 context gathered — <code>--auto</code> discuss-phase</td></tr>
+    <tr><th>Resume file</th><td><code>.planning/phases/03-security-hardening/03-CONTEXT.md</code></td></tr>
   </table>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 2 Plan 2 completion.</p>
+  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 3 context capture.</p>
 </footer>
 
 </body>
