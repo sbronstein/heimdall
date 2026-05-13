@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — LinkedIn scraper agent-browser evaluation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 6px; font-size: 30px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin-top: 24px; font-size: 17px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; margin: 12px 0; }
+  .decision {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-style: italic;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-good   { background: #d6e8d6; color: #3a6a3a; }
+  .badge-warn   { background: #fdd6cf; color: #8a3a2a; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  footer code { font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>LinkedIn scraper — agent-browser evaluation</h1>
+  <p class="meta">Note · 2026-05-13 · exploration session before spiking a replacement for Playwright-based LinkedIn scraping</p>
+</header>
+
+<h2>Problem</h2>
+<div class="card">
+  <p>The current Playwright-based scraper in <code>src/features/job-leads/lib/scrape-connections.ts</code> is fighting LinkedIn on two fronts:</p>
+  <ol>
+    <li><strong>Obfuscated DOM</strong> — LinkedIn uses randomized/obfuscated class names. The pending diff has cascaded into ~5 fallback selector strategies plus <code>page.evaluate</code> brute-force DOM scans plus hardcoded <code>waitForTimeout</code> waits. 326-line diff of defensive heuristics is unsustainable.</li>
+    <li><strong>Multi-step navigation</strong> — Job posting → company page → employees list → 2nd-degree filter. Each hop has its own fragile selectors and timing.</li>
+  </ol>
+  <p>Even with the latest fixes, end-to-end scrapes are unreliable.</p>
+</div>
+
+<h2>Two decoupled problems</h2>
+<table>
+  <thead><tr><th>Problem</th><th>What fixes it</th></tr></thead>
+  <tbody>
+    <tr><td>Selector brittleness (obfuscated DOM)</td><td>LLM-driven browser automation that reasons over rendered DOM / a11y tree instead of CSS selectors</td></tr>
+    <tr><td>Hosting constraint (local-dev/Docker only)</td><td>Hosted browser cloud (Browserbase, Browserless, Kernel) — paid, requires CDP endpoint</td></tr>
+  </tbody>
+</table>
+<p>These are independent. <strong>Production hosting is intentionally staying off-limits for now</strong>, so only the selector-brittleness problem is in scope.</p>
+
+<h2>Evaluated: <code>vercel-labs/agent-browser</code></h2>
+<div class="card">
+  <ul>
+    <li><strong>Rust CLI</strong>, not a TypeScript library. Distributed via npm but ships a native binary; no <code>main</code>/<code>exports</code> in <code>package.json</code>.</li>
+    <li>Speaks Chrome DevTools Protocol directly (not Playwright).</li>
+    <li>Accessibility-tree-with-stable-refs model (<code>@e1</code>, <code>@e2</code>) for LLM consumption — the right abstraction for obfuscated class names.</li>
+    <li>LLM via Vercel AI Gateway, default model <code>anthropic/claude-sonnet-4.6</code>.</li>
+    <li>~32.9k stars, actively maintained, Apache-2.0.</li>
+  </ul>
+  <p><span class="badge badge-warn">Verdict</span> Solves the selector problem brilliantly. But integration cost from a Next.js API route is high — <code>execSync</code>-ing a Rust binary, no TS types on inputs/outputs, parsing JSON stdout. Strongest use cases are CLI/agent-driving, not "called from a Next.js route handler."</p>
+</div>
+
+<h2>Decision: spike Stagehand</h2>
+<div class="card decision">
+  <strong>Spike <code>@browserbasehq/stagehand</code> as the Playwright replacement.</strong> TS-native, MIT, built on Playwright, drops in next to existing scraper code. Pay LLM tokens per scrape; keep running locally; no Browserbase dependency required.
+</div>
+
+<h3>What Stagehand brings</h3>
+<ul>
+  <li>Three LLM primitives that target the exact failure points:
+    <ul>
+      <li><code>page.act("click the employees link")</code> — natural-language action</li>
+      <li><code>page.observe()</code> — enumerate actionable elements</li>
+      <li><code>page.extract(schema)</code> — pull structured data from a rendered page</li>
+    </ul>
+  </li>
+  <li>Runs against <strong>local Chromium</strong> without Browserbase (Browserbase is optional)</li>
+  <li>Same Playwright <code>Page</code> object shape — minimal refactor to <code>scrape-connections.ts</code></li>
+  <li>Type-safe <code>extract(schema)</code> aligns with Zod-everywhere convention in this codebase</li>
+</ul>
+
+<h2>Why not agent-browser</h2>
+<ul>
+  <li>Selector-fix benefit is comparable, but Stagehand wins on DX</li>
+  <li>No child-process boundary, no native binary packaging concerns</li>
+  <li>If we ever decide to unlock prod-hosted scraping (see <a href="../seeds/prod-hosted-scraping.html">prod-hosted-scraping seed</a>), Stagehand's Browserbase path is the natural extension — same library, swap the runtime</li>
+</ul>
+
+<h2>Next step</h2>
+<div class="card">
+  <p>Spike Stagehand on one scrape path — likely <code>scrape-connections.ts</code> because multi-step nav is where Playwright breaks worst. Spike should capture:</p>
+  <ul>
+    <li>Does it actually navigate job → company → employees end-to-end?</li>
+    <li>LLM token cost per scrape (target: comparable to or below current Playwright runtime cost)</li>
+    <li>Reliability across 5–10 runs against different companies</li>
+    <li>Whether the existing logged-in-Chrome session (<code>BROWSER_CDP_ENDPOINT</code>) flow still works</li>
+  </ul>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code> — this HTML may lag behind.
+</footer>
+</body>
+</html>
