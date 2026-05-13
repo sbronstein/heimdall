@@ -81,7 +81,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [x] **DEBT-A2**: Delete `src/app/dashboard/{exclusive,workspaces,billing}/` routes and the 805-line `src/components/ui/infobar.tsx`
 - [x] **DEBT-A3**: Decide on Kanban route — either back it with the `tasks` table via `/api/tasks` or remove the route entirely
 - [ ] **DEBT-A4**: Remove the `__CLEANUP__/` directory once the optional features above are stripped
-- [ ] **DEBT-A5**: Drop the unused `computeBridgeScore` import in `src/app/api/job-leads/[id]/search/route.ts:10`
+- [x] **DEBT-A5**: Drop the unused `computeBridgeScore` import in `src/app/api/job-leads/[id]/search/route.ts:10`
 
 ### Performance
 - [ ] **PERF-A1**: Bulk-insert prospects in `/api/job-leads/[id]/search` (replace `for...of await db.insert(...)` with a single batch insert)

@@ -84,7 +84,7 @@ Plans:
 - [x] 04-01-PLAN.md — DEBT-A1: delete products feature + dead support (mock-api.ts, data.ts product types, breadcrumb entry)
 - [x] 04-02-PLAN.md — DEBT-A2: delete starter routes (exclusive, workspaces, billing) + Infobar machinery transitive teardown
 - [x] 04-03-PLAN.md — DEBT-A3: delete /dashboard/kanban route + features/kanban folder + record decision in PROJECT.md
-- [ ] 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route
+- [x] 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route
 
 **Wave 2** *(blocked on Wave 1 completion — must be last)*
 - [ ] 04-05-PLAN.md — DEBT-A4: rm -rf __CLEANUP__/ + add filesystem-existence verification test
