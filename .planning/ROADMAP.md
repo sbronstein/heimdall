@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Critical Bug Fix** - Eliminate the sidebar hydration crash that breaks navigation after LinkedIn imports
 - [x] **Phase 2: Test Infrastructure** - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01 (completed 2026-05-12)
 - [x] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts (completed 2026-05-13)
-- [ ] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports
+- [x] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports (completed 2026-05-13)
 - [ ] **Phase 5: Job Leads Completion** - Finish the LinkedIn scraper (bug fixes, timeouts, error surfacing)
 - [ ] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes
 
@@ -87,7 +87,7 @@ Plans:
 - [x] 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route
 
 **Wave 2** *(blocked on Wave 1 completion — must be last)*
-- [ ] 04-05-PLAN.md — DEBT-A4: rm -rf __CLEANUP__/ + add filesystem-existence verification test
+- [x] 04-05-PLAN.md — DEBT-A4: rm -rf __CLEANUP__/ + add filesystem-existence verification test
 **UI hint**: yes
 
 ### Phase 5: Job Leads Completion
@@ -120,6 +120,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
 | 2. Test Infrastructure | 5/5 | Complete    | 2026-05-12 |
 | 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
-| 4. Starter-Template Cleanup | 3/5 | In Progress|  |
+| 4. Starter-Template Cleanup | 5/5 | Complete | 2026-05-13 |
 | 5. Job Leads Completion | 0/TBD | Not started | - |
 | 6. Performance | 0/TBD | Not started | - |

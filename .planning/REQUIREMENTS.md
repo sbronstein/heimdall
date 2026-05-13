@@ -80,7 +80,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [x] **DEBT-A1**: Delete `src/features/products/` and `src/app/dashboard/product/` routes
 - [x] **DEBT-A2**: Delete `src/app/dashboard/{exclusive,workspaces,billing}/` routes and the 805-line `src/components/ui/infobar.tsx`
 - [x] **DEBT-A3**: Decide on Kanban route — either back it with the `tasks` table via `/api/tasks` or remove the route entirely
-- [ ] **DEBT-A4**: Remove the `__CLEANUP__/` directory once the optional features above are stripped
+- [x] **DEBT-A4**: Remove the `__CLEANUP__/` directory once the optional features above are stripped
 - [x] **DEBT-A5**: Drop the unused `computeBridgeScore` import in `src/app/api/job-leads/[id]/search/route.ts:10`
 
 ### Performance
@@ -144,8 +144,8 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | DEBT-A1 | Phase 4 | Complete |
 | DEBT-A2 | Phase 4 | Complete |
 | DEBT-A3 | Phase 4 | Complete |
-| DEBT-A4 | Phase 4 | Pending |
-| DEBT-A5 | Phase 4 | Pending |
+| DEBT-A4 | Phase 4 | Complete |
+| DEBT-A5 | Phase 4 | Complete |
 | JL-A1 | Phase 5 | Pending |
 | JL-A2 | Phase 5 | Pending |
 | JL-A3 | Phase 5 | Pending |
@@ -164,4 +164,4 @@ These are the requirements GSD will track to completion. The roadmap will group 
 
 ---
 *Requirements defined: 2026-05-12*
-*Last updated: 2026-05-12 after roadmap creation — traceability populated*
+*Last updated: 2026-05-13 after Phase 4 completion — DEBT-A4 + DEBT-A5 marked complete in traceability*

@@ -74,7 +74,7 @@
 <header>
   <h1>Heimdall — Requirements</h1>
   <p class="tagline">Brownfield CRM · 28 validated · 22 active · 6 phases mapped · standard granularity</p>
-  <p class="meta">Defined: 2026-05-12 · Last updated: 2026-05-12 after roadmap creation</p>
+  <p class="meta">Defined: 2026-05-12 · Last updated: 2026-05-13 after Phase 4 completion — DEBT-A4 + DEBT-A5 marked complete in traceability</p>
 </header>
 
 <div class="core-value">
@@ -170,15 +170,13 @@
   <li><span class="req-id">SEC-A2</span>Remove the no-op "Continue with GitHub" auth button (<code>github-auth-button.tsx</code>) and the residual external <code>api.github.com</code> star fetch on the sign-in/sign-up pages</li>
 </ul>
 
-<h3>Starter-Template Cleanup <span class="pill">DEBT</span> <span class="phase-pill phase-4">Phase 4</span></h3>
+<h3>Starter-Template Cleanup <span class="pill">DEBT</span> <span class="phase-pill phase-4">Phase 4</span> <span class="badge badge-good">Phase Complete</span></h3>
 <ul class="req-list shipped">
   <li><span class="req-id">DEBT-A1</span>Delete <code>src/features/products/</code> and <code>src/app/dashboard/product/</code> routes (shipped in <code>0323e90</code>, plan 04-01)</li>
   <li><span class="req-id">DEBT-A2</span>Delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code> routes and the 805-line <code>src/components/ui/infobar.tsx</code> (shipped in <code>ca82a84</code>, plan 04-02)</li>
   <li><span class="req-id">DEBT-A3</span>Decide on Kanban route — <strong>removed</strong> (not wired to <code>/api/tasks</code>) per D-01 rationale (zustand persist + localStorage anti-pattern); decision recorded in PROJECT.md per D-02 — shipped in <code>8fa1aa9</code>, plan 04-03</li>
+  <li><span class="req-id">DEBT-A4</span>Remove the <code>__CLEANUP__/</code> directory once the optional features above are stripped — shipped in <code>c7524c3</code>, plan 04-05 (also added <code>src/__cleanup__.test.ts</code> filesystem-existence regression guard with 14 assertions)</li>
   <li><span class="req-id">DEBT-A5</span>Drop the unused <code>computeBridgeScore</code> import in <code>src/app/api/job-leads/[id]/search/route.ts:10</code> — shipped in <code>114dd34</code>, plan 04-04</li>
-</ul>
-<ul class="req-list active">
-  <li><span class="req-id">DEBT-A4</span>Remove the <code>__CLEANUP__/</code> directory once the optional features above are stripped</li>
 </ul>
 
 <h3>Job Leads Completion <span class="pill">JL-A</span> <span class="phase-pill phase-5">Phase 5</span></h3>
@@ -253,7 +251,7 @@
   <tr><td><span class="req-id">DEBT-A1</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">DEBT-A2</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">DEBT-A3</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
-  <tr><td><span class="req-id">DEBT-A4</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td>Pending</td></tr>
+  <tr><td><span class="req-id">DEBT-A4</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">DEBT-A5</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">JL-A1</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
   <tr><td><span class="req-id">JL-A2</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
@@ -270,7 +268,7 @@
 <p class="meta"><strong>Coverage:</strong> 22 / 22 v1 Active mapped &middot; 0 unmapped ✓</p>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/REQUIREMENTS.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after roadmap creation.</p>
+  <p>Source-of-truth: <code>.planning/REQUIREMENTS.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 completion.</p>
 </footer>
 
 </body>

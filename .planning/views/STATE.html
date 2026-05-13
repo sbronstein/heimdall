@@ -91,7 +91,7 @@
 
 <header>
   <h1>Project State</h1>
-  <p class="tagline">Heimdall &middot; current-state dashboard &middot; 2026-05-13 (Phase 4 in progress — DEBT-A1, DEBT-A2, DEBT-A3 shipped)</p>
+  <p class="tagline">Heimdall &middot; current-state dashboard &middot; 2026-05-13 (Phase 4 complete — all five DEBT-A* requirements shipped)</p>
 </header>
 
 <h2>Project Reference</h2>
@@ -100,7 +100,7 @@
 </div>
 <div class="card">
   See <code>.planning/PROJECT.md</code> (updated 2026-05-12) for full context, constraints, and key decisions.<br>
-  <strong>Current focus:</strong> Phase 4 — Starter-Template Cleanup (in progress — DEBT-A1, DEBT-A2, DEBT-A3, DEBT-A5 shipped; DEBT-A4 pending Wave 2).
+  <strong>Current focus:</strong> Phase 4 — Starter-Template Cleanup <span class="badge badge-good">Complete</span> (2026-05-13). Next: Phase 5 (Job Leads Completion — JL-A1..JL-A5).
 </div>
 
 <h2>Current Position</h2>
@@ -109,43 +109,43 @@
   <div class="stat">
     <div class="stat-label">Phase</div>
     <div class="stat-value">4 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
-    <div class="meta">Starter-Template Cleanup — executing</div>
+    <div class="meta">Starter-Template Cleanup — complete</div>
   </div>
   <div class="stat">
     <div class="stat-label">Plan</div>
-    <div class="stat-value small">4 / 5 shipped</div>
-    <div class="meta">04-01 products · 04-02 starter routes + infobar · 04-03 kanban · 04-04 unused import</div>
+    <div class="stat-value small">5 / 5 shipped</div>
+    <div class="meta">04-01 products · 04-02 starter routes + infobar · 04-03 kanban · 04-04 unused import · 04-05 __CLEANUP__ + verification test</div>
   </div>
   <div class="stat">
     <div class="stat-label">Status</div>
-    <div class="stat-value small"><span class="badge badge-current">IN PROGRESS</span></div>
-    <div class="meta">Wave 1: 4/4 plans done · Next: 04-05 (DEBT-A4 + verification — Wave 2, last)</div>
+    <div class="stat-value small"><span class="badge badge-good">PHASE COMPLETE</span></div>
+    <div class="meta">All 5 DEBT-A* shipped · Next: Phase 5 (Job Leads Completion)</div>
   </div>
   <div class="stat">
     <div class="stat-label">Last activity</div>
     <div class="stat-value small">2026-05-13</div>
-    <div class="meta">04-04 DEBT-A5 shipped in <code>114dd34</code></div>
+    <div class="meta">04-05 DEBT-A4 shipped in <code>c7524c3</code></div>
   </div>
 </div>
 
 <div class="card">
   <div class="meta" style="margin-bottom: 4px;">Overall progress (plans completed across all phases)</div>
   <div class="progress-bar">
-    <div class="progress-fill" style="width: 92%;"></div>
-    <div class="progress-label">12 of 13 plans complete (92%)</div>
+    <div class="progress-fill" style="width: 100%;"></div>
+    <div class="progress-label">13 of 13 plans complete (100%) across Phases 1–4 · Phases 5 + 6 not yet planned</div>
   </div>
   <div class="phase-rail">
     <div class="phase-dot done">PHASE 1<br>Bug Fix</div>
     <div class="phase-dot done">PHASE 2<br>Tests</div>
     <div class="phase-dot done">PHASE 3<br>Security</div>
-    <div class="phase-dot current">PHASE 4<br>Cleanup</div>
+    <div class="phase-dot done">PHASE 4<br>Cleanup</div>
     <div class="phase-dot">PHASE 5<br>Job Leads</div>
     <div class="phase-dot">PHASE 6<br>Performance</div>
   </div>
 </div>
 
 <div class="blocker-row">
-  <strong>Phase 4 in progress:</strong> Wave 1 complete — 04-01 (DEBT-A1 products deletion, <code>0323e90</code>), 04-02 (DEBT-A2 starter routes + Infobar machinery teardown, <code>ca82a84</code>), 04-03 (DEBT-A3 kanban removal + decision record, <code>8fa1aa9</code>), and 04-04 (DEBT-A5 unused <code>computeBridgeScore</code> import dropped, <code>114dd34</code>) shipped. 04-04 satisfies ROADMAP SC #4 — no new <code>computeBridgeScore</code> unused-import warning. Wave 2 remaining: 04-05 (DEBT-A4 — <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test). Pre-existing TS error in <code>prioritization.ts:70</code> (downlevel-iteration on Map.values()) still blocks <code>npm run build</code> for all Phase 4 plans; verification accepts grep-cleanliness + no-new-errors per <code>deferred-items.md</code>.
+  <strong>Phase 4 complete (2026-05-13):</strong> All five DEBT-A* requirements shipped as atomic per-requirement commits — 04-01 (DEBT-A1 products deletion, <code>0323e90</code>), 04-02 (DEBT-A2 starter routes + Infobar machinery teardown, <code>ca82a84</code>), 04-03 (DEBT-A3 kanban removal + decision record, <code>8fa1aa9</code>), 04-04 (DEBT-A5 unused <code>computeBridgeScore</code> import dropped, <code>114dd34</code>), 04-05 (DEBT-A4 <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test, <code>c7524c3</code>). ROADMAP SC #1–4 directly verifiable on a clean checkout via <code>npm run test:run</code>: 12 test files, 101 tests pass in 9.92s (under the Phase 2 CD-01 10s threshold). The new <code>src/__cleanup__.test.ts</code> (14 assertions) enters the husky pre-push gate as durable regression protection. Pre-existing <code>prioritization.ts:70</code> MapIterator/es5 TS error is documented in <code>deferred-items.md</code> and out of Phase 4 scope — to be addressed in a follow-on phase. Next: Phase 5 (Job Leads Completion).
 </div>
 
 <h2>Performance Metrics</h2>
@@ -226,14 +226,14 @@
 <div class="card">
   <table>
     <tr><th>Last session</th><td>2026-05-13</td></tr>
-    <tr><th>Stopped at</th><td>Completed 04-04-PLAN.md (DEBT-A5 unused <code>computeBridgeScore</code> import dropped)</td></tr>
+    <tr><th>Stopped at</th><td>Completed 04-05-PLAN.md (DEBT-A4 + filesystem-existence verification test) — Phase 4 complete</td></tr>
     <tr><th>Resume file</th><td>None</td></tr>
-    <tr><th>Next step</th><td>Execute 04-05-PLAN.md (DEBT-A4 — <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test; Wave 2, last plan in Phase 4)</td></tr>
+    <tr><th>Next step</th><td>Phase 5 (Job Leads Completion — JL-A1..JL-A5) — discuss + plan via <code>/gsd-discuss-phase</code></td></tr>
   </table>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 04 (DEBT-A5) completion.</p>
+  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 05 (DEBT-A4 + verification test) — Phase 4 complete.</p>
 </footer>
 
 </body>

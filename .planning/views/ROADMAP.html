@@ -111,7 +111,7 @@
 </header>
 
 <div class="urgency">
-  <strong>Phase 4 status:</strong> <span class="badge badge-current">In Progress</span>. Phase 3 (Security Hardening) complete. Phase 4 (Starter-Template Cleanup) is mid-execution: DEBT-A1 (04-01), DEBT-A2 (04-02), DEBT-A3 (04-03), and DEBT-A5 (04-04) shipped — Wave 1 complete. Only Wave 2 DEBT-A4 (04-05) remains. <code>npm run build</code> remains blocked on the pre-existing <code>prioritization.ts:70</code> TS error documented in <code>deferred-items.md</code>.
+  <strong>Phase 4 status:</strong> <span class="badge badge-good">Complete</span> (2026-05-13). All five DEBT-A* requirements shipped: DEBT-A1 (04-01, <code>0323e90</code>), DEBT-A2 (04-02, <code>ca82a84</code>), DEBT-A3 (04-03, <code>8fa1aa9</code>), DEBT-A5 (04-04, <code>114dd34</code>), DEBT-A4 (04-05, <code>c7524c3</code> — also added <code>src/__cleanup__.test.ts</code> filesystem-existence regression guard). ROADMAP SC #1–4 directly verifiable via <code>npm run test:run</code>. Pre-existing <code>prioritization.ts:70</code> TS error remains deferred per <code>deferred-items.md</code> — to be addressed outside Phase 4 scope. Next: Phase 5 (Job Leads Completion).
 </div>
 
 <h2>Overview</h2>
@@ -125,7 +125,7 @@
   <tr><td><strong>1</strong> ✓</td><td>Critical Bug Fix</td><td>Restore reliable dashboard navigation after large LinkedIn imports</td><td><span class="req-pill">BUG-01</span><span class="req-pill">BUG-02</span></td><td><span class="badge badge-ui">yes</span></td></tr>
   <tr><td><strong>2</strong> ✓</td><td>Test Infrastructure</td><td>Working Vitest harness covering load-bearing logic + BUG-01 regression</td><td><span class="req-pill">TEST-A1</span><span class="req-pill">TEST-A2</span><span class="req-pill">TEST-A3</span></td><td>—</td></tr>
   <tr><td><strong>3</strong> ✓</td><td>Security Hardening</td><td>Every <code>/api/*</code> route requires a valid Clerk session; starter auth artifacts removed</td><td><span class="req-pill">SEC-A1</span><span class="req-pill">SEC-A2</span></td><td>—</td></tr>
-  <tr><td><strong>4</strong></td><td>Starter-Template Cleanup</td><td>Dead starter code removed; repo contains only Heimdall code</td><td><span class="req-pill">DEBT-A1</span><span class="req-pill">DEBT-A2</span><span class="req-pill">DEBT-A3</span><span class="req-pill">DEBT-A4</span><span class="req-pill">DEBT-A5</span></td><td><span class="badge badge-ui">yes</span></td></tr>
+  <tr><td><strong>4</strong> ✓</td><td>Starter-Template Cleanup</td><td>Dead starter code removed; repo contains only Heimdall code</td><td><span class="req-pill">DEBT-A1</span><span class="req-pill">DEBT-A2</span><span class="req-pill">DEBT-A3</span><span class="req-pill">DEBT-A4</span><span class="req-pill">DEBT-A5</span></td><td><span class="badge badge-ui">yes</span></td></tr>
   <tr><td><strong>5</strong></td><td>Job Leads Completion</td><td>LinkedIn scraper runs cleanly end-to-end and surfaces failures</td><td><span class="req-pill">JL-A1</span><span class="req-pill">JL-A2</span><span class="req-pill">JL-A3</span><span class="req-pill">JL-A4</span><span class="req-pill">JL-A5</span></td><td>—</td></tr>
   <tr><td><strong>6</strong></td><td>Performance</td><td>N+1 patterns eliminated; hot-path indexes in place</td><td><span class="req-pill">PERF-A1</span><span class="req-pill">PERF-A2</span><span class="req-pill">PERF-A3</span><span class="req-pill">PERF-A4</span><span class="req-pill">PERF-A5</span></td><td>—</td></tr>
 </table>
@@ -229,8 +229,8 @@
       </ul>
     </li>
     <li><strong>Wave 2</strong> (blocked on Wave 1):
-      <ul class="req-list active" style="margin-left:1em;">
-        <li><code>04-05-PLAN.md</code> — DEBT-A4: <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test <span class="badge badge-pending">Pending</span></li>
+      <ul class="req-list shipped" style="margin-left:1em;">
+        <li><code>04-05-PLAN.md</code> — DEBT-A4: <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test <span class="badge badge-good">Complete</span> <code>c7524c3</code></li>
       </ul>
     </li>
   </ul>
@@ -272,7 +272,7 @@
     <tr><td>1. Critical Bug Fix</td><td>1 / 1</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
     <tr><td>2. Test Infrastructure</td><td>5 / 5</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
     <tr><td>3. Security Hardening</td><td>2 / 2</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-13</td></tr>
-    <tr><td>4. Starter-Template Cleanup</td><td>2 / 5</td><td><span class="badge badge-current">In Progress</span></td><td>—</td></tr>
+    <tr><td>4. Starter-Template Cleanup</td><td>5 / 5</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-13</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>6. Performance</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
   </table>
@@ -281,7 +281,7 @@
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 03 completion (DEBT-A3 shipped in <code>8fa1aa9</code>).</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 05 completion (DEBT-A4 shipped in <code>c7524c3</code>) — Phase 4 complete.</p>
 </footer>
 
 </body>
