@@ -1,7 +1,6 @@
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Heading } from '../ui/heading';
-import type { InfobarContent } from '@/components/ui/infobar';
 
 function PageSkeleton() {
   return (
@@ -26,7 +25,6 @@ export default function PageContainer({
   accessFallback,
   pageTitle,
   pageDescription,
-  infoContent,
   pageHeaderAction
 }: {
   children: React.ReactNode;
@@ -36,7 +34,6 @@ export default function PageContainer({
   accessFallback?: React.ReactNode;
   pageTitle?: string;
   pageDescription?: string;
-  infoContent?: InfobarContent;
   pageHeaderAction?: React.ReactNode;
 }) {
   if (!access) {
@@ -60,7 +57,6 @@ export default function PageContainer({
           <Heading
             title={pageTitle ?? ''}
             description={pageDescription ?? ''}
-            infoContent={infoContent}
           />
           {pageHeaderAction && <div>{pageHeaderAction}</div>}
         </div>
@@ -73,7 +69,6 @@ export default function PageContainer({
         <Heading
           title={pageTitle ?? ''}
           description={pageDescription ?? ''}
-          infoContent={infoContent}
         />
         {pageHeaderAction && <div>{pageHeaderAction}</div>}
       </div>
