@@ -7,7 +7,6 @@ import { logTimeline } from '@/lib/db/timeline';
 import { scrapeConnections } from '@/features/job-leads/lib/scrape-connections';
 import { matchConnections } from '@/features/job-leads/lib/match-connections';
 import { inferSeniority } from '@/features/job-leads/lib/seniority';
-import { computeBridgeScore } from '@/features/job-leads/lib/prioritization';
 
 export async function POST(
   _request: Request,
