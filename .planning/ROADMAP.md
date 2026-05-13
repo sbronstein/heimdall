@@ -83,7 +83,7 @@ Plans:
 **Wave 1** *(four plans parallel — disjoint file sets)*
 - [x] 04-01-PLAN.md — DEBT-A1: delete products feature + dead support (mock-api.ts, data.ts product types, breadcrumb entry)
 - [x] 04-02-PLAN.md — DEBT-A2: delete starter routes (exclusive, workspaces, billing) + Infobar machinery transitive teardown
-- [ ] 04-03-PLAN.md — DEBT-A3: delete /dashboard/kanban route + features/kanban folder + record decision in PROJECT.md
+- [x] 04-03-PLAN.md — DEBT-A3: delete /dashboard/kanban route + features/kanban folder + record decision in PROJECT.md
 - [ ] 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route
 
 **Wave 2** *(blocked on Wave 1 completion — must be last)*
@@ -120,6 +120,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
 | 2. Test Infrastructure | 5/5 | Complete    | 2026-05-12 |
 | 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
-| 4. Starter-Template Cleanup | 2/5 | In Progress|  |
+| 4. Starter-Template Cleanup | 3/5 | In Progress|  |
 | 5. Job Leads Completion | 0/TBD | Not started | - |
 | 6. Performance | 0/TBD | Not started | - |
