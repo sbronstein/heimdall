@@ -78,6 +78,16 @@ Plans:
   2. `src/features/products/`, the 805-line `src/components/ui/infobar.tsx`, and the `__CLEANUP__/` directory no longer exist in the repo
   3. The `/dashboard/kanban` route is either backed by `/api/tasks` or removed (decision recorded in PROJECT.md)
   4. `npm run build` succeeds with no unused-import warnings for `computeBridgeScore` in the job-leads search route
+**Plans**: 5 plans
+Plans:
+**Wave 1** *(four plans parallel — disjoint file sets)*
+- [ ] 04-01-PLAN.md — DEBT-A1: delete products feature + dead support (mock-api.ts, data.ts product types, breadcrumb entry)
+- [ ] 04-02-PLAN.md — DEBT-A2: delete starter routes (exclusive, workspaces, billing) + Infobar machinery transitive teardown
+- [ ] 04-03-PLAN.md — DEBT-A3: delete /dashboard/kanban route + features/kanban folder + record decision in PROJECT.md
+- [ ] 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route
+
+**Wave 2** *(blocked on Wave 1 completion — must be last)*
+- [ ] 04-05-PLAN.md — DEBT-A4: rm -rf __CLEANUP__/ + add filesystem-existence verification test
 **UI hint**: yes
 
 ### Phase 5: Job Leads Completion
@@ -110,6 +120,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Critical Bug Fix | 1/1 | Complete | 2026-05-12 |
 | 2. Test Infrastructure | 5/5 | Complete    | 2026-05-12 |
 | 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
-| 4. Starter-Template Cleanup | 0/TBD | Not started | - |
+| 4. Starter-Template Cleanup | 0/5  | Not started | - |
 | 5. Job Leads Completion | 0/TBD | Not started | - |
 | 6. Performance | 0/TBD | Not started | - |

@@ -205,6 +205,7 @@
   <div class="phase-goal">Dead starter-template code is gone — the repo contains only Heimdall code.</div>
   <div class="phase-meta">
     <strong>Depends on:</strong> Phase 3 &middot;
+    <strong>Plans:</strong> 5 plans (4 in Wave 1 parallel, 1 in Wave 2) &middot;
     <strong>UI hint:</strong> <span class="badge badge-ui">yes</span>
   </div>
   <div class="req-pills"><strong>Requirements:</strong> <span class="req-pill">DEBT-A1</span><span class="req-pill">DEBT-A2</span><span class="req-pill">DEBT-A3</span><span class="req-pill">DEBT-A4</span><span class="req-pill">DEBT-A5</span></div>
@@ -215,6 +216,22 @@
     <li>The <code>/dashboard/kanban</code> route is either backed by <code>/api/tasks</code> or removed (decision recorded in PROJECT.md)</li>
     <li><code>npm run build</code> succeeds with no unused-import warnings for <code>computeBridgeScore</code> in the job-leads search route</li>
   </ol>
+  <strong>Plans:</strong>
+  <ul class="req-list active">
+    <li><strong>Wave 1</strong> (parallel — disjoint file sets):
+      <ul class="req-list active" style="margin-left:1em;">
+        <li><code>04-01-PLAN.md</code> — DEBT-A1: delete products feature + dead support</li>
+        <li><code>04-02-PLAN.md</code> — DEBT-A2: delete starter routes + Infobar machinery teardown</li>
+        <li><code>04-03-PLAN.md</code> — DEBT-A3: delete kanban route &amp; feature folder + record decision in PROJECT.md</li>
+        <li><code>04-04-PLAN.md</code> — DEBT-A5: drop unused <code>computeBridgeScore</code> import</li>
+      </ul>
+    </li>
+    <li><strong>Wave 2</strong> (blocked on Wave 1):
+      <ul class="req-list active" style="margin-left:1em;">
+        <li><code>04-05-PLAN.md</code> — DEBT-A4: <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test</li>
+      </ul>
+    </li>
+  </ul>
 </div>
 
 <div class="phase-card phase-5">
@@ -253,7 +270,7 @@
     <tr><td>1. Critical Bug Fix</td><td>1 / 1</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
     <tr><td>2. Test Infrastructure</td><td>5 / 5</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
     <tr><td>3. Security Hardening</td><td>0 / 2</td><td><span class="badge badge-current">Planned</span></td><td>—</td></tr>
-    <tr><td>4. Starter-Template Cleanup</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
+    <tr><td>4. Starter-Template Cleanup</td><td>0 / 5</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>6. Performance</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
   </table>
