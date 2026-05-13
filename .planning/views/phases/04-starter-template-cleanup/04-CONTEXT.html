@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — Phase 4 Context</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 4px; font-size: 30px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin-top: 24px; font-size: 17px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; margin: 12px 0; }
+  .boundary {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-size: 15px;
+    font-style: italic;
+  }
+  .alert {
+    background: #fdf0eb;
+    border-left: 4px solid var(--warn);
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+  }
+  .alert h3 { margin-top: 0; color: var(--warn); }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  .decision-id { color: var(--accent-2); font-weight: 600; }
+  .impl-note { display: block; margin-top: 6px; padding: 8px 12px; background: #f1f5ee; border-left: 3px solid var(--accent); font-size: 13px; color: #3a4a3a; border-radius: 0 4px 4px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-pending { background: #f0e5d0; color: #8a6a3a; }
+  .badge-good { background: #d8e8d8; color: #3a6a3a; }
+  .badge-current { background: #d9e2ef; color: #3a5a8a; }
+  .badge-warn { background: #fdd6cf; color: #8a3a2a; }
+  .scope-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 640px) { .scope-grid { grid-template-columns: 1fr; } }
+  .scope-block { border-radius: 8px; padding: 14px 18px; border: 1px solid var(--line); }
+  .scope-in { background: #f1f5ee; border-left: 4px solid var(--accent); }
+  .scope-out { background: #fdf0eb; border-left: 4px solid var(--warn); }
+  .scope-block h4 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  .file-list li { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Phase 4: Starter-Template Cleanup — Context</h1>
+  <p class="tagline">Heimdall · gathered 2026-05-13 · <span class="badge badge-good">Ready for planning</span> · <span class="badge badge-current">Mode: --auto</span></p>
+</header>
+
+<section class="card boundary">
+  <h2 style="border:none;margin-top:0;">Phase Boundary</h2>
+  <p>Delete the Next.js Shadcn dashboard starter-template residue still in the tree so the repo contains only Heimdall code: four unused dashboard routes, the 805-line Infobar component and its dependent machinery, the unused products feature, the kanban starter (decision: <strong>remove</strong>, not wire), the <code>__CLEANUP__/</code> directory, and the unused <code>computeBridgeScore</code> import in the job-leads search route.</p>
+</section>
+
+<div class="scope-grid">
+  <div class="scope-block scope-in">
+    <h4>In scope (DEBT-A1..A5)</h4>
+    <ul>
+      <li><strong>DEBT-A1:</strong> delete <code>src/features/products/</code> + <code>src/app/dashboard/product/</code></li>
+      <li><strong>DEBT-A2:</strong> delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code> + 805-line <code>infobar.tsx</code></li>
+      <li><strong>DEBT-A3:</strong> kanban — <span class="badge badge-warn">remove</span>; record decision in PROJECT.md</li>
+      <li><strong>DEBT-A4:</strong> <code>rm -rf __CLEANUP__/</code></li>
+      <li><strong>DEBT-A5:</strong> drop unused <code>computeBridgeScore</code> import in search route</li>
+    </ul>
+    <h4 style="margin-top:14px;">Transitive (build breaks without)</h4>
+    <ul>
+      <li>Infobar machinery: <code>info-button.tsx</code>, <code>info-sidebar.tsx</code>, <code>infoconfig.ts</code>, <code>InfobarProvider</code> wrapper in dashboard layout, <code>infoContent</code> prop on <code>PageContainer</code>/<code>Heading</code></li>
+      <li>Products dead support: <code>mock-api.ts</code>, <code>Product</code>/<code>SaleUser</code>/<code>recentSalesData</code> in <code>data.ts</code>, <code>/dashboard/product</code> breadcrumb entry</li>
+      <li>PROJECT.md kanban "Out of Scope" line — append <code>(Removed in Phase 4)</code></li>
+    </ul>
+  </div>
+  <div class="scope-block scope-out">
+    <h4>Out of scope (deferred)</h4>
+    <ul>
+      <li>Orphan starter components not named in DEBT: <code>org-switcher.tsx</code>, <code>demo-form.tsx</code>, <code>user-auth-form.tsx</code>, profile route, Profile/Login nav items</li>
+      <li>Auth-page visual chrome Phase 3 deferred (Random Dude quote, Logo SVG, <code>interactive-grid</code>, Star-on-GitHub text)</li>
+      <li><code>any</code> typings in <code>kbar/index.tsx</code> and <code>weekly-snapshot-form.tsx</code> (type-debt, not starter)</li>
+      <li><code>playwright</code> package classification (JL2-02, v2-deferred)</li>
+      <li><code>.planning/codebase/</code> map rewrites (doc-update task post-milestone)</li>
+    </ul>
+  </div>
+</div>
+
+<section class="alert">
+  <h3>⚠ Critical Pre-Discovery</h3>
+  <ul>
+    <li><span class="decision-id">PD-01:</span> Every name in DEBT-A1..A5 still exists in the tree — no requirement is already satisfied.</li>
+    <li><span class="decision-id">PD-02:</span> <code>infobar.tsx</code> is NOT isolated — deleting just that file breaks the build. 5+ files depend on <code>InfobarProvider</code>/<code>InfobarContent</code>. Transitive removal is mandatory.</li>
+    <li><span class="decision-id">PD-03:</span> Kanban removal has TWO surfaces: the route AND the feature folder (<code>src/features/kanban/</code> with its zustand+localStorage anti-pattern store). Both must go.</li>
+    <li><span class="decision-id">PD-04:</span> <code>src/features/products/</code> blast radius is wider than DEBT-A1 names: <code>mock-api.ts</code>, three exports in <code>data.ts</code>, breadcrumb entry are all products-only dead code.</li>
+    <li><span class="decision-id">PD-05:</span> SC #1 (404 verification) does not require an HTTP smoke. In Next.js App Router, deleting a route directory IS the 404. Filesystem-existence assertion + clean build is a stronger contract.</li>
+  </ul>
+</section>
+
+<h2>Implementation Decisions</h2>
+
+<div class="card">
+  <h3>Kanban Decision (DEBT-A3 — recorded for SC #3)</h3>
+  <ul>
+    <li><span class="decision-id">D-01:</span> <strong>Remove</strong> <code>/dashboard/kanban</code> entirely rather than wiring to <code>/api/tasks</code>. Reasons: localStorage anti-pattern (ARCHITECTURE.md); <code>/dashboard/pipeline</code> and <code>/dashboard/tasks</code> already cover DB-backed kanban; scope is cleanup, not new feature work.</li>
+    <li><span class="decision-id">D-02:</span> Decision record for SC #3 — append <code>(Removed in Phase 4)</code> to the existing kanban line in <code>PROJECT.md</code> §"Out of Scope". Minimum complete edit.</li>
+    <li><span class="decision-id">D-03:</span> Delete BOTH the route (<code>src/app/dashboard/kanban/</code>) AND the feature folder (<code>src/features/kanban/</code>).</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Infobar Teardown (DEBT-A2, transitive)</h3>
+  <ul>
+    <li><span class="decision-id">D-04:</span> Transitive removal — delete <code>infobar.tsx</code> + <code>info-button.tsx</code> + <code>info-sidebar.tsx</code> + <code>infoconfig.ts</code>; strip <code>InfobarProvider</code> + <code>&lt;InfoSidebar /&gt;</code> from dashboard layout; drop <code>infoContent</code> prop from <code>PageContainer</code> and <code>Heading</code>.</li>
+    <li><span class="decision-id">D-05:</span> Sweep every <code>infoContent={...}</code> call site. From scout: all live sites are the four starter routes being deleted; verify with post-deletion grep.</li>
+    <li><span class="decision-id">D-06:</span> No replacement for the removed <code>&lt;InfoSidebar /&gt;</code> slot — that would be feature work.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Products + Dead Support (DEBT-A1, transitive)</h3>
+  <ul>
+    <li><span class="decision-id">D-07:</span> Delete <code>src/features/products/</code> + <code>src/app/dashboard/product/</code> (whole directories).</li>
+    <li><span class="decision-id">D-08:</span> Delete <code>src/constants/mock-api.ts</code> outright — products-only consumer.</li>
+    <li><span class="decision-id">D-09:</span> Strip <code>Product</code>, <code>SaleUser</code>, <code>recentSalesData</code> from <code>src/constants/data.ts</code>; delete file if empty.</li>
+    <li><span class="decision-id">D-10:</span> Remove <code>/dashboard/product</code> entry from <code>src/hooks/use-breadcrumbs.tsx</code>.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Starter Dashboard Routes (DEBT-A2)</h3>
+  <ul>
+    <li><span class="decision-id">D-11:</span> Delete <code>src/app/dashboard/{exclusive,workspaces,workspaces/team,billing}/page.tsx</code>.</li>
+    <li><span class="decision-id">D-12:</span> No edits to <code>src/config/nav-config.ts</code> needed — already clean (no product/exclusive/workspaces/billing/kanban entries).</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3><code>__CLEANUP__/</code> Removal (DEBT-A4)</h3>
+  <ul>
+    <li><span class="decision-id">D-13:</span> <code>rm -rf __CLEANUP__/</code> — entire top-level directory.</li>
+    <li><span class="decision-id">D-14:</span> <strong>Sequence last</strong> (Wave 2). The cleanup script in it could overwrite real source with template versions; ordering it last makes accidents structurally impossible.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Unused Import (DEBT-A5)</h3>
+  <ul>
+    <li><span class="decision-id">D-15:</span> One-line edit in <code>src/app/api/job-leads/[id]/search/route.ts</code>: remove line 10. <code>computeBridgeScore</code> stays alive for <code>recommendations/route.ts</code>.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Verification Strategy (SC #1–4)</h3>
+  <ul>
+    <li><span class="decision-id">D-16:</span> Filesystem-existence test (Vitest, colocated) asserting deleted paths return <code>existsSync(...) === false</code>, plus assertion that <code>computeBridgeScore</code> string is gone from the search route.</li>
+    <li><span class="decision-id">D-17:</span> NO runtime HTTP 404 smoke. Next.js's resolver IS the contract. Filesystem assertion + clean <code>npm run build</code> is stronger and faster.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Plan Grouping</h3>
+  <p><span class="decision-id">D-18:</span> Recommended breakdown — <strong>4 disjoint parallel plans in Wave 1, 1 verification plan in Wave 2</strong> (planner has final say):</p>
+  <table>
+    <thead>
+      <tr><th>Wave</th><th>Plan</th><th>Owns</th><th>Files</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="4">1<br>(parallel)</td><td><strong>04-01</strong></td><td>DEBT-A1 — Products</td><td><code>src/features/products/</code>, <code>src/app/dashboard/product/</code>, <code>mock-api.ts</code>, parts of <code>data.ts</code>, breadcrumb entry</td></tr>
+      <tr><td><strong>04-02</strong></td><td>DEBT-A2 — Starter routes + Infobar</td><td>3 dashboard routes; <code>infobar.tsx</code>, <code>info-button.tsx</code>, <code>info-sidebar.tsx</code>, <code>infoconfig.ts</code>; <code>dashboard/layout.tsx</code>, <code>page-container.tsx</code>, <code>heading.tsx</code></td></tr>
+      <tr><td><strong>04-03</strong></td><td>DEBT-A3 — Kanban + record</td><td><code>src/app/dashboard/kanban/</code>, <code>src/features/kanban/</code>, <code>.planning/PROJECT.md</code></td></tr>
+      <tr><td><strong>04-04</strong></td><td>DEBT-A5 — Unused import</td><td><code>src/app/api/job-leads/[id]/search/route.ts:10</code></td></tr>
+      <tr><td>2<br>(serialized)</td><td><strong>04-05</strong></td><td>DEBT-A4 + verification</td><td><code>__CLEANUP__/</code>, new filesystem-existence test</td></tr>
+    </tbody>
+  </table>
+  <p><span class="decision-id">D-19:</span> Atomic commits per requirement (5 commits + verification commit). Mirrors Phase 3.</p>
+</div>
+
+<h2>Canonical References</h2>
+<div class="card">
+  <p>Downstream agents (researcher, planner, executor) <strong>MUST</strong> read these before acting.</p>
+  <h3>Requirements &amp; Roadmap</h3>
+  <ul class="file-list">
+    <li><code>.planning/REQUIREMENTS.md</code> §"Starter-Template Cleanup" — DEBT-A1..A5 verbatim</li>
+    <li><code>.planning/ROADMAP.md</code> §"Phase 4" — Goal + 4 success criteria</li>
+    <li><code>.planning/PROJECT.md</code> §"Out of Scope" — Existing kanban removal commitment</li>
+  </ul>
+  <h3>Codebase Maps</h3>
+  <ul class="file-list">
+    <li><code>.planning/codebase/CONCERNS.md</code> §"Tech Debt" — Names every DEBT target precisely</li>
+    <li><code>.planning/codebase/ARCHITECTURE.md</code> §"Anti-Patterns → Kanban store" — Rationale for D-01</li>
+  </ul>
+  <h3>Prior Phase Context</h3>
+  <ul class="file-list">
+    <li><code>.planning/phases/03-security-hardening/03-CONTEXT.md</code> — Parallel-disjoint-plans + atomic-commits-per-requirement patterns</li>
+    <li><code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> — Vitest harness (reused without modification)</li>
+    <li><code>__CLEANUP__/cleanup.md</code> line 33 — Owner intent: delete after feature-strip decisions land</li>
+  </ul>
+</div>
+
+<h2>What the Planner Does NOT Need to Research</h2>
+<div class="card">
+  <ul>
+    <li>Whether to wire kanban to <code>/api/tasks</code> — locked: <strong>remove</strong> (D-01)</li>
+    <li>Whether to delete infobar transitively or surgically — locked: <strong>transitive</strong> (D-04)</li>
+    <li>Whether to add an HTTP 404 smoke test — locked: <strong>no</strong>; filesystem assertion + build (D-17)</li>
+    <li>Whether to touch deferred orphans (org-switcher, demo-form, user-auth-form) — locked: <strong>defer</strong></li>
+    <li>Whether to add a custom 404 not-found.tsx — recommended: no (CD-02)</li>
+  </ul>
+</div>
+
+<h2>What the Planner DOES Need to Decide / Verify</h2>
+<div class="card">
+  <ul>
+    <li>Does <code>src/constants/data.ts</code> end up empty after stripping the three exports? (CD-01: delete file if so)</li>
+    <li>Final grep to confirm zero non-products consumers of <code>mock-api</code>, <code>SaleUser</code>, <code>recentSalesData</code> before <code>git rm</code></li>
+    <li>Final grep to confirm zero non-starter callers of <code>infoContent</code> prop after starter-route deletion</li>
+    <li>Whether <code>package.json</code> has any <code>scripts.cleanup</code> entry tied to <code>__CLEANUP__/scripts/cleanup.js</code></li>
+  </ul>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-CONTEXT.md</code> (may lag behind this HTML companion).<br>
+  Phase 4 · Starter-Template Cleanup · Context gathered 2026-05-13.
+</footer>
+
+</body>
+</html>
