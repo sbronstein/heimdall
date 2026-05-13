@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — Phase 3 Context</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 4px; font-size: 30px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin-top: 24px; font-size: 17px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; margin: 12px 0; }
+  .boundary {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-size: 15px;
+    font-style: italic;
+  }
+  .alert {
+    background: #fdf0eb;
+    border-left: 4px solid var(--warn);
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+  }
+  .alert h3 { margin-top: 0; color: var(--warn); }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  .decision-id { color: var(--accent-2); font-weight: 600; }
+  .impl-note { display: block; margin-top: 6px; padding: 8px 12px; background: #f1f5ee; border-left: 3px solid var(--accent); font-size: 13px; color: #3a4a3a; border-radius: 0 4px 4px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-pending { background: #f0e5d0; color: #8a6a3a; }
+  .badge-good { background: #d8e8d8; color: #3a6a3a; }
+  .badge-current { background: #d9e2ef; color: #3a5a8a; }
+  .badge-warn { background: #fdd6cf; color: #8a3a2a; }
+  .scope-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 640px) { .scope-grid { grid-template-columns: 1fr; } }
+  .scope-block { border-radius: 8px; padding: 14px 18px; border: 1px solid var(--line); }
+  .scope-in { background: #f1f5ee; border-left: 4px solid var(--accent); }
+  .scope-out { background: #fdf0eb; border-left: 4px solid var(--warn); }
+  .scope-block h4 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  .file-list li { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Phase 3: Security Hardening — Context</h1>
+  <p class="tagline">Heimdall · gathered 2026-05-12 · <span class="badge badge-good">Ready for planning</span> · <span class="badge badge-current">Mode: --auto</span></p>
+</header>
+
+<h2>Phase Boundary</h2>
+<div class="card boundary">
+  Authenticate every <code>/api/*</code> route with a valid Clerk session enforcing the single-user email lock, and strip the two starter-template auth artifacts that leak third-party network calls into the auth pages.
+</div>
+
+<div class="scope-grid">
+  <div class="scope-block scope-in">
+    <h4>In scope</h4>
+    <ul>
+      <li><strong>SEC-A1:</strong> Every <code>/api/*</code> route returns 401 without a valid Clerk session — enforcement at the Next.js middleware layer.</li>
+      <li><strong>SEC-A1:</strong> Same <code>steve@bronstein.org</code> email lock that protects <code>/dashboard/*</code> applies to <code>/api/*</code>.</li>
+      <li><strong>SEC-A2:</strong> Delete <code>github-auth-button.tsx</code> + its rendered usage in sign-in/sign-up views.</li>
+      <li><strong>SEC-A2:</strong> Remove <code>api.github.com/repos/...</code> fetch from both auth <code>page.tsx</code> files + dead <code>stars</code> prop.</li>
+      <li>Automated test proving the gate fires for unauthenticated <code>/api/*</code> requests.</li>
+    </ul>
+  </div>
+  <div class="scope-block scope-out">
+    <h4>Out of scope (other phases)</h4>
+    <ul>
+      <li>Broader starter cleanup (<code>infobar.tsx</code>, <code>__CLEANUP__/</code>, <code>products/</code>, etc.) — Phase 4</li>
+      <li>Other auth-page visual chrome (Random Dude quote, Logo placeholder, grid background)</li>
+      <li>LinkedIn cookie file handling — local-dev only, Phase 5 may revisit</li>
+      <li>Clerk configuration changes (providers, session lifetimes)</li>
+      <li>Rate limiting, CSRF, audit logging, security headers</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Critical Pre-Discovery</h2>
+
+<div class="alert">
+  <h3>PD-01 · <code>src/proxy.ts</code> is dead code</h3>
+  <p>
+    Next.js convention requires the middleware file to be named <code>middleware.ts</code> at the project root or under <code>src/</code>. A repo-wide search confirms no such file exists; the only <code>clerkMiddleware()</code> invocation lives in <code>src/proxy.ts</code>, which Next.js does <strong>not</strong> auto-load. The "Clerk middleware enforces the single-user email lock" claim in <code>PROJECT.md</code>, <code>ARCHITECTURE.md</code>, and <code>CLAUDE.md</code> is currently <strong>inaccurate</strong>. <code>/dashboard/*</code> is enforced only by page-level <code>auth()</code> calls in <code>src/app/page.tsx</code> and <code>src/app/dashboard/page.tsx</code>.
+  </p>
+  <p>
+    <strong>Consequence:</strong> SEC-A1 is not "extend the middleware" — it is "activate the middleware for the first time, then expand it to <code>/api/*</code>." This is the single highest-leverage change in the phase.
+  </p>
+</div>
+
+<div class="card">
+  <p><strong>PD-02 · Page-level redirects stay in place.</strong> <code>src/app/page.tsx</code> and <code>src/app/dashboard/page.tsx</code> already redirect unauthenticated users to <code>/auth/sign-in</code>. After Phase 3 these become belt-and-suspenders behind the now-active middleware; do NOT remove them in this phase.</p>
+</div>
+
+<h2>Implementation Decisions</h2>
+
+<h3>Enforcement Strategy</h3>
+<div class="card">
+  <p><span class="decision-id">D-01</span> Rename <code>src/proxy.ts</code> → <code>src/middleware.ts</code> via <code>git mv</code>. Single-file change that activates everything.</p>
+  <p><span class="decision-id">D-02</span> Expand the protected-route matcher inside <code>clerkMiddleware()</code> from <code>['/dashboard(.*)']</code> to <code>['/dashboard(.*)', '/api/(.*)']</code>.</p>
+  <p><span class="decision-id">D-03</span> Email lock applies to <strong>both</strong> route classes equally. CLI consumes the API surface using Steve's Clerk session; multi-user is out-of-scope.</p>
+  <p><span class="decision-id">D-04</span> For API routes, the planner must verify whether Clerk's <code>auth.protect()</code> emits a JSON 401 or an HTML redirect in Next.js 16. If it returns a redirect, add an explicit short-circuit emitting <code>NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })</code> to preserve API-V1 envelope.</p>
+  <p><span class="decision-id">D-05</span> Public auth pages (<code>/auth/sign-in</code>, <code>/auth/sign-up</code>) remain reachable without a session. The protected list contains only <code>[dashboard, api]</code>, so the negative top-level matcher already excludes them.</p>
+  <p><span class="decision-id">D-06</span> Do NOT add per-route <code>auth()</code> calls to <code>src/app/api/**/route.ts</code>. Middleware is the single chokepoint.</p>
+</div>
+
+<h3>Verification Strategy (Phase 3 SC #1)</h3>
+<div class="card">
+  <p><span class="decision-id">D-07</span> Two-layer verification, both required:</p>
+  <ol>
+    <li><strong>Middleware unit test</strong> — <code>src/middleware.test.ts</code>: stubs Clerk via <code>vi.mock('@clerk/nextjs/server')</code> and asserts the middleware returns 401 / sign-in redirect for unauthenticated <code>/api/*</code> and <code>/dashboard/*</code> requests.</li>
+    <li><strong>Route-enumeration assertion</strong> — globs <code>src/app/api/**/route.ts</code> and asserts every API path matches the protected-route matcher pattern. Catches matcher drift.</li>
+  </ol>
+  <p><span class="decision-id">D-08</span> Do NOT attempt a per-route HTTP sweep test — middleware runs at the edge before handlers, so a per-route test would need to mock middleware to reach the handler, which defeats the point.</p>
+  <p><span class="decision-id">D-09</span> Use the Phase 2 Vitest harness as-is (no PGlite needed for these tests).</p>
+  <p class="impl-note">Note: route count is <strong>32</strong>, not 34. ROADMAP.md's figure was a slight overcount. The contract is "all <code>/api/*</code> routes," not a specific integer.</p>
+</div>
+
+<h3>Starter-Template Auth Cleanup (SEC-A2)</h3>
+<div class="card">
+  <p><span class="decision-id">D-10</span> Delete <code>src/features/auth/components/github-auth-button.tsx</code> outright. Remove the rendered <code>&lt;GithubSignInButton /&gt;</code> usage from <code>sign-in-view.tsx</code> and <code>sign-up-view.tsx</code>.</p>
+  <p><span class="decision-id">D-11</span> Remove the <code>try { fetch('https://api.github.com/repos/...') }</code> block from both <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> and <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code>.</p>
+  <p><span class="decision-id">D-12</span> Remove the <code>stars</code> prop from <code>SignInViewPage</code> and <code>SignUpViewPage</code>, and delete the now-dead <code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> block in both view components.</p>
+  <p><span class="decision-id">D-13</span> Do NOT touch other auth-page chrome (Random Dude quote, Logo SVG, grid pattern, top-right Login link). Phase 4 territory.</p>
+</div>
+
+<h3>Claude's Discretion</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">CD-01</span> Use <code>git mv</code> (vs <code>rm</code> + <code>add</code>) — preserves history.</li>
+    <li><span class="decision-id">CD-02</span> Explicit 401 short-circuit vs Clerk default — <strong>planner verifies Clerk Next.js 16 behavior</strong>; recommended default = explicit short-circuit to preserve API envelope.</li>
+    <li><span class="decision-id">CD-03</span> Single commit for rename + matcher expansion (one logical change).</li>
+    <li><span class="decision-id">CD-04</span> <code>git rm</code> the deleted button file (no caller remains).</li>
+    <li><span class="decision-id">CD-05</span> Convert auth <code>page.tsx</code> files from <code>async</code> to sync after the <code>await fetch</code> is removed.</li>
+  </ul>
+</div>
+
+<h2>Canonical References</h2>
+<div class="card">
+  <p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+  <h3>Requirements &amp; Roadmap</h3>
+  <ul class="file-list">
+    <li><code>.planning/REQUIREMENTS.md</code> §"SEC-A1, SEC-A2"</li>
+    <li><code>.planning/ROADMAP.md</code> §"Phase 3: Security Hardening"</li>
+    <li><code>.planning/PROJECT.md</code> §"Constraints", §"Key Decisions"</li>
+  </ul>
+  <h3>Codebase Maps</h3>
+  <ul class="file-list">
+    <li><code>.planning/codebase/ARCHITECTURE.md</code> §"Entry Points → Clerk Middleware" — <em>aspirational, not current</em> (per PD-01)</li>
+    <li><code>.planning/codebase/CONCERNS.md</code> §"Security Considerations" — current-state auth gap + recommended fix</li>
+  </ul>
+  <h3>Prior Phase Context</h3>
+  <ul class="file-list">
+    <li><code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> §"Deferred Ideas → Auth-gate test sweep" — Phase 2 explicitly handed off SC #1 verification to this phase.</li>
+  </ul>
+  <h3>Source Files (under modification)</h3>
+  <ul class="file-list">
+    <li><code>src/proxy.ts</code> — rename to <code>src/middleware.ts</code>; expand matcher</li>
+    <li><code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> — strip fetch + <code>stars</code> prop</li>
+    <li><code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code> — same</li>
+    <li><code>src/features/auth/components/sign-in-view.tsx</code> — drop button + prop + dead Link</li>
+    <li><code>src/features/auth/components/sign-up-view.tsx</code> — same</li>
+    <li><code>src/features/auth/components/github-auth-button.tsx</code> — <strong>delete</strong></li>
+  </ul>
+  <h3>External</h3>
+  <ul class="file-list">
+    <li>Clerk docs for Next.js 16 <code>clerkMiddleware()</code> + <code>auth.protect()</code> — planner verifies response shape on <code>/api/*</code></li>
+  </ul>
+</div>
+
+<h2>--auto Discussion Log Summary</h2>
+<table>
+  <thead><tr><th>Gray area</th><th>Selected option</th><th>Reason (brief)</th></tr></thead>
+  <tbody>
+    <tr><td>Enforcement layer</td><td>Middleware-only (rename + expand)</td><td>Single chokepoint; the existing file is already authored</td></tr>
+    <tr><td>Email lock scope</td><td>Apply lock to <code>/api/*</code> too</td><td>CLI parity uses Steve's session; multi-user is OOS</td></tr>
+    <tr><td>Verification strategy</td><td>Middleware unit test + route-enumeration assertion</td><td>Middleware is the chokepoint; per-route HTTP sweep would have to mock middleware</td></tr>
+    <tr><td>Starter-auth cleanup</td><td>Surgical (SEC-A2 only)</td><td>Phase 4 owns broader cleanup</td></tr>
+    <tr><td><code>stars</code> prop fate</td><td>Remove prop + dead Link block</td><td>Minimum complete change; avoid dead-code drift</td></tr>
+    <tr><td>Rename strategy</td><td><code>git mv</code></td><td>Preserves history</td></tr>
+  </tbody>
+</table>
+
+<h2>Deferred Ideas</h2>
+<div class="card">
+  <ul>
+    <li>Codebase-wide CSRF / security headers audit</li>
+    <li>Rate limiting</li>
+    <li>API audit logging (distinct from <code>logTimeline()</code>)</li>
+    <li>Architecture-doc correction post-phase (ARCHITECTURE.md + CLAUDE.md describe middleware as if active)</li>
+    <li><code>src/app/dashboard/&lt;feature&gt;/page.tsx</code> defense-in-depth audit</li>
+    <li>LinkedIn cookie file security (Phase 5)</li>
+    <li>Auth-page visual chrome scrub (Phase 4)</li>
+    <li>Removing the now-redundant page-level <code>auth()</code> redirects</li>
+  </ul>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/phases/03-security-hardening/03-CONTEXT.md</code> — this HTML may lag behind. Discussion log: <code>.planning/phases/03-security-hardening/03-DISCUSSION-LOG.md</code>.
+</footer>
+
+</body>
+</html>
