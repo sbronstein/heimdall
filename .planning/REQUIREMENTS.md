@@ -78,7 +78,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 
 ### Starter-Template Cleanup
 - [x] **DEBT-A1**: Delete `src/features/products/` and `src/app/dashboard/product/` routes
-- [ ] **DEBT-A2**: Delete `src/app/dashboard/{exclusive,workspaces,billing}/` routes and the 805-line `src/components/ui/infobar.tsx`
+- [x] **DEBT-A2**: Delete `src/app/dashboard/{exclusive,workspaces,billing}/` routes and the 805-line `src/components/ui/infobar.tsx`
 - [ ] **DEBT-A3**: Decide on Kanban route — either back it with the `tasks` table via `/api/tasks` or remove the route entirely
 - [ ] **DEBT-A4**: Remove the `__CLEANUP__/` directory once the optional features above are stripped
 - [ ] **DEBT-A5**: Drop the unused `computeBridgeScore` import in `src/app/api/job-leads/[id]/search/route.ts:10`
@@ -142,7 +142,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | SEC-A1 | Phase 3 | Pending |
 | SEC-A2 | Phase 3 | Pending |
 | DEBT-A1 | Phase 4 | Complete |
-| DEBT-A2 | Phase 4 | Pending |
+| DEBT-A2 | Phase 4 | Complete |
 | DEBT-A3 | Phase 4 | Pending |
 | DEBT-A4 | Phase 4 | Pending |
 | DEBT-A5 | Phase 4 | Pending |

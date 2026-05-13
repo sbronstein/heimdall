@@ -171,9 +171,11 @@
 </ul>
 
 <h3>Starter-Template Cleanup <span class="pill">DEBT</span> <span class="phase-pill phase-4">Phase 4</span></h3>
+<ul class="req-list shipped">
+  <li><span class="req-id">DEBT-A1</span>Delete <code>src/features/products/</code> and <code>src/app/dashboard/product/</code> routes (shipped in <code>0323e90</code>, plan 04-01)</li>
+  <li><span class="req-id">DEBT-A2</span>Delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code> routes and the 805-line <code>src/components/ui/infobar.tsx</code> (shipped in <code>ca82a84</code>, plan 04-02)</li>
+</ul>
 <ul class="req-list active">
-  <li><span class="req-id">DEBT-A1</span>Delete <code>src/features/products/</code> and <code>src/app/dashboard/product/</code> routes</li>
-  <li><span class="req-id">DEBT-A2</span>Delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code> routes and the 805-line <code>src/components/ui/infobar.tsx</code></li>
   <li><span class="req-id">DEBT-A3</span>Decide on Kanban route — either back it with the <code>tasks</code> table via <code>/api/tasks</code> or remove the route entirely</li>
   <li><span class="req-id">DEBT-A4</span>Remove the <code>__CLEANUP__/</code> directory once the optional features above are stripped</li>
   <li><span class="req-id">DEBT-A5</span>Drop the unused <code>computeBridgeScore</code> import in <code>src/app/api/job-leads/[id]/search/route.ts:10</code></li>
@@ -248,8 +250,8 @@
   <tr><td><span class="req-id">TEST-A3</span></td><td><span class="phase-pill phase-2">Phase 2</span> Test Infrastructure</td><td>Pending</td></tr>
   <tr><td><span class="req-id">SEC-A1</span></td><td><span class="phase-pill phase-3">Phase 3</span> Security Hardening</td><td>Pending</td></tr>
   <tr><td><span class="req-id">SEC-A2</span></td><td><span class="phase-pill phase-3">Phase 3</span> Security Hardening</td><td>Pending</td></tr>
-  <tr><td><span class="req-id">DEBT-A1</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td>Pending</td></tr>
-  <tr><td><span class="req-id">DEBT-A2</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td>Pending</td></tr>
+  <tr><td><span class="req-id">DEBT-A1</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
+  <tr><td><span class="req-id">DEBT-A2</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">DEBT-A3</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td>Pending</td></tr>
   <tr><td><span class="req-id">DEBT-A4</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td>Pending</td></tr>
   <tr><td><span class="req-id">DEBT-A5</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td>Pending</td></tr>

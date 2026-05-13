@@ -91,7 +91,7 @@
 
 <header>
   <h1>Project State</h1>
-  <p class="tagline">Heimdall &middot; current-state dashboard &middot; 2026-05-12 (Phase 3 complete)</p>
+  <p class="tagline">Heimdall &middot; current-state dashboard &middot; 2026-05-13 (Phase 4 in progress — DEBT-A1, DEBT-A2 shipped)</p>
 </header>
 
 <h2>Project Reference</h2>
@@ -100,7 +100,7 @@
 </div>
 <div class="card">
   See <code>.planning/PROJECT.md</code> (updated 2026-05-12) for full context, constraints, and key decisions.<br>
-  <strong>Current focus:</strong> Phase 3 — Security Hardening (complete — SEC-A1 + SEC-A2 shipped).
+  <strong>Current focus:</strong> Phase 4 — Starter-Template Cleanup (in progress — DEBT-A1 and DEBT-A2 shipped; DEBT-A3, DEBT-A4, DEBT-A5 pending).
 </div>
 
 <h2>Current Position</h2>
@@ -108,44 +108,44 @@
 <div class="stat-grid">
   <div class="stat">
     <div class="stat-label">Phase</div>
-    <div class="stat-value">3 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
-    <div class="meta">Security Hardening — complete</div>
+    <div class="stat-value">4 <span style="font-size: 14px; color: var(--muted); font-weight: 400;">of 6</span></div>
+    <div class="meta">Starter-Template Cleanup — executing</div>
   </div>
   <div class="stat">
     <div class="stat-label">Plan</div>
-    <div class="stat-value small">2 / 2 shipped</div>
-    <div class="meta">03-01 auth gate · 03-02 strip starter chrome</div>
+    <div class="stat-value small">2 / 5 shipped</div>
+    <div class="meta">04-01 products · 04-02 starter routes + infobar</div>
   </div>
   <div class="stat">
     <div class="stat-label">Status</div>
-    <div class="stat-value small"><span class="badge badge-good">PHASE COMPLETE</span></div>
-    <div class="meta">SEC-A1 + SEC-A2 shipped · 87 tests passing</div>
+    <div class="stat-value small"><span class="badge badge-current">IN PROGRESS</span></div>
+    <div class="meta">Wave 1: 2/4 plans done · Next: 04-03 (kanban) or 04-04 (unused import)</div>
   </div>
   <div class="stat">
     <div class="stat-label">Last activity</div>
-    <div class="stat-value small">2026-05-12</div>
-    <div class="meta">Phase 3 verified · <code>--auto</code> chain complete</div>
+    <div class="stat-value small">2026-05-13</div>
+    <div class="meta">04-02 DEBT-A2 shipped in <code>ca82a84</code></div>
   </div>
 </div>
 
 <div class="card">
   <div class="meta" style="margin-bottom: 4px;">Overall progress (plans completed across all phases)</div>
   <div class="progress-bar">
-    <div class="progress-fill" style="width: 50%;"></div>
-    <div class="progress-label">3 of 6 phases complete</div>
+    <div class="progress-fill" style="width: 77%;"></div>
+    <div class="progress-label">10 of 13 plans complete (77%)</div>
   </div>
   <div class="phase-rail">
     <div class="phase-dot done">PHASE 1<br>Bug Fix</div>
     <div class="phase-dot done">PHASE 2<br>Tests</div>
     <div class="phase-dot done">PHASE 3<br>Security</div>
-    <div class="phase-dot">PHASE 4<br>Cleanup</div>
+    <div class="phase-dot current">PHASE 4<br>Cleanup</div>
     <div class="phase-dot">PHASE 5<br>Job Leads</div>
     <div class="phase-dot">PHASE 6<br>Performance</div>
   </div>
 </div>
 
 <div class="blocker-row">
-  <strong>Phase 3 closure:</strong> SEC-A1 (auth gate on every <code>/api/*</code>) and SEC-A2 (strip GitHub starter chrome) shipped. PD-01 in <code>03-CONTEXT.md</code> turned out to be wrong — Next.js 16 uses <code>src/proxy.ts</code> as the framework <em>proxy file</em> convention; <code>middleware.ts</code> is deprecated. The executor caught this empirically, applied the matcher expansion + envelope short-circuit in place, and recorded the correction as DI-02 in <code>deferred-items.md</code>. Pre-existing TS error in <code>prioritization.ts:70</code> (DI-01) is deferred to Phase 4 / a tsconfig modernization pass. All 87 tests passing; verifier returned PASS WITH NOTES.
+  <strong>Phase 4 in progress:</strong> 04-01 (DEBT-A1 products deletion, commit <code>0323e90</code>) and 04-02 (DEBT-A2 starter routes + Infobar machinery teardown, commit <code>ca82a84</code>) shipped. 04-02 deleted 805-line <code>infobar.tsx</code> transitively along with <code>info-button.tsx</code>, <code>info-sidebar.tsx</code>, <code>infoconfig.ts</code>, the layout wrapper, and the <code>infoContent</code> prop on PageContainer / Heading — 11 file changes in a single atomic commit per D-19. Pre-existing TS error in <code>prioritization.ts:70</code> (downlevel-iteration on Map.values()) still blocks <code>npm run build</code> for all Phase 4 plans; verification accepts grep-cleanliness + no-new-errors per <code>deferred-items.md</code>.
 </div>
 
 <h2>Performance Metrics</h2>
@@ -225,15 +225,15 @@
 <h2>Session Continuity</h2>
 <div class="card">
   <table>
-    <tr><th>Last session</th><td>2026-05-12</td></tr>
-    <tr><th>Stopped at</th><td>Phase 3 complete — SEC-A1 + SEC-A2 shipped, verifier PASSED WITH NOTES</td></tr>
-    <tr><th>Resume file</th><td><code>.planning/phases/03-security-hardening/03-VERIFICATION.md</code></td></tr>
-    <tr><th>Next step</th><td><code>/clear</code> then <code>/gsd-discuss-phase 4 --auto</code> (Starter-Template Cleanup)</td></tr>
+    <tr><th>Last session</th><td>2026-05-13</td></tr>
+    <tr><th>Stopped at</th><td>Completed 04-02-PLAN.md (DEBT-A2 starter routes + Infobar machinery teardown)</td></tr>
+    <tr><th>Resume file</th><td>None</td></tr>
+    <tr><th>Next step</th><td>Execute 04-03-PLAN.md (DEBT-A3 kanban removal) or 04-04-PLAN.md (DEBT-A5 unused import) — both Wave 1, disjoint file sets</td></tr>
   </table>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 3 completion.</p>
+  <p>Source-of-truth: <code>.planning/STATE.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 02 completion.</p>
 </footer>
 
 </body>

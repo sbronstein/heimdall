@@ -111,7 +111,7 @@
 </header>
 
 <div class="urgency">
-  <strong>Phase 3 status:</strong> <span class="badge badge-current">Planned</span>. Phase 2 (Test Infrastructure) shipped 5/5 plans. Phase 3 (Security Hardening) is planned: 2 parallel plans in a single wave covering SEC-A1 (activate <code>src/middleware.ts</code> + gate <code>/api/*</code>) and SEC-A2 (strip starter-template auth artifacts). Ready to execute via <code>/gsd-execute-phase 3</code>.
+  <strong>Phase 4 status:</strong> <span class="badge badge-current">In Progress</span>. Phase 3 (Security Hardening) complete. Phase 4 (Starter-Template Cleanup) is mid-execution: DEBT-A1 (04-01) and DEBT-A2 (04-02) shipped; DEBT-A3 (04-03), DEBT-A5 (04-04), and Wave 2 DEBT-A4 (04-05) still pending. <code>npm run build</code> remains blocked on the pre-existing <code>prioritization.ts:70</code> TS error documented in <code>deferred-items.md</code>.
 </div>
 
 <h2>Overview</h2>
@@ -124,7 +124,7 @@
   <tr><th>#</th><th>Phase</th><th>Goal</th><th>Requirements</th><th>UI hint</th></tr>
   <tr><td><strong>1</strong> ✓</td><td>Critical Bug Fix</td><td>Restore reliable dashboard navigation after large LinkedIn imports</td><td><span class="req-pill">BUG-01</span><span class="req-pill">BUG-02</span></td><td><span class="badge badge-ui">yes</span></td></tr>
   <tr><td><strong>2</strong> ✓</td><td>Test Infrastructure</td><td>Working Vitest harness covering load-bearing logic + BUG-01 regression</td><td><span class="req-pill">TEST-A1</span><span class="req-pill">TEST-A2</span><span class="req-pill">TEST-A3</span></td><td>—</td></tr>
-  <tr><td><strong>3</strong></td><td>Security Hardening</td><td>Every <code>/api/*</code> route requires a valid Clerk session; starter auth artifacts removed</td><td><span class="req-pill">SEC-A1</span><span class="req-pill">SEC-A2</span></td><td>—</td></tr>
+  <tr><td><strong>3</strong> ✓</td><td>Security Hardening</td><td>Every <code>/api/*</code> route requires a valid Clerk session; starter auth artifacts removed</td><td><span class="req-pill">SEC-A1</span><span class="req-pill">SEC-A2</span></td><td>—</td></tr>
   <tr><td><strong>4</strong></td><td>Starter-Template Cleanup</td><td>Dead starter code removed; repo contains only Heimdall code</td><td><span class="req-pill">DEBT-A1</span><span class="req-pill">DEBT-A2</span><span class="req-pill">DEBT-A3</span><span class="req-pill">DEBT-A4</span><span class="req-pill">DEBT-A5</span></td><td><span class="badge badge-ui">yes</span></td></tr>
   <tr><td><strong>5</strong></td><td>Job Leads Completion</td><td>LinkedIn scraper runs cleanly end-to-end and surfaces failures</td><td><span class="req-pill">JL-A1</span><span class="req-pill">JL-A2</span><span class="req-pill">JL-A3</span><span class="req-pill">JL-A4</span><span class="req-pill">JL-A5</span></td><td>—</td></tr>
   <tr><td><strong>6</strong></td><td>Performance</td><td>N+1 patterns eliminated; hot-path indexes in place</td><td><span class="req-pill">PERF-A1</span><span class="req-pill">PERF-A2</span><span class="req-pill">PERF-A3</span><span class="req-pill">PERF-A4</span><span class="req-pill">PERF-A5</span></td><td>—</td></tr>
@@ -219,16 +219,18 @@
   <strong>Plans:</strong>
   <ul class="req-list active">
     <li><strong>Wave 1</strong> (parallel — disjoint file sets):
+      <ul class="req-list shipped" style="margin-left:1em;">
+        <li><code>04-01-PLAN.md</code> — DEBT-A1: delete products feature + dead support <span class="badge badge-good">Complete</span></li>
+        <li><code>04-02-PLAN.md</code> — DEBT-A2: delete starter routes + Infobar machinery teardown <span class="badge badge-good">Complete</span></li>
+      </ul>
       <ul class="req-list active" style="margin-left:1em;">
-        <li><code>04-01-PLAN.md</code> — DEBT-A1: delete products feature + dead support</li>
-        <li><code>04-02-PLAN.md</code> — DEBT-A2: delete starter routes + Infobar machinery teardown</li>
-        <li><code>04-03-PLAN.md</code> — DEBT-A3: delete kanban route &amp; feature folder + record decision in PROJECT.md</li>
-        <li><code>04-04-PLAN.md</code> — DEBT-A5: drop unused <code>computeBridgeScore</code> import</li>
+        <li><code>04-03-PLAN.md</code> — DEBT-A3: delete kanban route &amp; feature folder + record decision in PROJECT.md <span class="badge badge-pending">Pending</span></li>
+        <li><code>04-04-PLAN.md</code> — DEBT-A5: drop unused <code>computeBridgeScore</code> import <span class="badge badge-pending">Pending</span></li>
       </ul>
     </li>
     <li><strong>Wave 2</strong> (blocked on Wave 1):
       <ul class="req-list active" style="margin-left:1em;">
-        <li><code>04-05-PLAN.md</code> — DEBT-A4: <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test</li>
+        <li><code>04-05-PLAN.md</code> — DEBT-A4: <code>rm -rf __CLEANUP__/</code> + filesystem-existence verification test <span class="badge badge-pending">Pending</span></li>
       </ul>
     </li>
   </ul>
@@ -269,17 +271,17 @@
     <tr><th>Phase</th><th>Plans Complete</th><th>Status</th><th>Completed</th></tr>
     <tr><td>1. Critical Bug Fix</td><td>1 / 1</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
     <tr><td>2. Test Infrastructure</td><td>5 / 5</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-12</td></tr>
-    <tr><td>3. Security Hardening</td><td>0 / 2</td><td><span class="badge badge-current">Planned</span></td><td>—</td></tr>
-    <tr><td>4. Starter-Template Cleanup</td><td>0 / 5</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
+    <tr><td>3. Security Hardening</td><td>2 / 2</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-13</td></tr>
+    <tr><td>4. Starter-Template Cleanup</td><td>2 / 5</td><td><span class="badge badge-current">In Progress</span></td><td>—</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
     <tr><td>6. Performance</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
   </table>
-  <p class="meta">Overall progress (plans completed across all phases — 6 of 8 known plans done; phases 4–6 still to plan)</p>
-  <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+  <p class="meta">Overall progress (plans completed across all phases — 10 of 13 known plans done)</p>
+  <div class="progress-bar"><div class="progress-fill" style="width: 77%;"></div></div>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-12 after Phase 3 planning (<code>03-01-PLAN.md</code> + <code>03-02-PLAN.md</code>).</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 02 completion (DEBT-A2 shipped in <code>ca82a84</code>).</p>
 </footer>
 
 </body>
