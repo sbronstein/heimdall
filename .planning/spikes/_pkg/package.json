@@ -1,0 +1,26 @@
+{
+  "name": "stagehand-linkedin-spikes",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-contained dependency footprint for the Stagehand LinkedIn spike series. Kept out of the project's main package.json so the spike is reversible.",
+  "scripts": {
+    "spike:001": "tsx ../001-stagehand-cdp-auth/spike.ts",
+    "spike:002": "tsx ../002-stagehand-linkedin-navigate/spike.ts",
+    "spike:003": "tsx ../003-stagehand-extract-prospects/spike.ts"
+  },
+  "dependencies": {
+    "@browserbasehq/stagehand": "^3.4.0",
+    "deepmerge": "^4.3.1",
+    "patchright-core": "^1.55.2",
+    "playwright-core": "^1.55.1",
+    "puppeteer-core": "^24.43.0",
+    "zod": "^4.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "@types/node": "^22.0.0"
+  }
+}

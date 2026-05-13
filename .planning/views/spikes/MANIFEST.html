@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — Spike Manifest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 6px; font-size: 30px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin-top: 24px; font-size: 17px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; margin: 12px 0; }
+  .idea {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-style: italic;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+  pre code { background: transparent; padding: 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-pending { background: #f0e5d0; color: #8a6a3a; }
+  .badge-good    { background: #d6e8d6; color: #3a6a3a; }
+  .badge-blocked { background: #fdd6cf; color: #8a3a2a; }
+  .badge-warn    { background: #fdd6cf; color: #8a3a2a; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  footer code { font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spike Manifest</h1>
+  <p class="tagline">Replace fragile Playwright LinkedIn scraping with Stagehand's a11y-tree-with-refs approach (local-only)</p>
+</header>
+
+<h2>Idea</h2>
+<div class="card idea">
+  Replace the fragile Playwright-based LinkedIn scraper (<code>src/features/job-leads/lib/scrape-connections.ts</code>) with <strong>Stagehand</strong> (<code>@browserbasehq/stagehand</code>) — an LLM-driven browser automation library built on Playwright that reasons over rendered DOM via an accessibility-tree-with-stable-refs abstraction instead of brittle CSS selectors.
+</div>
+<div class="card">
+  <p>The current scraper has cascaded into ~5 fallback selector strategies plus <code>page.evaluate</code> brute-force DOM scans because LinkedIn uses obfuscated/randomized class names. Even with heavy defensive logic, end-to-end scrapes are unreliable. Stagehand's <code>act()</code> / <code>observe()</code> / <code>extract()</code> primitives target the exact failure surface.</p>
+  <p><strong>Out of scope:</strong> production-hosted scraping. This spike is exclusively about reliability of <strong>local-dev / Docker</strong> scraping. The prod path is captured as a future seed in <a href="../seeds/prod-hosted-scraping.html">prod-hosted-scraping</a>.</p>
+  <p>Full context in <a href="../notes/linkedin-scraper-agent-browser-evaluation.html">LinkedIn scraper — agent-browser evaluation</a>.</p>
+</div>
+
+<h2>Requirements</h2>
+<ul>
+  <li>Must reuse the existing <code>BROWSER_CDP_ENDPOINT</code> flow — no new auth path or separate Chrome session</li>
+  <li>Must extract prospects in the same <code>ScrapedProspect</code> shape as today: <code>{ name, title, linkedinUrl, mutualConnectionNames[] }</code></li>
+  <li>Must work without a Browserbase account (<code>env: "LOCAL"</code>)</li>
+  <li>Must measure LLM token cost per scrape (Stagehand exposes per-primitive token counts via <code>stagehand.metrics</code>)</li>
+  <li>Must default to a Claude Anthropic model (consistent with the rest of the codebase's Anthropic-first preference)</li>
+</ul>
+
+<h2>Spikes</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Name</th><th>Type</th><th>Validates</th><th>Verdict</th><th>Tags</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>001</td><td>stagehand-cdp-auth</td><td>standard</td>
+      <td>Given Chrome with logged-in LinkedIn at <code>BROWSER_CDP_ENDPOINT</code>, when Stagehand initializes, then it attaches and reaches <code>/feed</code> without re-auth.</td>
+      <td><span class="badge badge-pending">PENDING</span></td>
+      <td>stagehand, cdp, auth</td>
+    </tr>
+    <tr>
+      <td>002</td><td>stagehand-linkedin-navigate</td><td>standard</td>
+      <td>Given an authenticated Stagehand session on a job posting, when <code>act()</code> runs natural-language steps, then the browser lands on a 2nd-degree employee search filtered to that company.</td>
+      <td><span class="badge badge-pending">PENDING</span></td>
+      <td>stagehand, navigation, linkedin</td>
+    </tr>
+    <tr>
+      <td>003</td><td>stagehand-extract-prospects</td><td>standard</td>
+      <td>Given Stagehand on a people-search results page, when <code>extract()</code> runs with a Zod prospect schema, then it returns the <code>ScrapedProspect</code> shape with measured token cost across 5+ runs.</td>
+      <td><span class="badge badge-pending">PENDING</span></td>
+      <td>stagehand, extract, cost</td>
+    </tr>
+  </tbody>
+</table>
+<p>Spikes are ordered by risk. 001 is gating. 002 is the core test. 003 only matters if 001 and 002 pass.</p>
+
+<h2>How to Run</h2>
+<pre><code># One-time setup
+cd .planning/spikes/_pkg
+npm install
+
+# Make sure your Chrome is running with --remote-debugging-port=&lt;port&gt;
+# and BROWSER_CDP_ENDPOINT is set (e.g. http://localhost:3005) — same flow
+# as the existing scraper. ANTHROPIC_API_KEY also required.
+
+# Run sequentially. Stop and fix if any verdict is FAIL.
+npm run spike:001
+npm run spike:002 -- &lt;linkedin-job-url&gt;
+npm run spike:003 -- &lt;linkedin-people-search-url&gt;</code></pre>
+<p>Each spike prints a <code>[verdict]</code> line and the post-run <code>stagehand.metrics</code> token counts. Update the corresponding README's <strong>Results</strong> section with what you observed, then flip the verdict in the table above.</p>
+
+<footer>
+  Source of truth: <code>.planning/spikes/MANIFEST.md</code> — this HTML may lag behind.
+</footer>
+</body>
+</html>
