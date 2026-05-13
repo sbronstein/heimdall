@@ -81,7 +81,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 **Wave 1** *(four plans parallel — disjoint file sets)*
-- [ ] 04-01-PLAN.md — DEBT-A1: delete products feature + dead support (mock-api.ts, data.ts product types, breadcrumb entry)
+- [x] 04-01-PLAN.md — DEBT-A1: delete products feature + dead support (mock-api.ts, data.ts product types, breadcrumb entry)
 - [ ] 04-02-PLAN.md — DEBT-A2: delete starter routes (exclusive, workspaces, billing) + Infobar machinery transitive teardown
 - [ ] 04-03-PLAN.md — DEBT-A3: delete /dashboard/kanban route + features/kanban folder + record decision in PROJECT.md
 - [ ] 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route

@@ -77,7 +77,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [ ] **SEC-A2**: Remove the no-op "Continue with GitHub" auth button (`github-auth-button.tsx`) and the residual external `api.github.com` star fetch on the sign-in/sign-up pages
 
 ### Starter-Template Cleanup
-- [ ] **DEBT-A1**: Delete `src/features/products/` and `src/app/dashboard/product/` routes
+- [x] **DEBT-A1**: Delete `src/features/products/` and `src/app/dashboard/product/` routes
 - [ ] **DEBT-A2**: Delete `src/app/dashboard/{exclusive,workspaces,billing}/` routes and the 805-line `src/components/ui/infobar.tsx`
 - [ ] **DEBT-A3**: Decide on Kanban route — either back it with the `tasks` table via `/api/tasks` or remove the route entirely
 - [ ] **DEBT-A4**: Remove the `__CLEANUP__/` directory once the optional features above are stripped
@@ -141,7 +141,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | TEST-A3 | Phase 2 | Complete |
 | SEC-A1 | Phase 3 | Pending |
 | SEC-A2 | Phase 3 | Pending |
-| DEBT-A1 | Phase 4 | Pending |
+| DEBT-A1 | Phase 4 | Complete |
 | DEBT-A2 | Phase 4 | Pending |
 | DEBT-A3 | Phase 4 | Pending |
 | DEBT-A4 | Phase 4 | Pending |
