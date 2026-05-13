@@ -60,7 +60,7 @@ A personal CRM and pipeline tracker for an executive job search targeting VP Dat
 - **OAuth providers beyond Clerk's own** — Clerk handles auth; the residual "Continue with GitHub" starter button will be deleted, not implemented.
 - **Server-side LinkedIn scraping on Vercel** — Playwright + Chromium cannot run on Vercel serverless (250MB bundle, no persistent FS). Scraping stays in local dev / Docker with a host browser via CDP. Production deployment would need a remote browser service if ever required.
 - **Video/voice posts or content** — not a CRM concern.
-- **Database-backed Kanban for the `/dashboard/kanban` route** — that page is starter-template residue and will be removed, not wired to `tasks`.
+- **Database-backed Kanban for the `/dashboard/kanban` route** — that page is starter-template residue and will be removed, not wired to `tasks`. (Removed in Phase 4)
 
 ## Context
 
