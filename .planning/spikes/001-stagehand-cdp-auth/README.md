@@ -3,12 +3,16 @@ spike: 001
 name: stagehand-cdp-auth
 type: standard
 validates: "Given an ANTHROPIC_API_KEY and either a headed Chromium with persistent profile (default) or a BROWSER_CDP_ENDPOINT, when Stagehand initializes and navigates to LinkedIn /feed, then it either signs in silently from the persisted session or pauses for an interactive login and resumes once /feed is reached."
-verdict: PENDING
+verdict: SUPERSEDED
 related: []
-tags: [stagehand, auth, headed]
+tags: [stagehand, auth, headed, superseded]
 ---
 
 # Spike 001: stagehand-cdp-auth
+
+> **SUPERSEDED 2026-05-13.** Architectural pivot — scraping is moving out of the app into a Claude Code skill on `vercel-labs/agent-browser`. See `../MANIFEST.md` "Status" section. This spike was never executed.
+
+
 
 ## What This Validates
 

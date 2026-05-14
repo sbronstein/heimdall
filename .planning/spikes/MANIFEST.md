@@ -1,55 +1,69 @@
 # Spike Manifest
 
-## Idea
+## Status: SUPERSEDED (2026-05-13)
 
-Replace the fragile Playwright-based LinkedIn scraper (`src/features/job-leads/lib/scrape-connections.ts`) with **Stagehand** (`@browserbasehq/stagehand`) — an LLM-driven browser automation library built on Playwright that reasons over rendered DOM via an accessibility-tree-with-stable-refs abstraction instead of brittle CSS selectors.
+The Stagehand-in-the-app path is no longer the chosen approach. Architectural pivot captured below; all three spikes below are kept on disk as historical record but are not the active path.
 
-The current scraper has cascaded into ~5 fallback selector strategies plus `page.evaluate` brute-force DOM scans because LinkedIn uses obfuscated/randomized class names. Even with heavy defensive logic, end-to-end scrapes are unreliable. Stagehand's `act()` / `observe()` / `extract()` primitives target the exact failure surface.
+### What changed
 
-**Out of scope:** production-hosted scraping. This spike is exclusively about reliability of **local-dev / Docker** scraping. The prod path is captured as a future seed in `.planning/seeds/prod-hosted-scraping.md`.
+Original framing: replace the in-app Playwright scraper (`src/features/job-leads/lib/scrape-connections.ts`) with Stagehand to fix selector brittleness while keeping scraping in an API route.
 
-Full context in `.planning/notes/linkedin-scraper-agent-browser-evaluation.md`.
+New framing: **scraping leaves the app entirely.** It becomes a **Claude Code skill** built on `vercel-labs/agent-browser`. Flow:
 
-## Requirements
+1. URL enters Heimdall via web UI paste **or** Claude Code CLI submission → row in DB (no scrape yet)
+2. User runs a Claude Code skill (with a URL arg, or no arg to drain the unprocessed queue)
+3. Skill drives agent-browser to do the LinkedIn navigation + extraction; Claude (already authed in Claude Code) is the LLM driver
+4. Results written back to DB through the existing API
 
-- Must reuse the existing `~/.heimdall/linkedin-profile/` user-data dir — same Chrome profile the project's `linkedin-browser.ts` uses, so LinkedIn login persists across both
-- Must support **interactive login on first run** in a visible Chrome window (not a headless re-auth)
-- Must extract prospects in the same `ScrapedProspect` shape as today: `{ name, title, linkedinUrl, mutualConnectionNames[] }`
-- Must work without a Browserbase account (`env: "LOCAL"`)
-- Must measure LLM token cost per scrape (via `stagehand.metrics`)
-- Must default to a Claude Anthropic model (consistent with the codebase's Anthropic-first preference)
+### Why this is better than the Stagehand-in-app path
+
+- **agent-browser's CLI shape becomes a feature.** Earlier rejection was about `execSync`-ing a Rust binary from a Next.js API route — Claude Code is already a CLI, so the DX mismatch evaporates
+- **No separate `ANTHROPIC_API_KEY` needed.** Claude Code is already authed against your Claude sub; the skill drives Claude through the navigation. The "Stagehand reads `ANTHROPIC_API_KEY`" auth gap (and the Claude-sub-auth question that surfaced during the rewrite) both disappear
+- **App decouples from Chrome.** The web UI and CLI both just capture URLs. The fire-and-forget Playwright IIFE in `src/app/api/job-leads/[id]/search/route.ts` goes away
+- **Failure is visible.** Scrape errors surface in the Claude Code session where the user can intervene, instead of being swallowed by the server's async path
+
+### What transfers from these spikes
+
+- LinkedIn nav decomposition (job → company → employees → 2nd-degree → extract) — same target steps for agent-browser
+- `~/.heimdall/linkedin-profile/` persistent profile pattern — agent-browser can attach to a Chrome running that profile
+- `ScrapedProspect` schema as the structured output target
+- The agent-browser evaluation note (`.planning/notes/linkedin-scraper-agent-browser-evaluation.md`) — now reads as the trail leading to this pivot
+
+### Next step
+
+`/gsd-plan-phase` for the LinkedIn-scraping-skill — a new phase that delivers:
+- Claude Code skill at `.claude/skills/scrape-linkedin-connections/` (or similar)
+- `<url-arg>` mode + `no-arg → drain queue` mode
+- DB read/write through the existing API
+- Removal of the in-app fire-and-forget scrape path
+
+---
+
+## Idea (original, kept for context)
+
+Replace the fragile Playwright-based LinkedIn scraper with **Stagehand** — an LLM-driven browser automation library built on Playwright that reasons over rendered DOM via an accessibility-tree-with-stable-refs abstraction instead of brittle CSS selectors.
+
+The current scraper has cascaded into ~5 fallback selector strategies plus `page.evaluate` brute-force DOM scans because LinkedIn uses obfuscated/randomized class names. Stagehand's `act()` / `observe()` / `extract()` primitives target the exact failure surface.
+
+**Out of scope:** production-hosted scraping. Captured as a future seed in `.planning/seeds/prod-hosted-scraping.md`.
+
+Full pre-pivot context in `.planning/notes/linkedin-scraper-agent-browser-evaluation.md`.
+
+## Requirements (frozen — superseded by skill-phase requirements)
+
+- Reuse `~/.heimdall/linkedin-profile/` user-data dir
+- Interactive login on first run in a visible Chrome window
+- Extract prospects in `ScrapedProspect` shape: `{ name, title, linkedinUrl, mutualConnectionNames[] }`
+- `env: "LOCAL"` (no Browserbase)
+- Measure LLM token cost per scrape
+- Default to a Claude Anthropic model
 
 ## Spikes
 
-| #   | Name                          | Type     | Validates                                                                                                              | Verdict | Tags                          |
-|-----|-------------------------------|----------|------------------------------------------------------------------------------------------------------------------------|---------|-------------------------------|
-| 001 | stagehand-cdp-auth            | standard | Stagehand launches headed Chromium, persists/reuses the LinkedIn profile, interactively pauses for login if needed, and reaches `/feed`. | PENDING | stagehand, auth, headed       |
-| 002 | stagehand-linkedin-navigate   | standard | `observe()`/`act()` walk job → company → employees → 2nd-degree filter, landing on a company-filtered people search.    | PENDING | stagehand, navigation, linkedin |
-| 003 | stagehand-extract-prospects   | standard | `extract()` returns the `ScrapedProspect` shape with measured per-run token cost across 5+ runs (≥80% success).         | PENDING | stagehand, extract, cost       |
+| #   | Name                          | Type     | Validates                                                                                                              | Verdict     | Tags                          |
+|-----|-------------------------------|----------|------------------------------------------------------------------------------------------------------------------------|-------------|-------------------------------|
+| 001 | stagehand-cdp-auth            | standard | Stagehand launches headed Chromium, persists/reuses the LinkedIn profile, interactively pauses for login if needed, and reaches `/feed`. | **SUPERSEDED** | stagehand, auth, headed       |
+| 002 | stagehand-linkedin-navigate   | standard | `observe()`/`act()` walk job → company → employees → 2nd-degree filter.                                                | **SUPERSEDED** | stagehand, navigation, linkedin |
+| 003 | stagehand-extract-prospects   | standard | `extract()` returns the `ScrapedProspect` shape with measured per-run token cost across 5+ runs.                       | **SUPERSEDED** | stagehand, extract, cost       |
 
-Risk-ordered. 001 is gating. 002 is the core test. 003 only matters if 001 and 002 pass.
-
-## How to Run
-
-```bash
-# One-time setup
-cd .planning/spikes/_pkg
-npm install
-npx playwright install chromium   # downloads the headed Chromium binary
-
-# Make sure ANTHROPIC_API_KEY is in .env.local (only required env var).
-# A Chrome window will open on first run — sign into LinkedIn there.
-# Cookies persist at ~/.heimdall/linkedin-profile/ for subsequent runs.
-
-npm run spike:001
-npm run spike:002 -- <linkedin-job-url>
-npm run spike:003 -- <linkedin-people-search-url> 5
-```
-
-If `BROWSER_CDP_ENDPOINT` is set (e.g. you already have Chrome running for the project's main scraper), the spikes will attach to that endpoint instead of launching a new browser.
-
-Each spike prints a `[verdict]` line and the post-run `stagehand.metrics` token counts. Update the corresponding README's **Results** section with what you observed, then flip the verdict in this table.
-
-## Notes on auth
-
-Stagehand uses the standard Anthropic SDK and reads `ANTHROPIC_API_KEY`. There's no first-class browser/OAuth/Claude-sub path in Stagehand 3.x. Community proxies that bridge Claude Pro/Max to OpenAI-compatible endpoints exist (`claude-pro-proxy`-style) but are unofficial and add a moving piece — kept out of scope for this spike. Total token cost across all three spikes with Sonnet 4.5 should land in the low single-digit dollars.
+These spikes were never run end-to-end. The scaffolding (`_pkg/`, `001/`, `002/`, `003/`) is left in place but should be considered archived. If you want to remove it entirely: `rm -rf .planning/spikes/_pkg .planning/spikes/00[123]-*` (and update this manifest).

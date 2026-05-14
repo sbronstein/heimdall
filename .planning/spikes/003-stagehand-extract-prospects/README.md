@@ -3,12 +3,16 @@ spike: 003
 name: stagehand-extract-prospects
 type: standard
 validates: "Given Stagehand on a LinkedIn people-search results page, when extract() runs with a Zod prospect schema, then it returns the ScrapedProspect shape with measured per-run token cost across 5+ runs."
-verdict: PENDING
+verdict: SUPERSEDED
 related: [001, 002]
-tags: [stagehand, extract, cost]
+tags: [stagehand, extract, cost, superseded]
 ---
 
 # Spike 003: stagehand-extract-prospects
+
+> **SUPERSEDED 2026-05-13.** See `../MANIFEST.md` "Status" section. This spike was never executed.
+
+
 
 ## What This Validates
 

@@ -3,12 +3,16 @@ spike: 002
 name: stagehand-linkedin-navigate
 type: standard
 validates: "Given an authenticated Stagehand session (via the headed-launch flow or BROWSER_CDP_ENDPOINT) starting on a LinkedIn job posting, when observe()/act() runs natural-language steps for company → employees → 2nd-degree filter, then the browser lands on a company-filtered people search."
-verdict: PENDING
+verdict: SUPERSEDED
 related: [001]
-tags: [stagehand, navigation, linkedin]
+tags: [stagehand, navigation, linkedin, superseded]
 ---
 
 # Spike 002: stagehand-linkedin-navigate
+
+> **SUPERSEDED 2026-05-13.** See `../MANIFEST.md` "Status" section. This spike was never executed.
+
+
 
 ## What This Validates
 
