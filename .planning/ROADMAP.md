@@ -135,10 +135,10 @@ Plans:
 - [x] 06-01-PLAN.md — Schema additions (5 index() + 1 partial UNIQUE index on contacts/companies), migration 0008 generation + apply, pg_indexes regression test (D-20)
 
 **Wave 2** *(four plans parallel — disjoint file sets — all blocked on Wave 1)*
-- [ ] 06-02-PLAN.md — PERF-A1 (bridges half) + PERF-A2: transactional POST /prospects with inline matchConnections, bulk bridge insert with onConflictDoNothing, narrowed contacts SELECT; ROADMAP SC #1 wording refresh in the same commit
-- [ ] 06-03-PLAN.md — PERF-A3: bulk UPDATE ... FROM unnest() in /api/contacts/import/categorize replacing per-row loop
-- [ ] 06-04-PLAN.md — PERF-A5 (import half): bulk INSERT + onConflictDoNothing on linkedin_url partial UNIQUE + narrowed name+company dedup in /api/contacts/import
-- [ ] 06-05-PLAN.md — Incidental fold #3: GET /api/job-leads/[id]/recommendations becomes a pure read (Variant B per D-15 — compute scores on-the-fly via prioritization.ts:55 fallback)
+- [x] 06-02-PLAN.md — PERF-A1 (bridges half) + PERF-A2: transactional POST /prospects with inline matchConnections, bulk bridge insert with onConflictDoNothing, narrowed contacts SELECT; ROADMAP SC #1 wording refresh in the same commit
+- [x] 06-03-PLAN.md — PERF-A3: bulk UPDATE ... FROM unnest() in /api/contacts/import/categorize replacing per-row loop
+- [x] 06-04-PLAN.md — PERF-A5 (import half): bulk INSERT + onConflictDoNothing on linkedin_url partial UNIQUE + narrowed name+company dedup in /api/contacts/import
+- [x] 06-05-PLAN.md — Incidental fold #3: GET /api/job-leads/[id]/recommendations becomes a pure read (Variant B per D-15 — compute scores on-the-fly via prioritization.ts:55 fallback)
 
 ## Progress
 
