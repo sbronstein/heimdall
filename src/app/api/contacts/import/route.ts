@@ -3,10 +3,10 @@ import { contacts } from '../../../../../drizzle/schema';
 import { success } from '@/lib/api/types';
 import { serverError, validationError } from '@/lib/api/errors';
 import { logTimeline } from '@/lib/db/timeline';
-import { isNull, sql, ilike } from 'drizzle-orm';
+import { isNull, sql, and } from 'drizzle-orm';
 import Papa from 'papaparse';
 import { z } from 'zod';
-import { contactClosenessValues } from '@/lib/domain/types';
+import { contactClosenessValues, outreachStatusValues } from '@/lib/domain/types';
 
 const defaultClosenessSchema = z.enum(contactClosenessValues).optional();
 
@@ -51,30 +51,20 @@ export async function POST(request: Request) {
       return validationError('Failed to parse CSV: ' + parsed.errors[0].message);
     }
 
-    // Get existing contacts for dedup
-    const existing = await db
-      .select({
-        id: contacts.id,
-        linkedinUrl: contacts.linkedinUrl,
-        firstName: contacts.firstName,
-        lastName: contacts.lastName,
-        currentCompany: contacts.currentCompany
-      })
-      .from(contacts)
-      .where(isNull(contacts.archivedAt));
+    // === STEP 1: VALIDATION PASS ===
+    // Build the candidate rows + the dedup key set from CSV in one pass.
+    type Candidate = {
+      firstName: string;
+      lastName: string;
+      email: string | null;
+      linkedinUrl: string | null;
+      currentCompany: string | null;
+      title: string | null;
+      linkedinConnectionDate: Date | null;
+      key: string;  // for name+company dedup
+    };
 
-    const existingUrls = new Set(
-      existing.filter((c) => c.linkedinUrl).map((c) => c.linkedinUrl!.toLowerCase())
-    );
-    const existingNameCompany = new Set(
-      existing.map(
-        (c) =>
-          `${c.firstName.toLowerCase()}|${c.lastName.toLowerCase()}|${(c.currentCompany || '').toLowerCase()}`
-      )
-    );
-
-    let created = 0;
-    let skipped = 0;
+    const candidates: Candidate[] = [];
     const errors: string[] = [];
 
     for (const row of parsed.data) {
@@ -82,7 +72,7 @@ export async function POST(request: Request) {
       const lastName = row['Last Name']?.trim();
 
       if (!firstName || !lastName) {
-        errors.push(`Skipped row: missing name`);
+        errors.push('Skipped row: missing name');
         continue;
       }
 
@@ -92,56 +82,110 @@ export async function POST(request: Request) {
       const position = row['Position']?.trim() || null;
       const connectedOn = row['Connected On']?.trim() || null;
 
-      // Dedup by LinkedIn URL
-      if (linkedinUrl && existingUrls.has(linkedinUrl.toLowerCase())) {
-        skipped++;
-        continue;
-      }
-
-      // Dedup by name + company
-      const key = `${firstName.toLowerCase()}|${lastName.toLowerCase()}|${(company || '').toLowerCase()}`;
-      if (existingNameCompany.has(key)) {
-        skipped++;
-        continue;
-      }
-
       let linkedinConnectionDate: Date | null = null;
       if (connectedOn) {
-        const parsed = new Date(connectedOn);
-        if (!isNaN(parsed.getTime())) {
-          linkedinConnectionDate = parsed;
-        }
+        const d = new Date(connectedOn);
+        if (!isNaN(d.getTime())) linkedinConnectionDate = d;
       }
 
+      candidates.push({
+        firstName,
+        lastName,
+        email,
+        linkedinUrl,
+        currentCompany: company,
+        title: position,
+        linkedinConnectionDate,
+        key: `${firstName.toLowerCase()}|${lastName.toLowerCase()}|${(company ?? '').toLowerCase()}`
+      });
+    }
+
+    // === STEP 2: NARROWED NAME+COMPANY SELECT (D-09) ===
+    // Empty-input short-circuit — no SQL issued.
+    let existingNameCompanyKeys = new Set<string>();
+    if (candidates.length > 0) {
+      const keys = candidates.map((c) => c.key);
+      // Narrowed SELECT — only fetches rows whose composed-key matches a CSV row.
+      // The composed-key is `lower(first_name) || '|' || lower(last_name) || '|' || lower(coalesce(current_company, ''))`.
+      // sql.join parameter-binds each key string individually — NO sql.raw, NO concat.
+      // D-06: sql template inside Drizzle's query builder is the documented
+      // escape; this is NOT the "raw SQL" CLAUDE.md forbids.
+      const narrowed = await db
+        .select({
+          firstName: contacts.firstName,
+          lastName: contacts.lastName,
+          currentCompany: contacts.currentCompany
+        })
+        .from(contacts)
+        .where(and(
+          isNull(contacts.archivedAt),
+          sql`(lower(${contacts.firstName}) || '|' || lower(${contacts.lastName}) || '|' || lower(coalesce(${contacts.currentCompany}, ''))) IN (${sql.join(keys.map((k) => sql`${k}`), sql`, `)})`
+        ));
+      existingNameCompanyKeys = new Set(
+        narrowed.map(
+          (r) => `${r.firstName.toLowerCase()}|${r.lastName.toLowerCase()}|${(r.currentCompany ?? '').toLowerCase()}`
+        )
+      );
+    }
+
+    // === STEP 3: FILTER by name+company dedup ===
+    // URL dedup is NOT pre-filtered — handled DB-side by ON CONFLICT below.
+    const toInsert = candidates.filter((c) => !existingNameCompanyKeys.has(c.key));
+    const nameCompanySkipped = candidates.length - toInsert.length;
+
+    // === STEP 4: BULK INSERT with ON CONFLICT (D-08, D-10) ===
+    let created = 0;
+    if (toInsert.length > 0) {
       try {
-        const [contact] = await db
+        const returningRows = await db
           .insert(contacts)
-          .values({
-            firstName,
-            lastName,
-            email,
-            linkedinUrl,
-            currentCompany: company,
-            title: position,
-            closeness: defaultCloseness || 'acquaintance',
-            outreachStatus: 'not_reached_out',
-            importSource: 'linkedin_csv',
-            importedAt: new Date(),
-            linkedinConnectionDate,
-            tags: ['linkedin-import']
+          .values(
+            toInsert.map((c) => ({
+              firstName: c.firstName,
+              lastName: c.lastName,
+              email: c.email,
+              linkedinUrl: c.linkedinUrl,
+              currentCompany: c.currentCompany,
+              title: c.title,
+              closeness: (defaultCloseness || 'acquaintance') as (typeof contactClosenessValues)[number],
+              outreachStatus: 'not_reached_out' as (typeof outreachStatusValues)[number],
+              importSource: 'linkedin_csv',
+              importedAt: new Date(),
+              linkedinConnectionDate: c.linkedinConnectionDate,
+              tags: ['linkedin-import']
+            }))
+          )
+          // Targets the partial UNIQUE index `contacts_linkedin_url_unique_idx`
+          // (Plan 1) whose predicate is
+          // `WHERE linkedin_url IS NOT NULL AND archived_at IS NULL`.
+          // The WHERE clause must be specified explicitly so Postgres (and PGlite)
+          // can match the conflict target to the partial index — omitting the
+          // predicate produces "no unique constraint matching the ON CONFLICT
+          // specification" on engines that require an exact match.
+          // ACTIVE-rows-only scope (BLOCKER 1 fix) means:
+          //   - Conflicts trigger ONLY against existing active contacts with the same URL.
+          //   - Re-importing an ARCHIVED contact with the same URL creates a fresh
+          //     active row (no silent skip).
+          //   - Rows with linkedinUrl IS NULL are not covered by the index and pass
+          //     through (no conflict path).
+          .onConflictDoNothing({
+            target: contacts.linkedinUrl,
+            where: sql`${contacts.linkedinUrl} IS NOT NULL AND ${contacts.archivedAt} IS NULL`
           })
-          .returning();
-
-        // Track for dedup within batch
-        if (linkedinUrl) existingUrls.add(linkedinUrl.toLowerCase());
-        existingNameCompany.add(key);
-
-        created++;
+          .returning({ id: contacts.id });
+        created = returningRows.length;
       } catch (err) {
-        errors.push(`Failed to import ${firstName} ${lastName}: ${String(err)}`);
+        // Aggregate failure — per D-10, DB-level errors after the bulk INSERT
+        // report as a single error, NOT per-row.
+        errors.push(`Failed to insert ${toInsert.length} rows: ${String(err)}`);
       }
     }
 
+    // skipped = (rows lost to name+company dedup) + (rows lost to URL ON CONFLICT)
+    const urlConflictSkipped = toInsert.length - created;
+    const skipped = nameCompanySkipped + urlConflictSkipped;
+
+    // === STEP 5: SINGLE TIMELINE EVENT ===
     if (created > 0) {
       await logTimeline({
         eventType: 'contacts_imported',
