@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { contacts, prospects, prospectBridges } from '../../../../drizzle/schema';
 import { eq, isNull } from 'drizzle-orm';
-import type { ScrapedProspect } from './scrape-connections';
+import type { ScrapedProspect } from './types';
 import type { Contact } from '@/lib/domain/types';
 
 type MatchResult = {
