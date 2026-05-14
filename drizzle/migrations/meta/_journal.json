@@ -57,6 +57,13 @@
       "when": 1778759973963,
       "tag": "0007_add_queued_failed_status_and_error_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778788004527,
+      "tag": "0008_phase6_indexes",
+      "breakpoints": true
     }
   ]
 }
