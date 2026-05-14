@@ -1,12 +1,16 @@
 import { db } from '@/lib/db';
-import { jobLeads, prospects } from '../../../../../../drizzle/schema';
+import { jobLeads } from '../../../../../../drizzle/schema';
 import { eq } from 'drizzle-orm';
 import { success } from '@/lib/api/types';
-import { notFound, serverError } from '@/lib/api/errors';
+import { notFound, serverError, validationError } from '@/lib/api/errors';
 import { logTimeline } from '@/lib/db/timeline';
-import { scrapeConnections } from '@/features/job-leads/lib/scrape-connections';
-import { matchConnections } from '@/features/job-leads/lib/match-connections';
-import { inferSeniority } from '@/features/job-leads/lib/seniority';
+import { canJobLeadTransition } from '@/lib/domain/job-lead-pipeline';
+
+// Thin synchronous status flip: scraped|failed -> queued.
+// Real connection scraping is performed out-of-band by the Claude Code skill
+// (Plan 06); this route exists so the UI and the skill share one transition
+// gate. canJobLeadTransition is the single source of truth — same graph as
+// PATCH /status — so there is no possibility of drift between the two routes.
 
 export async function POST(
   _request: Request,
@@ -22,80 +26,30 @@ export async function POST(
       .limit(1);
 
     if (!lead) return notFound('Job lead');
-    if (!lead.companyName) {
-      return Response.json(
-        { success: false, error: 'Company name not available. Scrape the job page first.' },
-        { status: 400 }
-      );
+
+    if (!canJobLeadTransition(lead.status, 'queued')) {
+      return validationError(`Cannot queue lead in status '${lead.status}'`);
     }
 
-    // Set status to searching
-    await db
+    const [updated] = await db
       .update(jobLeads)
-      .set({ status: 'searching', updatedAt: new Date() })
-      .where(eq(jobLeads.id, id));
+      .set({
+        status: 'queued',
+        lastError: null,
+        lastErrorAt: null,
+        updatedAt: new Date()
+      })
+      .where(eq(jobLeads.id, id))
+      .returning();
 
-    // Fire-and-forget: run the search async
-    (async () => {
-      try {
-        const { prospects: scrapedProspects, context } =
-          await scrapeConnections(lead.companyName!, {
-            jobUrl: lead.linkedinJobUrl
-          });
+    await logTimeline({
+      eventType: 'job_lead_search_queued',
+      title: `Queued for connection scrape: ${lead.companyName || 'Unknown'}`,
+      companyId: lead.companyId || undefined,
+      metadata: { jobLeadId: id, from: lead.status, to: 'queued' }
+    });
 
-        // Insert prospects into DB
-        for (const sp of scrapedProspects) {
-          const { level } = inferSeniority(sp.title || '');
-          await db.insert(prospects).values({
-            jobLeadId: id,
-            name: sp.name,
-            title: sp.title,
-            seniorityLevel: level,
-            linkedinUrl: sp.linkedinUrl,
-            profileSnippet: sp.profileSnippet
-          });
-        }
-
-        // Match mutual connections to contacts
-        const matchResult = await matchConnections(id, scrapedProspects);
-
-        // Update lead with results
-        const newStatus =
-          matchResult.contactIdsNeedingTriage.length > 0 ? 'found' : 'ready';
-
-        await db
-          .update(jobLeads)
-          .set({
-            status: newStatus,
-            prospectCount: scrapedProspects.length,
-            updatedAt: new Date()
-          })
-          .where(eq(jobLeads.id, id));
-
-        await logTimeline({
-          eventType: 'job_lead_search_complete',
-          title: `Found ${scrapedProspects.length} prospects at ${lead.companyName}`,
-          companyId: lead.companyId || undefined,
-          metadata: {
-            jobLeadId: id,
-            prospectCount: scrapedProspects.length,
-            matched: matchResult.matched,
-            unmatched: matchResult.unmatched
-          }
-        });
-
-        // Leave browser open for now (debug mode)
-        // await context.close();
-      } catch (err) {
-        console.error('Connection search failed:', err);
-        await db
-          .update(jobLeads)
-          .set({ status: 'scraped', updatedAt: new Date() })
-          .where(eq(jobLeads.id, id));
-      }
-    })();
-
-    return success({ status: 'searching', message: 'Search started. Poll /status for progress.' });
+    return success(updated);
   } catch (err) {
     return serverError(err);
   }

@@ -1,13 +1,14 @@
 import { db } from '@/lib/db';
 import { jobLeads } from '../../../../drizzle/schema';
-import { desc, isNull, lt, sql, eq } from 'drizzle-orm';
+import { desc, inArray, isNull, lt, sql, eq } from 'drizzle-orm';
 import { created, paginated } from '@/lib/api/types';
 import { serverError, validationError } from '@/lib/api/errors';
-import { parseCursor, parseLimit } from '@/lib/api/filters';
+import { parseArrayParam, parseCursor, parseLimit } from '@/lib/api/filters';
 import { logTimeline } from '@/lib/db/timeline';
 import { z } from 'zod';
 import { scrapeJobPage } from '@/features/job-leads/lib/scrape-job-page';
 import { companies } from '../../../../drizzle/schema';
+import { jobLeadStatusValues } from '@/lib/domain/types';
 
 const createJobLeadSchema = z.object({
   linkedinJobUrl: z.string().url()
@@ -18,8 +19,18 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = parseLimit(searchParams.get('limit'));
     const cursor = parseCursor(searchParams.get('cursor'));
+    const statuses = parseArrayParam(searchParams.get('status'));
 
     const conditions = [isNull(jobLeads.archivedAt)];
+
+    if (statuses) {
+      conditions.push(
+        inArray(
+          jobLeads.status,
+          statuses as (typeof jobLeadStatusValues)[number][]
+        )
+      );
+    }
 
     if (cursor) {
       conditions.push(lt(jobLeads.updatedAt, cursor));
