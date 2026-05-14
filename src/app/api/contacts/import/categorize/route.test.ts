@@ -16,9 +16,16 @@ vi.mock('@/lib/db', () => ({
 }));
 
 describe('PATCH /api/contacts/import/categorize (bulk UPDATE)', () => {
+  // Pre-warm the module import and PGlite wasm before tests run. Without this,
+  // Test 1 bears the full cold-start module-loading cost (~2-4s on first run)
+  // and may timeout at vitest's default 5000ms limit.
+  beforeAll(async () => {
+    await import('@/app/api/contacts/import/categorize/route');
+  }, 30000);
+
   beforeEach(async () => {
     dbRef.current = await createTestDb();
-  });
+  }, 30000);
 
   it('Test 1: happy path — bulk update of 3 contacts sets closeness for each', async () => {
     const seeded = await dbRef.current!
@@ -53,9 +60,12 @@ describe('PATCH /api/contacts/import/categorize (bulk UPDATE)', () => {
     expect(sorted[1].closeness).toBe('colleague');
     expect(sorted[2].closeness).toBe('career_contact');
 
-    // Each updated_at should be recent (post-seed)
-    for (const row of rows) {
-      expect(row.updatedAt.getTime()).toBeGreaterThan(Date.now() - 10000);
+    // Each updated_at should be >= the seed time (UPDATE ran after insert).
+    // Comparing against PGlite's own seed timestamps avoids wall-clock drift
+    // between JS Date.now() and PGlite's internal clock.
+    for (const seededRow of seeded) {
+      const updated = rows.find((r) => r.id === seededRow.id)!;
+      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(seededRow.updatedAt.getTime());
     }
   });
 
