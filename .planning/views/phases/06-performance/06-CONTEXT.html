@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heimdall — Phase 6 Context</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  header { border-bottom: 2px solid var(--line); padding-bottom: 16px; margin-bottom: 32px; }
+  h1 { margin: 0 0 4px; font-size: 30px; }
+  .tagline { color: var(--muted); font-style: italic; margin: 0; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
+  h3 { margin-top: 24px; font-size: 17px; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; margin: 12px 0; }
+  .boundary {
+    background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
+    border-left: 4px solid var(--accent-2);
+    font-size: 15px;
+    font-style: italic;
+  }
+  .alert {
+    background: #fdf0eb;
+    border-left: 4px solid var(--warn);
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+  }
+  .alert h3 { margin-top: 0; color: var(--warn); }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  .decision-id { color: var(--accent-2); font-weight: 600; }
+  .impl-note { display: block; margin-top: 6px; padding: 8px 12px; background: #f1f5ee; border-left: 3px solid var(--accent); font-size: 13px; color: #3a4a3a; border-radius: 0 4px 4px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+  .badge-pending { background: #f0e5d0; color: #8a6a3a; }
+  .badge-good { background: #d8e8d8; color: #3a6a3a; }
+  .badge-current { background: #d9e2ef; color: #3a5a8a; }
+  .badge-warn { background: #fdd6cf; color: #8a3a2a; }
+  .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .scope-grid { grid-template-columns: 1fr; } }
+  .scope-block { border-radius: 8px; padding: 14px 18px; border: 1px solid var(--line); }
+  .scope-in { background: #f1f5ee; border-left: 4px solid var(--accent); }
+  .scope-out { background: #fdf0eb; border-left: 4px solid var(--warn); }
+  .scope-block h4 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  .file-list li { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Phase 6: Performance — Context</h1>
+  <p class="tagline">Heimdall · gathered 2026-05-14 · <span class="badge badge-good">Ready for planning</span> · <span class="badge badge-current">Mode: discuss</span></p>
+</header>
+
+<section class="card boundary">
+  <h2 style="border:none;margin-top:0;">Phase Boundary</h2>
+  <p>Eliminate per-row DB round-trips and add hot-path indexes so the 1500-contact dataset stops straining import, bulk categorize, prospect writes, bridge-building, and recommendations. Horizontal: <strong>N+1 elimination + index migration</strong>. Scope = the five PERF-A* requirements <strong>plus</strong> three incidentals discovered in scout <strong>plus</strong> restoring the <code>matchConnections</code> caller that Phase 5's reshape unintentionally orphaned.</p>
+</section>
+
+<section class="alert">
+  <h3>Critical Findings From Codebase Scout</h3>
+  <ul>
+    <li><strong>ROADMAP SC #1 first half already satisfied.</strong> Phase 5 deleted the in-app scraper; <code>/api/job-leads/[id]/prospects/route.ts:60</code> already does <code>db.insert(prospects).values(rows)</code> in a single statement. SC text is stale.</li>
+    <li><strong><code>match-connections.ts</code> is currently dead code.</strong> Phase 5 removed its caller and didn't re-wire. <code>prospectBridges</code> never gets populated → recommendations + triage silently return empty results. PERF-A2 is meaningless until a caller is restored.</li>
+    <li><strong>Bonus N+1 in <code>recommendations/route.ts:44-52</code></strong> — per-row <code>db.update(prospectBridges).set({score})</code> in a <code>for</code>.</li>
+    <li><strong>Bonus N+1 in <code>/api/contacts/import:117</code></strong> — per-row <code>db.insert(contacts)</code> in the CSV loop. Required co-fix for PERF-A5's ON-CONFLICT change.</li>
+  </ul>
+</section>
+
+<div class="scope-grid">
+  <div class="scope-block scope-in">
+    <h4>In scope</h4>
+    <ul>
+      <li><strong>PERF-A1 bridges half + PERF-A2:</strong> restore <code>matchConnections</code> caller inline in <code>POST /prospects</code>, wrapped in <code>db.transaction()</code>. Bulk bridge insert via <code>.onConflictDoNothing()</code>.</li>
+      <li><strong>PERF-A3:</strong> single <code>UPDATE ... FROM unnest()</code> via Drizzle's <code>sql</code> template tag.</li>
+      <li><strong>PERF-A4:</strong> Drizzle <code>index()</code> on <code>contacts(archived_at, linkedin_url, company_id, linkedin_connection_date)</code> + <code>companies(name)</code> + UNIQUE partial on <code>contacts(linkedin_url) WHERE NOT NULL</code>.</li>
+      <li><strong>PERF-A5 import half:</strong> bulk insert + ON CONFLICT on linkedin_url + narrowed SELECT for name+company secondary dedup.</li>
+      <li><strong>PERF-A5 match-connections half:</strong> narrowed SELECT keyed on mutual-name tokens. Fuzzy match stays in Node.</li>
+      <li><strong>Incidental fold:</strong> ROADMAP SC #1 wording refresh.</li>
+      <li><strong>Incidental fold:</strong> <code>/api/contacts/import</code> for-loop → single bulk insert.</li>
+      <li><strong>Incidental fold:</strong> <code>recommendations/route.ts:44-52</code> bridge-score N+1 fixed.</li>
+    </ul>
+  </div>
+  <div class="scope-block scope-out">
+    <h4>Out of scope (deferred)</h4>
+    <ul>
+      <li><code>pg_trgm</code> GIN indexes for <code>ilike</code> search across <code>/api/search</code> + list routes (v2).</li>
+      <li>Server-side fuzzy matching in <code>match-connections.ts</code> via <code>pg_trgm similarity()</code> or FTS.</li>
+      <li>Materialized view for <code>recommendations</code>.</li>
+      <li><code>CREATE INDEX CONCURRENTLY</code> — overkill for single-user + 1500-row tables; plain <code>CREATE INDEX</code> wins.</li>
+      <li>Row-granular error reporting on <code>/api/contacts/import</code> — traded for aggregate counts.</li>
+      <li>Deleting <code>matchConnections</code> / retiring bridges feature.</li>
+      <li>New caching layers, query memoization.</li>
+      <li>Standalone btree on <code>prospectBridges(prospect_id)</code> / <code>(contact_id)</code> — planner research item.</li>
+      <li><code>prospectBridges.score</code> column retirement.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Implementation Decisions</h2>
+
+<h3>Bridge-Building Flow (PERF-A2 Caller Restoration)</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-01</span> — <strong><code>matchConnections</code> called inline inside <code>POST /api/job-leads/[id]/prospects</code></strong>, after bulk prospect insert, before status flip to <code>'found'</code>.</li>
+    <li><span class="decision-id">D-02</span> — <strong>Whole handler wrapped in <code>db.transaction()</code></strong>. Prospect insert + bridge insert + status update commit/rollback atomically. Failure → skill sees 500 → retry. Neon HTTP coalesces into one transactional request.</li>
+    <li><span class="decision-id">D-03</span> — Signature change minimal: pass <code>scrapedProspects</code> from the validated request body (already includes <code>mutualConnectionNames</code>). Planner decides whether to thread <code>tx</code> handle or wrap externally.</li>
+    <li><span class="decision-id">D-04</span> — Bulk bridge insert: <code>await tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code>. Piggybacks on existing <code>unique('prospect_bridge_unique')</code>.</li>
+  </ul>
+</div>
+
+<h3>Bulk Update Mechanism (PERF-A3)</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-05</span> — <strong><code>UPDATE ... FROM unnest()</code> via <code>sql</code> template tag</strong> inside <code>db.execute()</code>. One round-trip; no N+1.</li>
+    <li><span class="decision-id">D-06</span> — CLAUDE.md "no raw SQL" guard respected — <code>sql</code> template tag is the documented Drizzle escape. One-line comment notes the exception.</li>
+    <li><span class="decision-id">D-07</span> — Response shape unchanged: <code>{ updated, total }</code>.</li>
+  </ul>
+</div>
+
+<h3>DB-Side Dedup (PERF-A5)</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-08</span> — UNIQUE partial index on <code>contacts(linkedin_url) WHERE linkedin_url IS NOT NULL</code>. Doubles as the PERF-A4 btree on the same column. <code>ON CONFLICT</code> uses this partial index as its conflict target.</li>
+    <li><span class="decision-id">D-09</span> — Name+company dedup stays in-app, but uses a <strong>narrowed SELECT</strong> filtered by the CSV's tuples. No full table scan.</li>
+    <li><span class="decision-id">D-10</span> — <code>/api/contacts/import</code> becomes a single bulk insert with <code>onConflictDoNothing({ target: contacts.linkedinUrl })</code>. Per-row error messages drop to validation-stage only; database-level errors reported as a single aggregate.</li>
+    <li><span class="decision-id">D-11</span> — <code>match-connections.ts</code> narrowed SELECT: tokens drawn from <code>scrapedProspects.flatMap(p =&gt; p.mutualConnectionNames)</code>. <code>WHERE lower(first_name) IN (...) OR lower(last_name) IN (...)</code>. In-Node <code>fuzzyMatch</code> stays.</li>
+  </ul>
+</div>
+
+<h3>Index Migration (PERF-A4)</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-12</span> — Indexes declared in Drizzle schema via <code>index('...').on(...)</code>. Plain <code>CREATE INDEX</code> (not CONCURRENTLY).</li>
+    <li><span class="decision-id">D-13</span> — 5 btree + 1 UNIQUE partial:
+      <ol>
+        <li><code>contacts(archived_at)</code></li>
+        <li><code>contacts(linkedin_url) UNIQUE WHERE NOT NULL</code> — doubles as ON CONFLICT target</li>
+        <li><code>contacts(company_id)</code></li>
+        <li><code>contacts(linkedin_connection_date)</code></li>
+        <li><code>companies(name)</code></li>
+      </ol>
+    </li>
+    <li><span class="decision-id">D-14</span> — Migration <code>0008_*.sql</code> from <code>npm run db:generate</code>. Single file. Applied via <code>npm run db:migrate</code>.</li>
+  </ul>
+</div>
+
+<h3>Recommendations N+1 (Incidental Fold #3)</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-15</span> — <code>recommendations/route.ts:44-52</code> loop replaced by bulk <code>UPDATE ... FROM unnest()</code> for any bridges with <code>score IS NULL</code>. Alternative — compute on-the-fly without persistence — acceptable if planner verifies no other consumers.</li>
+  </ul>
+</div>
+
+<h3>Wave Structure (Planner Guidance)</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-16</span> — <strong>Wave 1:</strong> schema + migration. Blocks Wave 2 (PERF-A5 ON CONFLICT depends on UNIQUE index).</li>
+    <li><span class="decision-id">D-17</span> — <strong>Wave 2:</strong> four parallel atomics:
+      <ul>
+        <li><strong>Plan 2a</strong> (PERF-A1 + PERF-A2 + SC#1 refresh): <code>POST /prospects</code> + <code>matchConnections</code> transactional inline call</li>
+        <li><strong>Plan 2b</strong> (PERF-A3): <code>UPDATE ... FROM unnest()</code> in categorize</li>
+        <li><strong>Plan 2c</strong> (PERF-A5 import half): bulk insert + narrowed dedup</li>
+        <li><strong>Plan 2d</strong> (Incidental #3): recommendations N+1 fix</li>
+      </ul>
+    </li>
+    <li><span class="decision-id">D-18</span> — Atomic-per-requirement commit pattern (D-19 from Phases 1-5). ROADMAP SC #1 refresh ships in Plan 2a's commit.</li>
+  </ul>
+</div>
+
+<h3>Testing Strategy</h3>
+<div class="card">
+  <ul>
+    <li><span class="decision-id">D-19</span> — PGlite-backed route tests assert post-conditions on each rewritten path. Phase 2 harness reused as-is.</li>
+    <li><span class="decision-id">D-20</span> — Index presence regression test: query <code>pg_indexes</code> on PGlite after migrations.</li>
+    <li><span class="decision-id">D-21</span> — No micro-benchmarks. Behavior tests + greppable forbidden pattern (<code>for...of await db.X</code>) in changed routes.</li>
+  </ul>
+</div>
+
+<h2>Canonical References</h2>
+<div class="card">
+  <p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+  <table>
+    <tr><th>Topic</th><th>Path</th><th>Why</th></tr>
+    <tr><td>Requirements</td><td><code>.planning/ROADMAP.md</code> §Phase 6</td><td>Goal + 5 SCs (SC #1 wording refresh per D-18)</td></tr>
+    <tr><td>Requirements</td><td><code>.planning/REQUIREMENTS.md</code> §Performance</td><td>PERF-A1..A5 full definitions</td></tr>
+    <tr><td>Constraint</td><td><code>.planning/PROJECT.md</code> §Constraints</td><td>"No raw SQL except pgvector"; "1500+ contacts straining"</td></tr>
+    <tr><td>Phase 5 reshape</td><td><code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code></td><td>matchConnections orphan + new prospects flow</td></tr>
+    <tr><td>Skill contract</td><td><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code></td><td>Verify inline matchConnections doesn't break skill contract</td></tr>
+    <tr><td>Bottlenecks</td><td><code>.planning/codebase/CONCERNS.md</code> §Performance</td><td>Source of evidence for N+1 + missing indexes</td></tr>
+    <tr><td>Conventions</td><td><code>.planning/codebase/CONVENTIONS.md</code> §Drizzle</td><td>sql template tag = the no-raw-SQL escape</td></tr>
+  </table>
+</div>
+
+<h2>Code Paths Touched</h2>
+<div class="card">
+  <ul class="file-list">
+    <li><code>src/app/api/job-leads/[id]/prospects/route.ts</code> — host for inline matchConnections (D-01)</li>
+    <li><code>src/features/job-leads/lib/match-connections.ts</code> — caller restored, narrowed SELECT (D-11), bulk bridge insert (D-04)</li>
+    <li><code>src/app/api/contacts/import/categorize/route.ts</code> — UPDATE FROM unnest (D-05)</li>
+    <li><code>src/app/api/contacts/import/route.ts</code> — bulk insert + ON CONFLICT (D-08..D-10)</li>
+    <li><code>src/app/api/job-leads/[id]/recommendations/route.ts:44-52</code> — N+1 fix (D-15)</li>
+    <li><code>drizzle/schema/contacts.ts</code> — index() + uniqueIndex() (D-12..D-13)</li>
+    <li><code>drizzle/schema/companies.ts</code> — index() for name (D-13)</li>
+    <li><code>drizzle/migrations/0008_*.sql</code> (new) — generated migration (D-14)</li>
+  </ul>
+</div>
+
+<h2>Deferred Ideas</h2>
+<div class="card">
+  <ul>
+    <li><code>pg_trgm</code> GIN for <code>ilike</code> search across <code>/api/search</code> + list routes — v2.</li>
+    <li>Server-side fuzzy match in <code>match-connections.ts</code> — v2.</li>
+    <li>Materialized view for recommendations — bulk + indexes deliver perf without it.</li>
+    <li>Row-granular import errors — traded for aggregate counts under D-10.</li>
+    <li>Standalone btree on <code>prospectBridges(prospect_id)</code>/<code>(contact_id)</code> — planner research item.</li>
+    <li><code>prospectBridges.score</code> column retirement — depends on D-15 variant.</li>
+    <li><code>CREATE INDEX CONCURRENTLY</code> — unneeded at this dataset size.</li>
+  </ul>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/phases/06-performance/06-CONTEXT.md</code> — this HTML may lag behind. Discussion log: <code>06-DISCUSSION-LOG.md</code>.
+</footer>
+
+</body>
+</html>
