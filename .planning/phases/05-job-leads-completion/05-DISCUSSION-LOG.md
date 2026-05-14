@@ -1,156 +1,127 @@
 # Phase 5: Job Leads Completion - Discussion Log
 
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
-> Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
+> Decisions are captured in `05-CONTEXT.md` — this log preserves the alternatives considered.
 
-**Date:** 2026-05-13
+**Date:** 2026-05-13 (post-reshape)
 **Phase:** 05-job-leads-completion
-**Areas discussed:** Error surfacing model, Timeout budget + revert behavior, Browser lifecycle, Debug-log cleanup scope
+**Reshape note:** This phase was reshaped from "fix the in-app scraper" to "delete the in-app scraper and replace with a Claude Code skill on `vercel-labs/agent-browser`." The prior discussion log (covering the original 4 gray areas: error-surfacing model, timeout budget, browser lifecycle, debug-log cleanup) is preserved at `05-DISCUSSION-LOG-superseded-in-app-scraper.md`.
+**Areas discussed (this session):** skill location, agent-browser invocation pattern, queue+status model, no-arg drain mode, in-app code removal scope, web UI affordance, API write-back contract
 
 ---
 
-## Gray Area Selection
+## Skill location
 
-User was offered 4 phase-specific gray areas (5th, `navigateToEmployeeList` resilience, dropped due to AskUserQuestion's 4-option cap and folded into CONTEXT.md CD-04).
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Project-local `.claude/skills/scrape-linkedin-connections/` | Checked into the repo; ships with Heimdall; anyone with the codebase + Claude Code can run it. Co-located with `.planning/` docs the skill needs to read. | ✓ |
+| User-global `~/.claude/skills/scrape-linkedin-connections/` | Personal Claude Code config; doesn't ship with the repo. | |
 
-| Option | Selected |
-|--------|----------|
-| Error surfacing model | ✓ |
-| Timeout budget + revert behavior | ✓ |
-| Browser lifecycle | ✓ |
-| Debug-log cleanup scope | ✓ |
-
-**Outcome:** All 4 selected → all 4 deep-dived below.
+**User's choice:** Project-local (recommended)
+**Notes:** Skill is Heimdall-specific (knows the API, knows the prospect schema). Shipping with the repo is the right call.
 
 ---
 
-## Error surfacing model
-
-### Q1: Where should the scrape-failure error live so the UI can render it?
+## agent-browser invocation pattern
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| New `lastError` text column on job_leads | Add `last_error: text` + `last_error_at: timestamp` to job_leads schema. On failure: revert status, write error message + timestamp. `/status` endpoint returns it. Cleared on next successful scrape. Persistent, dead simple. | |
-| timeline_events row only | On failure, write a `job_lead_search_failed` timeline event with the error message in `metadata.error`. UI joins / queries timeline for the latest failure event. Uses existing infra (no migration), but the UI has to fetch + filter timeline. | |
-| Both — column + timeline event | Write to both: `lastError` column for fast 'current state of this lead' read, AND a timeline_events row for the activity feed / audit trail. Most informative. Two writes per failure. | ✓ |
-| Toast on the click + nothing persisted | Return the error from `/search` POST synchronously when known fast, or have `/status` return a one-shot `error` field that clears on next read. No new column, no timeline event. If the user navigates away, the error is gone. | |
+| Interactive `agent-browser ai chat` | Claude (in Claude Code) reasons step-by-step over agent-browser's snapshot+refs model. Best handles LinkedIn's unpredictable DOM. Cost = existing Claude Code session, no separate LLM bill. | ✓ |
+| Scripted CLI calls + JSON parsing | Skill shells out to specific `agent-browser` subcommands and parses JSON. More deterministic but defeats the "LLM reasons over a11y tree" point. | |
 
-**User's choice:** Both — column + timeline event.
-**Notes:** Captured as D-01 in CONTEXT.md. Drives Drizzle migration + extending `/status` payload + new timeline event type.
-
-### Q2: What does the user see when a scrape fails?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Inline banner on job-lead detail + Retry button | Banner above Find Connections; Retry clears error and re-POSTs to `/search`. | ✓ |
-| Toast on poll completion + persistent timeline entry | Sonner toast when `SearchProgress` poll detects status reverted with `lastError` set; no banner. | |
-| Both — inline banner AND toast | Toast for immediate feedback + banner for durable signal. | |
-| Inline banner only, no toast | Banner on detail page only. | |
-
-**User's choice:** Inline banner on job-lead detail + Retry button.
-**Notes:** Captured as D-02. New `scrape-error-banner.tsx` component. No sonner integration this phase.
-
-### Q3: What error message gets stored — raw or normalized?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Categorized + short raw tail | `<category>: <first 200 chars of err.message>`. 5 categories. | ✓ |
-| Raw err.message (truncated to 500 chars) | Honest but ugly. | |
-| Category only, no raw text | Cleanest UI but no per-scrape diagnostic. | |
-| Two columns — `errorCategory` + `errorDetail` | Most structure, most schema cost. | |
-
-**User's choice:** Categorized + short raw tail.
-**Notes:** Captured as D-03. 5-category taxonomy: `Timeout`, `LinkedIn navigation failed`, `No prospects found`, `Browser unavailable`, `Unknown error`.
+**User's choice:** Interactive `ai chat` mode (recommended)
+**Notes:** Locks the architectural reasoning behind the entire pivot — the value of agent-browser is the LLM reasoning, not its CDP plumbing.
 
 ---
 
-## Timeout budget + revert behavior
-
-### Q1: What's the wall-clock budget for a single scrape before the IIFE is killed and the lead reverts to `scraped`?
+## Queue + status model
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| 90 seconds | Long enough for nav + 10 pages under normal load; ~30s headroom over the per-step timeout sum. | ✓ |
-| 120 seconds | More generous; trades responsiveness for resilience. | |
-| 60 seconds | Tight; aggressive feedback loop. | |
-| Configurable via env (SCRAPE_TIMEOUT_MS), default 90s | Same default, adds one knob. | |
+| Add 2 enum values: `queued` and `failed` + reuse existing columns | Single source of truth via the status enum; explicit `queued` marker for the skill to pick up. Migration: 2 enum values + 2 columns (`last_error`, `last_error_at`). | ✓ |
+| Keep enum as-is; track queue state via new boolean/timestamp columns | More columns, more flexibility, but queue state is implied by column combos. | |
+| Use existing `searching`/`found` + add only `failed` + `last_error` | Minimal migration; skill picks up `scraped` leads. Fragile — relies on absence of state. | |
 
-**User's choice:** 90 seconds.
-**Notes:** Captured as D-06. No env override.
-
-### Q2: When the 90s timeout fires, how do we clean up the in-flight Playwright work?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Promise.race + AbortController + close context | Aborts in-flight Playwright + closes context. Cleanest. | |
-| Promise.race + close context (no abort) | Closes context; in-flight calls throw and are caught. | |
-| Promise.race + leave Playwright dangling | Just race against 90s and revert status. Lingering promise GC'd later. | ✓ |
-| Promise.race + close context + log full error to timeline | Option 1 + separate `job_lead_search_timeout` event type. | |
-
-**User's choice:** Promise.race + leave Playwright dangling.
-**Notes:** Captured as D-10. Tension flag against SC #3 ("no leaked browser instance open after completion") documented for plan-checker — interpretation is "successful completion closes the browser; timeout-abort releases promise ownership and lets the context GC; SC #3 is about the success-path leak only."
+**User's choice:** Add `queued` + `failed` (recommended)
+**Notes:** Status enum stays the source of truth for the lifecycle state. The skill claims leads by flipping `queued → searching`; race-safety via optimistic update (CONTEXT D-11).
 
 ---
 
-## Browser lifecycle
-
-### Q1: How should the browser context be closed after a successful scrape?
+## No-arg drain mode
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Always close context after scrape finishes | Simplest, satisfies SC #3 cleanly; pays open/close cost per scrape. | |
-| Close in remote (CDP/WS) mode only | In remote mode `close()` is cheap (just disconnect); in local mode `close()` shuts the whole persistent Chromium and the next scrape relaunches. | ✓ |
-| Always close + return result without context | Same as option 1, but scrapeConnections no longer returns `context`. | |
-| Module-level shared context singleton + idle timeout | Caches context, idle-times-out after 5 min. Best perf, most complex. | |
+| List queue, then process one-at-a-time with confirmation | Skill prints the queue, walks each lead with Claude narrating, allows user to interrupt/skip. Matches human-in-the-loop ethos; failures visible. | ✓ |
+| Batch through all unprocessed leads autonomously | Faster for large queues; harder to recover from a bad run because errors cascade silently. | |
+| Process the next single lead and exit | Each invocation handles one lead; simplest skill, most ceremonial. | |
 
-**User's choice:** Close in remote (CDP/WS) mode only.
-**Notes:** Captured as D-12. Export `isRemote()` from `linkedin-browser.ts`. Local-dev `launchPersistentContext` left alive between scrapes.
+**User's choice:** List queue, walk one-at-a-time with user prompts (recommended)
+**Notes:** Failures don't abort the batch — skill captures `failed` and moves to the next lead (CONTEXT D-10).
 
 ---
 
-## Debug-log cleanup scope
-
-### Q1: How aggressive should the console.log cleanup be in scrape-connections.ts?
+## In-app code removal scope
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Gate behind DEBUG_SCRAPE=1 env flag, silent by default | Wrap every `console.log` in env check. | |
-| Delete all console.log calls outright | Strip everything; `console.error` only in catch. | |
-| Replace logs with a small `scrapeLog()` helper | DRY version of env-flag option. | |
-| Keep navigation breadcrumbs (~5 lines), drop DOM dumps | Middle ground — high-level breadcrumbs stay, JSON dumps go. | ✓ |
+| Delete the IIFE + `scrape-connections.ts`; keep `linkedin-browser.ts` + `scrape-job-page.ts` | Targeted deletion. The connection-scrape code goes; the job-page-scrape (cheerio, in-app on submit) stays; profile-setup helpers stay (skill may reuse). Convert `/search` route to a thin status-flip endpoint. | ✓ |
+| Burn it all — delete every scraper file under `src/features/job-leads/lib/` | Skill handles job-page scrape too. Cleaner separation; doubles skill responsibility. | |
+| Keep everything; just disable the IIFE | Lowest risk; leaves cruft. | |
 
-**User's choice:** Keep navigation breadcrumbs (~5 lines), drop DOM dumps.
-**Notes:** Captured as D-15/D-16/D-17. Specific keep/drop list in CONTEXT.md D-15.
+**User's choice:** Targeted deletion (recommended)
+**Notes:** `scrape-job-page.ts` is a different concern (cheerio + fetch, in-app on lead create) — keeping it is correct. `linkedin-browser.ts` may still own the `~/.heimdall/linkedin-profile/` invariants even if the skill ends up not importing it directly.
+
+---
+
+## Web UI affordance
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| `queued` status badge + copy-skill-invocation button | Lead detail page shows queued badge + a button that copies `claude /scrape-linkedin-connections <id>` to clipboard. Failed leads show categorized error banner. | ✓ |
+| Just the badge — no copy button | User memorizes/types the skill invocation. One less thing to build. | |
+| Badge + webhook back so the web UI shows a real-time toast | Adds websocket/polling infra; YAGNI for single-user. | |
+
+**User's choice:** Badge + copy button (recommended)
+**Notes:** Web UI never triggers a live scrape — it captures URLs and shows results. Explicit boundary preserved.
+
+---
+
+## API write-back contract
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Clerk session via curl + `~/.heimdall/api-token` bearer token | Long-lived token at `~/.heimdall/api-token`; middleware accepts as service-token bypass for the single-user lock. Skill calls existing routes via REST. | ✓ |
+| Reuse Clerk session cookie from the local Chrome | No new auth path; fragile if cookie rotates mid-run; ties skill to a specific browser profile. | |
+| Skill talks to DB directly via `DATABASE_URL` | Fastest; skips API envelope + `logTimeline()` side effects. | |
+
+**User's choice:** Bearer token via middleware bypass (recommended)
+**Notes:** Preserves the REST + Zod + timeline-event invariants the project depends on. Token validation: SHA-256 hash in `.env.local`; single-user-locked at the middleware layer (CONTEXT D-19, D-21).
 
 ---
 
 ## Claude's Discretion
 
-Areas not asked but locked by analysis or roadmap text (full list in CONTEXT.md `### Claude's Discretion`):
+The following items were captured in CONTEXT.md `<decisions>` § "Claude's Discretion" rather than asked, because they're implementation details the planner should pick based on the codebase:
 
-- **CD-01:** How to handle the existing 457-line working-tree diff (commit as-is then fix forward, vs rewrite history). Recommended: commit as-is.
-- **CD-02:** Regression test for `'point'` removal as filesystem grep, not behavioral test.
-- **CD-03:** Whether to lift `Scraped*` types into a shared types file — skip (premature).
-- **CD-04:** Whether to reorder/strip `navigateToEmployeeList` fallback chain — defer; leave as-is.
-- **CD-05:** Show "5 min ago" timestamp in banner via `date-fns formatDistanceToNow`.
-- **CD-06:** Retry button uses optimistic UI (matches existing `handleFindConnections` pattern).
-- **CD-07:** Keep `job_lead_search_complete` and `job_lead_search_failed` as disjoint event types.
-- **CD-08:** New tests use the `callRoute` helper from Phase 2.
-
----
+- **CD-01:** Whether to commit the working-tree state before deletion (recommended: yes; preserves "we tried this before pivoting" history)
+- **CD-02:** Whether error-write folds into `PATCH /status` or a separate `POST /error` route (recommended: folded — always co-emitted)
+- **CD-03:** Per-step skill API calls vs batched (recommended: per-step for debug-ability)
+- **CD-04:** Whether to drop Playwright from `package.json` entirely (depends on whether `scrape-job-page.ts` uses it)
+- **CD-05:** Cleanup of leftover `~/.heimdall/linkedin-profile/storage-state.json` (recommended: leave)
+- **CD-06:** Bulk-prospects route naming (`POST /prospects` vs `POST /scrape-result`)
+- **CD-07:** Skill prompt depth (recommended: detailed first version, trim later)
 
 ## Deferred Ideas
 
-Ideas mentioned during discussion that belong in other phases (full list in CONTEXT.md `<deferred>`):
+Captured to CONTEXT.md `<deferred>` section. Highlights:
 
-- PERF-A1, PERF-A2 — N+1 inserts (Phase 6).
-- JL2-01..JL2-04 — decouple scrape worker, package classification, captcha detection, deeper pagination (v2).
-- LinkedIn cookie file handling (Phase 3 deferred → Phase 5 closes as "no action needed").
-- Architecture-doc rewrites to mark JL fragility resolved.
-- Possible split of "Browser unavailable" into "CDP unreachable" vs "Captcha detected" once usage data justifies it.
-- Persisting scrape duration on success-path timeline events.
+- JL-A1..A5 entire requirement set — superseded by the architectural pivot
+- Webhook/notification on skill completion — YAGNI for single-user
+- `heimdall-linkedin-login` sibling skill — useful if Chrome profile expires; spike later if friction warrants
+- Multi-tenant deployment — deferred indefinitely (project is single-user by design)
+- Skill output as audit log — YAGNI for now
+- Folding job-page scrape into the skill too — only revisit if cheerio path breaks
 
----
+## Notes on the discussion
 
-*Phase: 05-Job Leads Completion*
-*Logged: 2026-05-13*
+This was a streamlined discussion — all seven gray areas picked the recommended option in two batched `AskUserQuestion` rounds (4 + 3). The recommendations were strongly informed by the prior `/gsd-explore` conversation that led into this reshape, where the architectural rationale was already aligned with the user.
