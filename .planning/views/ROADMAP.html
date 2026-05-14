@@ -237,17 +237,19 @@
 </div>
 
 <div class="phase-card phase-5">
-  <h3><span class="phase-num">PHASE 5</span> Job Leads Completion</h3>
-  <div class="phase-goal">The Job Leads scraper runs cleanly end-to-end and surfaces failures to the user instead of stalling silently.</div>
+  <h3><span class="phase-num">PHASE 5</span> Job Leads Completion <span class="badge" style="background:#f0e5d0;color:#8a6a3a;">reshaped 2026-05-13</span></h3>
+  <div class="phase-goal">LinkedIn connection scraping is reliable. Scraping moves <strong>out of the app</strong> into a Claude Code skill driving <code>vercel-labs/agent-browser</code>; the app holds the queue and the results, scraping runs out-of-band, failures surface back into the UI via the DB.</div>
   <div class="phase-meta"><strong>Depends on:</strong> Phase 4</div>
-  <div class="req-pills"><strong>Requirements:</strong> <span class="req-pill">JL-A1</span><span class="req-pill">JL-A2</span><span class="req-pill">JL-A3</span><span class="req-pill">JL-A4</span><span class="req-pill">JL-A5</span></div>
+  <div class="req-pills"><strong>Requirements:</strong> <span class="req-pill" style="text-decoration:line-through;opacity:0.6;">JL-A1..A5 superseded</span> <span class="req-pill">JL-B1..B5 pending discuss-phase</span></div>
   <strong>Success criteria:</strong>
   <ol class="criteria">
-    <li>Pasting a LinkedIn job URL for any company produces a populated prospect list — no hardcoded <code>'point'</code> string remains in <code>scrape-connections.ts</code></li>
-    <li>A scrape that hangs or fails reverts the lead from <code>searching</code> back to <code>scraped</code> within a bounded timeout and the failure is visible in the UI</li>
-    <li>Running a scrape no longer produces the 20+ debug <code>console.log</code> dumps or leaves a browser instance open after completion</li>
-    <li>Heavy LinkedIn pages load reliably (uses <code>waitUntil: 'domcontentloaded'</code> + targeted <code>waitForSelector</code>, not fixed <code>waitForTimeout</code>)</li>
+    <li>A Claude Code skill exists that accepts a job URL argument <strong>or</strong>, when invoked with no argument, drains unprocessed job leads from the Heimdall DB</li>
+    <li>The skill drives <code>vercel-labs/agent-browser</code> to navigate job → company → employees → 2nd-degree filter and extract prospects in the same <code>ScrapedProspect</code> shape the existing UI consumes</li>
+    <li>The skill writes results back to the DB through existing REST routes; the in-app fire-and-forget Playwright IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code> and <code>src/features/job-leads/lib/scrape-connections.ts</code> are <strong>deleted</strong></li>
+    <li>Job-lead status in the DB cleanly represents the scraping queue — at minimum: needs-scrape, in-progress (by the skill), scraped, failed-with-category</li>
+    <li>The job-lead detail UI surfaces a clear "Run scrape from Claude Code" affordance for unprocessed leads and a categorized failure surface when the skill last attempted and failed, with a retry that re-queues the lead</li>
   </ol>
+  <p style="font-size:13px;color:var(--muted);margin-top:12px;"><em>Old context preserved at <code>.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md</code>. Fresh context will be gathered via <code>/gsd-discuss-phase 5</code>.</em></p>
 </div>
 
 <div class="phase-card phase-6">

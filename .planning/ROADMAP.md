@@ -90,15 +90,18 @@ Plans:
 - [x] 04-05-PLAN.md — DEBT-A4: rm -rf __CLEANUP__/ + add filesystem-existence verification test
 **UI hint**: yes
 
-### Phase 5: Job Leads Completion
-**Goal**: The Job Leads scraper runs cleanly end-to-end and surfaces failures to the user instead of stalling silently
+### Phase 5: Job Leads Completion — *RESHAPED 2026-05-13*
+**Goal**: LinkedIn connection scraping is reliable. Scraping moves **out of the app** into a Claude Code skill driving `vercel-labs/agent-browser`; the app holds the queue and the results, scraping runs out-of-band, failures surface back into the UI via the DB.
 **Depends on**: Phase 4
-**Requirements**: JL-A1, JL-A2, JL-A3, JL-A4, JL-A5
+**Requirements**: JL-A1..A5 are SUPERSEDED by the architectural pivot. New requirement set (JL-B1..B5) to be ratified during `/gsd-discuss-phase` for this reshape. Working framing below.
 **Success Criteria** (what must be TRUE):
-  1. Pasting a LinkedIn job URL for any company produces a populated prospect list — no hardcoded `'point'` string remains in `scrape-connections.ts`
-  2. A scrape that hangs or fails reverts the lead from `searching` back to `scraped` within a bounded timeout and the failure is visible in the UI
-  3. Running a scrape no longer produces the 20+ debug `console.log` dumps or leaves a browser instance open after completion
-  4. Heavy LinkedIn pages load reliably (uses `waitUntil: 'domcontentloaded'` + targeted `waitForSelector`, not fixed `waitForTimeout`)
+  1. A Claude Code skill exists (under `.claude/skills/` or per-project skill location) that accepts a job URL argument **or**, when invoked with no argument, drains unprocessed job leads from the Heimdall DB
+  2. The skill drives `vercel-labs/agent-browser` to navigate job → company → employees → 2nd-degree filter and extract prospects in the same `ScrapedProspect` shape the existing UI consumes
+  3. The skill writes results back to the DB through existing REST routes; the in-app fire-and-forget Playwright IIFE in `src/app/api/job-leads/[id]/search/route.ts` and `src/features/job-leads/lib/scrape-connections.ts` are **deleted** (the hardcoded `'point'`, the `waitForTimeout` antipatterns, and the 20+ debug `console.log` dumps go with them)
+  4. Job-lead status in the DB cleanly represents the scraping queue — at minimum: needs-scrape, in-progress (by the skill), scraped, failed-with-category — so the skill knows what to drain and the UI knows what to show
+  5. The job-lead detail UI surfaces a clear "Run scrape from Claude Code" affordance for unprocessed leads and a categorized failure surface when the skill last attempted and failed, with a retry that re-queues the lead
+
+**Note**: This phase's old `05-CONTEXT.md` (363 lines of context for the in-app-scraper-fix direction) is preserved at `.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md` and reflects the prior plan. A fresh `05-CONTEXT.md` for the new direction will be produced by `/gsd-discuss-phase 5`.
 
 ### Phase 6: Performance
 **Goal**: The 1500-contact dataset operations (import, scrape match, triage categorize) run without N+1 round-trips, and hot-path columns are indexed
