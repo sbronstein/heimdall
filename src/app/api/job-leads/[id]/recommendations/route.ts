@@ -8,10 +8,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { success } from '@/lib/api/types';
 import { notFound, serverError } from '@/lib/api/errors';
-import {
-  buildRecommendations,
-  computeBridgeScore
-} from '@/features/job-leads/lib/prioritization';
+import { buildRecommendations } from '@/features/job-leads/lib/prioritization';
 
 export async function GET(
   _request: Request,
@@ -28,7 +25,9 @@ export async function GET(
 
     if (!lead) return notFound('Job lead');
 
-    // Get all prospects with their bridges and contacts
+    // Variant B per Phase 6 D-15: bridge scores are computed on-the-fly inside
+    // buildRecommendations (which falls back to computeBridgeScore when bridge.score
+    // is null). No persistence step — recommendations is a pure read.
     const rows = await db
       .select({
         prospect: prospects,
@@ -39,18 +38,6 @@ export async function GET(
       .innerJoin(prospects, eq(prospectBridges.prospectId, prospects.id))
       .innerJoin(contacts, eq(prospectBridges.contactId, contacts.id))
       .where(eq(prospects.jobLeadId, id));
-
-    // Compute and persist scores for any bridges missing them
-    for (const row of rows) {
-      if (row.bridge.score === null) {
-        const score = computeBridgeScore(row.prospect, row.contact);
-        await db
-          .update(prospectBridges)
-          .set({ score })
-          .where(eq(prospectBridges.id, row.bridge.id));
-        row.bridge.score = score;
-      }
-    }
 
     const recommendations = buildRecommendations(rows);
 
