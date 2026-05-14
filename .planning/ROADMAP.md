@@ -129,6 +129,16 @@ Plans:
   2. `/api/contacts/import/categorize` updates closeness for all selected contacts in a single batched statement (or transaction) instead of one UPDATE per contact
   3. Drizzle `index()` definitions exist on `contacts(archived_at)`, `contacts(linkedin_url)`, `contacts(company_id)`, `contacts(linkedin_connection_date)`, and `companies(name)`, applied via a migration
   4. `/api/contacts/import` and `match-connections.ts` no longer load the entire `contacts` table into memory for dedup — dedup is pushed to the database (`ON CONFLICT DO NOTHING` or equivalent)
+**Plans**: 5 plans
+Plans:
+**Wave 1**
+- [ ] 06-01-PLAN.md — Schema additions (5 index() + 1 partial UNIQUE index on contacts/companies), migration 0008 generation + apply, pg_indexes regression test (D-20)
+
+**Wave 2** *(four plans parallel — disjoint file sets — all blocked on Wave 1)*
+- [ ] 06-02-PLAN.md — PERF-A1 (bridges half) + PERF-A2: transactional POST /prospects with inline matchConnections, bulk bridge insert with onConflictDoNothing, narrowed contacts SELECT; ROADMAP SC #1 wording refresh in the same commit
+- [ ] 06-03-PLAN.md — PERF-A3: bulk UPDATE ... FROM unnest() in /api/contacts/import/categorize replacing per-row loop
+- [ ] 06-04-PLAN.md — PERF-A5 (import half): bulk INSERT + onConflictDoNothing on linkedin_url partial UNIQUE + narrowed name+company dedup in /api/contacts/import
+- [ ] 06-05-PLAN.md — Incidental fold #3: GET /api/job-leads/[id]/recommendations becomes a pure read (Variant B per D-15 — compute scores on-the-fly via prioritization.ts:55 fallback)
 
 ## Progress
 
@@ -142,4 +152,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
 | 4. Starter-Template Cleanup | 5/5 | Complete | 2026-05-13 |
 | 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
-| 6. Performance | 0/TBD | Not started | - |
+| 6. Performance | 0/5 | Plans created | - |

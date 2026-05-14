@@ -264,6 +264,22 @@
     <li>Drizzle <code>index()</code> definitions exist on <code>contacts(archived_at)</code>, <code>contacts(linkedin_url)</code>, <code>contacts(company_id)</code>, <code>contacts(linkedin_connection_date)</code>, and <code>companies(name)</code>, applied via a migration</li>
     <li><code>/api/contacts/import</code> and <code>match-connections.ts</code> no longer load the entire <code>contacts</code> table into memory for dedup — dedup is pushed to the database (<code>ON CONFLICT DO NOTHING</code> or equivalent)</li>
   </ol>
+  <strong>Plans (5):</strong>
+  <ul class="plans-list">
+    <li><strong>Wave 1</strong>
+      <ul>
+        <li><code>06-01-PLAN.md</code> — Schema additions (5 <code>index()</code> + 1 partial UNIQUE on <code>contacts</code>/<code>companies</code>), migration <code>0008</code> generation + apply, <code>pg_indexes</code> regression test (D-20)</li>
+      </ul>
+    </li>
+    <li><strong>Wave 2</strong> <span class="meta">(four plans parallel — disjoint file sets — all blocked on Wave 1)</span>
+      <ul>
+        <li><code>06-02-PLAN.md</code> — PERF-A1 (bridges half) + PERF-A2: transactional <code>POST /prospects</code> with inline <code>matchConnections</code>, bulk bridge insert + <code>onConflictDoNothing</code>, narrowed contacts SELECT; ROADMAP SC #1 wording refresh in the same commit</li>
+        <li><code>06-03-PLAN.md</code> — PERF-A3: bulk <code>UPDATE ... FROM unnest()</code> in <code>/api/contacts/import/categorize</code> replacing per-row loop</li>
+        <li><code>06-04-PLAN.md</code> — PERF-A5 (import half): bulk INSERT + <code>onConflictDoNothing</code> on <code>linkedin_url</code> partial UNIQUE + narrowed name+company dedup in <code>/api/contacts/import</code></li>
+        <li><code>06-05-PLAN.md</code> — Incidental fold #3: <code>GET /api/job-leads/[id]/recommendations</code> becomes a pure read (Variant B per D-15 — compute scores on-the-fly via <code>prioritization.ts:55</code> fallback)</li>
+      </ul>
+    </li>
+  </ul>
 </div>
 
 <h2>Progress</h2>
@@ -276,14 +292,14 @@
     <tr><td>3. Security Hardening</td><td>2 / 2</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-13</td></tr>
     <tr><td>4. Starter-Template Cleanup</td><td>5 / 5</td><td><span class="badge badge-good">Complete</span></td><td>2026-05-13</td></tr>
     <tr><td>5. Job Leads Completion</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
-    <tr><td>6. Performance</td><td>0 / TBD</td><td><span class="badge badge-pending">Not started</span></td><td>—</td></tr>
+    <tr><td>6. Performance</td><td>0 / 5</td><td><span class="badge badge-current">Plans created</span></td><td>—</td></tr>
   </table>
   <p class="meta">Overall progress (plans completed across all phases — 10 of 13 known plans done)</p>
   <div class="progress-bar"><div class="progress-fill" style="width: 77%;"></div></div>
 </div>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 plan 05 completion (DEBT-A4 shipped in <code>c7524c3</code>) — Phase 4 complete.</p>
+  <p>Source-of-truth: <code>.planning/ROADMAP.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-14 after Phase 6 plans created (5 plans, 2 waves).</p>
 </footer>
 
 </body>
