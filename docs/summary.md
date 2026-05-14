@@ -1,6 +1,6 @@
 # Heimdall — Project Summary
 
-> Last updated: 2026-03-16
+> Last updated: 2026-03-19
 
 ## What It Is
 
@@ -165,11 +165,45 @@ Keyboard-driven bulk triage for classifying imported contacts:
 
 Automated intro-path finder: paste a LinkedIn job URL → get a prioritized list of who to ask for an intro.
 
+### Status: In Progress
+
+**Working:**
+- Job page scraping via cheerio (company name, role title, location extraction)
+- Job lead CRUD (create from URL, list, detail, status updates)
+- LinkedIn browser setup via CDP (login, session save)
+- Navigation flow: job posting → company page → find `currentCompany` link → build people search URL
+- People search result extraction via `page.evaluate()` (26 people extracted in test run)
+- Seniority inference, prioritization scoring, recommendation API
+
+**Needs Debugging:**
+- The Playwright navigation sometimes times out on `page.goto` for LinkedIn pages (heavy JS). Using `waitUntil: 'domcontentloaded'` helps but isn't fully reliable yet. The `waitForTimeout` calls may need tuning.
+- The hardcoded company name `'point'` in Strategy 2 of `navigateToEmployeeList` should be parameterized from the lead's company name.
+- Debug logging and browser-stays-open mode are currently active for development.
+
 ### Flow
-1. **Paste URL** — auto-submits on paste, scrapes job page with cheerio for company name, role title, location
-2. **Find Connections** — Playwright scrapes LinkedIn for 2nd-degree connections at the target company (people search with `network=["S"]`)
-3. **Match & Triage** — mutual connection names fuzzy-matched to contacts in DB; untriaged contacts routed through existing triage workflow
+1. **Paste URL** — auto-submits on paste, scrapes job page with cheerio for company name, role title, location. Parses both `"Company hiring Role in Location | LinkedIn"` and `"Role - Company | LinkedIn"` title formats.
+2. **Find Connections** — Playwright navigates the actual LinkedIn UI: job posting → click company link → find `currentCompany=NNNN` link on company page → build clean people search URL with `network=["S"]` (2nd degree only). Extracts results via `page.evaluate()` using `a[href*="/in/"]` profile links (resilient to LinkedIn's obfuscated CSS class names).
+3. **Match & Triage** — mutual connection names fuzzy-matched to contacts in DB; untriaged contacts routed through existing triage workflow (with `exitUrl` prop to return to job lead detail page).
 4. **Recommendations** — scored and ranked by composite formula: `0.40 × seniority + 0.35 × closeness + 0.25 × recency`
+
+### LinkedIn Browser Architecture (Docker)
+
+The app runs in Docker but needs to control a browser on the host for LinkedIn auth and scraping.
+
+**Three connection modes** (set via env vars in `.env.local`):
+
+| Mode | Env Var | Use Case |
+|------|---------|----------|
+| CDP | `BROWSER_CDP_ENDPOINT=http://IP:PORT` | Docker → headed Chrome on host (best for login + scraping) |
+| WebSocket | `BROWSER_WS_ENDPOINT=ws://IP:PORT` | Docker → Playwright run-server on host (headless only) |
+| Local | neither set | Direct Chromium launch (local dev, non-Docker) |
+
+**CDP setup (recommended for Docker):**
+1. On host: `google-chrome --remote-debugging-port=3005 --user-data-dir=~/.heimdall/linkedin-profile about:blank`
+2. In `.env.local`: `BROWSER_CDP_ENDPOINT=http://192.168.5.2:3005` (use IP, not `host.docker.internal` — Chrome rejects non-IP/localhost Host headers)
+3. CDP mode reuses the browser's default context (already logged in), no storage state file needed
+
+**Gotcha:** Chrome's DevTools server rejects requests where the `Host` header is a hostname (like `host.docker.internal`). Must use the resolved IP address directly.
 
 ### Seniority Inference
 Title keyword matching (first match wins): C-Suite (100) → VP (85) → Director (70) → Senior Manager (55) → Manager (40) → Senior IC (30) → IC (20) → Entry Level (10) → Unknown (15)
@@ -182,8 +216,11 @@ Title keyword matching (first match wins): C-Suite (100) → VP (85) → Directo
 ### Recommendation Grouping
 Results grouped by mutual connection (the person you'd reach out to), each showing the prospects they can connect you to with seniority badges. "Request Intro" button creates an `intro_requested` interaction.
 
-### LinkedIn Browser Profile
-Persistent Playwright context at `~/.heimdall/linkedin-profile/` — one-time login via `/api/job-leads/linkedin-setup`, then headless reuse for scraping.
+### LinkedIn Scraping Notes
+- LinkedIn uses obfuscated/hashed CSS class names — cannot rely on semantic selectors like `.entity-result__item`. Instead, use `page.evaluate()` with structural queries (`a[href*="/in/"]`, `a[href*="/company/"]`, etc.)
+- The company page has a "See all" link with `currentCompany=NNNN` in the href — this is the most reliable way to get the numeric company ID (don't search by company name, especially for generic names like "Point")
+- LinkedIn people search URLs from company pages may include extra filters (e.g. `schoolFilter`) — strip these and build a clean URL with only `currentCompany` and `network` params
+- Pages are heavy JS apps; `waitUntil: 'domcontentloaded'` is better than default `'load'` for `page.goto()`, combined with `waitForSelector` for specific elements
 
 ### Dependencies Added
 - `cheerio` — server-side HTML parsing for job page scraping

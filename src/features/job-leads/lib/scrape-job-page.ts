@@ -56,13 +56,27 @@ export async function scrapeJobPage(url: string): Promise<ScrapedJobData> {
       null;
   }
 
-  // Fallback: title tag (usually "Role Title - Company Name | LinkedIn")
+  // Fallback: title tag
   if (!roleTitle || !companyName) {
     const titleText = $('title').text();
-    const match = titleText.match(/^(.+?)\s*[-–]\s*(.+?)\s*\|/);
-    if (match) {
-      if (!roleTitle) roleTitle = match[1].trim();
-      if (!companyName) companyName = match[2].trim();
+
+    // Format: "Company hiring Role in Location | LinkedIn"
+    const hiringMatch = titleText.match(
+      /^(.+?)\s+hiring\s+(.+?)(?:\s+in\s+(.+?))?\s*\|/i
+    );
+    if (hiringMatch) {
+      if (!companyName) companyName = hiringMatch[1].trim();
+      if (!roleTitle) roleTitle = hiringMatch[2].trim();
+      if (!location && hiringMatch[3]) location = hiringMatch[3].trim();
+    }
+
+    // Format: "Role Title - Company Name | LinkedIn"
+    if (!roleTitle || !companyName) {
+      const dashMatch = titleText.match(/^(.+?)\s*[-–]\s*(.+?)\s*\|/);
+      if (dashMatch) {
+        if (!roleTitle) roleTitle = dashMatch[1].trim();
+        if (!companyName) companyName = dashMatch[2].trim();
+      }
     }
   }
 

@@ -39,7 +39,9 @@ export async function POST(
     (async () => {
       try {
         const { prospects: scrapedProspects, context } =
-          await scrapeConnections(lead.companyName!);
+          await scrapeConnections(lead.companyName!, {
+            jobUrl: lead.linkedinJobUrl
+          });
 
         // Insert prospects into DB
         for (const sp of scrapedProspects) {
@@ -82,7 +84,8 @@ export async function POST(
           }
         });
 
-        await context.close();
+        // Leave browser open for now (debug mode)
+        // await context.close();
       } catch (err) {
         console.error('Connection search failed:', err);
         await db

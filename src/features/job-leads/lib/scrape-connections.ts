@@ -9,64 +9,251 @@ export type ScrapedProspect = {
   mutualConnectionNames: string[];
 };
 
-async function resolveCompanyId(
+/**
+ * Navigate from job posting → company page → employees list.
+ * This follows the actual LinkedIn UI flow:
+ * 1. Go to job posting
+ * 2. Click company name link at top
+ * 3. Click "X-X employees" link on company page
+ * 4. Now we're on the people search filtered to this company
+ */
+async function navigateToEmployeeList(
   page: Page,
-  companyName: string
-): Promise<string | null> {
-  // Search for the company on LinkedIn
-  const searchUrl = `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(companyName)}`;
-  await page.goto(searchUrl);
-  await page.waitForTimeout(2000);
+  jobUrl: string
+): Promise<boolean> {
+  // Step 1: Go to job posting
+  console.log('Navigating to job posting...');
+  await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-  // Get the first company result's LinkedIn URL
-  const firstResult = await page
-    .locator('.entity-result__title-text a')
-    .first()
-    .getAttribute('href');
+  // Wait for page content to render
+  await page.waitForTimeout(5000);
 
-  if (!firstResult) return null;
+  // Debug: find all links on the page to understand the DOM
+  const pageLinks = await page.evaluate(() => {
+    const links = document.querySelectorAll('a');
+    return Array.from(links)
+      .filter(a => a.href && !a.href.includes('javascript:'))
+      .slice(0, 30)
+      .map(a => ({ text: (a.textContent?.trim() || '').slice(0, 60), href: a.href.slice(0, 120) }));
+  });
+  console.log('Links on job page:', JSON.stringify(pageLinks, null, 2));
 
-  // Extract company ID from URL like /company/123456/
-  const match = firstResult.match(/\/company\/([^/]+)/);
-  return match ? match[1] : null;
+  // Step 2: Click the company link — try multiple strategies
+  // Strategy 1: direct href match
+  let companyClicked = false;
+  const companyLink = await page.locator('a[href*="/company/"]').first().getAttribute('href').catch(() => null);
+  if (companyLink) {
+    await page.locator('a[href*="/company/"]').first().click();
+    companyClicked = true;
+    console.log('Clicked company link (href match)');
+  }
+
+  // Strategy 2: if the company name is known, click the link with that text
+  if (!companyClicked) {
+    // The company name link is usually near the top of the job posting
+    const companyNameLink = await page.evaluate((name) => {
+      const links = document.querySelectorAll('a');
+      for (const a of links) {
+        if (a.textContent?.trim().toLowerCase().includes(name.toLowerCase())) {
+          return a.href;
+        }
+      }
+      return null;
+    }, 'point');
+
+    if (companyNameLink && companyNameLink.includes('/company/')) {
+      await page.goto(companyNameLink, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      companyClicked = true;
+      console.log('Navigated to company via text match');
+    }
+  }
+
+  if (!companyClicked) {
+    console.log('Could not find company link on job page');
+    return false;
+  }
+
+  // Wait for company page to render
+  await page.waitForTimeout(5000);
+  console.log('On company page:', page.url());
+
+  // Step 3: Find and click the employees link (e.g. "51-200 employees")
+  // Log what links are visible to help debug
+  const allLinks = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('a'))
+      .filter(a => a.textContent?.match(/employ|people|staff/i) || a.href?.includes('/people'))
+      .map(a => ({ text: a.textContent?.trim().slice(0, 80), href: a.href }))
+      .slice(0, 10);
+  });
+  console.log('Employee-related links found:', JSON.stringify(allLinks, null, 2));
+
+  // First try: find a link with currentCompany in the href (the people search link)
+  const peopleSearchHref = await page.evaluate(() => {
+    const links = document.querySelectorAll('a');
+    for (const a of links) {
+      if (a.href?.includes('currentCompany')) return a.href;
+    }
+    return null;
+  });
+
+  if (peopleSearchHref) {
+    // Extract just the currentCompany param and build a clean search URL
+    const companyMatch = peopleSearchHref.match(/currentCompany=(\d+)/);
+    const companyId = companyMatch ? companyMatch[1] : null;
+
+    let targetUrl: string;
+    if (companyId) {
+      // Build a clean URL with only company + 2nd-degree filters
+      targetUrl = `https://www.linkedin.com/search/results/people/?currentCompany=%5B%22${companyId}%22%5D&network=%5B%22S%22%5D`;
+    } else {
+      // Fall back to the original href, just add network filter
+      targetUrl = peopleSearchHref;
+      if (!targetUrl.includes('network=')) {
+        targetUrl += `${targetUrl.includes('?') ? '&' : '?'}network=%5B%22S%22%5D`;
+      }
+    }
+
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(3000);
+    console.log(`Navigated to people search: ${targetUrl}`);
+    return true;
+  }
+
+  // Fallback: try clicking various employee-related links
+  const employeeLinkSelectors = [
+    'a[href*="/people"]',
+    'a:has-text("employees")',
+    'a:has-text("employee")',
+    '.org-top-card-summary-info-list__info-item a',
+    '.face-pile-module a'
+  ];
+
+  for (const selector of employeeLinkSelectors) {
+    try {
+      const link = page.locator(selector).first();
+      if (await link.isVisible({ timeout: 2000 })) {
+        await link.click();
+        await page.waitForTimeout(3000);
+        console.log('Clicked employees link');
+
+        // Add 2nd-degree filter
+        const currentUrl = page.url();
+        if (!currentUrl.includes('network=')) {
+          const separator = currentUrl.includes('?') ? '&' : '?';
+          await page.goto(`${currentUrl}${separator}network=%5B%22S%22%5D`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.waitForTimeout(3000);
+        }
+        return true;
+      }
+    } catch {
+      // Try next selector
+    }
+  }
+
+  console.log('Could not find employees link on company page');
+  return false;
 }
 
 async function scrapeResultsPage(page: Page): Promise<ScrapedProspect[]> {
   const results: ScrapedProspect[] = [];
 
-  const cards = await page.locator('.entity-result__item').all();
+  // Wait a moment for results to render
+  await page.waitForTimeout(1000);
 
-  for (const card of cards) {
-    try {
-      const nameEl = card.locator('.entity-result__title-text a span[aria-hidden="true"]');
-      const name = (await nameEl.textContent())?.trim() ?? '';
-      if (!name || name === 'LinkedIn Member') continue;
+  // Wait for search results to render — LinkedIn uses obfuscated class names,
+  // so wait for profile links to appear instead
+  try {
+    await page.waitForSelector('a[href*="/in/"]', { timeout: 15000 });
+  } catch {
+    console.log('Timed out waiting for results to render');
+    return results;
+  }
+  await page.waitForTimeout(2000);
 
-      const titleEl = card.locator('.entity-result__primary-subtitle');
-      const title = (await titleEl.textContent())?.trim() || null;
+  // Extract results directly via page.evaluate — more resilient than locators
+  // since LinkedIn's DOM uses obfuscated class names
+  const extracted = await page.evaluate(() => {
+    const people: Array<{
+      name: string;
+      title: string | null;
+      linkedinUrl: string | null;
+      mutualText: string | null;
+    }> = [];
 
-      const linkEl = card.locator('.entity-result__title-text a');
-      const href = await linkEl.getAttribute('href');
-      const linkedinUrl = href ? href.split('?')[0] : null;
+    // Find all profile links (href contains "/in/")
+    const profileLinks = document.querySelectorAll('a[href*="/in/"]');
+    const seen = new Set<string>();
 
-      const snippetEl = card.locator('.entity-result__summary');
-      const profileSnippet = (await snippetEl.textContent())?.trim() || null;
+    for (const link of profileLinks) {
+      const href = link.getAttribute('href');
+      if (!href || seen.has(href)) continue;
 
-      // Mutual connections text
-      const mutualEl = card.locator('.entity-result__simple-insight');
-      const mutualText = (await mutualEl.textContent())?.trim() || '';
-      const mutualConnectionNames = extractMutualNames(mutualText);
+      // Get the name from the link's visible text
+      const nameEl = link.querySelector('span[aria-hidden="true"]') || link;
+      const name = nameEl.textContent?.trim() || '';
+      if (!name || name === 'LinkedIn Member' || name.length < 2) continue;
 
-      results.push({
+      // Deduplicate by URL
+      const cleanUrl = href.split('?')[0];
+      if (seen.has(cleanUrl)) continue;
+      seen.add(cleanUrl);
+
+      // Walk up to find the containing card/list item
+      let container = link.closest('li') || link.parentElement?.parentElement?.parentElement;
+
+      let title: string | null = null;
+      let mutualText: string | null = null;
+
+      if (container) {
+        // Get all text blocks in the container
+        const textBlocks = container.querySelectorAll('span, div, p');
+        const texts: string[] = [];
+        for (const el of textBlocks) {
+          const t = el.textContent?.trim();
+          if (t && t !== name && t.length > 3 && t.length < 200) {
+            texts.push(t);
+          }
+        }
+
+        // The title/role is usually the first non-name text block
+        for (const t of texts) {
+          if (!t.includes('mutual') && !t.includes('Connect') && !t.includes('Message') && !t.includes('Follow')) {
+            title = t;
+            break;
+          }
+        }
+
+        // Mutual connections text
+        for (const t of texts) {
+          if (t.includes('mutual') || t.includes('connection')) {
+            mutualText = t;
+            break;
+          }
+        }
+      }
+
+      people.push({
         name,
         title,
-        linkedinUrl,
-        profileSnippet,
-        mutualConnectionNames
+        linkedinUrl: cleanUrl,
+        mutualText
       });
-    } catch {
-      // Skip malformed cards
     }
+
+    return people;
+  });
+
+  console.log(`Extracted ${extracted.length} people from page`);
+
+  for (const person of extracted) {
+    const mutualConnectionNames = extractMutualNames(person.mutualText || '');
+    results.push({
+      name: person.name,
+      title: person.title,
+      linkedinUrl: person.linkedinUrl,
+      profileSnippet: null,
+      mutualConnectionNames
+    });
   }
 
   return results;
@@ -87,9 +274,30 @@ function extractMutualNames(text: string): string[] {
   return names;
 }
 
+function hasNextPage(page: Page): Promise<boolean> {
+  return page
+    .locator('button[aria-label="Next"]')
+    .isEnabled({ timeout: 2000 })
+    .catch(() => false);
+}
+
+async function goToNextPage(page: Page): Promise<boolean> {
+  try {
+    const nextBtn = page.locator('button[aria-label="Next"]');
+    if (await nextBtn.isEnabled({ timeout: 2000 })) {
+      await nextBtn.click();
+      await page.waitForTimeout(2000 + Math.random() * 1000);
+      return true;
+    }
+  } catch {
+    // No next button
+  }
+  return false;
+}
+
 export async function scrapeConnections(
   companyName: string,
-  options: { maxPages?: number } = {}
+  options: { maxPages?: number; jobUrl?: string } = {}
 ): Promise<{ prospects: ScrapedProspect[]; context: BrowserContext }> {
   const maxPages = options.maxPages ?? 10;
   const context = await getContext();
@@ -97,33 +305,43 @@ export async function scrapeConnections(
   const allProspects: ScrapedProspect[] = [];
 
   try {
-    const companyId = await resolveCompanyId(page, companyName);
-    if (!companyId) {
+    // Navigate via the job posting UI flow
+    let onEmployeePage = false;
+    if (options.jobUrl) {
+      onEmployeePage = await navigateToEmployeeList(page, options.jobUrl);
+    }
+
+    if (!onEmployeePage) {
+      console.log('Failed to navigate to employee list');
       return { prospects: [], context };
     }
 
+    // Scrape results pages
     for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-      const url = `https://www.linkedin.com/search/results/people/?currentCompany=%5B%22${companyId}%22%5D&network=%5B%22S%22%5D&page=${pageNum}`;
-      await page.goto(url);
-      await page.waitForTimeout(2000 + Math.random() * 1000);
-
-      // Check if we hit end of results
-      const noResults = await page.locator('.search-reusable-search-no-results').count();
-      if (noResults > 0) break;
+      console.log(`Scraping page ${pageNum}...`);
 
       const pageResults = await scrapeResultsPage(page);
-      if (pageResults.length === 0) break;
+      if (pageResults.length === 0) {
+        console.log('No results on page, stopping');
+        break;
+      }
 
       allProspects.push(...pageResults);
+      console.log(`Total prospects so far: ${allProspects.length}`);
 
-      // Random delay between pages
+      // Navigate to next page
       if (pageNum < maxPages) {
-        await page.waitForTimeout(2000 + Math.random() * 1000);
+        const hasNext = await goToNextPage(page);
+        if (!hasNext) break;
       }
     }
-  } finally {
-    await page.close();
+
+    console.log(`Scraping complete. Found ${allProspects.length} prospects at ${companyName}`);
+  } catch (err) {
+    console.error('Scrape error:', err);
+    // Don't close the page — leave it open for inspection
   }
 
+  // Don't close page or context — leave browser open for debugging
   return { prospects: allProspects, context };
 }
