@@ -5,6 +5,7 @@ import { created } from '@/lib/api/types';
 import { notFound, serverError, validationError } from '@/lib/api/errors';
 import { logTimeline } from '@/lib/db/timeline';
 import { inferSeniority } from '@/features/job-leads/lib/seniority';
+import { matchConnections } from '@/features/job-leads/lib/match-connections';
 import { z } from 'zod';
 
 // 5-field ScrapedProspect shape — must match src/features/job-leads/lib/types.ts
@@ -31,6 +32,9 @@ export async function POST(
     const body = await request.json();
     const validated = bulkBody.parse(body);
 
+    // Lead lookup + status check happen BEFORE the transaction (read-only).
+    // Status check rejects writes to non-'searching' leads; if it fails, no
+    // transaction is opened at all.
     const [lead] = await db
       .select()
       .from(jobLeads)
@@ -56,22 +60,39 @@ export async function POST(
       seniorityLevel: inferSeniority(p.title ?? '').level
     }));
 
-    if (rows.length > 0) {
-      await db.insert(prospects).values(rows);
-    }
+    // ATOMIC WRITE SET: prospects insert + matchConnections + status flip all
+    // commit or roll back together (D-02). logTimeline is OUTSIDE so a rolled-back
+    // transaction never emits a timeline event (WARNING 3 fix — post-commit invariant).
+    const updated = await db.transaction(async (tx) => {
+      if (rows.length > 0) {
+        await tx.insert(prospects).values(rows);
+      }
 
-    const [updated] = await db
-      .update(jobLeads)
-      .set({
-        status: 'found',
-        prospectCount: rows.length,
-        lastError: null,
-        lastErrorAt: null,
-        updatedAt: new Date()
-      })
-      .where(eq(jobLeads.id, id))
-      .returning();
+      // Inline matchConnections call per D-01. Bridges insert happens inside tx;
+      // rollback on failure unwinds prospects and status flip too.
+      await matchConnections(tx, id, validated.prospects);
 
+      const [u] = await tx
+        .update(jobLeads)
+        .set({
+          status: 'found',
+          prospectCount: rows.length,
+          lastError: null,
+          lastErrorAt: null,
+          updatedAt: new Date()
+        })
+        .where(eq(jobLeads.id, id))
+        .returning();
+      return u;
+    });
+
+    // POST-COMMIT side-effect (WARNING 3 fix — concrete rationale):
+    //
+    // Drizzle's neon-http db.transaction() returns ONLY after the Neon HTTP
+    // endpoint acknowledges COMMIT. Therefore placing logTimeline() after
+    // await db.transaction() guarantees the event is emitted only on committed
+    // state. If the transaction throws, logTimeline never runs (Test 3 asserts
+    // this — zero timeline rows after forced rollback).
     await logTimeline({
       eventType: 'job_lead_search_complete',
       title: `Found ${rows.length} prospects at ${lead.companyName || 'Unknown'}`,
