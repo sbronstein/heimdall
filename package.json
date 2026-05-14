@@ -21,6 +21,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx drizzle/seed.ts",
+    "token:generate": "tsx scripts/generate-api-token.ts",
     "test": "vitest",
     "test:run": "vitest run"
   },
