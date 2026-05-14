@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Test Infrastructure** - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01 (completed 2026-05-12)
 - [x] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts (completed 2026-05-13)
 - [x] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports (completed 2026-05-13)
-- [ ] **Phase 5: Job Leads Completion** - Finish the LinkedIn scraper (bug fixes, timeouts, error surfacing)
+- [x] **Phase 5: Job Leads Completion** - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)
 - [ ] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes
 
 ## Phase Details
@@ -104,19 +104,19 @@ Plans:
 **Plans**: 7 plans
 Plans:
 **Wave 1** *(three plans parallel — disjoint file sets)*
-- [ ] 05-01-PLAN.md — Schema additions (queued/failed enum values, last_error columns), ScrapedProspect type relocation, Drizzle migration
-- [ ] 05-02-PLAN.md — Middleware bearer-token bypass + token-generation script + env example placeholders
-- [ ] 05-03-PLAN.md — REQUIREMENTS.md supersession of JL-A1..A5, definition of JL-B1..JL-B5, HTML companion regen
+- [x] 05-01-PLAN.md — Schema additions (queued/failed enum values, last_error columns), ScrapedProspect type relocation, Drizzle migration
+- [x] 05-02-PLAN.md — Middleware bearer-token bypass + token-generation script + env example placeholders
+- [x] 05-03-PLAN.md — REQUIREMENTS.md supersession of JL-A1..A5, definition of JL-B1..JL-B5, HTML companion regen
 
 **Wave 2** *(blocked on Wave 1)*
-- [ ] 05-04-PLAN.md — API routes: state-machine module, PATCH /status, POST /prospects (bulk), POST /search (thin flip), GET /job-leads status filter + tests
+- [x] 05-04-PLAN.md — API routes: state-machine module, PATCH /status, POST /prospects (bulk), POST /search (thin flip), GET /job-leads status filter + tests
 
 **Wave 3** *(blocked on Waves 1 + 2)*
-- [ ] 05-05-PLAN.md — Job-lead detail UI rewrite: queued badge, copy-skill-invocation button, categorized failure banner, retry; list-view status rendering
-- [ ] 05-06-PLAN.md — Skill assets at .claude/skills/scrape-linkedin-connections/ (SKILL.md + three references docs)
+- [x] 05-05-PLAN.md — Job-lead detail UI rewrite: queued badge, copy-skill-invocation button, categorized failure banner, retry; list-view status rendering
+- [x] 05-06-PLAN.md — Skill assets at .claude/skills/scrape-linkedin-connections/ (SKILL.md + three references docs)
 
 **Wave 4** *(blocked on Waves 1, 2, 3 — must be last)*
-- [ ] 05-07-PLAN.md — Delete scrape-connections.ts + search-progress.tsx; lock the deletions in src/__cleanup__.test.ts
+- [x] 05-07-PLAN.md — Delete scrape-connections.ts + search-progress.tsx; lock the deletions in src/__cleanup__.test.ts
 
 **Note**: This phase's old `05-CONTEXT.md` (363 lines of context for the in-app-scraper-fix direction) is preserved at `.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md` and reflects the prior plan. A fresh `05-CONTEXT.md` for the new direction will be produced by `/gsd-discuss-phase 5`.
 
@@ -141,5 +141,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Test Infrastructure | 5/5 | Complete    | 2026-05-12 |
 | 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
 | 4. Starter-Template Cleanup | 5/5 | Complete | 2026-05-13 |
-| 5. Job Leads Completion | 0/TBD | Not started | - |
+| 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
 | 6. Performance | 0/TBD | Not started | - |
