@@ -2,11 +2,18 @@ import { createTestDb } from '@/test-utils/pglite';
 import { callRoute } from '@/test-utils/call-route';
 import {
   companies,
+  contacts,
   jobLeads,
   prospects,
+  prospectBridges,
   timelineEvents
 } from '../../../../../../drizzle/schema';
 import { eq } from 'drizzle-orm';
+import * as matchConnectionsModule from '@/features/job-leads/lib/match-connections';
+
+// No vi.mock for matchConnections. Tests 1, 1b, 2, 4, 5, 6 use the real
+// implementation via the seeded PGlite database. Test 3 uses vi.spyOn +
+// mockRejectedValueOnce (BLOCKER 2 fix — single decisive mock strategy).
 
 const { dbRef } = vi.hoisted(() => ({
   dbRef: { current: null as Awaited<ReturnType<typeof createTestDb>> | null }
@@ -283,6 +290,156 @@ describe('POST /api/job-leads/[id]/prospects (bulk insert)', () => {
       success: false,
       error: 'Job lead not found'
     });
+  });
+
+  it('Test 7: inline matchConnections inserts bridges for matched mutual connections (D-01, D-04)', async () => {
+    const [carol, dave] = await dbRef.current!
+      .insert(contacts)
+      .values([
+        {
+          firstName: 'Carol',
+          lastName: 'Chen'
+        },
+        {
+          firstName: 'Dave',
+          lastName: 'Davis'
+        }
+      ])
+      .returning();
+
+    const { POST } = await import('@/app/api/job-leads/[id]/prospects/route');
+    const { status, body } = await callRoute(
+      POST as unknown as Parameters<typeof callRoute>[0],
+      {
+        method: 'POST',
+        params: { id: leadId },
+        body: {
+          prospects: [
+            {
+              name: 'Alice',
+              title: 'CTO',
+              linkedinUrl: 'https://linkedin.com/in/alice',
+              profileSnippet: null,
+              mutualConnectionNames: ['Carol Chen', 'Dave Davis']
+            }
+          ]
+        }
+      }
+    );
+
+    expect(status).toBe(201);
+    const data = (body as { data: { insertedCount: number } }).data;
+    expect(data.insertedCount).toBe(1);
+
+    const bridges = await dbRef.current!.select().from(prospectBridges);
+    expect(bridges).toHaveLength(2);
+    const bridgedContactIds = bridges.map((b) => b.contactId).sort();
+    expect(bridgedContactIds).toEqual([carol.id, dave.id].sort());
+  });
+
+  it('Test 8: rollback on matchConnections failure leaves no prospects, bridges, or timeline events (D-02)', async () => {
+    const spy = vi.spyOn(matchConnectionsModule, 'matchConnections')
+      .mockRejectedValueOnce(new Error('forced rollback'));
+
+    try {
+      const { POST } = await import('@/app/api/job-leads/[id]/prospects/route');
+      const { status } = await callRoute(
+        POST as unknown as Parameters<typeof callRoute>[0],
+        {
+          method: 'POST',
+          params: { id: leadId },
+          body: {
+            prospects: [
+              {
+                name: 'Alice',
+                title: 'CTO',
+                linkedinUrl: null,
+                profileSnippet: null,
+                mutualConnectionNames: []
+              },
+              {
+                name: 'Bob',
+                title: 'VP',
+                linkedinUrl: null,
+                profileSnippet: null,
+                mutualConnectionNames: []
+              }
+            ]
+          }
+        }
+      );
+      expect(status).toBe(500);
+
+      // FOUR rollback invariants (D-02):
+      const prospectRows = await dbRef.current!.select().from(prospects);
+      expect(prospectRows).toHaveLength(0);
+
+      const bridgeRows = await dbRef.current!.select().from(prospectBridges);
+      expect(bridgeRows).toHaveLength(0);
+
+      // Post-commit-only invariant: logTimeline never runs when tx rolls back
+      const timelineRows = await dbRef.current!.select().from(timelineEvents);
+      expect(timelineRows).toHaveLength(0);
+
+      const [leadAfter] = await dbRef.current!
+        .select()
+        .from(jobLeads)
+        .where(eq(jobLeads.id, leadId));
+      expect(leadAfter.status).toBe('searching');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('Test 9: second call to same lead returns 400 (status check rejects), DB state unchanged', async () => {
+    const { POST } = await import('@/app/api/job-leads/[id]/prospects/route');
+    const callBody = {
+      prospects: [
+        {
+          name: 'A',
+          title: 'CTO',
+          linkedinUrl: null,
+          profileSnippet: null,
+          mutualConnectionNames: []
+        },
+        {
+          name: 'B',
+          title: 'VP',
+          linkedinUrl: null,
+          profileSnippet: null,
+          mutualConnectionNames: []
+        },
+        {
+          name: 'C',
+          title: 'Dir',
+          linkedinUrl: null,
+          profileSnippet: null,
+          mutualConnectionNames: []
+        }
+      ]
+    };
+
+    const first = await callRoute(
+      POST as unknown as Parameters<typeof callRoute>[0],
+      { method: 'POST', params: { id: leadId }, body: callBody }
+    );
+    expect(first.status).toBe(201);
+
+    const second = await callRoute(
+      POST as unknown as Parameters<typeof callRoute>[0],
+      { method: 'POST', params: { id: leadId }, body: callBody }
+    );
+    expect(second.status).toBe(400);
+    expect((second.body as { error: string }).error).toContain(
+      "Cannot write prospects to lead in status 'found'"
+    );
+
+    const prospectRows = await dbRef.current!.select().from(prospects);
+    expect(prospectRows).toHaveLength(3);
+
+    // Exactly 1 timeline event total — post-commit emission is idempotent
+    const timelineRows = await dbRef.current!.select().from(timelineEvents);
+    expect(timelineRows).toHaveLength(1);
   });
 
   it('Test 6: bulk insert uses single statement (regression — row count matches input length)', async () => {

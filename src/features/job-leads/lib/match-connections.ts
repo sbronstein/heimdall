@@ -1,8 +1,14 @@
-import { db } from '@/lib/db';
+import type { db } from '@/lib/db';
 import { contacts, prospects, prospectBridges } from '../../../../drizzle/schema';
-import { eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { ScrapedProspect } from './types';
 import type { Contact } from '@/lib/domain/types';
+
+// Structural alias for the neon-http transaction handle (narrower than typeof db).
+// NeonHttpTransaction is not exported by drizzle-orm v0.45.1 — use the structural
+// fallback instead. `tx.transaction(...)` is a compile error on this type, which
+// ensures atomicity invariants are preserved at the call site (D-03 + WARNING 1 fix).
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type MatchResult = {
   matched: number;
@@ -37,22 +43,46 @@ function fuzzyMatch(scraped: string, contact: Contact): boolean {
 }
 
 export async function matchConnections(
+  tx: Tx,
   jobLeadId: string,
   scrapedProspects: ScrapedProspect[]
 ): Promise<MatchResult> {
-  // Fetch all active contacts
-  const allContacts = await db
-    .select()
-    .from(contacts)
-    .where(isNull(contacts.archivedAt));
+  // Defensive early return — no contacts to match if no prospects provided (D-11)
+  if (scrapedProspects.length === 0) {
+    return { matched: 0, unmatched: 0, contactIdsNeedingTriage: [] };
+  }
+
+  // Build token set from all mutual connection names (D-11)
+  const tokenSet = new Set<string>(
+    scrapedProspects
+      .flatMap((p) => p.mutualConnectionNames)
+      .flatMap((s) => s.toLowerCase().split(/\s+/))
+      .filter(Boolean)
+  );
+
+  // Narrowed contacts SELECT — keyed on tokens from mutualConnectionNames (D-11).
+  // Falls back to empty array if no tokens (no bridges possible in that case).
+  let allContacts: Contact[] = [];
+  if (tokenSet.size > 0) {
+    const tokens = Array.from(tokenSet);
+    // sql.join with parameterized bindings — NOT sql.raw. Each token is a separate
+    // bound parameter (sql`${t}`), preventing SQL injection (T-06-05 mitigation).
+    allContacts = await tx
+      .select()
+      .from(contacts)
+      .where(
+        and(
+          isNull(contacts.archivedAt),
+          sql`(lower(${contacts.firstName}) IN (${sql.join(tokens.map((t) => sql`${t}`), sql`, `)}) OR lower(${contacts.lastName}) IN (${sql.join(tokens.map((t) => sql`${t}`), sql`, `)}))`
+        )
+      );
+  }
 
   // Build prospect records and collect all mutual names
-  const prospectRecords = await db
+  const prospectRecords = await tx
     .select()
     .from(prospects)
-    .where(
-      eq(prospects.jobLeadId, jobLeadId)
-    );
+    .where(eq(prospects.jobLeadId, jobLeadId));
 
   // Map prospect name → prospect record
   const prospectByName = new Map(
@@ -77,7 +107,6 @@ export async function matchConnections(
       // Try to match by name
       const matchedContact = allContacts.find((c) => fuzzyMatch(mutualName, c));
 
-      // Also try to match by linkedin URL if available
       if (matchedContact) {
         hasMatch = true;
         matched++;
@@ -100,15 +129,12 @@ export async function matchConnections(
     }
   }
 
-  // Insert bridges
+  // Single bulk bridge insert per D-04. onConflictDoNothing() leverages the
+  // existing prospect_bridge_unique constraint on (prospect_id, contact_id) —
+  // no target needed, Postgres infers it. No try/catch — failures propagate
+  // to the caller's transaction for atomic rollback (D-02 invariant).
   if (bridgeValues.length > 0) {
-    for (const val of bridgeValues) {
-      try {
-        await db.insert(prospectBridges).values(val).onConflictDoNothing();
-      } catch {
-        // Ignore duplicate bridge errors
-      }
-    }
+    await tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing();
   }
 
   return {

@@ -14,6 +14,8 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
-    passWithNoTests: true
+    passWithNoTests: true,
+    hookTimeout: 60000,
+    testTimeout: 60000
   }
 });

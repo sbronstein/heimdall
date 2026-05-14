@@ -125,7 +125,7 @@ Plans:
 **Depends on**: Phase 5
 **Requirements**: PERF-A1, PERF-A2, PERF-A3, PERF-A4, PERF-A5
 **Success Criteria** (what must be TRUE):
-  1. `/api/job-leads/[id]/search` inserts all scraped prospects in a single bulk insert, and `match-connections.ts` inserts all prospect bridges in a single bulk insert (no per-row `await db.insert()` loops remain in those paths)
+  1. `/api/job-leads/[id]/prospects` (the route Phase 5 introduced for bulk prospect writes) performs a single bulk insert of scraped prospects, and `match-connections.ts` performs a single bulk insert of prospect bridges (`onConflictDoNothing()` on the `prospect_bridge_unique` constraint). The entire `POST /prospects` handler runs inside `db.transaction()` so prospect insert + bridge insert + status flip commit or roll back together.
   2. `/api/contacts/import/categorize` updates closeness for all selected contacts in a single batched statement (or transaction) instead of one UPDATE per contact
   3. Drizzle `index()` definitions exist on `contacts(archived_at)`, `contacts(linkedin_url)`, `contacts(company_id)`, `contacts(linkedin_connection_date)`, and `companies(name)`, applied via a migration
   4. `/api/contacts/import` and `match-connections.ts` no longer load the entire `contacts` table into memory for dedup — dedup is pushed to the database (`ON CONFLICT DO NOTHING` or equivalent)
