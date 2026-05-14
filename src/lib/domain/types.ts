@@ -206,11 +206,13 @@ export const jobLeadStatusValues = [
   'pending',
   'scraping',
   'scraped',
+  'queued',
   'searching',
   'found',
   'ready',
   'actioned',
-  'archived'
+  'archived',
+  'failed'
 ] as const;
 
 export const seniorityLevelValues = [

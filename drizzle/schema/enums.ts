@@ -161,11 +161,13 @@ export const jobLeadStatusEnum = pgEnum('job_lead_status', [
   'pending',
   'scraping',
   'scraped',
+  'queued',
   'searching',
   'found',
   'ready',
   'actioned',
-  'archived'
+  'archived',
+  'failed'
 ]);
 
 export const seniorityLevelEnum = pgEnum('seniority_level', [

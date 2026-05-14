@@ -33,6 +33,10 @@ export const jobLeads = pgTable('job_leads', {
   // Stats
   prospectCount: integer('prospect_count').default(0).notNull(),
 
+  // Error tracking (D-07)
+  lastError: text('last_error'),
+  lastErrorAt: timestamp('last_error_at', { withTimezone: true }),
+
   // Metadata
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
