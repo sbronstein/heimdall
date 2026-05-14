@@ -31,7 +31,7 @@
   .tagline { color: var(--muted); font-style: italic; margin: 0; }
   .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
   h2 { margin-top: 48px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 22px; }
-  h3 { margin-top: 28px; font-size: 17px; display: flex; align-items: center; gap: 10px; }
+  h3 { margin-top: 28px; font-size: 17px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   h3 .pill { font-family: ui-monospace, "SF Mono", monospace; font-size: 11px; background: var(--code-bg); padding: 3px 8px; border-radius: 4px; color: var(--ink); }
   .core-value {
     background: linear-gradient(135deg, #f4f0e8 0%, #ede7d8 100%);
@@ -42,11 +42,25 @@
     font-size: 15px;
     margin-bottom: 24px;
   }
+  .callout {
+    background: #fbeee4;
+    border-left: 4px solid var(--warn);
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-style: italic;
+    font-size: 14px;
+    margin: 16px 0;
+    color: var(--ink);
+  }
+  .callout strong { font-style: normal; color: var(--warn); }
   .req-list { list-style: none; padding-left: 0; margin: 12px 0; }
   .req-list li { padding: 8px 0 8px 28px; position: relative; border-bottom: 1px solid var(--line); line-height: 1.5; }
   .req-list li:last-child { border-bottom: none; }
   .req-list.shipped li::before { content: "✓"; position: absolute; left: 0; top: 8px; color: var(--accent); font-size: 16px; font-weight: 700; }
   .req-list.active li::before { content: "☐"; position: absolute; left: 0; top: 8px; color: var(--accent-2); font-size: 16px; }
+  .req-list li.superseded { color: var(--muted); text-decoration: line-through; }
+  .req-list li.superseded::before { content: "~"; color: var(--warn); text-decoration: none; display: inline-block; }
+  .req-list li.superseded .req-id { text-decoration: none; opacity: 0.7; }
   .req-id { display: inline-block; font-family: ui-monospace, "SF Mono", monospace; font-size: 11px; font-weight: 700; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; margin-right: 8px; color: var(--ink); }
   .v2-list { list-style: none; padding-left: 0; }
   .v2-list li { padding: 4px 0 4px 22px; position: relative; color: #555; }
@@ -67,14 +81,18 @@
   .phase-4 { background: #f0e5d0; color: #8a6a3a; }
   .phase-5 { background: #f0e0ec; color: #6a4a7a; }
   .phase-6 { background: #cfe2cf; color: #2a6a4a; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-good { background: #d5e8d5; color: #2a6a4a; }
+  .badge-pending { background: var(--code-bg); color: var(--muted); }
+  .badge-superseded { background: #ecdcd1; color: var(--warn); font-style: italic; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Heimdall — Requirements</h1>
-  <p class="tagline">Brownfield CRM · 28 validated · 22 active · 6 phases mapped · standard granularity</p>
-  <p class="meta">Defined: 2026-05-12 · Last updated: 2026-05-13 after Phase 4 completion — DEBT-A4 + DEBT-A5 marked complete in traceability</p>
+  <p class="tagline">Brownfield CRM · 28 validated · 22 active (5 superseded, replaced) · 6 phases mapped · standard granularity</p>
+  <p class="meta">Defined: 2026-05-12 · Last updated: 2026-05-13 — JL-A1..A5 superseded by JL-B1..B5 for the Phase 5 reshape (Claude Code skill + agent-browser direction)</p>
 </header>
 
 <div class="core-value">
@@ -179,13 +197,23 @@
   <li><span class="req-id">DEBT-A5</span>Drop the unused <code>computeBridgeScore</code> import in <code>src/app/api/job-leads/[id]/search/route.ts:10</code> — shipped in <code>114dd34</code>, plan 04-04</li>
 </ul>
 
-<h3>Job Leads Completion <span class="pill">JL-A</span> <span class="phase-pill phase-5">Phase 5</span></h3>
+<h3>Job Leads Completion <span class="pill">JL-A · JL-B</span> <span class="phase-pill phase-5">Phase 5</span></h3>
+
+<div class="callout">
+  <strong>SUPERSEDED 2026-05-13:</strong> Phase 5 was reshaped from an in-app-scraper-fix direction to a Claude Code skill driving <code>vercel-labs/agent-browser</code>. JL-A1..A5 targeted code that is being deleted (<code>src/features/job-leads/lib/scrape-connections.ts</code>, the fire-and-forget IIFE in <code>/api/job-leads/[id]/search/route.ts</code>, the polling <code>SearchProgress</code> component, and the <code>Find Connections</code> button). The new requirement set is <strong>JL-B1..JL-B5</strong>, defined below and mapped 1:1 to the five Success Criteria in <code>ROADMAP.md §Phase 5 (RESHAPED)</code>. The original JL-A items remain in the list strikethrough'd for audit trail; their status in the Traceability table is <strong>SUPERSEDED</strong>.
+</div>
+
 <ul class="req-list active">
-  <li><span class="req-id">JL-A1</span>Replace hardcoded <code>'point'</code> company name in <code>scrape-connections.ts:62</code> with the lead's actual <code>companyName</code></li>
-  <li><span class="req-id">JL-A2</span>Tune Playwright navigation for heavy LinkedIn pages — <code>waitUntil: 'domcontentloaded'</code> + targeted <code>waitForSelector</code> instead of fixed <code>waitForTimeout</code> calls</li>
-  <li><span class="req-id">JL-A3</span>Remove debug-mode noise — strip the 20+ <code>console.log</code> dumps and the "leave browser open" pattern in <code>scrape-connections.ts</code></li>
-  <li><span class="req-id">JL-A4</span>Bound the fire-and-forget search IIFE with a <code>Promise.race()</code> timeout that reverts a stuck lead from <code>searching</code> back to <code>scraped</code> and surfaces the failure to the UI</li>
-  <li><span class="req-id">JL-A5</span>Surface scrape errors to the user — currently the async path swallows errors and the lead silently stalls</li>
+  <li class="superseded"><span class="req-id">JL-A1</span>Replace hardcoded <code>'point'</code> company name in <code>scrape-connections.ts:62</code> with the lead's actual <code>companyName</code></li>
+  <li class="superseded"><span class="req-id">JL-A2</span>Tune Playwright navigation for heavy LinkedIn pages — <code>waitUntil: 'domcontentloaded'</code> + targeted <code>waitForSelector</code> instead of fixed <code>waitForTimeout</code> calls</li>
+  <li class="superseded"><span class="req-id">JL-A3</span>Remove debug-mode noise — strip the 20+ <code>console.log</code> dumps and the "leave browser open" pattern in <code>scrape-connections.ts</code></li>
+  <li class="superseded"><span class="req-id">JL-A4</span>Bound the fire-and-forget search IIFE with a <code>Promise.race()</code> timeout that reverts a stuck lead from <code>searching</code> back to <code>scraped</code> and surfaces the failure to the UI</li>
+  <li class="superseded"><span class="req-id">JL-A5</span>Surface scrape errors to the user — currently the async path swallows errors and the lead silently stalls</li>
+  <li><span class="req-id">JL-B1</span>A Claude Code skill at <code>.claude/skills/scrape-linkedin-connections/</code> accepts a job-lead UUID or LinkedIn URL as a positional argument, OR drains all leads with <code>status = 'queued'</code> when invoked with no argument. Verifiable via the SKILL.md frontmatter (<code>argument-hint: "[job-lead-id-or-url]"</code>) and the skill prompt body's no-arg branch.</li>
+  <li><span class="req-id">JL-B2</span>The skill drives <code>vercel-labs/agent-browser</code> through the canonical LinkedIn nav: job posting → company page → employees list → 2nd-degree filter, and extracts prospects in the existing <code>ScrapedProspect</code> shape (<code>{ name, title, linkedinUrl, profileSnippet, mutualConnectionNames }</code>). Verifiable via <code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> documenting the nav steps and the skill prompt body invoking <code>agent-browser</code> subcommands.</li>
+  <li><span class="req-id">JL-B3</span>The skill writes results back through <code>POST /api/job-leads/[id]/prospects</code> (new bulk-insert route) and <code>PATCH /api/job-leads/[id]/status</code> (extended state-machine). The fire-and-forget IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code> is removed; <code>src/features/job-leads/lib/scrape-connections.ts</code> (hardcoded <code>'point'</code>, <code>waitForTimeout</code>, 20+ <code>console.log</code> dumps) is deleted; <code>src/features/job-leads/components/search-progress.tsx</code> is deleted. Verifiable via <code>src/__cleanup__.test.ts</code> Phase 5 block + grep for <code>scrapeConnections</code> returning zero matches in <code>src/</code>.</li>
+  <li><span class="req-id">JL-B4</span>The <code>job_lead_status</code> enum has two new values — <code>'queued'</code> (between <code>'scraped'</code> and <code>'searching'</code>) and <code>'failed'</code> (terminal-recoverable, after <code>'archived'</code>) — and the <code>job_leads</code> table has nullable <code>last_error</code> (text, ≤200 chars) and <code>last_error_at</code> (timestamp) columns. The state machine enforces <code>scraped → queued</code>, <code>queued → searching</code>, <code>searching → found | failed</code>, <code>failed → queued</code> (retry). Verifiable via Drizzle migration + <code>PATCH /api/job-leads/[id]/status</code> rejecting invalid transitions with <code>validationError(...)</code>.</li>
+  <li><span class="req-id">JL-B5</span>The job-lead detail page renders: (a) on <code>status = 'queued'</code> — a subtle badge labeled <code>queued for connection scrape</code> + a <code>Copy skill invocation</code> button that copies <code>claude /scrape-linkedin-connections &lt;lead-id&gt;</code> to the clipboard with a sonner toast confirmation; (b) on <code>status = 'failed'</code> — a <code>bg-destructive/10</code> border-destructive/30 banner showing the error category (bold) + truncated detail + a <code>Retry</code> button that POSTs to <code>/api/job-leads/[id]/search</code> to flip back to <code>queued</code>. Verifiable via the rendered component output and a click-handler test.</li>
 </ul>
 
 <h3>Performance <span class="pill">PERF</span> <span class="phase-pill phase-6">Phase 6</span></h3>
@@ -253,11 +281,16 @@
   <tr><td><span class="req-id">DEBT-A3</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">DEBT-A4</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
   <tr><td><span class="req-id">DEBT-A5</span></td><td><span class="phase-pill phase-4">Phase 4</span> Starter-Template Cleanup</td><td><span class="badge badge-good">Complete</span></td></tr>
-  <tr><td><span class="req-id">JL-A1</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
-  <tr><td><span class="req-id">JL-A2</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
-  <tr><td><span class="req-id">JL-A3</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
-  <tr><td><span class="req-id">JL-A4</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
-  <tr><td><span class="req-id">JL-A5</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td>Pending</td></tr>
+  <tr><td><span class="req-id">JL-A1</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-superseded">SUPERSEDED</span></td></tr>
+  <tr><td><span class="req-id">JL-A2</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-superseded">SUPERSEDED</span></td></tr>
+  <tr><td><span class="req-id">JL-A3</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-superseded">SUPERSEDED</span></td></tr>
+  <tr><td><span class="req-id">JL-A4</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-superseded">SUPERSEDED</span></td></tr>
+  <tr><td><span class="req-id">JL-A5</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-superseded">SUPERSEDED</span></td></tr>
+  <tr><td><span class="req-id">JL-B1</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-pending">Pending</span></td></tr>
+  <tr><td><span class="req-id">JL-B2</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-pending">Pending</span></td></tr>
+  <tr><td><span class="req-id">JL-B3</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-pending">Pending</span></td></tr>
+  <tr><td><span class="req-id">JL-B4</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-pending">Pending</span></td></tr>
+  <tr><td><span class="req-id">JL-B5</span></td><td><span class="phase-pill phase-5">Phase 5</span> Job Leads Completion</td><td><span class="badge badge-pending">Pending</span></td></tr>
   <tr><td><span class="req-id">PERF-A1</span></td><td><span class="phase-pill phase-6">Phase 6</span> Performance</td><td>Pending</td></tr>
   <tr><td><span class="req-id">PERF-A2</span></td><td><span class="phase-pill phase-6">Phase 6</span> Performance</td><td>Pending</td></tr>
   <tr><td><span class="req-id">PERF-A3</span></td><td><span class="phase-pill phase-6">Phase 6</span> Performance</td><td>Pending</td></tr>
@@ -265,10 +298,10 @@
   <tr><td><span class="req-id">PERF-A5</span></td><td><span class="phase-pill phase-6">Phase 6</span> Performance</td><td>Pending</td></tr>
 </table>
 
-<p class="meta"><strong>Coverage:</strong> 22 / 22 v1 Active mapped &middot; 0 unmapped ✓</p>
+<p class="meta"><strong>Coverage:</strong> 22 v1 Active total (5 superseded; net 22 active — JL-A1..A5 replaced by JL-B1..B5) &middot; mapped to phases: 22 ✓ &middot; unmapped: 0 ✓</p>
 
 <footer>
-  <p>Source-of-truth: <code>.planning/REQUIREMENTS.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 after Phase 4 completion.</p>
+  <p>Source-of-truth: <code>.planning/REQUIREMENTS.md</code>. This HTML companion is hand-rendered for readability and may lag behind. Last updated: 2026-05-13 — JL-A1..A5 superseded by JL-B1..B5 for the Phase 5 reshape (Claude Code skill + agent-browser direction).</p>
 </footer>
 
 </body>

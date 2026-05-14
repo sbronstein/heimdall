@@ -66,11 +66,24 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [x] **BUG-02**: Guard `emailAddresses[0]` access — change `user?.emailAddresses[0].emailAddress` to `user?.emailAddresses[0]?.emailAddress ?? ''` in `user-avatar-profile.tsx:31` and `user-nav.tsx:38`
 
 ### Job Leads Completion
-- [ ] **JL-A1**: Replace hardcoded `'point'` company name in `scrape-connections.ts:62` with the lead's actual `companyName`
-- [ ] **JL-A2**: Tune Playwright navigation for heavy LinkedIn pages — `waitUntil: 'domcontentloaded'` + targeted `waitForSelector` instead of fixed `waitForTimeout` calls
-- [ ] **JL-A3**: Remove debug-mode noise — strip the 20+ `console.log` dumps and the "leave browser open" pattern in `scrape-connections.ts`
-- [ ] **JL-A4**: Bound the fire-and-forget search IIFE with a `Promise.race()` timeout that reverts a stuck lead from `searching` back to `scraped` and surfaces the failure to the UI
-- [ ] **JL-A5**: Surface scrape errors to the user — currently the async path swallows errors and the lead silently stalls
+
+> **SUPERSEDED 2026-05-13:** Phase 5 was reshaped from an in-app-scraper-fix direction to a Claude Code skill driving `vercel-labs/agent-browser`. JL-A1..A5 targeted code that is being deleted (`src/features/job-leads/lib/scrape-connections.ts`, the fire-and-forget IIFE in `/api/job-leads/[id]/search/route.ts`, the polling `SearchProgress` component, and the `Find Connections` button). The new requirement set is **JL-B1..JL-B5**, defined below and mapped 1:1 to the five Success Criteria in `ROADMAP.md §Phase 5 (RESHAPED)`. The original JL-A items remain in the list strikethrough'd for audit trail; their status in the Traceability table is **SUPERSEDED**.
+
+- [ ] ~~**JL-A1**: Replace hardcoded `'point'` company name in `scrape-connections.ts:62` with the lead's actual `companyName`~~
+- [ ] ~~**JL-A2**: Tune Playwright navigation for heavy LinkedIn pages — `waitUntil: 'domcontentloaded'` + targeted `waitForSelector` instead of fixed `waitForTimeout` calls~~
+- [ ] ~~**JL-A3**: Remove debug-mode noise — strip the 20+ `console.log` dumps and the "leave browser open" pattern in `scrape-connections.ts`~~
+- [ ] ~~**JL-A4**: Bound the fire-and-forget search IIFE with a `Promise.race()` timeout that reverts a stuck lead from `searching` back to `scraped` and surfaces the failure to the UI~~
+- [ ] ~~**JL-A5**: Surface scrape errors to the user — currently the async path swallows errors and the lead silently stalls~~
+
+- [ ] **JL-B1**: A Claude Code skill at `.claude/skills/scrape-linkedin-connections/` accepts a job-lead UUID or LinkedIn URL as a positional argument, OR drains all leads with `status = 'queued'` when invoked with no argument. Verifiable via the SKILL.md frontmatter (`argument-hint: "[job-lead-id-or-url]"`) and the skill prompt body's no-arg branch.
+
+- [ ] **JL-B2**: The skill drives `vercel-labs/agent-browser` through the canonical LinkedIn nav: job posting → company page → employees list → 2nd-degree filter, and extracts prospects in the existing `ScrapedProspect` shape (`{ name, title, linkedinUrl, profileSnippet, mutualConnectionNames }`). Verifiable via `.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md` documenting the nav steps and the skill prompt body invoking `agent-browser` subcommands.
+
+- [ ] **JL-B3**: The skill writes results back through `POST /api/job-leads/[id]/prospects` (new bulk-insert route) and `PATCH /api/job-leads/[id]/status` (extended state-machine). The fire-and-forget IIFE in `src/app/api/job-leads/[id]/search/route.ts` is removed; `src/features/job-leads/lib/scrape-connections.ts` (hardcoded `'point'`, `waitForTimeout`, 20+ `console.log` dumps) is deleted; `src/features/job-leads/components/search-progress.tsx` is deleted. Verifiable via `src/__cleanup__.test.ts` Phase 5 block + grep for `scrapeConnections` returning zero matches in `src/`.
+
+- [ ] **JL-B4**: The `job_lead_status` enum has two new values — `'queued'` (between `'scraped'` and `'searching'`) and `'failed'` (terminal-recoverable, after `'archived'`) — and the `job_leads` table has nullable `last_error` (text, ≤200 chars) and `last_error_at` (timestamp) columns. The state machine enforces `scraped → queued`, `queued → searching`, `searching → found | failed`, `failed → queued` (retry). Verifiable via Drizzle migration + `PATCH /api/job-leads/[id]/status` rejecting invalid transitions with `validationError(...)`.
+
+- [ ] **JL-B5**: The job-lead detail page renders: (a) on `status = 'queued'` — a subtle badge labeled `queued for connection scrape` + a `Copy skill invocation` button that copies `claude /scrape-linkedin-connections <lead-id>` to the clipboard with a sonner toast confirmation; (b) on `status = 'failed'` — a `bg-destructive/10` border-destructive/30 banner showing the error category (bold) + truncated detail + a `Retry` button that POSTs to `/api/job-leads/[id]/search` to flip back to `queued`. Verifiable via the rendered component output and a click-handler test.
 
 ### Security Hardening
 - [ ] **SEC-A1**: Add Clerk `auth()` check (or a `middleware.ts` matcher) to every `/api/*` route — currently 0/34 routes authenticate
@@ -146,11 +159,16 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | DEBT-A3 | Phase 4 | Complete |
 | DEBT-A4 | Phase 4 | Complete |
 | DEBT-A5 | Phase 4 | Complete |
-| JL-A1 | Phase 5 | Pending |
-| JL-A2 | Phase 5 | Pending |
-| JL-A3 | Phase 5 | Pending |
-| JL-A4 | Phase 5 | Pending |
-| JL-A5 | Phase 5 | Pending |
+| JL-A1 | Phase 5 | SUPERSEDED |
+| JL-A2 | Phase 5 | SUPERSEDED |
+| JL-A3 | Phase 5 | SUPERSEDED |
+| JL-A4 | Phase 5 | SUPERSEDED |
+| JL-A5 | Phase 5 | SUPERSEDED |
+| JL-B1 | Phase 5 | Pending |
+| JL-B2 | Phase 5 | Pending |
+| JL-B3 | Phase 5 | Pending |
+| JL-B4 | Phase 5 | Pending |
+| JL-B5 | Phase 5 | Pending |
 | PERF-A1 | Phase 6 | Pending |
 | PERF-A2 | Phase 6 | Pending |
 | PERF-A3 | Phase 6 | Pending |
@@ -158,10 +176,10 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | PERF-A5 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 Active requirements: 22 total
+- v1 Active requirements: 22 total (5 superseded; net 22 active, with JL-A1..A5 replaced by JL-B1..B5)
 - Mapped to phases: 22 ✓
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-12*
-*Last updated: 2026-05-13 after Phase 4 completion — DEBT-A4 + DEBT-A5 marked complete in traceability*
+*Last updated: 2026-05-13 — JL-A1..A5 superseded by JL-B1..B5 for the Phase 5 reshape (Claude Code skill + agent-browser direction)*
