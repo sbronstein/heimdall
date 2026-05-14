@@ -132,7 +132,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 **Wave 1**
-- [ ] 06-01-PLAN.md — Schema additions (5 index() + 1 partial UNIQUE index on contacts/companies), migration 0008 generation + apply, pg_indexes regression test (D-20)
+- [x] 06-01-PLAN.md — Schema additions (5 index() + 1 partial UNIQUE index on contacts/companies), migration 0008 generation + apply, pg_indexes regression test (D-20)
 
 **Wave 2** *(four plans parallel — disjoint file sets — all blocked on Wave 1)*
 - [ ] 06-02-PLAN.md — PERF-A1 (bridges half) + PERF-A2: transactional POST /prospects with inline matchConnections, bulk bridge insert with onConflictDoNothing, narrowed contacts SELECT; ROADMAP SC #1 wording refresh in the same commit
