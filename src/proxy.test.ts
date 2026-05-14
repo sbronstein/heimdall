@@ -1,18 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 // Configurable per-test auth() return value. Tests set this before invoking
 // the proxy middleware so the mocked Clerk auth helper returns the desired
 // {userId, sessionClaims} shape.
-let mockAuthReturn: { userId: string | null; sessionClaims: Record<string, unknown> | null } = {
+let mockAuthReturn: {
+  userId: string | null;
+  sessionClaims: Record<string, unknown> | null;
+} = {
   userId: null,
   sessionClaims: null
 };
 
 // Spy mocks recorded across tests — clearable in beforeEach.
 const protectSpy = vi.fn();
+// authSpy fires on every invocation of `auth()` (the callable form). Used by the
+// (F) bearer-bypass suite to assert the middleware short-circuited BEFORE invoking Clerk.
+const authSpy = vi.fn();
 
 vi.mock('@clerk/nextjs/server', () => {
   // clerkMiddleware accepts a handler and returns a NextMiddleware that
@@ -22,10 +29,15 @@ vi.mock('@clerk/nextjs/server', () => {
   // unauthenticated request, but our middleware ONLY calls auth.protect() on
   // /dashboard/* paths where the test asserts the spy fired, not the side
   // effect.
-  const clerkMiddleware = (handler: (auth: unknown, req: NextRequest) => unknown) => {
+  const clerkMiddleware = (
+    handler: (auth: unknown, req: NextRequest) => unknown
+  ) => {
     return async (req: NextRequest) => {
       const auth = Object.assign(
-        async () => mockAuthReturn,
+        async () => {
+          authSpy();
+          return mockAuthReturn;
+        },
         {
           protect: vi.fn(async () => {
             protectSpy();
@@ -46,7 +58,11 @@ vi.mock('@clerk/nextjs/server', () => {
       return patterns.some((p) => {
         // Strip the regex parens to get the base path
         const base = p.replace(/\(\.\*\)/g, '').replace(/\/$/, '');
-        return pathname === base || pathname.startsWith(base + '/') || pathname.startsWith(base);
+        return (
+          pathname === base ||
+          pathname.startsWith(base + '/') ||
+          pathname.startsWith(base)
+        );
       });
     };
   };
@@ -59,18 +75,29 @@ vi.mock('@clerk/nextjs/server', () => {
 // as a hard dependency that must be stubbed for unit testing.
 const proxyModulePromise = import('@/proxy');
 
-async function getMiddleware(): Promise<(req: NextRequest) => Promise<Response | undefined>> {
+async function getMiddleware(): Promise<
+  (req: NextRequest) => Promise<Response | undefined>
+> {
   const mod = await proxyModulePromise;
   // proxy.ts default export is the wrapped NextMiddleware
-  return mod.default as unknown as (req: NextRequest) => Promise<Response | undefined>;
+  return mod.default as unknown as (
+    req: NextRequest
+  ) => Promise<Response | undefined>;
 }
 
-function makeRequest(url: string): NextRequest {
+function makeRequest(
+  url: string,
+  headers?: Record<string, string>
+): NextRequest {
+  if (headers) {
+    return new NextRequest(new URL(url), { headers });
+  }
   return new NextRequest(new URL(url));
 }
 
 beforeEach(() => {
   protectSpy.mockClear();
+  authSpy.mockClear();
   mockAuthReturn = { userId: null, sessionClaims: null };
 });
 
@@ -88,7 +115,9 @@ describe('proxy (A): unauthenticated /api/* returns 401 envelope', () => {
   it('returns 401 envelope for nested dynamic /api/job-leads/abc/search', async () => {
     mockAuthReturn = { userId: null, sessionClaims: null };
     const middleware = await getMiddleware();
-    const res = await middleware(makeRequest('http://localhost/api/job-leads/abc/search'));
+    const res = await middleware(
+      makeRequest('http://localhost/api/job-leads/abc/search')
+    );
     expect(res).toBeInstanceOf(Response);
     expect(res!.status).toBe(401);
     const body = await res!.json();
@@ -100,7 +129,9 @@ describe('proxy (B): unauthenticated /dashboard/* triggers auth.protect (Clerk r
   it('invokes auth.protect() rather than returning the JSON 401 envelope', async () => {
     mockAuthReturn = { userId: null, sessionClaims: null };
     const middleware = await getMiddleware();
-    const res = await middleware(makeRequest('http://localhost/dashboard/overview'));
+    const res = await middleware(
+      makeRequest('http://localhost/dashboard/overview')
+    );
     // The middleware took the /dashboard branch: auth.protect was called.
     expect(protectSpy).toHaveBeenCalledTimes(1);
     // It did NOT return the /api 401 envelope — the dashboard branch returns
@@ -136,7 +167,9 @@ describe('proxy (C): wrong-email session redirects to /auth/sign-in for both /da
       sessionClaims: { email: 'attacker@example.com' }
     };
     const middleware = await getMiddleware();
-    const res = await middleware(makeRequest('http://localhost/dashboard/overview'));
+    const res = await middleware(
+      makeRequest('http://localhost/dashboard/overview')
+    );
     expect(res).toBeInstanceOf(Response);
     expect([307, 308]).toContain(res!.status);
     const location = res!.headers.get('location');
@@ -194,5 +227,106 @@ describe('proxy (E): route-enumeration assertion — every /api/* route is cover
         `Derived path "${derived}" does not match the protected matcher pattern /api/(.*) — the proxy.ts createRouteMatcher arg list is out of sync with the actual /api route surface`
       ).toBe(true);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// (F): bearer-token bypass for /api/* skill traffic (D-19 / D-21)
+//
+// The Claude Code skill cannot authenticate via Clerk session cookies (browser-
+// bound), so the middleware accepts `Authorization: Bearer <token>` where
+// SHA-256(token) matches `process.env.API_TOKEN_HASH` AND
+// `process.env.SINGLE_USER_EMAIL === ALLOWED_EMAIL`. Bypass is /api/*-only;
+// /dashboard/* paths ignore the header entirely.
+// ---------------------------------------------------------------------------
+
+describe('proxy (F): bearer-token bypass for /api/* skill traffic', () => {
+  const VALID_TOKEN = 'a'.repeat(64); // any 64-char hex string is fine for the test
+  const VALID_HASH = createHash('sha256').update(VALID_TOKEN).digest('hex');
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('valid Bearer token + matching API_TOKEN_HASH + SINGLE_USER_EMAIL set → pass-through (Clerk auth() NOT invoked)', async () => {
+    vi.stubEnv('API_TOKEN_HASH', VALID_HASH);
+    vi.stubEnv('SINGLE_USER_EMAIL', 'steve@bronstein.org');
+    mockAuthReturn = { userId: null, sessionClaims: null };
+    const middleware = await getMiddleware();
+    const res = await middleware(
+      makeRequest('http://localhost/api/companies', {
+        authorization: `Bearer ${VALID_TOKEN}`
+      })
+    );
+    // Pass-through: middleware returns undefined, Clerk's auth() was NOT called.
+    expect(res).toBeUndefined();
+    expect(authSpy).not.toHaveBeenCalled();
+    expect(protectSpy).not.toHaveBeenCalled();
+  });
+
+  it('invalid Bearer token → falls through to Clerk; returns 401 envelope on no session', async () => {
+    vi.stubEnv('API_TOKEN_HASH', VALID_HASH);
+    vi.stubEnv('SINGLE_USER_EMAIL', 'steve@bronstein.org');
+    mockAuthReturn = { userId: null, sessionClaims: null };
+    const middleware = await getMiddleware();
+    const res = await middleware(
+      makeRequest('http://localhost/api/companies', {
+        authorization: 'Bearer wrong-token-not-the-real-one'
+      })
+    );
+    expect(res).toBeInstanceOf(Response);
+    expect(res!.status).toBe(401);
+    const body = await res!.json();
+    expect(body).toEqual({ success: false, error: 'Unauthorized' });
+    // Falling through to Clerk means auth() WAS called.
+    expect(authSpy).toHaveBeenCalled();
+  });
+
+  it('no Authorization header → existing Clerk-only behavior preserved (401 envelope on no session)', async () => {
+    vi.stubEnv('API_TOKEN_HASH', VALID_HASH);
+    vi.stubEnv('SINGLE_USER_EMAIL', 'steve@bronstein.org');
+    mockAuthReturn = { userId: null, sessionClaims: null };
+    const middleware = await getMiddleware();
+    const res = await middleware(makeRequest('http://localhost/api/companies'));
+    expect(res).toBeInstanceOf(Response);
+    expect(res!.status).toBe(401);
+    const body = await res!.json();
+    expect(body).toEqual({ success: false, error: 'Unauthorized' });
+    expect(authSpy).toHaveBeenCalled();
+  });
+
+  it('valid Bearer token BUT SINGLE_USER_EMAIL unset → bypass rejected; falls through to Clerk (multi-tenant safety)', async () => {
+    vi.stubEnv('API_TOKEN_HASH', VALID_HASH);
+    // Explicitly UNSET SINGLE_USER_EMAIL — D-21 multi-tenant safety check.
+    vi.stubEnv('SINGLE_USER_EMAIL', '');
+    mockAuthReturn = { userId: null, sessionClaims: null };
+    const middleware = await getMiddleware();
+    const res = await middleware(
+      makeRequest('http://localhost/api/companies', {
+        authorization: `Bearer ${VALID_TOKEN}`
+      })
+    );
+    expect(res).toBeInstanceOf(Response);
+    expect(res!.status).toBe(401);
+    const body = await res!.json();
+    expect(body).toEqual({ success: false, error: 'Unauthorized' });
+    expect(authSpy).toHaveBeenCalled();
+  });
+
+  it('/dashboard/* with valid Bearer header → bearer is IGNORED (auth.protect() still invoked)', async () => {
+    vi.stubEnv('API_TOKEN_HASH', VALID_HASH);
+    vi.stubEnv('SINGLE_USER_EMAIL', 'steve@bronstein.org');
+    mockAuthReturn = {
+      userId: 'user_xyz',
+      sessionClaims: { email: 'steve@bronstein.org' }
+    };
+    const middleware = await getMiddleware();
+    await middleware(
+      makeRequest('http://localhost/dashboard/overview', {
+        authorization: `Bearer ${VALID_TOKEN}`
+      })
+    );
+    // The dashboard branch ran auth.protect() — bearer bypass is /api/*-only.
+    expect(protectSpy).toHaveBeenCalledTimes(1);
   });
 });
