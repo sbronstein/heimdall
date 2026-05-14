@@ -93,13 +93,30 @@ Plans:
 ### Phase 5: Job Leads Completion — *RESHAPED 2026-05-13*
 **Goal**: LinkedIn connection scraping is reliable. Scraping moves **out of the app** into a Claude Code skill driving `vercel-labs/agent-browser`; the app holds the queue and the results, scraping runs out-of-band, failures surface back into the UI via the DB.
 **Depends on**: Phase 4
-**Requirements**: JL-A1..A5 are SUPERSEDED by the architectural pivot. New requirement set (JL-B1..B5) to be ratified during `/gsd-discuss-phase` for this reshape. Working framing below.
+**Requirements**: JL-B1, JL-B2, JL-B3, JL-B4, JL-B5 (defined in `.planning/REQUIREMENTS.md` §Job Leads Completion; JL-A1..A5 superseded 2026-05-13 — see `.planning/phases/05-job-leads-completion/05-03-PLAN.md`)
 **Success Criteria** (what must be TRUE):
   1. A Claude Code skill exists (under `.claude/skills/` or per-project skill location) that accepts a job URL argument **or**, when invoked with no argument, drains unprocessed job leads from the Heimdall DB
   2. The skill drives `vercel-labs/agent-browser` to navigate job → company → employees → 2nd-degree filter and extract prospects in the same `ScrapedProspect` shape the existing UI consumes
   3. The skill writes results back to the DB through existing REST routes; the in-app fire-and-forget Playwright IIFE in `src/app/api/job-leads/[id]/search/route.ts` and `src/features/job-leads/lib/scrape-connections.ts` are **deleted** (the hardcoded `'point'`, the `waitForTimeout` antipatterns, and the 20+ debug `console.log` dumps go with them)
   4. Job-lead status in the DB cleanly represents the scraping queue — at minimum: needs-scrape, in-progress (by the skill), scraped, failed-with-category — so the skill knows what to drain and the UI knows what to show
   5. The job-lead detail UI surfaces a clear "Run scrape from Claude Code" affordance for unprocessed leads and a categorized failure surface when the skill last attempted and failed, with a retry that re-queues the lead
+
+**Plans**: 7 plans
+Plans:
+**Wave 1** *(three plans parallel — disjoint file sets)*
+- [ ] 05-01-PLAN.md — Schema additions (queued/failed enum values, last_error columns), ScrapedProspect type relocation, Drizzle migration
+- [ ] 05-02-PLAN.md — Middleware bearer-token bypass + token-generation script + env example placeholders
+- [ ] 05-03-PLAN.md — REQUIREMENTS.md supersession of JL-A1..A5, definition of JL-B1..JL-B5, HTML companion regen
+
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 05-04-PLAN.md — API routes: state-machine module, PATCH /status, POST /prospects (bulk), POST /search (thin flip), GET /job-leads status filter + tests
+
+**Wave 3** *(blocked on Waves 1 + 2)*
+- [ ] 05-05-PLAN.md — Job-lead detail UI rewrite: queued badge, copy-skill-invocation button, categorized failure banner, retry; list-view status rendering
+- [ ] 05-06-PLAN.md — Skill assets at .claude/skills/scrape-linkedin-connections/ (SKILL.md + three references docs)
+
+**Wave 4** *(blocked on Waves 1, 2, 3 — must be last)*
+- [ ] 05-07-PLAN.md — Delete scrape-connections.ts + search-progress.tsx; lock the deletions in src/__cleanup__.test.ts
 
 **Note**: This phase's old `05-CONTEXT.md` (363 lines of context for the in-app-scraper-fix direction) is preserved at `.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md` and reflects the prior plan. A fresh `05-CONTEXT.md` for the new direction will be produced by `/gsd-discuss-phase 5`.
 
