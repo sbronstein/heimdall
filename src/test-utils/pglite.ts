@@ -25,5 +25,31 @@ export async function createTestDb() {
     await pglite.exec(sql);
   }
 
-  return drizzle(pglite, { schema });
+  const db = drizzle(pglite, { schema });
+
+  // Production code uses db.batch([...]) for atomic multi-statement writes
+  // (required because the neon-http driver does NOT support db.transaction).
+  // pglite's Drizzle adapter does NOT expose .batch, but it DOES support
+  // db.transaction. We add a .batch shim here that runs all queries inside a
+  // single pglite transaction so atomicity semantics match production.
+  // Returns the same tuple shape as neon-http's batch.
+  if (typeof (db as unknown as { batch?: unknown }).batch !== 'function') {
+    type Runnable = { execute: () => Promise<unknown> };
+    (db as unknown as { batch: (qs: Runnable[]) => Promise<unknown[]> }).batch =
+      async (queries: Runnable[]) => {
+        return db.transaction(async () => {
+          // The pre-built queries reference the outer db, but pglite's
+          // PGlite client is single-connection — statements issued during
+          // a transaction block share the same wire connection. Each query
+          // resolves via its own .execute() call, all inside this tx.
+          const results: unknown[] = [];
+          for (const q of queries) {
+            results.push(await q.execute());
+          }
+          return results;
+        });
+      };
+  }
+
+  return db;
 }

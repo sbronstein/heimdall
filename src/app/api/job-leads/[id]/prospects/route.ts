@@ -5,8 +5,13 @@ import { created } from '@/lib/api/types';
 import { notFound, serverError, validationError } from '@/lib/api/errors';
 import { logTimeline } from '@/lib/db/timeline';
 import { inferSeniority } from '@/features/job-leads/lib/seniority';
-import { matchConnections } from '@/features/job-leads/lib/match-connections';
+import {
+  matchConnections,
+  buildBridgeInsert,
+  type ProspectWithId
+} from '@/features/job-leads/lib/match-connections';
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
 
 // 5-field ScrapedProspect shape — must match src/features/job-leads/lib/types.ts
 // (name, title, linkedinUrl, profileSnippet, mutualConnectionNames). profileSnippet
@@ -32,9 +37,9 @@ export async function POST(
     const body = await request.json();
     const validated = bulkBody.parse(body);
 
-    // Lead lookup + status check happen BEFORE the transaction (read-only).
+    // Lead lookup + status check happen BEFORE the atomic write set (read-only).
     // Status check rejects writes to non-'searching' leads; if it fails, no
-    // transaction is opened at all.
+    // writes are issued.
     const [lead] = await db
       .select()
       .from(jobLeads)
@@ -49,9 +54,20 @@ export async function POST(
       );
     }
 
-    // Single bulk insert — NOT a per-row loop. profileSnippet wired through
-    // from validated input, NOT hardcoded null.
-    const rows = validated.prospects.map((p) => ({
+    // Pre-generate prospect UUIDs in app code so we can compute bridge rows
+    // (which reference prospect IDs) WITHOUT a post-insert RETURNING round-trip.
+    // This is required because the neon-http driver does NOT support
+    // interactive transactions (db.transaction() throws) — atomicity must come
+    // from a non-interactive db.batch([...]) call where all statements are
+    // pre-built. The schema's defaultRandom() on prospects.id is overridden by
+    // the explicit id field below; collision risk is negligible (UUIDv4).
+    const prospectsWithIds: ProspectWithId[] = validated.prospects.map((p) => ({
+      ...p,
+      id: randomUUID()
+    }));
+
+    const rows = prospectsWithIds.map((p) => ({
+      id: p.id,
       jobLeadId: id,
       name: p.name,
       title: p.title,
@@ -60,39 +76,58 @@ export async function POST(
       seniorityLevel: inferSeniority(p.title ?? '').level
     }));
 
-    // ATOMIC WRITE SET: prospects insert + matchConnections + status flip all
-    // commit or roll back together (D-02). logTimeline is OUTSIDE so a rolled-back
-    // transaction never emits a timeline event (WARNING 3 fix — post-commit invariant).
-    const updated = await db.transaction(async (tx) => {
-      if (rows.length > 0) {
-        await tx.insert(prospects).values(rows);
-      }
+    // Compute bridge rows in app code (read-only DB access for contacts lookup).
+    // matchConnections returns the bridge values — it does NOT write — so we
+    // can include the bridge insert in the same atomic batch below.
+    const matchResult = await matchConnections(prospectsWithIds);
+    const bridgeInsert = buildBridgeInsert(matchResult.bridgeValues);
 
-      // Inline matchConnections call per D-01. Bridges insert happens inside tx;
-      // rollback on failure unwinds prospects and status flip too.
-      await matchConnections(tx, id, validated.prospects);
+    // ATOMIC WRITE SET (D-02) via db.batch — neon-http executes batched queries
+    // as a single non-interactive Postgres transaction over one HTTP request.
+    // All statements commit or roll back together. If any statement fails, the
+    // whole batch rolls back and the await throws — logTimeline below is
+    // skipped (post-commit invariant — WARNING 3 fix preserved).
+    const leadUpdate = db
+      .update(jobLeads)
+      .set({
+        status: 'found',
+        prospectCount: rows.length,
+        lastError: null,
+        lastErrorAt: null,
+        updatedAt: new Date()
+      })
+      .where(eq(jobLeads.id, id))
+      .returning();
 
-      const [u] = await tx
-        .update(jobLeads)
-        .set({
-          status: 'found',
-          prospectCount: rows.length,
-          lastError: null,
-          lastErrorAt: null,
-          updatedAt: new Date()
-        })
-        .where(eq(jobLeads.id, id))
-        .returning();
-      return u;
-    });
+    // Build the batch array conditionally — only include the prospects insert
+    // and bridge insert if there's anything to write. db.batch requires at
+    // least one query; the lead update is always present so the type-level
+    // [U, ...U[]] minimum is satisfied.
+    let updated;
+    if (rows.length === 0) {
+      const [result] = await db.batch([leadUpdate]);
+      [updated] = result;
+    } else if (bridgeInsert === null) {
+      const [, leadResult] = await db.batch([
+        db.insert(prospects).values(rows),
+        leadUpdate
+      ]);
+      [updated] = leadResult;
+    } else {
+      const [, , leadResult] = await db.batch([
+        db.insert(prospects).values(rows),
+        bridgeInsert,
+        leadUpdate
+      ]);
+      [updated] = leadResult;
+    }
 
     // POST-COMMIT side-effect (WARNING 3 fix — concrete rationale):
     //
-    // Drizzle's neon-http db.transaction() returns ONLY after the Neon HTTP
-    // endpoint acknowledges COMMIT. Therefore placing logTimeline() after
-    // await db.transaction() guarantees the event is emitted only on committed
-    // state. If the transaction throws, logTimeline never runs (Test 3 asserts
-    // this — zero timeline rows after forced rollback).
+    // db.batch() resolves only after the Neon HTTP endpoint acknowledges
+    // COMMIT for the non-interactive transaction. Therefore placing
+    // logTimeline() after await db.batch() guarantees the event is emitted
+    // only on committed state. If the batch throws, logTimeline never runs.
     await logTimeline({
       eventType: 'job_lead_search_complete',
       title: `Found ${rows.length} prospects at ${lead.companyName || 'Unknown'}`,

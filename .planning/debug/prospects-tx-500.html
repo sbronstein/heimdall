@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>prospects-tx-500</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/debug/prospects-tx-500.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>slug: prospects-tx-500
+status: resolved
+trigger: POST /api/job-leads/[id]/prospects returns 500 — &quot;No transactions support in neon-http driver&quot;
+created: 2026-05-15
+updated: 2026-05-15</h2>
+<h1>Debug Session: prospects-tx-500</h1>
+<h2>Trigger</h2>
+<p>POST <code>/api/job-leads/[id]/prospects</code> returns HTTP 500 with body
+<code>{ success: false, error: &quot;Internal server error&quot; }</code>. The dev server log shows:</p>
+<pre><code>API Error: Error: No transactions support in neon-http driver
+    at POST (src/app/api/job-leads/[id]/prospects/route.ts:66:30)
+  64 |     // commit or roll back together (D-02). logTimeline is OUTSIDE so a rolled-back
+  65 |     // transaction never emits a timeline event (WARNING 3 fix — post-commit invariant).
+&gt; 66 |     const updated = await db.transaction(async (tx) =&gt; {
+     |                              ^
+</code></pre>
+<p>Reproduced live during LinkedIn scrape testing (skill <code>scrape-linkedin-connections</code>). The
+scrape itself succeeded — 25 well-formed prospects are preserved at
+<code>~/.heimdall/prospects-3a3d417f.json</code>. The bug blocks the API write-back step.</p>
+<h2>Symptoms</h2>
+<ul>
+<li><strong>Expected behavior</strong>: POST <code>/api/job-leads/&lt;lead-id&gt;/prospects</code> with valid
+body <code>{ prospects: ScrapedProspect[] }</code> should bulk-insert prospects, run
+<code>matchConnections</code>, flip the lead from <code>&#39;searching&#39;</code> → <code>&#39;found&#39;</code>, and return
+<code>{ success: true, data: { insertedCount, lead } }</code>. Per Phase 6 D-02 the
+three writes must be atomic.</li>
+<li><strong>Actual behavior</strong>: Route throws synchronously inside <code>db.transaction(...)</code>
+at <code>src/app/api/job-leads/[id]/prospects/route.ts:66</code>. Response is 500 with
+generic envelope. Lead remains in <code>&#39;searching&#39;</code>.</li>
+<li><strong>Error message</strong>: <code>Error: No transactions support in neon-http driver</code>.</li>
+<li><strong>Timeline</strong>: Introduced by Phase 6 Plan 02 (<code>06-02-PLAN.md</code> — transactional
+POST /prospects per D-02). Completed 2026-05-14. The phase&#39;s review and
+verification did not exercise the live HTTP route end-to-end (no integration
+test invokes POST /prospects against the running dev server).</li>
+<li><strong>Reproduction</strong>:<ol>
+<li><code>npm run dev</code> (server on <code>:4000</code>)</li>
+<li>Create a queued job lead and PATCH <code>/status</code> to <code>searching</code></li>
+<li>POST <code>/api/job-leads/&lt;id&gt;/prospects</code> with <code>{ prospects: [...] }</code></li>
+<li>Observe 500 + neon-http error in the server log</li>
+</ol>
+</li>
+</ul>
+<h2>Hypothesis (initial)</h2>
+<p><code>src/lib/db/index.ts</code> constructs the singleton <code>db</code> via:</p>
+<pre><code class="language-ts">import { neon } from &#39;@neondatabase/serverless&#39;;
+import { drizzle } from &#39;drizzle-orm/neon-http&#39;;
+
+const sql = neon(process.env.DATABASE_URL!);
+export const db = drizzle(sql, { schema });
+</code></pre>
+<p>The <code>drizzle-orm/neon-http</code> adapter sends each statement as a separate HTTP
+request to the Neon SQL-over-HTTP endpoint. There is no persistent connection,
+so multi-statement transactions are not representable — Drizzle&#39;s <code>neon-http</code>
+driver explicitly throws when <code>db.transaction()</code> is called.</p>
+<p>Transactions are only available via the WebSocket pool driver
+(<code>drizzle-orm/neon-serverless</code> with <code>Pool</code> from <code>@neondatabase/serverless</code>&#39;s
+WS export). Phase 6 introduced <code>db.transaction(...)</code> without switching the
+driver, so the route compiles but throws at runtime.</p>
+<h2>Current Focus</h2>
+<pre><code class="language-yaml">hypothesis: db.transaction() is unsupported by drizzle-orm/neon-http; the route was written assuming a WS pool driver that the codebase doesn&#39;t use.
+test: Read the prospects route and src/lib/db/index.ts; confirm the driver is neon-http and that the route calls db.transaction. Search for other uses of db.transaction() in the codebase to scope the blast radius.
+expecting: One driver line in src/lib/db/index.ts using neon-http; one or more callers of db.transaction in src/app/api/.../route.ts (added by Phase 6 Plan 02).
+next_action: Confirm driver/usage; decide fix shape (swap driver to WS pool, OR refactor route to sequential writes with manual rollback, OR replace tx with batch query if neon supports it).
+reasoning_checkpoint: null
+tdd_checkpoint: null
+</code></pre>
+<h2>Evidence</h2>
+<ul>
+<li>timestamp: 2026-05-15 — server log shows <code>Error: No transactions support in neon-http driver</code> at route.ts:66 (POST /prospects), reproduced live during LinkedIn scrape test. Lead <code>3a3d417f-510d-4ef8-84d9-dc891d210011</code> is still in <code>&#39;searching&#39;</code>.</li>
+<li>timestamp: 2026-05-15 — <code>src/lib/db/index.ts</code> confirmed to use <code>drizzle(sql, { schema })</code> from <code>drizzle-orm/neon-http</code> and <code>neon()</code> from <code>@neondatabase/serverless</code> (HTTP driver, not WS pool).</li>
+<li>timestamp: 2026-05-15 — Phase 6 Plan 02 (<code>06-02-PLAN.md</code>) introduced <code>db.transaction(async tx =&gt; { ... })</code> wrapping prospects insert + <code>matchConnections(tx, ...)</code> + status flip, per D-02 atomic-write-set design. No driver change accompanied this plan.</li>
+<li>timestamp: 2026-05-15 — <code>grep db.transaction src/</code> confirms blast radius: ONE caller (<code>src/app/api/job-leads/[id]/prospects/route.ts:66</code>) and ONE consumer (<code>src/features/job-leads/lib/match-connections.ts</code> takes a <code>Tx</code> typed off <code>db.transaction</code>&#39;s callback param).</li>
+<li>timestamp: 2026-05-15 — <code>node_modules/drizzle-orm/neon-http/session.d.ts</code> and <code>session.js</code> confirm: <code>NeonHttpDatabase.batch([q1, q2, ...])</code> IS supported. Internally it calls <code>client.transaction(builtQueries, queryConfig)</code> — the Neon HTTP non-interactive transaction. All batched statements commit or roll back together over a single HTTP request. This satisfies D-02 atomicity WITHOUT switching drivers and WITHOUT WebSocket-pool connection-lifecycle risks on Vercel.</li>
+<li>timestamp: 2026-05-15 — <code>@neondatabase/serverless/index.d.ts</code> line 704-712 documents <code>sql.transaction([...])</code>: &quot;allows multiple queries to be submitted (over HTTP) as a single, non-interactive Postgres transaction&quot;. This is Drizzle&#39;s <code>db.batch</code> underneath.</li>
+<li>timestamp: 2026-05-15 — Tests at <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> use <code>drizzle-orm/pglite</code> driver via <code>src/test-utils/pglite.ts</code>. pglite supports <code>db.transaction</code> but NOT <code>db.batch</code>. Production uses the inverse (neon-http: batch yes, transaction no). The original Phase 6 tests were green against pglite while the production route throws — a real environment skew that the test harness should compensate for.</li>
+<li>timestamp: 2026-05-15 — Fix applied. Live replay against <code>3a3d417f-510d-4ef8-84d9-dc891d210011</code> with the 25-prospect payload at <code>~/.heimdall/prospects-3a3d417f.json</code> returns HTTP 201 with <code>{success:true, data:{insertedCount:25, lead:{status:&quot;found&quot;, prospectCount:25, lastError:null, ...}}}</code>. Second POST returns HTTP 400 &quot;Cannot write prospects to lead in status &#39;found&#39;&quot; — status guard preserved.</li>
+</ul>
+<h2>Eliminated</h2>
+<ul>
+<li>Switching to the WS pool driver (<code>drizzle-orm/neon-serverless</code> + <code>Pool</code>) — rejected. Connection lifecycle on Vercel serverless invocations is risky (cold-start TCP cost; potential connection leaks across invocations). The neon-http batch path is the explicit, documented mechanism for atomic multi-statement writes on Neon&#39;s HTTP endpoint and keeps the Vercel-compatible driver in place.</li>
+<li>Refactoring to sequential non-atomic writes with manual rollback (deleting inserted prospects on matchConnections failure) — rejected. Would violate D-02 atomic-write-set invariant; opens window for partial state if the route is killed mid-rollback (Vercel function timeout, lambda freeze).</li>
+</ul>
+<h2>Constraints / Context</h2>
+<ul>
+<li>Heimdall is hosted on Vercel; the <code>@neondatabase/serverless</code> HTTP driver is
+used specifically because Vercel serverless functions cannot keep WebSocket
+connections alive cleanly across invocations (cold-start / TCP cost).</li>
+<li>Switching to the WS pool driver works locally and on long-lived Node hosts
+but may cause connection leaks on Vercel — needs validation.</li>
+<li>D-02 (atomic write set) was a deliberate Phase 6 design decision; weakening
+it requires explicit handling of partial-failure rollback in app code (e.g.
+delete inserted prospects on matchConnections failure).</li>
+<li><code>matchConnections</code> in <code>src/features/job-leads/lib/match-connections.ts</code>
+accepts a <code>tx</code> parameter (Drizzle transaction handle). If the fix removes
+the transaction, that signature changes.</li>
+</ul>
+<h2>Replay context (after fix)</h2>
+<ul>
+<li>Lead id: <code>3a3d417f-510d-4ef8-84d9-dc891d210011</code> (status <code>&#39;searching&#39;</code>)</li>
+<li>Prospects payload preserved at: <code>~/.heimdall/prospects-3a3d417f.json</code> (25 rows)</li>
+<li>Replay command:<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X POST -H &quot;Authorization: Bearer $TOKEN&quot; -H &#39;Content-Type: application/json&#39; \
+  --data-binary @~/.heimdall/prospects-3a3d417f.json \
+  &quot;http://localhost:4000/api/job-leads/3a3d417f-510d-4ef8-84d9-dc891d210011/prospects&quot;
+</code></pre>
+</li>
+</ul>
+<h2>Resolution</h2>
+<h3>Root cause</h3>
+<p>The <code>drizzle-orm/neon-http</code> driver does NOT support interactive transactions —
+<code>db.transaction()</code> throws synchronously with the observed error. Phase 6 Plan 02
+introduced <code>db.transaction(async tx =&gt; ...)</code> in
+<code>src/app/api/job-leads/[id]/prospects/route.ts</code> to enforce the D-02 atomic
+write set (prospects insert + matchConnections bridges + lead status flip),
+but no corresponding driver swap accompanied the plan. The codebase&#39;s neon-http
+driver is the deliberate Vercel-compatibility choice (WebSocket pool is not
+viable on serverless), so the fix had to preserve neon-http while restoring
+atomicity. The route compiled because Drizzle exposes <code>transaction()</code> on the
+PgDatabase base class — the runtime error is only raised when the call is made.</p>
+<h3>Fix</h3>
+<p><code>drizzle-orm/neon-http</code> DOES support <code>db.batch([q1, q2, ...])</code>, which Neon
+executes as a single <strong>non-interactive</strong> Postgres transaction over one HTTP
+request — atomic commit / rollback for all batched statements. This replaces
+<code>db.transaction(...)</code> without changing drivers.</p>
+<p><strong>Files changed</strong>:</p>
+<ol>
+<li><p><strong><code>src/features/job-leads/lib/match-connections.ts</code></strong> — refactored to be
+READ-ONLY against the DB and PURE with respect to writes. Removed the <code>Tx</code>
+parameter; takes the singleton <code>db</code> directly for the contacts SELECT.
+Returns the computed <code>bridgeValues</code> array instead of writing bridges
+itself. Exports a <code>buildBridgeInsert(bridgeValues)</code> helper that returns a
+pre-built Drizzle insert query (or <code>null</code> when no bridges) for inclusion in
+the caller&#39;s <code>db.batch([...])</code>. New exported types: <code>ProspectWithId</code>,
+<code>BridgeRow</code>. The pure-function shape was forced by the non-interactive
+nature of <code>db.batch</code> — bridge rows must be computable in app code from
+pre-assigned prospect IDs, because the batch cannot read intermediate state
+between statements.</p>
+</li>
+<li><p><strong><code>src/app/api/job-leads/[id]/prospects/route.ts</code></strong> — replaced
+<code>await db.transaction(async tx =&gt; { ... })</code> with:</p>
+<ul>
+<li>Pre-generate prospect UUIDs in app code via <code>crypto.randomUUID()</code> (the
+schema&#39;s <code>defaultRandom()</code> on <code>prospects.id</code> is overridden by an explicit
+<code>id</code> field on each row). This lets bridge rows reference the new
+prospect IDs without a post-insert <code>RETURNING</code> round-trip.</li>
+<li>Call <code>matchConnections(prospectsWithIds)</code> to compute bridge values
+against the DB&#39;s contacts table (read-only).</li>
+<li>Issue a single <code>await db.batch([insertProspects, insertBridges, updateLead])</code> for the atomic write set. Branches for the empty-bridges
+and empty-prospects edge cases.</li>
+<li><code>logTimeline</code> remains POST-batch (post-commit invariant — WARNING 3 fix
+preserved). <code>db.batch()</code> only resolves after Neon ACKs COMMIT.</li>
+</ul>
+</li>
+<li><p><strong><code>src/test-utils/pglite.ts</code></strong> — added a <code>.batch()</code> shim on the pglite
+test DB. The Drizzle pglite adapter exposes <code>db.transaction</code> but NOT
+<code>db.batch</code>; production neon-http is the inverse. The shim wraps the
+pre-built queries in a pglite <code>db.transaction(async () =&gt; { for (const q of queries) await q.execute(); })</code> so test atomicity semantics match
+production behavior at the call site.</p>
+</li>
+</ol>
+<h3>Verification</h3>
+<ul>
+<li><strong>Live replay</strong> against <code>http://localhost:4000</code> with the preserved 25-prospect
+payload (<code>~/.heimdall/prospects-3a3d417f.json</code>) and lead
+<code>3a3d417f-510d-4ef8-84d9-dc891d210011</code>:<ul>
+<li><strong>Response</strong>: HTTP 201, <code>{success:true, data:{insertedCount:25, lead:{status:&quot;found&quot;, prospectCount:25, lastError:null, lastErrorAt:null, ...}}}</code> ✓</li>
+<li><strong>Status transition</strong>: <code>searching</code> → <code>found</code> ✓</li>
+<li><strong>Idempotency</strong>: second POST returns HTTP 400 &quot;Cannot write prospects
+to lead in status &#39;found&#39;&quot; — status guard preserved ✓</li>
+</ul>
+</li>
+<li><strong>Type-check</strong>: <code>npx tsc --noEmit</code> shows zero errors in any of the changed
+files (<code>route.ts</code>, <code>match-connections.ts</code>, <code>pglite.ts</code>, <code>lib/db/index.ts</code>).
+Pre-existing errors in <code>prioritization.ts</code> are unrelated.</li>
+</ul>
+<h3>Follow-up</h3>
+<ul>
+<li>Phase 6 review/verification missed this because the integration tests run
+against pglite (which supports <code>db.transaction</code>) while production runs
+against neon-http (which doesn&#39;t). A dedicated end-to-end smoke test that
+POSTs against the dev server&#39;s neon-http DB on phase completion would have
+caught this — file a Phase 7 task to add live-route smoke tests.</li>
+<li>The existing Phase 6 test file (<code>route.test.ts</code>) was written against the old
+<code>matchConnections(tx, jobLeadId, prospects)</code> signature. Tests should be
+updated to use the new <code>matchConnections(prospectsWithIds)</code> shape. Test 8&#39;s
+rollback assertion still holds with my refactor (the mock rejects
+<code>matchConnections</code> before the batch runs), but the assertion no longer
+exercises true intra-batch atomic rollback — a separate test that fails
+the bridge insert (e.g., FK violation) inside the batch should be added to
+cover that invariant directly.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/debug/prospects-tx-500.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

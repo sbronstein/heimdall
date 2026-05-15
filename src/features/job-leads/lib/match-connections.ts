@@ -1,19 +1,26 @@
-import type { db } from '@/lib/db';
-import { contacts, prospects, prospectBridges } from '../../../../drizzle/schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { db } from '@/lib/db';
+import { contacts, prospectBridges } from '../../../../drizzle/schema';
+import { and, isNull, sql } from 'drizzle-orm';
 import type { ScrapedProspect } from './types';
 import type { Contact } from '@/lib/domain/types';
 
-// Structural alias for the neon-http transaction handle (narrower than typeof db).
-// NeonHttpTransaction is not exported by drizzle-orm v0.45.1 — use the structural
-// fallback instead. `tx.transaction(...)` is a compile error on this type, which
-// ensures atomicity invariants are preserved at the call site (D-03 + WARNING 1 fix).
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+// ProspectWithId — a ScrapedProspect plus the UUID that will be (or has been)
+// assigned to the prospect row in the prospects table. Caller pre-generates
+// these IDs in app code so bridges can be built without a post-insert RETURNING
+// round-trip (required for db.batch atomic non-interactive transaction — see
+// route.ts and Phase 6 D-02).
+export type ProspectWithId = ScrapedProspect & { id: string };
 
-type MatchResult = {
+export type BridgeRow = {
+  prospectId: string;
+  contactId: string;
+};
+
+export type MatchResult = {
   matched: number;
   unmatched: number;
   contactIdsNeedingTriage: string[];
+  bridgeValues: BridgeRow[];
 };
 
 function normalizeForMatch(name: string): string {
@@ -42,14 +49,21 @@ function fuzzyMatch(scraped: string, contact: Contact): boolean {
   return false;
 }
 
+// matchConnections is now READ-ONLY against the database and PURE with respect
+// to writes — it computes the bridge rows that the caller must insert. The
+// caller is responsible for batching the bridge insert alongside the prospects
+// insert and lead status flip so all three commit atomically (D-02). This
+// shape change was forced by the neon-http driver's lack of interactive
+// transactions: db.transaction() throws, but db.batch() runs a non-interactive
+// transaction over a single HTTP request — which is sufficient for our write
+// set because bridge rows can be computed entirely in app code from the
+// pre-assigned prospect UUIDs (see ProspectWithId).
 export async function matchConnections(
-  tx: Tx,
-  jobLeadId: string,
-  scrapedProspects: ScrapedProspect[]
+  scrapedProspects: ProspectWithId[]
 ): Promise<MatchResult> {
   // Defensive early return — no contacts to match if no prospects provided (D-11)
   if (scrapedProspects.length === 0) {
-    return { matched: 0, unmatched: 0, contactIdsNeedingTriage: [] };
+    return { matched: 0, unmatched: 0, contactIdsNeedingTriage: [], bridgeValues: [] };
   }
 
   // Build token set from all mutual connection names (D-11)
@@ -67,7 +81,7 @@ export async function matchConnections(
     const tokens = Array.from(tokenSet);
     // sql.join with parameterized bindings — NOT sql.raw. Each token is a separate
     // bound parameter (sql`${t}`), preventing SQL injection (T-06-05 mitigation).
-    allContacts = await tx
+    allContacts = await db
       .select()
       .from(contacts)
       .where(
@@ -78,29 +92,12 @@ export async function matchConnections(
       );
   }
 
-  // Build prospect records and collect all mutual names
-  const prospectRecords = await tx
-    .select()
-    .from(prospects)
-    .where(eq(prospects.jobLeadId, jobLeadId));
-
-  // Map prospect name → prospect record
-  const prospectByName = new Map(
-    prospectRecords.map((p) => [normalizeForMatch(p.name), p])
-  );
-
   let matched = 0;
   let unmatched = 0;
   const contactIdsNeedingTriage = new Set<string>();
-  const bridgeValues: Array<{
-    prospectId: string;
-    contactId: string;
-  }> = [];
+  const bridgeValues: BridgeRow[] = [];
 
   for (const scraped of scrapedProspects) {
-    const prospectRecord = prospectByName.get(normalizeForMatch(scraped.name));
-    if (!prospectRecord) continue;
-
     let hasMatch = false;
 
     for (const mutualName of scraped.mutualConnectionNames) {
@@ -111,7 +108,7 @@ export async function matchConnections(
         hasMatch = true;
         matched++;
         bridgeValues.push({
-          prospectId: prospectRecord.id,
+          prospectId: scraped.id,
           contactId: matchedContact.id
         });
 
@@ -129,17 +126,20 @@ export async function matchConnections(
     }
   }
 
-  // Single bulk bridge insert per D-04. onConflictDoNothing() leverages the
-  // existing prospect_bridge_unique constraint on (prospect_id, contact_id) —
-  // no target needed, Postgres infers it. No try/catch — failures propagate
-  // to the caller's transaction for atomic rollback (D-02 invariant).
-  if (bridgeValues.length > 0) {
-    await tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing();
-  }
-
   return {
     matched,
     unmatched,
-    contactIdsNeedingTriage: Array.from(contactIdsNeedingTriage)
+    contactIdsNeedingTriage: Array.from(contactIdsNeedingTriage),
+    bridgeValues
   };
+}
+
+// buildBridgeInsert returns the prebuilt Drizzle insert query for the
+// computed bridge values, suitable for inclusion in db.batch([...]).
+// Returns null when there are no bridges to insert so the caller can skip it.
+// onConflictDoNothing() leverages the prospect_bridge_unique constraint
+// on (prospect_id, contact_id) (D-04).
+export function buildBridgeInsert(bridgeValues: BridgeRow[]) {
+  if (bridgeValues.length === 0) return null;
+  return db.insert(prospectBridges).values(bridgeValues).onConflictDoNothing();
 }
