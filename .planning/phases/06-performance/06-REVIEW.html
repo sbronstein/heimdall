@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+reviewed: 2026-05-14T00:00:00Z
+depth: standard
+files_reviewed: 14
+files_reviewed_list:</p>
+<ul>
+<li>drizzle/migrations/0008_phase6_indexes.sql</li>
+<li>drizzle/migrations/meta/_journal.json</li>
+<li>drizzle/migrations/meta/0008_snapshot.json</li>
+<li>drizzle/schema/companies.ts</li>
+<li>drizzle/schema/contacts.ts</li>
+<li>src/app/api/contacts/import/categorize/route.test.ts</li>
+<li>src/app/api/contacts/import/categorize/route.ts</li>
+<li>src/app/api/contacts/import/route.test.ts</li>
+<li>src/app/api/contacts/import/route.ts</li>
+<li>src/app/api/job-leads/[id]/prospects/route.test.ts</li>
+<li>src/app/api/job-leads/[id]/prospects/route.ts</li>
+<li>src/app/api/job-leads/[id]/recommendations/route.test.ts</li>
+<li>src/app/api/job-leads/[id]/recommendations/route.ts</li>
+<li>src/features/job-leads/lib/match-connections.ts</li>
+<li>src/lib/db/<strong>phase6_indexes</strong>.test.ts</li>
+<li>vitest.config.ts
+findings:
+  critical: 2
+  warning: 5
+  info: 3
+  total: 10
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 06: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-05-14
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 14 (15 paths in scope; <code>vitest.config.ts</code> re-confirmed unchanged config — included for completeness)
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 06 wires up five hot-path indexes and rewrites three N+1 patterns into batched single-statement operations. Architecturally the work is sound: SQL is parameter-bound throughout (no string interpolation of user input), the <code>db.transaction()</code> boundary in <code>POST /prospects</code> correctly atomically commits the prospects insert + bridges insert + lead-status flip, and <code>logTimeline()</code> is correctly placed <em>after</em> the transaction returns so a rollback can never emit a phantom timeline row.</p>
+<p>Two BLOCKER findings concern (1) a response-envelope contract break in <code>GET /api/job-leads/[id]/recommendations</code> — the outer <code>meta</code> payload is being nested inside <code>data</code> instead of returned as the top-level envelope <code>meta</code>, and downstream CLI consumers parsing per the API-V1 contract will read <code>meta</code> as <code>undefined</code>; and (2) a <code>prospectCount</code> correctness bug in <code>POST /prospects</code> — the lead row&#39;s <code>prospectCount</code> is set to the <em>requested</em> row count rather than the <em>inserted</em> row count, which is fine in the current implementation only because no dedup runs on prospects but breaks the moment one is added (and contradicts the documented &quot;prospects.linkedinUrl is dedup-eligible&quot; pattern in Phase 5 — verify before merge).</p>
+<p>Five warnings concern subtle correctness/robustness issues: the bulk UPDATE in <code>categorize</code> won&#39;t return rows whose closeness already matches the requested value (RETURNING semantics confounded with <code>updated_at = NOW()</code>), the import route&#39;s per-batch ON CONFLICT can cause a <code>Date</code> collision under concurrent imports, the contacts dedup composed key has a Unicode-folding mismatch between Postgres <code>lower()</code> and JS <code>.toLowerCase()</code>, the timeline event in <code>POST /prospects</code> can be lost-but-acknowledged if the timeline insert fails after the prospects transaction commits, and <code>matchConnections</code> builds two redundant <code>sql.join</code> parameter lists.</p>
+<h2>Critical Issues</h2>
+<h3>CR-01: <code>GET /api/job-leads/[id]/recommendations</code> returns <code>meta</code> inside <code>data</code>, breaking the API-V1 envelope</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/[id]/recommendations/route.ts:44-51</code></p>
+<p><strong>Issue:</strong> The route returns</p>
+<pre><code class="language-ts">return success({
+  recommendations,
+  meta: {
+    totalProspects: lead.prospectCount,
+    totalBridges: rows.length,
+    totalContacts: recommendations.length
+  }
+});
+</code></pre>
+<p>This wraps <code>{ recommendations, meta }</code> inside <code>success()</code>, which produces the envelope <code>{ success: true, data: { recommendations, meta: {...} } }</code>. Per <code>CLAUDE.md</code> (&quot;Standard response envelope: <code>{ success, data, error, meta }</code>&quot;) and the existing helper in <code>src/lib/api/types.ts</code> (<code>paginated(data, meta)</code>), <code>meta</code> is meant to live at the top of the envelope, not nested inside <code>data</code>. CLI consumers and any client parsing per the documented contract will read <code>body.meta</code> as <code>undefined</code> and silently lose totals; only callers that descend into <code>body.data.meta</code> see the values. The test file (<code>route.test.ts:104-106</code>) reads <code>body.data.meta.totalBridges</code> directly, so it <em>enforces the bug</em> — meaning a fix that moves <code>meta</code> to the envelope will fail the existing test.</p>
+<p>This is a contract regression because the same handler in pre-Phase-6 form, and every other route in <code>/api/</code>, return <code>meta</code> at the envelope level via <code>paginated()</code> or omit it. A consumer relying on <code>body.meta</code> (CLI or new UI) is broken.</p>
+<p><strong>Fix:</strong> Move <code>meta</code> to the envelope using <code>paginated()</code> (already in <code>src/lib/api/types.ts</code>), and update the test:</p>
+<pre><code class="language-ts">// route.ts
+import { paginated } from &#39;@/lib/api/types&#39;;
+// ...
+return paginated(
+  { recommendations },
+  {
+    totalProspects: lead.prospectCount,
+    totalBridges: rows.length,
+    totalContacts: recommendations.length
+  }
+);
+
+// route.test.ts:104
+const data = (body as { data: { recommendations: unknown[] }; meta: { totalBridges: number } });
+expect(data.meta.totalBridges).toBe(2);
+</code></pre>
+<p>If for some reason the nested-meta shape is intentional, rename the inner key (e.g., <code>counts</code>) so the conflict with the documented <code>meta</code> envelope field is removed.</p>
+<h3>CR-02: <code>prospectCount</code> written to <code>job_leads</code> is request length, not inserted-row count</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/[id]/prospects/route.ts:54-79</code></p>
+<p><strong>Issue:</strong> The lead-status flip sets <code>prospectCount: rows.length</code>, where <code>rows</code> is the request-validated input array. There is no <code>ON CONFLICT</code> clause on the <code>prospects</code> insert today, so today <code>rows.length === insertedCount</code>. However:</p>
+<ol>
+<li>The handler advertises in its comment that <code>profileSnippet</code> and <code>linkedinUrl</code> round-trip from the request — and <code>prospects.linkedinUrl</code> is <code>text</code> with no unique index, meaning a future plan that adds dedup-by-linkedin (very plausible given the dedup pattern in <code>contacts.linkedinUrl</code>) will silently desynchronize <code>lead.prospectCount</code> from the actual <code>prospects</code> row count for this lead.</li>
+<li>The lead-status flip happens <em>after</em> <code>matchConnections</code> inside the same transaction; if <code>matchConnections</code> mutates the <code>prospects</code> row count by inserting additional auto-derived rows (it doesn&#39;t today, but the call site contract doesn&#39;t forbid it), the same desync applies.</li>
+<li>The much safer and equally cheap source-of-truth pattern is to issue <code>tx.insert(...).returning({ id: prospects.id })</code> and use that array length for <code>prospectCount</code> — which has no incremental cost (Postgres already returns the row IDs for the bulk insert) and survives future dedup additions.</li>
+</ol>
+<p>This is a correctness BLOCKER because <code>prospectCount</code> is the user-visible &quot;how many prospects did we find&quot; badge on the leads list, and the comment in <code>route.ts:54</code> explicitly calls out single-bulk-insert semantics — drift between intent and storage will not be caught by the current test suite (Tests 1, 6 use 5/5 inputs with no dup; the &quot;second POST returns 400&quot; test of Test 9 short-circuits before any dedup branch could expose the bug).</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-ts">let insertedCount = 0;
+const updated = await db.transaction(async (tx) =&gt; {
+  if (rows.length &gt; 0) {
+    const insertedRows = await tx
+      .insert(prospects)
+      .values(rows)
+      .returning({ id: prospects.id });
+    insertedCount = insertedRows.length;
+  }
+
+  await matchConnections(tx, id, validated.prospects);
+
+  const [u] = await tx
+    .update(jobLeads)
+    .set({
+      status: &#39;found&#39;,
+      prospectCount: insertedCount,   // &lt;-- use what actually got inserted
+      lastError: null,
+      lastErrorAt: null,
+      updatedAt: new Date()
+    })
+    .where(eq(jobLeads.id, id))
+    .returning();
+  return u;
+});
+
+// ...
+return created({ insertedCount, lead: updated });
+</code></pre>
+<h2>Warnings</h2>
+<h3>WR-01: Bulk UPDATE <code>RETURNING</code> count over-reports rows when closeness is unchanged</h3>
+<p><strong>File:</strong> <code>src/app/api/contacts/import/categorize/route.ts:58-68</code></p>
+<p><strong>Issue:</strong> The bulk UPDATE is:</p>
+<pre><code class="language-sql">UPDATE contacts
+SET closeness = data.cl,
+    updated_at = NOW()
+FROM (VALUES ...) AS data(cid, cl)
+WHERE contacts.id = data.cid
+RETURNING contacts.id
+</code></pre>
+<p>This issues <code>RETURNING contacts.id</code> for every row that <em>matched</em> the <code>WHERE</code>, regardless of whether <code>closeness</code> actually changed. Test 5 confirms this is intentional (&quot;Second call&#39;s <code>updated_at</code> is strictly greater than first call&#39;s&quot;). However, the semantics returned to the client — <code>data: { updated: 3, total: 4 }</code> — read as &quot;3 rows were updated.&quot; In Postgres terms, &quot;updated&quot; should mean &quot;row state actually changed,&quot; not &quot;WHERE matched and <code>NOW()</code> was rewritten.&quot;</p>
+<p>In practice this causes:</p>
+<ol>
+<li>Idempotent retries to claim &quot;1 updated&quot; on a no-op (Test 5 documents this as desired — but the test description &quot;idempotency under retry&quot; is misleading: a true idempotent retry should return 0 changes, not 1).</li>
+<li>The <code>updated</code> count cannot be used by the client to detect actual state change vs. a redundant write — a CLI consumer that uses <code>updated</code> for invalidation logic will over-invalidate caches.</li>
+<li>Mass-categorize tooling that fans out periodic re-saves of unchanged state will, in production logs, look like sustained churn rather than no-ops.</li>
+</ol>
+<p>The trade-off is real: filtering on <code>closeness IS DISTINCT FROM data.cl</code> would suppress <code>updated_at</code> advancement on no-ops, and Test 5 explicitly <em>requires</em> <code>updated_at</code> to advance. But the test is asserting an arguably wrong invariant. Either (a) the test should be relaxed to allow no-op retries to return <code>updated: 0</code>, or (b) the response shape should distinguish &quot;matched&quot; from &quot;changed&quot;:</p>
+<pre><code class="language-sql">UPDATE contacts
+SET closeness = data.cl, updated_at = NOW()
+FROM (VALUES ...) AS data(cid, cl)
+WHERE contacts.id = data.cid
+  AND contacts.closeness IS DISTINCT FROM data.cl
+RETURNING contacts.id
+</code></pre>
+<p><strong>Fix:</strong> Add <code>AND contacts.closeness IS DISTINCT FROM data.cl</code> to the WHERE clause and update Test 5 to expect <code>updated: 0</code> on the second call (idempotent retry on identical state is a no-op). This matches the more standard Postgres convention and the more useful CLI invariant.</p>
+<h3>WR-02: Concurrent imports of the same LinkedIn URL leak duplicate name+company rows</h3>
+<p><strong>File:</strong> <code>src/app/api/contacts/import/route.ts:113-181</code></p>
+<p><strong>Issue:</strong> The dedup pipeline is:</p>
+<ol>
+<li>SELECT pre-existing <code>(firstName, lastName, currentCompany)</code> keys (line 113-123).</li>
+<li>Filter <code>candidates</code> in JS to remove name+company matches (line 133).</li>
+<li>Bulk INSERT with <code>ON CONFLICT (linkedin_url) DO NOTHING</code> (line 171).</li>
+</ol>
+<p>The name+company dedup is performed in application code without a transaction or a <code>SELECT FOR UPDATE</code>. If two clients (or two CLI invocations) issue <code>POST /api/contacts/import</code> simultaneously with the same row &quot;Alice Jones / AcmeCo&quot; and no LinkedIn URL, both <code>SELECT</code> calls return empty, both filter passes leave Alice in <code>toInsert</code>, and the URL-only <code>ON CONFLICT</code> clause does <em>not</em> fire (linkedinUrl is null), producing two duplicate name+company contacts.</p>
+<p>This is a genuine race condition, not theoretical: the Claude Code CLI explicitly enables concurrent calls (the bearer-token bypass in <code>src/proxy.ts:34-47</code> is designed precisely for this). With 1500+ contacts and triage flows that may re-import on every session, the probability is non-trivial.</p>
+<p>The cleanest fix is to lift the entire pipeline into a <code>db.transaction()</code> and select with <code>FOR UPDATE</code> (locking the matched rows, narrow by the same composed key). The cheap fix is to defer name+company dedup to a partial UNIQUE index on <code>(lower(firstName), lower(lastName), lower(coalesce(currentCompany, &#39;&#39;)))</code> <em>WHERE archived_at IS NULL</em> — analogous to the linkedinUrl partial UNIQUE — and rely on a second <code>ON CONFLICT DO NOTHING</code> clause at insert time. The latter is the structurally consistent option for Phase 6.</p>
+<p><strong>Fix:</strong> Add a second partial UNIQUE index in <code>drizzle/schema/contacts.ts</code>:</p>
+<pre><code class="language-ts">uniqueIndex(&#39;contacts_name_company_unique_idx&#39;)
+  .on(sql`lower(${table.firstName})`, sql`lower(${table.lastName})`, sql`lower(coalesce(${table.currentCompany}, &#39;&#39;))`)
+  .where(sql`${table.archivedAt} IS NULL`)
+</code></pre>
+<p>…and remove the application-side SELECT-then-filter, relying entirely on <code>ON CONFLICT DO NOTHING</code> for both dedup branches. This eliminates the race and also halves DB round-trips.</p>
+<p>(If the migration cost is unacceptable for Phase 6, the SELECT can be moved inside a transaction with <code>FOR UPDATE</code> on the matched rows — but Postgres does not lock &quot;non-existence&quot; without a serializable txn, so the race is fundamental to the optimistic-check pattern.)</p>
+<h3>WR-03: Composed-dedup key built in JS uses <code>.toLowerCase()</code> but Postgres uses <code>lower()</code> — Unicode mismatch</h3>
+<p><strong>File:</strong> <code>src/app/api/contacts/import/route.ts:99,122,126</code></p>
+<p><strong>Issue:</strong> The composed key for name+company dedup is built two ways:</p>
+<ul>
+<li>JS (line 99, 126): <code>firstName.toLowerCase() + &#39;|&#39; + lastName.toLowerCase() + &#39;|&#39; + (company ?? &#39;&#39;).toLowerCase()</code></li>
+<li>SQL (line 122): <code>lower(first_name) || &#39;|&#39; || lower(last_name) || &#39;|&#39; || lower(coalesce(current_company, &#39;&#39;))</code></li>
+</ul>
+<p>These are <em>almost</em> equivalent but differ in edge cases:</p>
+<ol>
+<li>JS <code>&#39;I&#39;.toLowerCase()</code> returns <code>&#39;i&#39;</code>; Postgres <code>lower(&#39;I&#39;)</code> on a default <code>en_US.UTF-8</code> locale returns <code>&#39;i&#39;</code> — agree.</li>
+<li>JS <code>&#39;İ&#39;.toLowerCase()</code> returns <code>&#39;i̇&#39;</code> (with combining dot, U+0307); Postgres <code>lower(&#39;İ&#39;)</code> returns <code>&#39;i̇&#39;</code> on UTF-8 but <code>&#39;İ&#39;</code> on <code>C</code> collation — disagree on some locales.</li>
+<li>JS <code>&#39;ß&#39;.toLowerCase()</code> returns <code>&#39;ß&#39;</code>; Postgres <code>lower(&#39;ß&#39;)</code> returns <code>&#39;ß&#39;</code> — agree.</li>
+<li>JS <code>&#39;SS&#39;.toLowerCase()</code> returns <code>&#39;ss&#39;</code>; Postgres <code>lower(&#39;SS&#39;)</code> returns <code>&#39;ss&#39;</code> — agree.</li>
+<li>JS <code>&#39;Σ&#39;.toLowerCase()</code> returns <code>&#39;σ&#39;</code> (medial) regardless of position; Postgres <code>lower(&#39;Σ&#39;)</code> returns <code>&#39;σ&#39;</code> — agree.</li>
+</ol>
+<p>The İ case is the failure mode: if a contact is named &quot;İsmail&quot; with the Turkish dotted-I, the JS pre-filter believes it has not been seen, but the SELECT may match (or vice versa). In Neon&#39;s default <code>en_US.UTF-8</code> it agrees, but the application becomes silently locale-coupled.</p>
+<p>This is a low-frequency bug but worth fixing because the route is the LinkedIn import path, which absorbs whatever characters LinkedIn outputs.</p>
+<p><strong>Fix:</strong> Either (a) perform the JS-side comparison using <code>someString.toLocaleLowerCase(&#39;en-US&#39;)</code> and document the locale dependency, or (b) eliminate the JS-side compose-and-set entirely by collapsing both branches into the database (per WR-02 fix). Option (b) is cleaner.</p>
+<h3>WR-04: Timeline event after <code>POST /prospects</code> transaction commits is unprotected</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/[id]/prospects/route.ts:96-101</code></p>
+<p><strong>Issue:</strong> The handler correctly places <code>logTimeline()</code> <em>after</em> <code>db.transaction()</code> returns (so a transaction rollback never emits a timeline event — Test 8 verifies this). However, the inverse failure mode is not addressed: if <code>logTimeline()</code> throws (e.g., Neon transient network error, or <code>timeline_events</code> insertion fails for any reason after the transaction has <em>already committed</em>), the API returns 500, the client retries, the status check on retry rejects with 400 (&quot;Cannot write prospects to lead in status &#39;found&#39;&quot;), and the lead now has prospects + bridges + a &quot;found&quot; status but <em>no</em> timeline event for the search-complete event.</p>
+<p>The downstream user impact: the dashboard activity feed silently omits one search-completion event. Not catastrophic, but the comment at lines 89-95 reads as if this is a fully-handled invariant — it is not.</p>
+<p><strong>Fix:</strong> Two options:</p>
+<ol>
+<li><p><strong>Best-effort with logging</strong> (cheap): wrap <code>logTimeline()</code> in <code>try/catch</code>, log the error to <code>console.error(&#39;Timeline log failed after commit:&#39;, err)</code>, and still return 201. The API success contract is preserved and a CLI retry will short-circuit on the status check (already does today). The cost is one missing activity-feed row per occurrence.</p>
+</li>
+<li><p><strong>Outbox pattern</strong> (correct): insert a row into a <code>timeline_outbox</code> table <em>inside</em> the transaction, and have a background job (or the next request) flush the outbox to <code>timeline_events</code>. This is the canonical fix but is out of scope for Phase 6.</p>
+</li>
+</ol>
+<p>Recommendation: take option 1 now, and log the error so frequency is visible.</p>
+<pre><code class="language-ts">try {
+  await logTimeline({
+    eventType: &#39;job_lead_search_complete&#39;,
+    // ...
+  });
+} catch (err) {
+  console.error(&#39;Timeline log failed post-commit (lead %s):&#39;, id, err);
+}
+return created({ insertedCount: rows.length, lead: updated });
+</code></pre>
+<h3>WR-05: <code>matchConnections</code> builds two redundant parameter lists for the same token set</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/lib/match-connections.ts:76</code></p>
+<p><strong>Issue:</strong> The narrowed SELECT is:</p>
+<pre><code class="language-ts">sql`(lower(${contacts.firstName}) IN (${sql.join(tokens.map((t) =&gt; sql`${t}`), sql`, `)}) OR lower(${contacts.lastName}) IN (${sql.join(tokens.map((t) =&gt; sql`${t}`), sql`, `)}))`
+</code></pre>
+<p>Each <code>sql.join(tokens.map(...))</code> builds an independent set of parameter bindings — so a 200-token query sends 400 bound parameters down the wire, not 200. The Neon HTTP driver does not deduplicate identical bindings. This is correctness-neutral but wastes 50% of the parameter budget and doubles the SQL textual size, which is noticeable at the upper end of the LinkedIn-mutual-connection token count.</p>
+<p>The fix is to factor the token list once and reference it on both sides of the OR:</p>
+<pre><code class="language-ts">const tokenSql = sql.join(tokens.map((t) =&gt; sql`${t}`), sql`, `);
+allContacts = await tx
+  .select()
+  .from(contacts)
+  .where(
+    and(
+      isNull(contacts.archivedAt),
+      sql`(lower(${contacts.firstName}) IN (${tokenSql}) OR lower(${contacts.lastName}) IN (${tokenSql}))`
+    )
+  );
+</code></pre>
+<p>Note: even with this refactor, Drizzle&#39;s <code>sql.join</code> produces fresh <code>$N</code> placeholders on each splice. The structural fix is to bind the token list once as a Postgres array and use <code>= ANY($1)</code>:</p>
+<pre><code class="language-ts">sql`(lower(${contacts.firstName}) = ANY(${tokens}) OR lower(${contacts.lastName}) = ANY(${tokens}))`
+</code></pre>
+<p>…but the comment in <code>categorize/route.ts:53-57</code> notes that Drizzle&#39;s array-binding renders as a row constructor on this version, so this requires testing on PGlite first.</p>
+<p><strong>Fix:</strong> At minimum, hoist the <code>sql.join</code> into a const to halve the SQL textual size. If array-binding works in Drizzle v0.45.1 + Neon HTTP, prefer that.</p>
+<h2>Info</h2>
+<h3>IN-01: <code>LinkedInRow</code> interface has loose typing on header keys</h3>
+<p><strong>File:</strong> <code>src/app/api/contacts/import/route.ts:13-21</code></p>
+<p><strong>Issue:</strong> <code>LinkedInRow</code> uses string-keyed optional fields for the LinkedIn CSV header schema. Papa Parse with <code>header: true</code> will silently accept rows with arbitrary extra columns (or missing expected columns) without surfacing them. If LinkedIn changes the CSV header layout, the route will silently produce all-undefined rows that then get skipped as &quot;missing name.&quot;</p>
+<p><strong>Fix:</strong> Add a Zod schema for the parsed row shape and emit a 400 if the header set doesn&#39;t include the expected names. Optional improvement; current behavior is &quot;fail-soft&quot; which is acceptable for a CSV upload UX.</p>
+<h3>IN-02: <code>inferSeniority</code> import is unguarded against <code>null</code> title</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/[id]/prospects/route.ts:60</code></p>
+<p><strong>Issue:</strong> <code>inferSeniority(p.title ?? &#39;&#39;).level</code> — passing an empty string to <code>inferSeniority</code> works (returns the <code>unknown</code> seniority level), but the call is implicit. If <code>inferSeniority</code> is ever rewritten to throw on empty input, the route would 500 on a prospect with <code>title: null</code>. A defensive comment or explicit null check would document the contract.</p>
+<p><strong>Fix:</strong> No code change needed. Consider adding <code>// inferSeniority returns level: &#39;unknown&#39; on empty input</code> comment for clarity.</p>
+<h3>IN-03: Test pre-warm in <code>categorize/route.test.ts</code> is suite-scoped, not test-scoped</h3>
+<p><strong>File:</strong> <code>src/app/api/contacts/import/categorize/route.test.ts:22-24</code></p>
+<p><strong>Issue:</strong> The <code>beforeAll</code> block pre-warms the route module to avoid Test 1 timeout. This is fine in isolation but reads as a workaround. Consider documenting the underlying cause (<code>vitest</code>&#39;s lazy ESM resolution + PGlite WASM cold-start) so a future test author doesn&#39;t strip it during refactor. The comment is already there but could call out which file the warm-up affects.</p>
+<p><strong>Fix:</strong> Cosmetic — improve the comment to explicitly name the cold-start chain (&quot;module resolution + PGlite WASM init + Drizzle schema reflection&quot;) so the warmup is not stripped by a future cleanup pass.</p>
+<hr>
+<h2>Notes — Items Verified Safe</h2>
+<p>These were checked and found correct; recording them so future reviewers don&#39;t re-investigate:</p>
+<ul>
+<li><strong>SQL injection (categorize, import, match-connections):</strong> All three batched <code>sql</code> template uses route every user-controlled value through <code>sql\</code>${value}`<code>interpolation, which Drizzle binds as a</code>$N<code>parameter. There is no</code>sql.raw<code> or string concatenation of user input anywhere in the Phase 6 surface. Identifiers (</code>contacts<code>, </code>data.cid<code>, </code>data.cl`) are SQL keywords/literal column names, not user input.</li>
+<li><strong>Transaction atomicity in <code>POST /prospects</code>:</strong> <code>db.transaction()</code> rolls back on any thrown error inside the callback. Test 8 verifies this with <code>vi.spyOn(matchConnections).mockRejectedValueOnce()</code> and asserts (a) 0 prospects, (b) 0 bridges, (c) 0 timeline events, (d) lead status remains &#39;searching&#39;. The <code>tx</code> parameter passed through to <code>matchConnections</code> is correctly typed via <code>Parameters&lt;Parameters&lt;typeof db.transaction&gt;[0]&gt;[0]</code> so <code>tx.transaction()</code> is a compile error, preventing accidental nested-tx.</li>
+<li><strong>Partial UNIQUE on <code>contacts_linkedin_url</code>:</strong> The migration SQL (<code>drizzle/migrations/0008_phase6_indexes.sql:3</code>) and schema (<code>contacts.ts:63-65</code>) both correctly scope the UNIQUE to <code>WHERE linkedin_url IS NOT NULL AND archived_at IS NULL</code>. Test 8c verifies the re-import-of-archived case creates a fresh row. The <code>ON CONFLICT</code> clause in <code>route.ts:171-174</code> correctly mirrors the partial-index predicate, which is required for engines that match conflict targets by exact predicate.</li>
+<li><strong>Race conditions in bulk INSERT with <code>ON CONFLICT DO NOTHING</code> on <code>linkedinUrl</code>:</strong> Postgres handles this atomically — concurrent INSERTs of the same URL produce exactly one persisted row, the other is silently skipped. No application-side guard required. (The race that <em>is</em> unprotected — name+company dedup — is recorded under WR-02.)</li>
+<li><strong>Authorization:</strong> All four API routes live under <code>/api/*</code>, which is matched by <code>isProtectedRoute</code> in <code>src/proxy.ts:7</code> and gated by Clerk session check + <code>ALLOWED_EMAIL</code> validation. The bearer-token bypass path is correctly behind a SHA-256 hash + <code>SINGLE_USER_EMAIL</code> env gate. No auth holes introduced by Phase 6.</li>
+<li><strong><code>logTimeline()</code> placement after transaction commit:</strong> The comment at <code>prospects/route.ts:89-95</code> is accurate — Drizzle&#39;s <code>neon-http</code> driver does not return from <code>db.transaction()</code> until the HTTP endpoint acknowledges COMMIT. Test 8 verifies the rollback-no-timeline invariant. (The forward-failure case is recorded under WR-04.)</li>
+<li><strong>Index migration journal:</strong> The new migration entry in <code>_journal.json</code> is sequential (idx 8, prevId chain consistent) and the snapshot file is well-formed JSON. No migration-replay surprise expected.</li>
+</ul>
+<hr>
+<p><em>Reviewed: 2026-05-14</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

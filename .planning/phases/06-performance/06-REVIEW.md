@@ -283,7 +283,7 @@ Note: even with this refactor, Drizzle's `sql.join` produces fresh `$N` placehol
 sql`(lower(${contacts.firstName}) = ANY(${tokens}) OR lower(${contacts.lastName}) = ANY(${tokens}))`
 ```
 
-…but the comment in `categorize/route.ts:53-57` notes that Drizzle's array-binding renders as a row-constructor on this version, so this requires testing on PGlite first.
+…but the comment in `categorize/route.ts:53-57` notes that Drizzle's array-binding renders as a row constructor on this version, so this requires testing on PGlite first.
 
 **Fix:** At minimum, hoist the `sql.join` into a const to halve the SQL textual size. If array-binding works in Drizzle v0.45.1 + Neon HTTP, prefer that.
 

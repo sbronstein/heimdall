@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
     // updating this SQL string by hand — accepted for Phase 6 scope.
     //
     // Note on implementation choice: the plan spec called for unnest(${ids}::uuid[])
-    // but Drizzle's sql template renders a JS array as a row-constructor tuple
+    // but Drizzle's sql template renders a JS array as a row constructor tuple
     // `($1, $2)::uuid[]` (invalid cast) rather than a Postgres array literal.
     // The VALUES approach achieves identical single-round-trip semantics with
     // parameter binding that works across both the PGlite test harness and the

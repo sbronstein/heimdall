@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: &quot;03&quot;
+subsystem: contacts-import-categorize
+tags: [drizzle, sql-template, bulk-update, values-clause, contacts]
+dependency_graph:
+  requires: [06-01]
+  provides: [PERF-A3-bulk-categorize]
+  affects: [src/app/api/contacts/import/categorize/route.ts]
+tech_stack:
+  added: []
+  patterns: [UPDATE...FROM(VALUES) via db.execute(sql), sql.join for parameterized VALUES list]
+key_files:
+  created:
+    - src/app/api/contacts/import/categorize/route.test.ts
+  modified:
+    - src/app/api/contacts/import/categorize/route.ts
+decisions:</p>
+<ul>
+<li>&quot;VALUES approach instead of unnest — Drizzle v0.45.1 renders JS arrays as row constructor tuples that Postgres rejects as uuid[] casts; VALUES with per-element bound parameters achieves identical single-round-trip semantics (Rule 1 deviation from plan spec)&quot;</li>
+<li>&quot;cid column alias instead of id — avoids ambiguous column reference error in WHERE contacts.id = data.id when both tables are in scope&quot;</li>
+<li>&quot;sql.join with sql`, ` separator instead of sql.raw(&#39;, &#39;) — eliminates sql.raw entirely while achieving identical SQL output; satisfies the plan&#39;s grep security gate&quot;</li>
+<li>&quot;beforeAll pre-warm for PGlite module loading — prevents first-test timeout on cold WASM start; other tests benefit from cached module&quot;
+metrics:
+  duration: &quot;~25 minutes&quot;
+  completed: &quot;2026-05-14&quot;
+  tasks_completed: 2
+  files_changed: 2</li>
+</ul>
+<hr>
+<h1>Phase 6 Plan 03: Bulk Categorize UPDATE via db.execute(sql) Summary</h1>
+<p>Single-round-trip bulk UPDATE replaces the N+1 per-row <code>db.update()</code> loop in <code>PATCH /api/contacts/import/categorize</code> using Drizzle&#39;s <code>sql</code> template tag with <code>UPDATE...FROM (VALUES ...) AS data(cid, cl)</code> and per-element bound parameters.</p>
+<h2>What Was Built</h2>
+<h3>Task 1: Route Rewrite (GREEN — feat commit 069a180)</h3>
+<p>Rewrote <code>src/app/api/contacts/import/categorize/route.ts</code> to replace the <code>for (...) { await db.update(contacts) }</code> N+1 loop with a single <code>db.execute(sql\</code>UPDATE contacts SET closeness = data.cl, updated_at = NOW() FROM (VALUES ...) AS data(cid, cl) WHERE contacts.id = data.cid RETURNING contacts.id`)`.</p>
+<p><strong>Exact SQL emitted (confirmed from implementation):</strong></p>
+<pre><code class="language-sql">UPDATE contacts
+SET closeness = data.cl,
+    updated_at = NOW()
+FROM (VALUES ($1::uuid, $2::contact_closeness), ($3::uuid, $4::contact_closeness), ...) AS data(cid, cl)
+WHERE contacts.id = data.cid
+RETURNING contacts.id
+</code></pre>
+<ul>
+<li><code>contacts</code> and <code>contacts.id</code> are LITERAL identifiers — NOT Drizzle pgTable interpolations (WARNING 2 fix)</li>
+<li>Each <code>$N</code> is a bound parameter from <code>sql.join(updates.map((u) =&gt; sql\</code>(${u.contactId}::uuid, ${u.closeness}::contact_closeness)`), sql`, `<code>)</code></li>
+<li><code>cid</code> alias avoids column-name ambiguity between contacts.id and data.id</li>
+<li><code>RETURNING contacts.id</code> provides deterministic updated row count (rowCount unreliable on neon-http and pglite)</li>
+</ul>
+<p><strong>Postgres enum type used:</strong> <code>contact_closeness</code> (confirmed in <code>drizzle/schema/enums.ts</code> line 133 — matches plan spec exactly)</p>
+<h3>Task 2: Test File (RED commit 6867d7d + GREEN commit 069a180)</h3>
+<p>Created <code>src/app/api/contacts/import/categorize/route.test.ts</code> with 6 tests covering all D-19 invariants:</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>What It Pins</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Test 1: happy path</td>
+<td>3 contacts updated, correct closeness values, updated_at advances</td>
+</tr>
+<tr>
+<td>Test 2: single-statement evidence</td>
+<td>All 3 updated_at within 50ms window (single NOW() call)</td>
+</tr>
+<tr>
+<td>Test 3: RETURNING count + envelope pin</td>
+<td><code>{ success: true, data: { updated: 3, total: 4 } }</code> with <code>toEqual</code> (N=4, M=3)</td>
+</tr>
+<tr>
+<td>Test 4: empty-input early-return</td>
+<td>No SQL issued — byte-identical updated_at proves no UPDATE ran</td>
+</tr>
+<tr>
+<td>Test 5: idempotency under retry</td>
+<td>Second call: same final state, updated_at strictly greater (proves UPDATE ran)</td>
+</tr>
+<tr>
+<td>Test 6: Zod validation</td>
+<td>400 on invalid UUID, no rows mutated</td>
+</tr>
+</tbody></table>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] VALUES approach instead of unnest(${ids}::uuid[]) — Drizzle array rendering incompatibility</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 GREEN phase (test failures with 500 responses)</li>
+<li><strong>Issue:</strong> Plan spec called for <code>unnest(${ids}::uuid[], ${closenesses}::contact_closeness[])</code>. Drizzle v0.45.1&#39;s <code>sql</code> template tag renders a JS array <code>${[&#39;a&#39;,&#39;b&#39;]}</code> as a row constructor tuple <code>($1, $2)</code> NOT as a Postgres array literal. The SQL generated was <code>unnest(($1, $2)::uuid[], ($3, $4)::contact_closeness[])</code> which Postgres rejects with &quot;cannot cast type record to uuid[]&quot;.</li>
+<li><strong>Fix:</strong> Used <code>UPDATE...FROM (VALUES ...) AS data(cid, cl)</code> with <code>sql.join()</code> and per-element parameters. Achieves identical single-round-trip semantics. Works with both PGlite (test harness) and Neon HTTP (production). The <code>cid</code> alias was added to avoid the &quot;column reference &#39;id&#39; is ambiguous&quot; error.</li>
+<li><strong>D-06 compliance preserved:</strong> <code>sql</code> template tag inside <code>db.execute()</code> — no <code>sql.raw</code> for user data, no string concatenation.</li>
+<li><strong>Files modified:</strong> <code>src/app/api/contacts/import/categorize/route.ts</code></li>
+<li><strong>Commit:</strong> 069a180</li>
+</ul>
+<p><strong>2. [Rule 1 - Bug] sql.raw(&#39;, &#39;) separator replaced with sql`, ` — plan grep security gate</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 implementation verification</li>
+<li><strong>Issue:</strong> Initial implementation used <code>sql.raw(&#39;, &#39;)</code> as the <code>sql.join</code> separator. The plan&#39;s acceptance criteria requires <code>grep -c &quot;sql.raw&quot; route.ts</code> returns 0 (security gate). While <code>sql.raw(&#39;, &#39;)</code> for a static comma is safe, the gate is intentionally strict.</li>
+<li><strong>Fix:</strong> Replaced <code>sql.raw(&#39;, &#39;)</code> with the tagged template literal <code>sql\</code>, `<code>which produces equivalent SQL with no</code>sql.raw` call anywhere in the file.</li>
+<li><strong>Files modified:</strong> <code>src/app/api/contacts/import/categorize/route.ts</code></li>
+<li><strong>Commit:</strong> 069a180</li>
+</ul>
+<p><strong>3. [Rule 1 - Bug] Comment text removed ${contacts} reference — grep gate false positive</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 verification</li>
+<li><strong>Issue:</strong> A comment documenting the forbidden <code>${pgTable}</code> pattern contained the literal text <code>${contacts}</code> / <code>${contacts.id}</code>. The plan&#39;s grep gate <code>grep -E &#39;\$\{contacts(\.[a-zA-Z]+)?\}&#39;</code> matched the comment text, returning count 1 instead of 0.</li>
+<li><strong>Fix:</strong> Rephrased comment to describe the forbidden pattern without containing the exact characters that match the grep.</li>
+<li><strong>Files modified:</strong> <code>src/app/api/contacts/import/categorize/route.ts</code></li>
+<li><strong>Commit:</strong> 069a180</li>
+</ul>
+<p><strong>4. [Rule 1 - Bug] Test timing — PGlite cold-start module loading causes first-test timeout</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 2 test run</li>
+<li><strong>Issue:</strong> Test 1 intermittently timed out at vitest&#39;s default 5000ms limit because PGlite WASM module loading takes 2-4s on first import. Subsequent tests use the cached module and pass quickly.</li>
+<li><strong>Fix:</strong> Added <code>beforeAll</code> that pre-warms the module import with a 30s timeout, so Test 1 doesn&#39;t bear the full cold-start cost. Also added 30s timeout to <code>beforeEach</code> to allow for PGlite createTestDb overhead.</li>
+<li><strong>Files modified:</strong> <code>src/app/api/contacts/import/categorize/route.test.ts</code></li>
+<li><strong>Commit:</strong> 069a180</li>
+</ul>
+<h2>Verification Results</h2>
+<p>All plan acceptance criteria verified:</p>
+<ul>
+<li><code>grep -c &quot;sql.raw&quot; route.ts</code> → 0 (no string-concatenated SQL)</li>
+<li><code>grep -E &#39;\$\{contacts(\.[a-zA-Z]+)?\}&#39; route.ts</code> → 0 (no pgTable interpolation)</li>
+<li><code>grep -c &quot;db.execute(sql&quot; route.ts</code> → 1 (single execute call)</li>
+<li><code>grep -c &quot;UPDATE contacts&quot; route.ts</code> → 1 (literal identifier)</li>
+<li><code>grep -c &quot;WHERE contacts.id&quot; route.ts</code> → 1 (literal identifier)</li>
+<li><code>grep -c &quot;updates.length === 0&quot; route.ts</code> → 1 (empty-input early return)</li>
+<li>All 6 tests pass: <code>npm run test:run -- src/app/api/contacts/import/categorize/route.test.ts</code></li>
+<li>TypeScript errors in route.ts: 0 (pre-existing errors in prioritization.ts are unrelated)</li>
+</ul>
+<h2>Performance Impact</h2>
+<p>Estimated performance improvement for the 1500-contact triage workflow: Previously, categorizing all 1500 contacts required 1500 individual HTTP round-trips to the Neon database. After this change, it requires exactly 1 SQL statement with 3000 bound parameters (1500 ids + 1500 closeness values). At ~50ms per Neon HTTP round-trip, this reduces ~75s of database time to ~50ms — a ~1500x reduction in database round-trips.</p>
+<h2>Stub Scan</h2>
+<p>No stubs. The route returns actual data from <code>RETURNING contacts.id</code>. The response shape <code>{ updated, total }</code> is fully wired.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/app/api/contacts/import/categorize/route.ts</code> — FOUND</li>
+<li><code>src/app/api/contacts/import/categorize/route.test.ts</code> — FOUND</li>
+<li>Commit 6867d7d (test RED) — FOUND</li>
+<li>Commit 069a180 (feat GREEN) — FOUND</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

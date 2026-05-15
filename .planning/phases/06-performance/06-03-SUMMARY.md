@@ -16,7 +16,7 @@ key_files:
   modified:
     - src/app/api/contacts/import/categorize/route.ts
 decisions:
-  - "VALUES approach instead of unnest — Drizzle v0.45.1 renders JS arrays as row-constructor tuples that Postgres rejects as uuid[] casts; VALUES with per-element bound parameters achieves identical single-round-trip semantics (Rule 1 deviation from plan spec)"
+  - "VALUES approach instead of unnest — Drizzle v0.45.1 renders JS arrays as row constructor tuples that Postgres rejects as uuid[] casts; VALUES with per-element bound parameters achieves identical single-round-trip semantics (Rule 1 deviation from plan spec)"
   - "cid column alias instead of id — avoids ambiguous column reference error in WHERE contacts.id = data.id when both tables are in scope"
   - "sql.join with sql\`, \` separator instead of sql.raw(', ') — eliminates sql.raw entirely while achieving identical SQL output; satisfies the plan's grep security gate"
   - "beforeAll pre-warm for PGlite module loading — prevents first-test timeout on cold WASM start; other tests benefit from cached module"
@@ -75,7 +75,7 @@ Created `src/app/api/contacts/import/categorize/route.test.ts` with 6 tests cove
 **1. [Rule 1 - Bug] VALUES approach instead of unnest(${ids}::uuid[]) — Drizzle array rendering incompatibility**
 
 - **Found during:** Task 1 GREEN phase (test failures with 500 responses)
-- **Issue:** Plan spec called for `unnest(${ids}::uuid[], ${closenesses}::contact_closeness[])`. Drizzle v0.45.1's `sql` template tag renders a JS array `${['a','b']}` as a row-constructor tuple `($1, $2)` NOT as a Postgres array literal. The SQL generated was `unnest(($1, $2)::uuid[], ($3, $4)::contact_closeness[])` which Postgres rejects with "cannot cast type record to uuid[]".
+- **Issue:** Plan spec called for `unnest(${ids}::uuid[], ${closenesses}::contact_closeness[])`. Drizzle v0.45.1's `sql` template tag renders a JS array `${['a','b']}` as a row constructor tuple `($1, $2)` NOT as a Postgres array literal. The SQL generated was `unnest(($1, $2)::uuid[], ($3, $4)::contact_closeness[])` which Postgres rejects with "cannot cast type record to uuid[]".
 - **Fix:** Used `UPDATE...FROM (VALUES ...) AS data(cid, cl)` with `sql.join()` and per-element parameters. Achieves identical single-round-trip semantics. Works with both PGlite (test harness) and Neon HTTP (production). The `cid` alias was added to avoid the "column reference 'id' is ambiguous" error.
 - **D-06 compliance preserved:** `sql` template tag inside `db.execute()` — no `sql.raw` for user data, no string concatenation.
 - **Files modified:** `src/app/api/contacts/import/categorize/route.ts`
