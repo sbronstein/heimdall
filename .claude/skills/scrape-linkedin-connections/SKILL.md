@@ -66,17 +66,52 @@ For the Company-URL and Bare-name flow navigation details, see `references/linke
 
 ## Drain mode (no arg)
 
-1. Fetch the queue:
+1. **Fetch the queue.**
    ```bash
    TOKEN=$(cat ~/.heimdall/api-token)
    curl -s -H "Authorization: Bearer $TOKEN" \
      'http://localhost:4000/api/job-leads?status=queued&limit=50'
    ```
-2. Render `data` as a markdown table: `id`, `companyName`, `roleTitle`, "queued since" (from `updatedAt`).
-3. Ask the user: "Process all N? Process the first then ask again? Skip and exit?"
-4. For each approved lead, run the single-lead flow (next section), narrating each agent-browser action.
-5. On failure: write the categorized error (see "Error handling") and CONTINUE to the next lead — do NOT abort the batch.
-6. End with a summary: `N processed, M succeeded, K failed (categories: Timeout: x, LinkedIn navigation failed: y, ...)`.
+   Each row in `data[]` now includes `companyLinkedinUrl` (D-13) — string when the linked company has a non-null `linkedinUrl`, null otherwise. Job-URL leads also carry `companyLinkedinUrl` (joined from the same `companies` row) but the drain loop ignores it for them — they navigate via `linkedinJobUrl` instead.
+
+2. **Render `data` as a markdown table** with these columns: `id`, scope (`linkedinJobUrl ? 'job-URL' : 'company-scope'`), `companyName`, `roleTitle`, queued-since (from `updatedAt`). The scope column makes the queue mix visible to the user at a glance.
+
+3. **Ask the user**: "Process all N? Process the first then ask again? Skip and exit?"
+
+4. **For each approved lead, branch on `lead.linkedinJobUrl`** — this is the single-loop with inline branching per D-11 / D-12 / JL-C7:
+   ```text
+   print(`Lead ${lead.id}: ${lead.linkedinJobUrl ? 'job-URL' : 'company-scope'} (${lead.companyName})`)   // D-15
+
+   if (lead.linkedinJobUrl == null) {
+     // Company-scope branch (D-11, D-12, D-15)
+     let url = lead.companyLinkedinUrl
+     if (url == null) {
+       // D-14 mid-drain fallback: bare-name search → disambiguate → backfill
+       //   1. Follow references/linkedin-navigation.md § Bare-name path using lead.companyName as the keyword.
+       //   2. User picks → derive url from the picked card.
+       //   3. Backfill the persisted companies row so subsequent drains find a non-null companyLinkedinUrl.
+       url = runBareNameFlow(lead.companyName)
+       PUT /api/companies/<lead.companyId> body { linkedinUrl: url }     // Note: PUT (not PATCH). See heimdall-api.md.
+     }
+     print(`Lead ${lead.id}: company-scope (${lead.companyName}) — navigating to ${url}/people/...`)   // D-15
+     navigate(url.endsWith('/') ? `${url}people/` : `${url}/people/`)
+     // Per references/linkedin-navigation.md § Company-URL path: do NOT re-POST /api/job-leads — the lead already exists.
+     // Best-effort name extraction is unnecessary here (the lead already has companyName).
+   } else {
+     // Job-URL branch (unchanged from Phase 5)
+     // Follow references/linkedin-navigation.md § Job-URL path Steps 1–3:
+     //   open lead.linkedinJobUrl → click company name link → click "X employees" link.
+     navigateJobUrlBranch(lead.linkedinJobUrl)
+   }
+
+   // Both branches converge at references/linkedin-navigation.md § Shared:
+   // Apply the 2nd-degree filter (Shared Step 4), paginate + extract (Shared Step 5), POST /api/job-leads/<id>/prospects.
+   claimAndScrape(lead.id)
+   ```
+
+5. **On failure: write the categorized error and CONTINUE to the next lead — do NOT abort the batch.** (Same as today.) New: if the D-14 mid-drain disambiguation step is presented and the user cancels (no pick / Ctrl-C), write the failure as `LinkedIn navigation failed: user cancelled disambiguation for <companyName>` and continue to the next lead.
+
+6. **End with a summary** (unchanged): `N processed, M succeeded, K failed (categories: Timeout: x, LinkedIn navigation failed: y, ...)`.
 
 ## Single-lead mode (UUID or URL arg)
 
