@@ -172,7 +172,14 @@ Plans:
   2. Invoking the skill with a bare company name string (not a UUID, not a URL, not empty) triggers a LinkedIn company search; the skill presents the top 3–5 matches (name + employee count + industry) as a numbered list and waits for the user to confirm their pick before proceeding
   3. When drain mode processes a lead whose `linkedinJobUrl` is null, the skill navigates via the null branch (direct company employees URL) rather than the job-URL branch — both lead types drain from the same `GET /api/job-leads?status=queued` endpoint in a single loop
   4. `references/linkedin-navigation.md` documents both navigation paths (company-URL branch and company-search → disambiguate → employees branch) alongside the existing job-URL path
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1** *(two plans parallel — disjoint file sets)*
+- [ ] 08-01-PLAN.md — D-13 / CD-04: GET /api/job-leads leftJoin(companies) projection + companyLinkedinUrl field + regression test
+- [ ] 08-02-PLAN.md — JL-C1/JL-C2/JL-C5/JL-C6: 5-branch SKILL.md argument parser + linkedin-navigation.md three-path rewrite (Job-URL / Company-URL / Bare-name + Shared)
+
+**Wave 2** *(blocked on Wave 1 — depends on 08-01 GET extension + 08-02 nav doc)*
+- [ ] 08-03-PLAN.md — JL-C6/JL-C7: SKILL.md drain mode loop branch on linkedinJobUrl + D-14 mid-drain PUT backfill + heimdall-api.md GET/POST/PUT updates + troubleshooting.md failure-mode bullets
 **UI hint**: yes
 
 ### Phase 9: UI for Company-Scope Leads
@@ -200,5 +207,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
 | 6. Performance | 5/5 | Complete | 2026-05-14 |
 | 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
-| 8. Skill Input Parsing, Navigation Branching + Drain | 0/TBD | Not started | - |
+| 8. Skill Input Parsing, Navigation Branching + Drain | 0/3 | Not started | - |
 | 9. UI for Company-Scope Leads | 0/TBD | Not started | - |

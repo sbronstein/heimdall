@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 08-skill-input-parsing-navigation-branching-drain
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/job-leads/route.ts</li>
+<li>src/app/api/job-leads/route.test.ts
+autonomous: true
+requirements:</li>
+<li>JL-C6</li>
+<li>JL-C7
+must_haves:
+  truths:<ul>
+<li>&quot;GET /api/job-leads response rows include a top-level companyLinkedinUrl field (null or string)&quot;</li>
+<li>&quot;The new field is sourced via a leftJoin from companies.linkedinUrl on jobLeads.companyId&quot;</li>
+<li>&quot;Company-scope leads (linkedinJobUrl IS NULL) and job-URL leads both appear in the GET response with companyLinkedinUrl populated when the linked company has a non-null linkedinUrl&quot;</li>
+<li>&quot;Existing GET tests (Test 12, 13, 14) still pass — projection switch from select() to explicit object shape preserves every prior field&quot;
+artifacts:</li>
+<li>path: src/app/api/job-leads/route.ts
+provides: &quot;GET handler with leftJoin(companies) + explicit projection including companyLinkedinUrl&quot;
+contains: &quot;companyLinkedinUrl: companies.linkedinUrl&quot;</li>
+<li>path: src/app/api/job-leads/route.test.ts
+provides: &quot;New describe block covering D-13/CD-04 — mixed fixture (company-scope + job-URL lead) asserting companyLinkedinUrl appears on both rows&quot;
+contains: &quot;companyLinkedinUrl&quot;
+key_links:</li>
+<li>from: &quot;src/app/api/job-leads/route.ts (GET handler)&quot;
+to: &quot;drizzle/schema/companies.ts (linkedinUrl column)&quot;
+via: &quot;leftJoin(companies, eq(jobLeads.companyId, companies.id))&quot;
+pattern: &quot;leftJoin\(companies&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Extend `GET /api/job-leads` to expose `companyLinkedinUrl` as a top-level field on every lead row, sourced via a leftJoin to the `companies` table. This is the data Phase 8's skill drain loop needs to navigate directly to a company-scope lead's employees page without a per-lead `GET /api/companies/[id]` round-trip.<p>Purpose: Implements user decision D-13 (&quot;Extend GET /api/job-leads to include companyLinkedinUrl as a single top-level field per lead row&quot;). Without this field present in the response, the drain loop (Plan 08-03) cannot tell whether a company-scope lead has a persisted LinkedIn company URL or needs the mid-drain fallback (D-14).</p>
+<p>Output:</p>
+<ul>
+<li>Modified <code>src/app/api/job-leads/route.ts</code> GET handler (POST handler untouched — Phase 7 owns it)</li>
+<li>Extended <code>src/app/api/job-leads/route.test.ts</code> with a single new test case pinning the new field on both lead types (CD-04)</li>
+<li><code>npm test</code> passes; <code>npm run build</code> succeeds</objective></li>
+</ul>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md
+@.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md<interfaces>
+<!-- Drizzle table imports needed for the new projection — already present in route.ts --><p>From drizzle/schema/job-leads.ts:</p>
+<ul>
+<li><code>jobLeads</code> pgTable with columns: id, linkedinJobUrl (nullable as of Phase 7), roleTitle (nullable), companyName, companyId (FK → companies.id, nullable), applicationId, status, scrapedData, prospectCount, lastError, lastErrorAt, createdAt, updatedAt, archivedAt</li>
+</ul>
+<p>From drizzle/schema/companies.ts:</p>
+<ul>
+<li><code>companies</code> pgTable; <code>linkedinUrl: text(&#39;linkedin_url&#39;)</code> is nullable</li>
+</ul>
+<p>From src/app/api/recruiters/route.ts:27–52 (canonical analog):</p>
+<ul>
+<li>Pattern: <code>.select({ /* explicit field map */ }).from(leftTable).leftJoin(joinedTable, eq(...))</code> returning a FLAT row (joined-table columns appear as siblings, not nested)</li>
+</ul>
+<p>From src/lib/api/types.ts:</p>
+<ul>
+<li><code>paginated(data, meta)</code> envelope helper — unchanged, returns <code>{ success: true, data, meta }</code></li>
+</ul>
+<p>Test harness imports (already in route.test.ts):</p>
+<ul>
+<li><code>createTestDb</code> from <code>@/test-utils/pglite</code></li>
+<li><code>callRoute</code> from <code>@/test-utils/call-route</code></li>
+<li>Hoisted <code>vi.mock(&#39;@/lib/db&#39;)</code> Proxy pattern (lines 11–23)</li>
+<li>Dynamic route import inside each <code>it()</code>: <code>const { GET } = await import(&#39;@/app/api/job-leads/route&#39;);</code></interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Extend GET /api/job-leads with leftJoin(companies) + explicit projection adding companyLinkedinUrl</name>
+  <files>src/app/api/job-leads/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/route.ts (current GET handler at lines 24–71 uses `.select().from(jobLeads)` — full-row, no join)
+    - src/app/api/recruiters/route.ts:21–61 (canonical leftJoin + explicit projection analog — copy this shape verbatim)
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md (§ src/app/api/job-leads/route.ts — GET handler) — has the full target projection block to copy
+    - drizzle/schema/job-leads.ts (confirm all current columns are preserved in the explicit projection — id, linkedinJobUrl, roleTitle, companyName, companyId, applicationId, status, scrapedData, prospectCount, lastError, lastErrorAt, createdAt, updatedAt, archivedAt)
+    - drizzle/schema/companies.ts (confirm linkedinUrl column shape — nullable text)
+  </read_first>
+  <behavior>
+    - Test 1 (existing Test 12 must continue to pass): `GET /api/job-leads?status=queued` returns only queued leads; each row has every field it had before (id, linkedinJobUrl, roleTitle, companyName, status, etc.)
+    - Test 2 (NEW — added in Task 2): a mixed fixture (one `linkedinJobUrl: null` company-scope lead + one job-URL lead, both joined to a company whose `linkedinUrl` is `'https://www.linkedin.com/company/acme'`) → `GET /api/job-leads?status=queued` returns 2 rows, each containing `companyLinkedinUrl: 'https://www.linkedin.com/company/acme'`
+    - Test 3 (existing Test 14 must continue to pass): no status param → returns all non-archived leads (3 rows in the existing beforeEach fixture); each row has the new `companyLinkedinUrl` key (value will be `null` because the existing beforeEach's company has no linkedinUrl set)
+  </behavior>
+  <action>
+    Implement D-13. In `src/app/api/job-leads/route.ts`:<pre><code>1. Locate the GET handler (currently lines 24–71). Leave imports alone — `companies` is already imported (line 10) and `eq` is already imported from `drizzle-orm` (line 3). No new imports needed.
+
+2. Replace the `db.select().from(jobLeads).where(...).orderBy(...).limit(...)` chain with an explicit-projection `.select({...}).from(jobLeads).leftJoin(companies, eq(jobLeads.companyId, companies.id)).where(...).orderBy(...).limit(...)`.
+
+3. The explicit projection MUST include EVERY existing `jobLeads` column (so no consumer breaks) plus the new joined field. Required fields in the projection object — match these exact key names so the JSON envelope is identical to today on the existing fields:
+   - `id: jobLeads.id`
+   - `linkedinJobUrl: jobLeads.linkedinJobUrl`
+   - `roleTitle: jobLeads.roleTitle`
+   - `companyName: jobLeads.companyName`
+   - `companyId: jobLeads.companyId`
+   - `applicationId: jobLeads.applicationId`
+   - `status: jobLeads.status`
+   - `scrapedData: jobLeads.scrapedData`
+   - `prospectCount: jobLeads.prospectCount`
+   - `lastError: jobLeads.lastError`
+   - `lastErrorAt: jobLeads.lastErrorAt`
+   - `createdAt: jobLeads.createdAt`
+   - `updatedAt: jobLeads.updatedAt`
+   - `archivedAt: jobLeads.archivedAt`
+   - `companyLinkedinUrl: companies.linkedinUrl`   ← NEW (D-13)
+
+4. Add `.leftJoin(companies, eq(jobLeads.companyId, companies.id))` between `.from(jobLeads)` and `.where(where)`. Use `leftJoin` (NOT `innerJoin`) — leads whose `companyId IS NULL` must still appear in the result set with `companyLinkedinUrl: null`.
+
+5. All other GET logic is preserved verbatim: the `conditions` array (archivedAt filter + status filter + cursor), the WHERE construction, `.orderBy(desc(jobLeads.updatedAt))`, `.limit(limit + 1)`, the `hasMore = results.length &gt; limit` slice, and the `paginated(data, { cursor: ..., hasMore })` envelope. The cursor logic still keys off `data[data.length - 1].updatedAt.toISOString()` — flat projection keeps `updatedAt` as a top-level field on each row.
+
+6. The `serverError(err)` catch handler stays unchanged.
+
+7. The POST handler (lines 73–225) is NOT touched in this task. Phase 7 owns it.
+
+Rationale references: D-13 (CONTEXT.md), pattern analog `src/app/api/recruiters/route.ts:27–52`, full target snippet in 08-PATTERNS.md §&quot;Pattern to apply for Phase 8 D-13&quot;.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run build 2>&1 | tail -20</automated>
+    <automated>grep -q "companyLinkedinUrl: companies.linkedinUrl" src/app/api/job-leads/route.ts</automated>
+    <automated>grep -q "leftJoin(companies" src/app/api/job-leads/route.ts</automated>
+    <automated>grep -cE "\.select\(\)" src/app/api/job-leads/route.ts | grep -q "^[2-9]" || (grep -n "\.select()" src/app/api/job-leads/route.ts | grep -v "// POST" && echo "OK: GET no longer uses .select() — POST still uses it inside its own branches which is expected")</automated>
+  </verify>
+  <acceptance_criteria>
+    - Source: `grep -q "companyLinkedinUrl: companies.linkedinUrl" src/app/api/job-leads/route.ts` exits 0
+    - Source: `grep -q "leftJoin(companies, eq(jobLeads.companyId, companies.id))" src/app/api/job-leads/route.ts` exits 0
+    - Source: `grep -q "companyLinkedinUrl" src/app/api/job-leads/route.ts` exits 0 (the new field appears at least once in the file)
+    - Source: GET handler no longer contains the line `.select()` followed by `.from(jobLeads)` — it must use explicit projection. Check via: `awk '/^export async function GET/,/^export async function POST/' src/app/api/job-leads/route.ts | grep -q '\.select({'`
+    - Source: All 14 existing `jobLeads.*` projection keys remain — verify via: `for f in id linkedinJobUrl roleTitle companyName companyId applicationId status scrapedData prospectCount lastError lastErrorAt createdAt updatedAt archivedAt; do grep -q "$f: jobLeads.$f" src/app/api/job-leads/route.ts || echo "MISSING: $f"; done` produces no output
+    - Build: `npm run build` exits 0
+    - No new imports needed: the file's import block at lines 1–14 is unchanged (`eq` already there at line 3, `companies` already there at line 10)
+  </acceptance_criteria>
+  <done>GET handler returns the expanded row shape with `companyLinkedinUrl` populated via leftJoin; production build passes; no existing field is dropped.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Add D-13/CD-04 regression test — companyLinkedinUrl appears on both lead types in GET response</name>
+  <files>src/app/api/job-leads/route.test.ts</files>
+  <read_first>
+    - src/app/api/job-leads/route.test.ts (existing GET describe block at lines 25–108; Phase 7 POST tests at lines 110+ for the company-scope fixture style)
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md (§ src/app/api/job-leads/route.test.ts — one new GET test case (CD-04)) — has the exact target test shape
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-02-PLAN.md (Phase 7 POST tests C1–C7 — fixture style reference for inserting null-URL leads)
+    - src/test-utils/pglite.ts (read-only — confirms `createTestDb` signature; we do NOT extract a helper for this single test per CD-04 / 08-PATTERNS.md decision)
+    - src/test-utils/call-route.ts (read-only — confirms callRoute signature)
+    - drizzle/schema/companies.ts (confirm `linkedinUrl` accepts arbitrary strings via Drizzle insert)
+  </read_first>
+  <behavior>
+    - Test 15 (NEW): inserts one company with `linkedinUrl: 'https://www.linkedin.com/company/acme'`, then two `jobLeads` rows joined to it (one with `linkedinJobUrl: null` + `roleTitle: 'Company-wide scrape'` + `status: 'queued'`, one with `linkedinJobUrl: 'https://www.linkedin.com/jobs/view/100'` + `status: 'queued'`). Calling `GET /api/job-leads?status=queued` returns 2 rows; every row contains `companyLinkedinUrl === 'https://www.linkedin.com/company/acme'`; the two rows are distinguishable by their `linkedinJobUrl` shapes (one `null`, one matching `/\/jobs\/view\//`).
+  </behavior>
+  <action>
+    Implement CD-04. In `src/app/api/job-leads/route.test.ts`:<pre><code>1. Add a NEW sibling `describe` block AFTER the existing `describe(&#39;GET /api/job-leads (status filter)&#39;)` (ends at line 108) and BEFORE `describe(&#39;POST /api/job-leads (company-scope, D-01..D-15)&#39;)`. Title: `describe(&#39;GET /api/job-leads (companyLinkedinUrl projection — D-13 / CD-04)&#39;, () =&gt; { ... })`.
+
+2. The new describe block has its OWN `beforeEach` that creates a fresh `dbRef.current = await createTestDb();` — does NOT extend the existing block&#39;s fixture (its fixture has no `linkedinUrl` on the company and asserting on its rows would require updating Tests 12–14 too; 08-PATTERNS.md recommends a sibling block as the cleaner choice).
+
+3. The new `beforeEach` inserts the mixed fixture INLINE (per CD-04 / 08-PATTERNS.md — no helper extracted, DRY threshold not met for a single test):
+   - One company: `{ name: &#39;AcmeCo&#39;, linkedinUrl: &#39;https://www.linkedin.com/company/acme&#39; }` → capture `company.id`
+   - Two `jobLeads`:
+     - Company-scope: `{ linkedinJobUrl: null, companyId: company.id, companyName: &#39;AcmeCo&#39;, roleTitle: &#39;Company-wide scrape&#39;, status: &#39;queued&#39; }`
+     - Job-URL: `{ linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/100&#39;, companyId: company.id, companyName: &#39;AcmeCo&#39;, status: &#39;queued&#39; }`
+
+4. The new `it` block (call it `&#39;Test 15 (D-13/CD-04): GET response includes companyLinkedinUrl on both lead types&#39;`):
+   - Dynamic-imports `GET` from `@/app/api/job-leads/route` inside the test (preserves the hoisted-mock contract)
+   - Calls `callRoute(GET, { method: &#39;GET&#39;, searchParams: { status: &#39;queued&#39; } })`
+   - Asserts `status === 200` and `body.data.length === 2`
+   - Iterates `body.data` asserting `row` has property `companyLinkedinUrl` and value equals `&#39;https://www.linkedin.com/company/acme&#39;` on every row
+   - Sorts the two rows by `linkedinJobUrl === null` ascending and asserts the first row&#39;s `linkedinJobUrl` is `null` and the second matches `/\/jobs\/view\//`
+   - Use the response-shape typing pattern from the existing tests: `const data = (body as { data: Array&lt;{ linkedinJobUrl: string | null; companyLinkedinUrl: string | null }&gt; }).data;`
+
+5. The hoisted `vi.mock(&#39;@/lib/db&#39;)` pattern at lines 11–23 is REUSED unchanged — already at the top of the file; no edits to the mock.
+
+6. Do NOT modify the existing GET tests (12, 13, 14) or the POST C1–C7 tests. The existing GET fixture&#39;s company has no `linkedinUrl` set; the existing tests do not assert on the new field, so they continue to pass (the new field is added to every row but Tests 12–14 do not inspect it).
+
+Rationale references: CD-04 (CONTEXT.md), full test scaffold in 08-PATTERNS.md §&quot;Pattern to apply for Phase 8 CD-04&quot;.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/app/api/job-leads/route.test.ts -t "companyLinkedinUrl" 2>&1 | tail -20</automated>
+    <automated>npx vitest run src/app/api/job-leads/route.test.ts 2>&1 | tail -5</automated>
+    <automated>grep -q "describe('GET /api/job-leads (companyLinkedinUrl projection" src/app/api/job-leads/route.test.ts</automated>
+    <automated>grep -q "companyLinkedinUrl: 'https://www.linkedin.com/company/acme'" src/app/api/job-leads/route.test.ts || grep -q "linkedinUrl: 'https://www.linkedin.com/company/acme'" src/app/api/job-leads/route.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - Test: `npx vitest run src/app/api/job-leads/route.test.ts -t "companyLinkedinUrl"` exits 0 and the new test reports `✓`
+    - Test: `npx vitest run src/app/api/job-leads/route.test.ts` exits 0 — all prior tests (Test 12, 13, 14, C1..C7) still pass alongside the new one
+    - Source: `grep -q "describe('GET /api/job-leads (companyLinkedinUrl projection — D-13 / CD-04)" src/app/api/job-leads/route.test.ts` exits 0
+    - Source: `grep -q "Test 15" src/app/api/job-leads/route.test.ts` exits 0
+    - Source: the new test inserts a `linkedinJobUrl: null` lead — verify via: `awk '/Test 15/,/^  it\(|^\}\);$/' src/app/api/job-leads/route.test.ts | grep -q "linkedinJobUrl: null"`
+    - Source: the new test asserts on `companyLinkedinUrl` on each returned row — verify via: `awk '/Test 15/,/^  it\(|^\}\);$/' src/app/api/job-leads/route.test.ts | grep -q "companyLinkedinUrl"`
+    - The hoisted `vi.mock('@/lib/db')` block at lines 11–23 is UNCHANGED — `git diff src/app/api/job-leads/route.test.ts` shows additions only after line 108 (between the GET describe and the POST describe), no deletions before line 108
+  </acceptance_criteria>
+  <done>One new test case in a sibling describe block exercises the D-13 leftJoin projection on a mixed fixture; all prior tests continue to pass; the new test fails if anyone reverts the projection change.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>client → /api/job-leads (GET)</td>
+<td>Authenticated REST consumer (web UI or skill via bearer token); already gated by Clerk middleware + bearer-token bypass (Phase 3 + Phase 5)</td>
+</tr>
+<tr>
+<td>DB → API response</td>
+<td><code>companies.linkedinUrl</code> flows out via the new projection key</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-08-01</td>
+<td>Information Disclosure</td>
+<td>GET /api/job-leads new <code>companyLinkedinUrl</code> field</td>
+<td>accept</td>
+<td><code>companies.linkedinUrl</code> is already returned by <code>GET /api/companies</code> and <code>GET /api/companies/[id]</code> (verified in route handlers). Exposing it on the joined <code>job-leads</code> listing surfaces no new data class; the auth boundary (single-user Clerk lock + bearer token middleware) is unchanged.</td>
+</tr>
+<tr>
+<td>T-08-02</td>
+<td>Tampering</td>
+<td>GET handler projection change</td>
+<td>mitigate</td>
+<td>The explicit projection lists every column by name — a future schema-add does not silently leak new columns. Phase 7 <code>linkedinJobUrl</code> nullable migration already shipped; this plan touches no schema.</td>
+</tr>
+<tr>
+<td>T-08-03</td>
+<td>Denial of Service</td>
+<td>leftJoin on listings endpoint</td>
+<td>accept</td>
+<td><code>jobLeads.companyId</code> is FK-indexed; <code>companies</code> is small (single-user CRM, ≤ low-thousands of rows). Existing limit/cursor pagination unchanged. Plan does not add package installs (no Package Legitimacy gate applies).</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. `npm run build` exits 0
+2. `npx vitest run src/app/api/job-leads/route.test.ts` exits 0 and includes the new Test 15
+3. The GET handler uses explicit projection (not `.select()` ) and includes `companyLinkedinUrl: companies.linkedinUrl` with a `leftJoin(companies, eq(jobLeads.companyId, companies.id))`
+4. No imports changed in `src/app/api/job-leads/route.ts` (everything needed was already imported)
+5. POST handler is byte-identical to its current state — Phase 7 owns it
+</verification><success_criteria>
+- Modified file count: 2 (`src/app/api/job-leads/route.ts`, `src/app/api/job-leads/route.test.ts`)
+- New test count: 1 (Test 15 in a new sibling describe block)
+- Existing tests still pass: Tests 12, 13, 14, C1..C7 unchanged
+- GET response shape: every row now has `companyLinkedinUrl: string | null` (null when `jobLeads.companyId IS NULL` OR when the joined `companies.linkedinUrl IS NULL`)
+- Build passes; types satisfied (Drizzle infers the explicit-projection row shape at compile time)
+- Requirement coverage: JL-C6 (drain-mode branching is enabled by this GET data), JL-C7 (drain endpoint now carries the URL the skill needs)
+</success_criteria><output>
+Create `.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-SUMMARY.md` when done. Include: files modified, line-count delta, test counts (before/after), `npx vitest run` last-line summary, and a one-paragraph "what unlocks for 08-03" note.
+</output>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

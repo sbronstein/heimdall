@@ -66,7 +66,7 @@ img { max-width: 100%; height: auto; }
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 4: Starter-Template Cleanup</strong> - Delete unused routes, components, and dead imports (completed 2026-05-13)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 5: Job Leads Completion</strong> - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 6: Performance</strong> - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)</li>
-<li><input disabled="" type="checkbox"> <strong>Phase 7: Schema + API for Company-Scope Leads</strong> - Nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> schema + API route for creating synthetic job leads without a job URL</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 7: Schema + API for Company-Scope Leads</strong> - Nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)</li>
 <li><input disabled="" type="checkbox"> <strong>Phase 8: Skill Input Parsing, Navigation Branching + Drain</strong> - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches</li>
 <li><input disabled="" type="checkbox"> <strong>Phase 9: UI for Company-Scope Leads</strong> - Detail page and list view render company-scope leads cleanly without broken job-URL affordances</li>
 </ul>
@@ -228,12 +228,12 @@ Plans:
 <strong>Wave 1</strong></li>
 </ol>
 <ul>
-<li><input disabled="" type="checkbox"> 07-01-PLAN.md — Schema migration (drop NOT NULL on linkedin_job_url), COMPANY_SCOPE_ROLE_TITLE constant, [BLOCKING] live-DB migrate, PGlite regression test (D-05/D-06/D-10/D-11/CD-01)</li>
+<li><input checked="" disabled="" type="checkbox"> 07-01-PLAN.md — Schema migration (drop NOT NULL on linkedin_job_url), COMPANY_SCOPE_ROLE_TITLE constant, [BLOCKING] live-DB migrate, PGlite regression test (D-05/D-06/D-10/D-11/CD-01)</li>
 </ul>
 <p><strong>Wave 2</strong> <em>(both plans parallel — disjoint file sets, both blocked on Wave 1)</em></p>
 <ul>
-<li><input disabled="" type="checkbox"> 07-02-PLAN.md — POST /api/job-leads discriminated Zod union + company-scope branch (auto-create/backfill/dedup/timeline) + 7 route tests (D-01/D-02/D-03/D-04/D-07..D-09/D-13..D-15)</li>
-<li><input disabled="" type="checkbox"> 07-03-PLAN.md — D-17 regression: PATCH /status + POST /prospects route tests against null-URL fixtures (no production code changes)</li>
+<li><input checked="" disabled="" type="checkbox"> 07-02-PLAN.md — POST /api/job-leads discriminated Zod union + company-scope branch (auto-create/backfill/dedup/timeline) + 7 route tests (D-01/D-02/D-03/D-04/D-07..D-09/D-13..D-15)</li>
+<li><input checked="" disabled="" type="checkbox"> 07-03-PLAN.md — D-17 regression: PATCH /status + POST /prospects route tests against null-URL fixtures (no production code changes)</li>
 </ul>
 <h3>Phase 8: Skill Input Parsing, Navigation Branching + Drain</h3>
 <p><strong>Goal</strong>: The <code>scrape-linkedin-connections</code> skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue
@@ -245,9 +245,19 @@ Plans:
 <li>Invoking the skill with a bare company name string (not a UUID, not a URL, not empty) triggers a LinkedIn company search; the skill presents the top 3–5 matches (name + employee count + industry) as a numbered list and waits for the user to confirm their pick before proceeding</li>
 <li>When drain mode processes a lead whose <code>linkedinJobUrl</code> is null, the skill navigates via the null branch (direct company employees URL) rather than the job-URL branch — both lead types drain from the same <code>GET /api/job-leads?status=queued</code> endpoint in a single loop</li>
 <li><code>references/linkedin-navigation.md</code> documents both navigation paths (company-URL branch and company-search → disambiguate → employees branch) alongside the existing job-URL path
-<strong>Plans</strong>: TBD
-<strong>UI hint</strong>: yes</li>
+<strong>Plans</strong>: 3 plans
+Plans:
+<strong>Wave 1</strong> <em>(two plans parallel — disjoint file sets)</em></li>
 </ol>
+<ul>
+<li><input disabled="" type="checkbox"> 08-01-PLAN.md — D-13 / CD-04: GET /api/job-leads leftJoin(companies) projection + companyLinkedinUrl field + regression test</li>
+<li><input disabled="" type="checkbox"> 08-02-PLAN.md — JL-C1/JL-C2/JL-C5/JL-C6: 5-branch SKILL.md argument parser + linkedin-navigation.md three-path rewrite (Job-URL / Company-URL / Bare-name + Shared)</li>
+</ul>
+<p><strong>Wave 2</strong> <em>(blocked on Wave 1 — depends on 08-01 GET extension + 08-02 nav doc)</em></p>
+<ul>
+<li><input disabled="" type="checkbox"> 08-03-PLAN.md — JL-C6/JL-C7: SKILL.md drain mode loop branch on linkedinJobUrl + D-14 mid-drain PUT backfill + heimdall-api.md GET/POST/PUT updates + troubleshooting.md failure-mode bullets
+<strong>UI hint</strong>: yes</li>
+</ul>
 <h3>Phase 9: UI for Company-Scope Leads</h3>
 <p><strong>Goal</strong>: The job-lead detail page and list view render company-scope leads (where <code>linkedinJobUrl</code> is null) cleanly — no broken links, clear labeling, scannable at a glance
 <strong>Depends on</strong>: Phase 8
@@ -310,13 +320,13 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 </tr>
 <tr>
 <td>7. Schema + API for Company-Scope Leads</td>
-<td>0/3</td>
-<td>Not started</td>
-<td>-</td>
+<td>3/3</td>
+<td>Complete</td>
+<td>2026-05-19</td>
 </tr>
 <tr>
 <td>8. Skill Input Parsing, Navigation Branching + Drain</td>
-<td>0/TBD</td>
+<td>0/3</td>
 <td>Not started</td>
 <td>-</td>
 </tr>

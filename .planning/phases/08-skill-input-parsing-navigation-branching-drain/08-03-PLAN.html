@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 08-skill-input-parsing-navigation-branching-drain
+plan: 03
+type: execute
+wave: 2
+depends_on:</p>
+<ul>
+<li>08-01</li>
+<li>08-02
+files_modified:</li>
+<li>.claude/skills/scrape-linkedin-connections/SKILL.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+autonomous: true
+requirements:</li>
+<li>JL-C6</li>
+<li>JL-C7
+must_haves:
+  truths:<ul>
+<li>&quot;Drain mode loop in SKILL.md is a single for-each-lead with an inline branch (D-11) keyed off the structural discriminator lead.linkedinJobUrl === null (D-12): null → company-scope branch (navigate to lead.companyLinkedinUrl + &#39;/people/&#39;); non-null → existing job-URL branch — both lead types drain from the same GET /api/job-leads?status=queued endpoint in a single loop (JL-C7)&quot;</li>
+<li>&quot;When a company-scope queued lead has companyLinkedinUrl === null, the drain loop runs the bare-name search + disambiguation flow inline using lead.companyName, then PUTs /api/companies/&lt;lead.companyId&gt; with { linkedinUrl: <picked> } to backfill (D-14)&quot;</li>
+<li>&quot;Drain mode emits a one-line confirmation per company-scope lead: Lead <id>: company-scope (<companyName>) — navigating to <companyLinkedinUrl>/people/... (D-15)&quot;</li>
+<li>&quot;heimdall-api.md documents the new companyLinkedinUrl field on GET /api/job-leads response (D-13) and the discriminated POST /api/job-leads body shape from Phase 7 (used by the company-URL and bare-name flows from Plan 08-02)&quot;</li>
+<li>&quot;heimdall-api.md documents PUT /api/companies/[id] (not PATCH) with the linkedinUrl body shape used by the D-14 backfill — actual route handler is PUT per src/app/api/companies/[id]/route.ts:55&quot;</li>
+<li>&quot;troubleshooting.md folds three new failure modes (name-extraction fallback, zero-match on bare-name search, mid-drain disambiguation) into existing categories — no new top-level category&quot;
+artifacts:</li>
+<li>path: .claude/skills/scrape-linkedin-connections/SKILL.md
+provides: &quot;Drain mode loop rewritten with linkedinJobUrl null-branch + D-14 mid-drain fallback + D-15 per-lead confirmation; rest of SKILL.md unchanged&quot;
+contains: &quot;lead.linkedinJobUrl&quot;</li>
+<li>path: .claude/skills/scrape-linkedin-connections/references/heimdall-api.md
+provides: &quot;Updated GET /api/job-leads response shape (companyLinkedinUrl field), new POST /api/job-leads section (Phase 7 discriminated body), new PUT /api/companies/[id] section (D-14 backfill)&quot;
+contains: &quot;companyLinkedinUrl&quot;</li>
+<li>path: .claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+provides: &quot;Three new failure-mode bullets folded into existing categories&quot;
+contains: &quot;Could not extract company name&quot;
+key_links:</li>
+<li>from: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md (Drain mode loop)&quot;
+to: &quot;GET /api/job-leads (response now carries companyLinkedinUrl per Plan 08-01)&quot;
+via: &quot;curl -H Authorization fetch + per-lead linkedinJobUrl null check&quot;
+pattern: &quot;lead.linkedinJobUrl&quot;</li>
+<li>from: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md (D-14 fallback)&quot;
+to: &quot;PUT /api/companies/[id] (existing route, accepts linkedinUrl)&quot;
+via: &quot;curl -X PUT body { linkedinUrl }&quot;
+pattern: &quot;PUT /api/companies&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Integrate the new input shapes (from Plan 08-02) with the drain queue: rewrite SKILL.md's `## Drain mode (no arg)` loop to branch on `lead.linkedinJobUrl`, consume the new `companyLinkedinUrl` field from the GET response (Plan 08-01 shipped this), and run the D-14 mid-drain fallback (bare-name disambiguate + PUT backfill) when `companyLinkedinUrl` is null. Document the three API touch-points the skill now relies on in `heimdall-api.md`, and fold the three new failure modes into `troubleshooting.md`.<p>This is the Wave 2 plan — it depends on Plan 08-01 (GET projection ships <code>companyLinkedinUrl</code>) and Plan 08-02 (bare-name + Company-URL paths exist in <code>linkedin-navigation.md</code> for the loop to reference).</p>
+<p>Purpose: Implements user decisions D-11 (single drain loop with inline branch on <code>linkedinJobUrl</code>), D-12 (structural discriminator is <code>lead.linkedinJobUrl === null</code> everywhere), D-13 (consume the new GET field), D-14 (drain-mode fallback: bare-name flow + PUT backfill), D-15 (per-lead confirmation line). Documentation updates per CD-01 / D-13 cross-references.</p>
+<p>Output:</p>
+<ul>
+<li>SKILL.md <code>## Drain mode (no arg)</code> section: replaces the existing 6-step list with the D-11/D-14/D-15 branched loop</li>
+<li><code>references/heimdall-api.md</code>: extends GET /api/job-leads response shape; adds POST /api/job-leads section (Phase 7) and PUT /api/companies/[id] section (D-14 backfill)</li>
+<li><code>references/troubleshooting.md</code>: appends three new bullets under existing categories — name-extraction fallback, zero-match on bare-name search, mid-drain disambiguation</li>
+<li>No code changes — markdown-only plan</objective></li>
+</ul>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md
+@.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md
+@.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-PLAN.md
+@.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-02-PLAN.md
+@.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md<interfaces>
+<!-- API shapes the drain loop relies on. Plan 08-01 already shipped the GET extension. --><p>GET /api/job-leads?status=queued (post-08-01):</p>
+<ul>
+<li>Response per row: { id, linkedinJobUrl, roleTitle, companyName, companyId, applicationId, status, scrapedData, prospectCount, lastError, lastErrorAt, createdAt, updatedAt, archivedAt, companyLinkedinUrl }</li>
+<li>companyLinkedinUrl is null OR string</li>
+</ul>
+<p>POST /api/job-leads (Phase 7, src/app/api/job-leads/route.ts):</p>
+<ul>
+<li>Body shape B (company-scope): { companyName: string, linkedinCompanyUrl?: string-url }</li>
+<li>Returns 201 newly-created OR 200 idempotent dedup; both envelope { success: true, data: <lead-row> }</li>
+</ul>
+<p>PATCH /api/job-leads/<id>/status (existing, unchanged in Phase 8):</p>
+<ul>
+<li>Claim: body { status: &#39;searching&#39; }</li>
+<li>Failure write: body { status: &#39;failed&#39;, lastError: &#39;<Category>: <detail>&#39; }</li>
+</ul>
+<p>POST /api/job-leads/<id>/prospects (existing, unchanged in Phase 8):</p>
+<ul>
+<li>Body { prospects: ScrapedProspect[] }</li>
+<li>Side effects: insert + flip &#39;searching&#39; → &#39;found&#39; + emit timeline event</li>
+</ul>
+<p>PUT /api/companies/[id] (existing route — VERIFIED via src/app/api/companies/[id]/route.ts:55):</p>
+<ul>
+<li>Body: { linkedinUrl?: string-url, ...other optional fields }</li>
+<li>updateCompanySchema (line 18) already accepts linkedinUrl</li>
+<li>Returns { success: true, data: <updated company row> }</li>
+<li>HARD CONSTRAINT: this is PUT, NOT PATCH. CONTEXT.md uses &quot;PATCH&quot; colloquially but the route handler exports PUT.</li>
+</ul>
+<p>D-14 backfill flow (must appear in SKILL.md drain loop + linkedin-navigation.md Bare-name Step 5 + heimdall-api.md PUT section):</p>
+<pre><code>url = await runBareNameFlow(lead.companyName)   // interactive: presents 3–5 matches, waits for user pick
+PUT /api/companies/&lt;lead.companyId&gt; { linkedinUrl: url }
+navigate(`${url.endsWith(&#39;/&#39;) ? url : url + &#39;/&#39;}people/`)
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Rewrite SKILL.md Drain mode loop with linkedinJobUrl branch, D-14 mid-drain fallback, D-15 per-lead confirmation</name>
+  <files>.claude/skills/scrape-linkedin-connections/SKILL.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/SKILL.md (FULL — current `## Drain mode (no arg)` at lines 44–55 is the 6-step list being rewritten; the rest of the file — Setup / Argument parsing (already rewritten by 08-02) / Single-lead mode / Error handling / Constraints — stays verbatim)
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md (§ .claude/skills/scrape-linkedin-connections/SKILL.md — "Phase 8 rewrite — drain-mode loop" has the full target block)
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md (§ decisions D-11, D-12, D-13, D-14, D-15; § specifics "Drain-mode loop sketch")
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-PLAN.md (confirms `companyLinkedinUrl` is on every GET row after Wave 1 — required prerequisite for this loop)
+    - src/app/api/companies/[id]/route.ts (FULL — confirms PUT handler at line 55; confirms updateCompanySchema accepts linkedinUrl at line 18 — used by D-14 backfill)
+  </read_first>
+  <action>
+    Rewrite the `## Drain mode (no arg)` section of SKILL.md. The rest of the file is NOT touched by this task — `## Setup`, `## Argument parsing` (already rewritten by Plan 08-02), `## Single-lead mode` (already partially extended by Plan 08-02 for Step 3 sub-routes), `## Error handling`, `## Constraints` all remain byte-identical to their post-08-02 state.<pre><code>Replace the entire `## Drain mode (no arg)` block (currently 6 steps; lines 43–55) with the following 6-step block. Use the existing markdown numbered-list style (1. / 2. / 3. ...) and fenced code blocks for the curl + pseudo-code:
+
+1. **Fetch the queue.** Use the existing curl, but add the note about the new field:
+   ```bash
+   TOKEN=$(cat ~/.heimdall/api-token)
+   curl -s -H &quot;Authorization: Bearer $TOKEN&quot; \
+     &#39;http://localhost:4000/api/job-leads?status=queued&amp;limit=50&#39;
+   ```
+   Each row in `data[]` now includes `companyLinkedinUrl` (D-13) — string when the linked company has a non-null `linkedinUrl`, null otherwise. Job-URL leads also carry `companyLinkedinUrl` (joined from the same `companies` row) but the drain loop ignores it for them — they navigate via `linkedinJobUrl` instead.
+
+2. **Render `data` as a markdown table** with these columns: `id`, scope (`linkedinJobUrl ? &#39;job-URL&#39; : &#39;company-scope&#39;`), `companyName`, `roleTitle`, queued-since (from `updatedAt`). The scope column makes the queue mix visible to the user at a glance.
+
+3. **Ask the user**: &quot;Process all N? Process the first then ask again? Skip and exit?&quot; (unchanged from today)
+
+4. **For each approved lead, branch on `lead.linkedinJobUrl`** — this is the single-loop with inline branching per D-11 / D-12 / JL-C7. Insert this pseudo-code block (keep as markdown-fenced `text` block, NOT as a bash script — it is executor guidance, not literal shell):
+   ```text
+   print(`Lead ${lead.id}: ${lead.linkedinJobUrl ? &#39;job-URL&#39; : &#39;company-scope&#39;} (${lead.companyName})`)   // D-15
+
+   if (lead.linkedinJobUrl == null) {
+     // Company-scope branch (D-11, D-12, D-15)
+     let url = lead.companyLinkedinUrl
+     if (url == null) {
+       // D-14 mid-drain fallback: bare-name search → disambiguate → backfill
+       //   1. Follow references/linkedin-navigation.md § Bare-name path using lead.companyName as the keyword.
+       //   2. User picks → derive url from the picked card.
+       //   3. Backfill the persisted companies row so subsequent drains find a non-null companyLinkedinUrl.
+       url = runBareNameFlow(lead.companyName)
+       PUT /api/companies/&lt;lead.companyId&gt; body { linkedinUrl: url }     // Note: PUT (not PATCH). See heimdall-api.md.
+     }
+     print(`Lead ${lead.id}: company-scope (${lead.companyName}) — navigating to ${url}/people/...`)   // D-15
+     navigate(url.endsWith(&#39;/&#39;) ? `${url}people/` : `${url}/people/`)
+     // Per references/linkedin-navigation.md § Company-URL path: do NOT re-POST /api/job-leads — the lead already exists.
+     // Best-effort name extraction is unnecessary here (the lead already has companyName).
+   } else {
+     // Job-URL branch (unchanged from Phase 5)
+     // Follow references/linkedin-navigation.md § Job-URL path Steps 1–3:
+     //   open lead.linkedinJobUrl → click company name link → click &quot;X employees&quot; link.
+     navigateJobUrlBranch(lead.linkedinJobUrl)
+   }
+
+   // Both branches converge at references/linkedin-navigation.md § Shared:
+   // Apply the 2nd-degree filter (Shared Step 4), paginate + extract (Shared Step 5), POST /api/job-leads/&lt;id&gt;/prospects.
+   claimAndScrape(lead.id)
+   ```
+
+5. **On failure: write the categorized error and CONTINUE to the next lead — do NOT abort the batch.** (Same as today.) New: if the D-14 mid-drain disambiguation step is presented and the user cancels (no pick / Ctrl-C), write the failure as `LinkedIn navigation failed: user cancelled disambiguation for &lt;companyName&gt;` and continue to the next lead.
+
+6. **End with a summary** (unchanged): `N processed, M succeeded, K failed (categories: Timeout: x, LinkedIn navigation failed: y, ...)`.
+
+HARD CONSTRAINTS:
+- Use PUT, not PATCH, on `/api/companies/&lt;id&gt;` everywhere in this section. The pattern mapper verified that the actual route handler is PUT.
+- Do NOT touch any other section of SKILL.md. This task owns the drain loop only.
+- The D-15 confirmation line (&quot;Lead &lt;id&gt;: company-scope (&lt;companyName&gt;) — navigating to ...&quot;) must be present verbatim in the pseudo-code block (the executor narrates this when running the loop).
+- The branch discriminator MUST be `lead.linkedinJobUrl == null` (per D-12). Do NOT use `roleTitle === &#39;Company-wide scrape&#39;` as a control-flow predicate anywhere.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+    <automated>grep -q "lead.linkedinJobUrl" .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+    <automated>grep -q "companyLinkedinUrl" .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+    <automated>grep -q "PUT /api/companies" .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+    <automated>grep -v '^#' .claude/skills/scrape-linkedin-connections/SKILL.md | grep -c "PATCH /api/companies" | grep -q "^0$"</automated>
+    <automated>grep -q "D-14" .claude/skills/scrape-linkedin-connections/SKILL.md || grep -q "mid-drain fallback" .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+    <automated>grep -q "company-scope (" .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+  </verify>
+  <acceptance_criteria>
+    - Doc: `grep -q "lead.linkedinJobUrl" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0 (branch discriminator present per D-12)
+    - Doc: `grep -q "companyLinkedinUrl" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0 (drain loop consumes the new field per D-13)
+    - Doc: `grep -q "PUT /api/companies" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0 (D-14 backfill uses PUT)
+    - Doc: NO PATCH /api/companies anywhere — `grep -v '^#' .claude/skills/scrape-linkedin-connections/SKILL.md | grep -c "PATCH /api/companies"` outputs `0`
+    - Doc: D-15 per-lead confirmation message present — `grep -q "company-scope (" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0
+    - Doc: D-14 fallback path documented — `grep -q "mid-drain" .claude/skills/scrape-linkedin-connections/SKILL.md || grep -q "bare-name search" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0
+    - Doc: roleTitle NOT used as a control-flow discriminator — `grep -E "roleTitle.*===|=== .*'Company-wide scrape'" .claude/skills/scrape-linkedin-connections/SKILL.md` exits non-zero (no such control-flow comparison)
+    - Doc: existing Setup / Single-lead mode / Error handling / Constraints sections preserved — `grep -q "User-side prerequisites" .claude/skills/scrape-linkedin-connections/SKILL.md && grep -q "Do NOT mock or skip the API write" .claude/skills/scrape-linkedin-connections/SKILL.md && grep -q "^## Single-lead mode" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0
+    - Doc: argument parser from Plan 08-02 preserved — `grep -q "first match wins" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0 (08-02 added this; 08-03 must not delete it)
+    - Doc: the drain loop's old "For each approved lead, run the single-lead flow" sentence is REPLACED — `grep -q "For each approved lead, branch on" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0 (new wording present)
+    - Doc: single drain endpoint (JL-C7) — `grep -q "status=queued" .claude/skills/scrape-linkedin-connections/SKILL.md` exits 0
+  </acceptance_criteria>
+  <done>Drain mode is a single loop reading `GET /api/job-leads?status=queued` (already extended with `companyLinkedinUrl` by Plan 08-01); it branches on `lead.linkedinJobUrl` per D-11/D-12; null leads use `companyLinkedinUrl` (or the D-14 fallback) to navigate to `/people/`; non-null leads run the unchanged job-URL path; per-lead D-15 confirmation is emitted; PUT (not PATCH) is the only verb used for /api/companies.</done>
+</task><task type="auto">
+  <name>Task 2: Update heimdall-api.md — extend GET response shape, add POST /api/job-leads section, add PUT /api/companies/[id] section</name>
+  <files>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md (FULL — currently documents Auth, Response envelope, and four endpoints: GET /api/job-leads, PATCH /api/job-leads/[id]/status, POST /api/job-leads/[id]/prospects, POST /api/job-leads/[id]/search)
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md (§ heimdall-api.md — has the full target JSON shape for the extended GET response, the new POST /api/job-leads section, and the new PUT /api/companies/[id] section)
+    - src/app/api/job-leads/route.ts (POST handler at lines 73–225 — the discriminated union body the new section documents)
+    - src/app/api/companies/[id]/route.ts (PUT handler at line 55 + updateCompanySchema at line 18 — the route the new section documents)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (§ D-13 idempotent dedup behavior — 200 vs 201)
+  </read_first>
+  <action>
+    Make three surgical edits to `references/heimdall-api.md`. Do NOT touch the Auth section, Response envelope section, status-code table, or the existing PATCH /status / POST /prospects / POST /search sections — they stay verbatim.<pre><code>**Edit 1: Extend the GET /api/job-leads response-shape block.**
+
+Locate the existing JSON block (lines 83–98 in the current doc — the one starting `{ &quot;success&quot;: true, &quot;data&quot;: [...] }`). Replace it with:
+
+```json
+{
+  &quot;success&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;uuid&quot;,
+      &quot;linkedinJobUrl&quot;: &quot;https://www.linkedin.com/jobs/view/...&quot; | null,
+      &quot;roleTitle&quot;: &quot;VP Data&quot; | &quot;Company-wide scrape&quot; | null,
+      &quot;companyName&quot;: &quot;Example Co&quot;,
+      &quot;companyLinkedinUrl&quot;: &quot;https://www.linkedin.com/company/example&quot; | null,
+      &quot;status&quot;: &quot;queued&quot;,
+      &quot;lastError&quot;: null,
+      &quot;updatedAt&quot;: &quot;2026-05-14T08:00:00.000Z&quot;
+    }
+  ],
+  &quot;meta&quot;: { &quot;cursor&quot;: &quot;2026-05-14T08:00:00.000Z&quot;, &quot;hasMore&quot;: false }
+}
+```
+
+Immediately below the JSON block, add this paragraph (verbatim):
+
+```
+**Note (Phase 8 D-13):** `companyLinkedinUrl` is left-joined from `companies.linkedinUrl`.
+It is `null` when the lead has no `companyId`, OR when the linked company row has no
+`linkedinUrl` set. The drain skill uses this field to navigate directly to
+`&lt;companyLinkedinUrl&gt;/people/` for company-scope leads (`linkedinJobUrl === null`),
+skipping the job → company link-clicking dance.
+
+**Note (Phase 7 D-12 + Phase 8 D-12):** The discriminator for &quot;is this a company-scope
+lead?&quot; is `linkedinJobUrl === null`, not `roleTitle === &#39;Company-wide scrape&#39;`. The
+sentinel role title is informational only.
+```
+
+**Edit 2: Add a new &quot;5. POST /api/job-leads&quot; section.**
+
+Insert immediately AFTER section &quot;4. POST /api/job-leads/[id]/search&quot; and BEFORE &quot;Error envelopes the skill must handle&quot;. Renumber as section 5 (note: the existing doc already has sections 1–4 numbered in `### N. Endpoint` style; insert the new section consistent with that style). Content per 08-PATTERNS.md § heimdall-api.md &quot;New section to add — POST /api/job-leads (creation, not just status)&quot;:
+
+```markdown
+### 5. `POST /api/job-leads` (Phase 7 + 8)
+
+**Used by:** company-URL input, bare-name input pick. NOT used by drain mode (drain only PATCHes status on existing leads — the leads are already in the queue).
+
+**Body — discriminated union (Phase 7 D-01):** two shapes; first-match-wins via Zod `z.union`.
+
+Shape A — job-URL (existing job-URL flow; UI uses this; skill uses this when Branch 4 of the argument parser fires):
+```json
+{ &quot;linkedinJobUrl&quot;: &quot;https://www.linkedin.com/jobs/view/...&quot; }
+```
+
+Shape B — company-scope (NEW in Phase 7, used by Phase 8 skill from the company-URL and bare-name flows):
+```json
+{
+  &quot;companyName&quot;: &quot;OpenAI&quot;,
+  &quot;linkedinCompanyUrl&quot;: &quot;https://www.linkedin.com/company/openai/&quot;
+}
+```
+(`linkedinCompanyUrl` is optional.)
+
+**Side effects** (handled by the route — do NOT replicate in the skill):
+
+1. Looks up `companies` by case-insensitive name match.
+2. On match: backfills `companies.linkedinUrl` if it was null AND the request supplied one. Never overwrites a non-null `linkedinUrl` (protects user-curated data).
+3. On no match: auto-creates a stub `companies` row with `name` + optional `linkedinUrl`, plus schema defaults for everything else.
+4. Idempotent dedup (D-13/D-14 in Phase 7 CONTEXT): if an in-flight company-scope lead already exists for this company (status in `queued`/`searching`/`failed`, `archived_at IS NULL`), returns HTTP **200** with the existing row. Otherwise inserts a new lead and returns HTTP **201**.
+5. Emits a `job_lead_created` timeline event with `metadata.scope: &#39;company&#39;`.
+
+**Response (both branches):**
+```json
+{
+  &quot;success&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: &quot;uuid&quot;,
+    &quot;linkedinJobUrl&quot;: null,
+    &quot;roleTitle&quot;: &quot;Company-wide scrape&quot;,
+    &quot;companyName&quot;: &quot;OpenAI&quot;,
+    &quot;companyId&quot;: &quot;uuid&quot;,
+    &quot;status&quot;: &quot;queued&quot;,
+    &quot;...&quot;: &quot;...&quot;
+  }
+}
+```
+
+The skill handles 200 and 201 identically — use the returned lead, claim it via PATCH /status.
+
+**Curl (company-scope):**
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X POST \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;companyName&quot;:&quot;OpenAI&quot;,&quot;linkedinCompanyUrl&quot;:&quot;https://www.linkedin.com/company/openai/&quot;}&#39; \
+  http://localhost:4000/api/job-leads
+```
+```
+
+**Edit 3: Add a new &quot;6. PUT /api/companies/[id]&quot; section.**
+
+Insert immediately after the new section 5, BEFORE &quot;Error envelopes the skill must handle&quot;. Content per 08-PATTERNS.md:
+
+```markdown
+### 6. `PUT /api/companies/[id]` (Phase 8 D-14 backfill)
+
+**Used by:** drain-mode fallback when a company-scope lead has `companyLinkedinUrl === null`. After running the bare-name disambiguation flow (per `references/linkedin-navigation.md` § Bare-name path), the skill backfills the URL so subsequent drains don&#39;t re-prompt.
+
+**Note on verb:** The actual route handler is **PUT**, not PATCH. CONTEXT.md refers to it as PATCH but the route exports `PUT` (verified in `src/app/api/companies/[id]/route.ts:55`). Use `-X PUT` in curl.
+
+**Body (the only field the skill writes):**
+```json
+{ &quot;linkedinUrl&quot;: &quot;https://www.linkedin.com/company/openai/&quot; }
+```
+
+The route&#39;s `updateCompanySchema` (line 18 in the same file) declares `linkedinUrl` as `z.string().url().optional().nullable()` — accepts any valid URL or `null`.
+
+**Response:** `{ success: true, data: &lt;updated company row&gt; }`.
+
+**Curl:**
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X PUT \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;linkedinUrl&quot;:&quot;https://www.linkedin.com/company/openai/&quot;}&#39; \
+  &quot;http://localhost:4000/api/companies/$COMPANY_ID&quot;
+```
+```
+
+Sections 1–4 of the original doc (GET /api/job-leads except the JSON block edit, PATCH /api/job-leads/[id]/status, POST /prospects, POST /search) are NOT touched by this task. The &quot;Error envelopes the skill must handle&quot; table at the bottom is also unchanged.
+
+HARD CONSTRAINTS:
+- PUT, not PATCH. Both the verb header and the curl example MUST use PUT. The note about the discrepancy with CONTEXT.md is explicit.
+- The new POST /api/job-leads section documents BOTH shapes (job-URL + company-scope) but emphasizes that the skill uses Shape B from the company-URL and bare-name flows.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+    <automated>grep -q "companyLinkedinUrl" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+    <automated>grep -q "POST /api/job-leads" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+    <automated>grep -q "PUT /api/companies" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+    <automated>grep -q "linkedinCompanyUrl" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+    <automated>grep -q "Phase 7 D-12" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md || grep -q "discriminator" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+    <automated>grep -v '^#' .claude/skills/scrape-linkedin-connections/references/heimdall-api.md | grep -c "PATCH /api/companies" | grep -q "^0$"</automated>
+  </verify>
+  <acceptance_criteria>
+    - Doc: GET response now lists `companyLinkedinUrl` — `grep -q "companyLinkedinUrl" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: GET response shape JSON now includes the new field on the data[0] object — `awk '/^### 1\. /,/^### 2\. /' .claude/skills/scrape-linkedin-connections/references/heimdall-api.md | grep -q "companyLinkedinUrl"` exits 0
+    - Doc: D-13 note paragraph present — `grep -q "Phase 8 D-13" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: D-12 discriminator note present — `grep -q "linkedinJobUrl === null" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: new POST /api/job-leads section present — `grep -q "^### 5\. " .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "POST /api/job-leads" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: POST section documents BOTH shapes — `grep -q "linkedinJobUrl" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "linkedinCompanyUrl" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: POST section documents idempotent dedup (200 vs 201) — `grep -q "200" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "201" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "dedup" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: new PUT /api/companies section present and uses PUT — `grep -q "^### 6\. " .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "PUT /api/companies" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+    - Doc: PUT section curl example uses -X PUT — `awk '/^### 6\. /,/^## /' .claude/skills/scrape-linkedin-connections/references/heimdall-api.md | grep -q "\-X PUT"` exits 0
+    - Doc: PUT section notes the PATCH-vs-PUT discrepancy with CONTEXT.md — `awk '/^### 6\. /,/^## /' .claude/skills/scrape-linkedin-connections/references/heimdall-api.md | grep -qi "PUT.*not PATCH\|PATCH.*but the route\|verb"` exits 0
+    - Doc: NO PATCH /api/companies in non-comment lines — `grep -v '^#' .claude/skills/scrape-linkedin-connections/references/heimdall-api.md | grep -c "PATCH /api/companies"` outputs `0`
+    - Doc: existing sections preserved — `grep -q "^## Auth" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "^### 2\. " .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "^### 3\. " .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "^### 4\. " .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && grep -q "^## Error envelopes" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md` exits 0
+  </acceptance_criteria>
+  <done>heimdall-api.md's GET section reflects the new `companyLinkedinUrl` field; two new sections (POST /api/job-leads + PUT /api/companies/[id]) document the routes the skill now calls; PUT is the only verb used for /api/companies; sections 1–4 + Error envelopes table are unchanged.</done>
+</task><task type="auto">
+  <name>Task 3: Add three new failure-mode bullets to troubleshooting.md under existing categories</name>
+  <files>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/references/troubleshooting.md (FULL — currently has 5 categories: Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error; ends with Manual recovery and "What the skill does NOT handle (yet)")
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-PATTERNS.md (§ troubleshooting.md — has the verbatim text of the three new bullets and where they go)
+    - .planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md (§ decisions D-06, D-09, D-14)
+  </read_first>
+  <action>
+    Append three new bullets to existing sections in `references/troubleshooting.md`. Do NOT add new top-level categories (the doc's own guidance: "the bar for adding a sixth category is high"). All three modes map into the existing `## LinkedIn navigation failed` category.<pre><code>**Edit 1: Append to `## LinkedIn navigation failed` → &quot;Common triggers and remediation&quot;** list.
+
+After the existing fifth bullet (&quot;DOM change.&quot;) add these three bullets (verbatim from 08-PATTERNS.md):
+
+```markdown
+- **Company-name-extraction failure (Phase 8 D-05/D-06).** When the skill navigates to
+  `/company/&lt;slug&gt;/people/`, it extracts the company name from the page H1 / heading-role
+  element. If that extraction returns null/empty (DOM shift, sign-in wall, captcha during
+  load), this is NOT a hard failure: the skill falls back to using the slug as the
+  `companyName` for the POST `/api/job-leads` call, logs the warning `Could not extract
+  company name from &lt;url&gt;; using slug &quot;&lt;slug&gt;&quot; as fallback. Rename in the companies UI if
+  needed.`, and proceeds. Remediation is post-hoc curation in the companies UI; no skill
+  retry needed.
+
+- **Zero matches on bare-name LinkedIn search (Phase 8 D-09).** When the user passes a bare
+  company name and `https://www.linkedin.com/search/results/companies/?keywords=&lt;name&gt;`
+  returns no result cards, the skill writes `No companies found for &quot;&lt;name&gt;&quot;. Try a more
+  specific name or pass a LinkedIn company URL.` and exits cleanly. This is BEFORE any
+  Heimdall row is created — no `job_leads` row exists to mark as `failed`; the failure is
+  a user-facing message only. Distinguishable from `No prospects found` (which is
+  post-navigation, after the lead is created and claimed).
+
+- **Mid-drain disambiguation (Phase 8 D-14).** When draining a company-scope lead whose
+  `companyLinkedinUrl IS NULL`, the skill pauses and runs the bare-name disambiguation flow
+  inline using `lead.companyName`. The user picks; the skill PUTs
+  `/api/companies/&lt;lead.companyId&gt;` to backfill the URL (verb is PUT, not PATCH — per
+  `heimdall-api.md` § 6), then resumes navigation. If the user cancels (no pick / Ctrl-C),
+  the skill writes `failed` with `lastError: &quot;LinkedIn navigation failed: user cancelled
+  disambiguation for &lt;companyName&gt;&quot;` and continues to the next lead.
+```
+
+**Edit 2: Append to &quot;What the skill does NOT handle (yet)&quot;** (the bottom section).
+
+Add two new bullets immediately after the existing four (Rate-limit backoff / Pagination beyond page 10 / Captcha auto-solve / Multi-instance drain):
+
+```markdown
+- **Auto-pick disambiguation single matches** (Phase 8 D-08 declined). Even when LinkedIn
+  returns exactly one result for a bare-name search, the skill confirms with the user
+  before proceeding. The cost is one keystroke; the benefit is never silently scraping the
+  wrong company on a fuzzy match.
+
+- **Retry-with-broader-query on zero matches** (Phase 8 D-09 declined). The skill does NOT
+  auto-strip suffixes like &quot;Inc&quot;/&quot;LLC&quot; or fall back to looser searches. Fail-loudly is the
+  v1 policy.
+```
+
+Do NOT touch the other category sections (`## Timeout`, `## No prospects found`, `## Browser unavailable`, `## Unknown error`, `## Manual recovery`). Do NOT add a sixth top-level `## Category` heading.
+
+HARD CONSTRAINT: the mid-drain disambiguation bullet&#39;s PUT reference must explicitly say PUT (not PATCH).
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</automated>
+    <automated>grep -q "Could not extract company name" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</automated>
+    <automated>grep -q "No companies found for" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</automated>
+    <automated>grep -q "Mid-drain disambiguation" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</automated>
+    <automated>grep -q "Auto-pick disambiguation" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</automated>
+    <automated>grep -q "Retry-with-broader-query" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</automated>
+    <automated>grep -c "^## " .claude/skills/scrape-linkedin-connections/references/troubleshooting.md | grep -qE "^[78]$"</automated>
+    <automated>grep -v '^#' .claude/skills/scrape-linkedin-connections/references/troubleshooting.md | grep -c "PATCH /api/companies" | grep -q "^0$"</automated>
+  </verify>
+  <acceptance_criteria>
+    - Doc: name-extraction fallback bullet present — `grep -q "Could not extract company name" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md` exits 0
+    - Doc: zero-match bullet present — `grep -q "No companies found for" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md` exits 0
+    - Doc: mid-drain disambiguation bullet present — `grep -q "Mid-drain disambiguation" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md` exits 0
+    - Doc: D-14 backfill in the new bullet uses PUT — `awk '/Mid-drain disambiguation/,/^- \*\*|^## /' .claude/skills/scrape-linkedin-connections/references/troubleshooting.md | grep -q "PUT"` exits 0
+    - Doc: NO PATCH /api/companies anywhere in non-comment lines — `grep -v '^#' .claude/skills/scrape-linkedin-connections/references/troubleshooting.md | grep -c "PATCH /api/companies"` outputs `0`
+    - Doc: "What the skill does NOT handle (yet)" section appended with the two new D-08 / D-09 decline bullets — `grep -q "Auto-pick disambiguation" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md && grep -q "Retry-with-broader-query" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md` exits 0
+    - Doc: no new top-level category was added — `grep -c "^## " .claude/skills/scrape-linkedin-connections/references/troubleshooting.md` outputs a number that equals the original top-level section count (the doc has these `## ` headings today: Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error, Manual recovery, What the skill does NOT handle (yet) = 7 sections; count must be exactly 7 after this edit)
+    - Doc: the five top-level categories present and unchanged — `for h in "Timeout" "LinkedIn navigation failed" "No prospects found" "Browser unavailable" "Unknown error"; do grep -q "^## $h" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md || echo "MISSING: $h"; done` produces no output
+  </acceptance_criteria>
+  <done>troubleshooting.md gains three new failure-mode bullets under `## LinkedIn navigation failed` (name-extraction fallback, zero-match, mid-drain disambiguation) and two new D-08/D-09 decline bullets under "What the skill does NOT handle (yet)"; no new top-level category; PUT (not PATCH) is the verb used in the mid-drain bullet.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill → GET /api/job-leads</td>
+<td>Consuming the new <code>companyLinkedinUrl</code> field from Plan 08-01&#39;s projection</td>
+</tr>
+<tr>
+<td>Skill → PUT /api/companies/[id]</td>
+<td>New caller of an existing authenticated route (D-14 mid-drain backfill)</td>
+</tr>
+<tr>
+<td>Skill → user (interactive)</td>
+<td>Disambiguation prompts during drain (D-14)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-08-09</td>
+<td>Tampering</td>
+<td>D-14 PUT body</td>
+<td>mitigate</td>
+<td><code>updateCompanySchema</code> (<code>src/app/api/companies/[id]/route.ts:18</code>) declares <code>linkedinUrl: z.string().url().optional().nullable()</code>. Invalid URLs return 400; the skill surfaces validation errors verbatim per its existing error-envelope handling.</td>
+</tr>
+<tr>
+<td>T-08-10</td>
+<td>Repudiation</td>
+<td>D-14 backfill silently mutates user-curated data</td>
+<td>mitigate</td>
+<td>Phase 7 D-09 already gated backfill on null-only (never overwrites an existing <code>linkedinUrl</code>). The PUT path through <code>updateCompanySchema</code> always replaces <code>linkedinUrl</code> when present — the skill only invokes PUT when <code>companyLinkedinUrl IS NULL</code> per the drain loop&#39;s branch, so this code path is also null-only in practice. Documented in heimdall-api.md § 6 and troubleshooting.md mid-drain bullet.</td>
+</tr>
+<tr>
+<td>T-08-11</td>
+<td>Denial of Service</td>
+<td>Mid-drain interactive prompt blocks drain progress</td>
+<td>accept</td>
+<td>This is intentional — the skill is single-threaded and synchronous per-lead. D-14 trades drain throughput for not silently scraping the wrong company (D-08 / D-09 rationale). User can cancel and resume; failed-leads stay in <code>&#39;failed&#39;</code> for later retry via UI.</td>
+</tr>
+<tr>
+<td>T-08-12</td>
+<td>Information Disclosure</td>
+<td>New troubleshooting / heimdall-api docs surface route paths + bearer-token pattern</td>
+<td>accept</td>
+<td>These docs already exist with the same disclosure surface; this plan adds 3 new endpoint-doc paragraphs and 3 troubleshooting bullets. No new credential, no new secret. The bearer-token pattern is documented per Phase 5 D-04 (token-in-file at <code>~/.heimdall/api-token</code>, chmod 600).</td>
+</tr>
+</tbody></table>
+<p>This plan touches no code, no package installs. Package Legitimacy Gate does not apply.
+</threat_model></p>
+<verification>
+1. SKILL.md's drain loop branches on `lead.linkedinJobUrl`, references `companyLinkedinUrl`, and uses PUT for the D-14 backfill
+2. heimdall-api.md has 6 numbered endpoint sections (was 4): GET /api/job-leads (extended) / PATCH /status / POST /prospects / POST /search / **NEW** POST /api/job-leads / **NEW** PUT /api/companies/[id]
+3. troubleshooting.md `## LinkedIn navigation failed` section has 3 new bullets at the end of "Common triggers and remediation"; "What the skill does NOT handle (yet)" has 2 new bullets at the end
+4. PUT (not PATCH) is the only verb used for /api/companies in any of the three files
+5. No new top-level category in troubleshooting.md (exactly 7 `## ` headings total)
+6. SKILL.md sections OTHER than drain mode are byte-identical to their post-08-02 state (Setup, Argument parsing, Single-lead mode, Error handling, Constraints)
+</verification><success_criteria>
+- 3 files modified (SKILL.md drain section, heimdall-api.md, troubleshooting.md)
+- Drain mode loop: single loop, branches on `lead.linkedinJobUrl`, consumes `companyLinkedinUrl` from GET response (shipped by 08-01)
+- Mid-drain D-14 fallback wired: bare-name search → user picks → PUT /api/companies/[id] backfill → resume navigation
+- heimdall-api.md: 6 endpoint sections (existing GET extended + 5 unchanged + 2 new)
+- troubleshooting.md: 3 new bullets folded into `## LinkedIn navigation failed`; 2 new bullets in "What the skill does NOT handle (yet)"; no new top-level category
+- PUT (not PATCH) for /api/companies in all three files
+- Requirement coverage: JL-C6 (drain-side branching documented in SKILL.md), JL-C7 (single queue, single loop, no separate status enum — drain processes both lead types via `?status=queued`)
+</success_criteria><output>
+Create `.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-03-SUMMARY.md` when done. Include: files modified, line-count delta per file, before/after `## ` heading counts for heimdall-api.md and troubleshooting.md, and a one-paragraph "phase verification next steps" note (manual dev-server smoke test using `/scrape-linkedin-connections https://linkedin.com/company/openai/` and `/scrape-linkedin-connections OpenAI` to exercise the two new branches end-to-end — agent-browser-driven flows are not unit-testable per Phase 5 D-21, so the verification is human-driven).
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
