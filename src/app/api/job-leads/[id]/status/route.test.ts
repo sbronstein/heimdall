@@ -5,6 +5,7 @@ import {
   jobLeads,
   timelineEvents
 } from '../../../../../../drizzle/schema';
+import { COMPANY_SCOPE_ROLE_TITLE } from '@/lib/domain/types';
 
 // vi.hoisted + Proxy pattern — mandated by D-05/D-07/02-03-PLAN
 const { dbRef } = vi.hoisted(() => ({
@@ -266,5 +267,133 @@ describe('PATCH /api/job-leads/[id]/status (D-08 state machine)', () => {
       'status',
       'updatedAt'
     ]);
+  });
+});
+
+// D-17: Pin the input-shape-agnostic invariant for the PATCH status route.
+// The handler operates on `id` lookups and never reads `linkedinJobUrl` — these
+// regression tests lock that against a future refactor accidentally adding an
+// `if (lead.linkedinJobUrl)` guard that would silently break the company-scope
+// drain path. Fixtures use `linkedinJobUrl: null` + `COMPANY_SCOPE_ROLE_TITLE`
+// to match the company-scope lead shape produced by Plan 02's POST branch.
+describe('PATCH /api/job-leads/[id]/status — company-scope leads (D-17)', () => {
+  let leadId: string;
+  let companyId: string;
+
+  beforeEach(async () => {
+    dbRef.current = await createTestDb();
+
+    const [company] = await dbRef.current
+      .insert(companies)
+      .values({ name: 'AcmeCo' })
+      .returning();
+    companyId = company.id;
+
+    const [lead] = await dbRef.current
+      .insert(jobLeads)
+      .values({
+        linkedinJobUrl: null, // company-scope shape — the D-17 invariant
+        roleTitle: COMPANY_SCOPE_ROLE_TITLE,
+        companyId,
+        companyName: 'AcmeCo',
+        status: 'queued' // start at queued — the company-scope create branch leaves leads here
+      })
+      .returning();
+    leadId = lead.id;
+  });
+
+  it('Test S1: queued -> searching -> found traversal works on a null-URL lead', async () => {
+    const { PATCH } = await import('@/app/api/job-leads/[id]/status/route');
+    const { eq } = await import('drizzle-orm');
+
+    // Step 1: queued -> searching
+    const step1 = await callRoute(
+      PATCH as unknown as Parameters<typeof callRoute>[0],
+      {
+        method: 'PATCH',
+        body: { status: 'searching' },
+        params: { id: leadId }
+      }
+    );
+    expect(step1.status).toBe(200);
+    expect(step1.body).toMatchObject({
+      success: true,
+      data: expect.objectContaining({ id: leadId, status: 'searching' })
+    });
+    const step1Data = (step1.body as { data: Record<string, unknown> }).data;
+    // D-17 invariant: the handler did not mutate linkedinJobUrl
+    expect(step1Data.linkedinJobUrl).toBeNull();
+
+    // Step 2: searching -> found
+    const step2 = await callRoute(
+      PATCH as unknown as Parameters<typeof callRoute>[0],
+      {
+        method: 'PATCH',
+        body: { status: 'found' },
+        params: { id: leadId }
+      }
+    );
+    expect(step2.status).toBe(200);
+    expect(step2.body).toMatchObject({
+      success: true,
+      data: expect.objectContaining({ id: leadId, status: 'found' })
+    });
+    const step2Data = (step2.body as { data: Record<string, unknown> }).data;
+    // D-17 invariant pin: still null after the second PATCH
+    expect(step2Data.linkedinJobUrl).toBeNull();
+
+    // Read back the lead and confirm final state + null-URL invariant
+    const [finalLead] = await dbRef.current!
+      .select()
+      .from(jobLeads)
+      .where(eq(jobLeads.id, leadId));
+    expect(finalLead.status).toBe('found');
+    expect(finalLead.linkedinJobUrl).toBeNull();
+    expect(finalLead.roleTitle).toBe(COMPANY_SCOPE_ROLE_TITLE);
+
+    // Timeline emitted both transitions
+    const rows = await dbRef.current!.select().from(timelineEvents);
+    expect(rows).toHaveLength(2);
+    const eventTypes = rows.map((r) => r.eventType).sort();
+    expect(eventTypes).toEqual(
+      ['job_lead_search_claimed', 'job_lead_search_complete'].sort()
+    );
+  });
+
+  it('Test S2: failed -> queued (retry) clears lastError + lastErrorAt on a null-URL lead', async () => {
+    const { eq } = await import('drizzle-orm');
+
+    // Bump the seed lead to failed + populate error fields, mirroring Test 4
+    await dbRef.current!
+      .update(jobLeads)
+      .set({
+        status: 'failed',
+        lastError: 'simulated',
+        lastErrorAt: new Date()
+      })
+      .where(eq(jobLeads.id, leadId));
+
+    const { PATCH } = await import('@/app/api/job-leads/[id]/status/route');
+
+    const { status, body } = await callRoute(
+      PATCH as unknown as Parameters<typeof callRoute>[0],
+      {
+        method: 'PATCH',
+        body: { status: 'queued' },
+        params: { id: leadId }
+      }
+    );
+
+    expect(status).toBe(200);
+    const data = (body as { data: Record<string, unknown> }).data;
+    expect(data.status).toBe('queued');
+    expect(data.lastError).toBeNull();
+    expect(data.lastErrorAt).toBeNull();
+    // D-17 invariant: the failed -> queued retry did not mutate linkedinJobUrl
+    expect(data.linkedinJobUrl).toBeNull();
+
+    const rows = await dbRef.current!.select().from(timelineEvents);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].eventType).toBe('job_lead_search_queued');
   });
 });
