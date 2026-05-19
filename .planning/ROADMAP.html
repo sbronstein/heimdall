@@ -67,7 +67,7 @@ img { max-width: 100%; height: auto; }
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 5: Job Leads Completion</strong> - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 6: Performance</strong> - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 7: Schema + API for Company-Scope Leads</strong> - Nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)</li>
-<li><input disabled="" type="checkbox"> <strong>Phase 8: Skill Input Parsing, Navigation Branching + Drain</strong> - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 8: Skill Input Parsing, Navigation Branching + Drain</strong> - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches (completed 2026-05-19)</li>
 <li><input disabled="" type="checkbox"> <strong>Phase 9: UI for Company-Scope Leads</strong> - Detail page and list view render company-scope leads cleanly without broken job-URL affordances</li>
 </ul>
 <h2>Phase Details</h2>
@@ -255,7 +255,7 @@ Plans:
 </ul>
 <p><strong>Wave 2</strong> <em>(blocked on Wave 1 — depends on 08-01 GET extension + 08-02 nav doc)</em></p>
 <ul>
-<li><input disabled="" type="checkbox"> 08-03-PLAN.md — JL-C6/JL-C7: SKILL.md drain mode loop branch on linkedinJobUrl + D-14 mid-drain PUT backfill + heimdall-api.md GET/POST/PUT updates + troubleshooting.md failure-mode bullets
+<li><input checked="" disabled="" type="checkbox"> 08-03-PLAN.md — JL-C6/JL-C7: SKILL.md drain mode loop branch on linkedinJobUrl + D-14 mid-drain PUT backfill + heimdall-api.md GET/POST/PUT updates + troubleshooting.md failure-mode bullets
 <strong>UI hint</strong>: yes</li>
 </ul>
 <h3>Phase 9: UI for Company-Scope Leads</h3>
@@ -326,9 +326,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 </tr>
 <tr>
 <td>8. Skill Input Parsing, Navigation Branching + Drain</td>
-<td>2/3</td>
-<td>In Progress</td>
-<td></td>
+<td>3/3</td>
+<td>Complete</td>
+<td>2026-05-19</td>
 </tr>
 <tr>
 <td>9. UI for Company-Scope Leads</td>

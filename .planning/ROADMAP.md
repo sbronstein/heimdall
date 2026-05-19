@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Job Leads Completion** - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)
 - [x] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)
 - [x] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)
-- [ ] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches
+- [x] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches (completed 2026-05-19)
 - [ ] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances
 
 ## Phase Details
@@ -179,7 +179,7 @@ Plans:
 - [x] 08-02-PLAN.md — JL-C1/JL-C2/JL-C5/JL-C6: 5-branch SKILL.md argument parser + linkedin-navigation.md three-path rewrite (Job-URL / Company-URL / Bare-name + Shared)
 
 **Wave 2** *(blocked on Wave 1 — depends on 08-01 GET extension + 08-02 nav doc)*
-- [ ] 08-03-PLAN.md — JL-C6/JL-C7: SKILL.md drain mode loop branch on linkedinJobUrl + D-14 mid-drain PUT backfill + heimdall-api.md GET/POST/PUT updates + troubleshooting.md failure-mode bullets
+- [x] 08-03-PLAN.md — JL-C6/JL-C7: SKILL.md drain mode loop branch on linkedinJobUrl + D-14 mid-drain PUT backfill + heimdall-api.md GET/POST/PUT updates + troubleshooting.md failure-mode bullets
 **UI hint**: yes
 
 ### Phase 9: UI for Company-Scope Leads
@@ -207,5 +207,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
 | 6. Performance | 5/5 | Complete | 2026-05-14 |
 | 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
-| 8. Skill Input Parsing, Navigation Branching + Drain | 2/3 | In Progress|  |
+| 8. Skill Input Parsing, Navigation Branching + Drain | 3/3 | Complete   | 2026-05-19 |
 | 9. UI for Company-Scope Leads | 0/TBD | Not started | - |
