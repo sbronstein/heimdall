@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 08-skill-input-parsing-navigation-branching-drain
+plan: &quot;02&quot;
+subsystem: skill-docs
+tags:</p>
+<ul>
+<li>skill</li>
+<li>linkedin</li>
+<li>navigation</li>
+<li>argument-parsing</li>
+<li>docs-only
+dependency_graph:
+  requires:<ul>
+<li>&quot;08-01 (GET /api/job-leads companyLinkedinUrl projection — provides the field the drain-mode drain reads)&quot;</li>
+<li>&quot;Phase 7 POST /api/job-leads discriminated union (company-scope shape)&quot;
+provides:</li>
+<li>&quot;5-branch argument parser routing (JL-C1, JL-C2)&quot;</li>
+<li>&quot;Three-path linkedin-navigation.md (JL-C6)&quot;</li>
+<li>&quot;Bare-name disambiguation UX spec (JL-C5)&quot;</li>
+<li>&quot;Company-URL and Bare-name navigation cheat-sheets for executor&quot;
+affects:</li>
+<li>&quot;08-03 (drain loop rewrite reads the updated SKILL.md and navigation doc)&quot;</li>
+<li>&quot;Phase 9 (UI discriminator uses same lead.linkedinJobUrl === null predicate)&quot;
+tech_stack:
+added: []
+patterns:</li>
+<li>&quot;Skill markdown surgical extension (keep Setup/Error handling/Constraints verbatim, rewrite specific sections)&quot;</li>
+<li>&quot;Prefix-based sub-heading naming (Job-URL Step N / Company-URL Step N / Bare-name Step N / Shared Step N)&quot;
+key_files:
+created: []
+modified:</li>
+<li>.claude/skills/scrape-linkedin-connections/SKILL.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md
+decisions:</li>
+</ul>
+</li>
+<li>&quot;PUT (not PATCH) for /api/companies/<id> — matches the actual route handler at src/app/api/companies/[id]/route.ts:55&quot;</li>
+<li>&quot;Job-URL Steps 1–3 and Shared Steps 4–5 preserved verbatim from the previous doc&quot;</li>
+<li>&quot;5-branch argument parser replaces 4-branch; old stop-and-ask terminal branch removed&quot;</li>
+<li>&quot;Sub-heading prefix scheme: Job-URL Step N / Company-URL Step N / Bare-name Step N / Shared Step N&quot;
+metrics:
+  duration: &quot;~20 minutes&quot;
+  completed: &quot;2026-05-19&quot;
+  tasks: 2
+  files: 2</li>
+</ul>
+<hr>
+<h1>Phase 08 Plan 02: Skill Input Parsing + Navigation Branching Summary</h1>
+<p><strong>One-liner:</strong> 5-branch argument parser (empty/UUID/company-URL/job-URL/bare-name) and three-path
+navigation cheat-sheet (Job-URL / Company-URL / Bare-name) with shared Steps 4–5 preserved verbatim.</p>
+<h2>What Was Built</h2>
+<h3>Task 1: Rewrite references/linkedin-navigation.md</h3>
+<p><code>linkedin-navigation.md</code> was a single 5-step linear narrative for the job-posting-to-employees
+flow. It is now a three-path cheat-sheet with a routing table at the top.</p>
+<p><strong>Line-count delta:</strong> 193 → 439 lines (+246 lines)</p>
+<p><strong>Six top-level section headings (in order):</strong></p>
+<pre><code>## Choosing the entry point
+## Job-URL path (Steps 1–3)
+## Company-URL path (slug → /people/)
+## Bare-name path (search → disambiguate → /people/)
+## Shared: 2nd-degree filter + paginate + extract
+## Historically-stable selectors (hints, not guarantees)
+</code></pre>
+<p><strong>Content breakdown:</strong></p>
+<ul>
+<li><code>## Choosing the entry point</code> — routing table mapping lead/input condition to path.</li>
+<li><code>## Job-URL path (Steps 1–3)</code> — current Steps 1–3 preserved verbatim under prefixed headings
+(<code>Job-URL Step 1 / Job-URL Step 2 / Job-URL Step 3</code>).</li>
+<li><code>## Company-URL path (slug → /people/)</code> — 4 new sub-steps: slug extraction via <code>new URL()</code> +
+<code>pathname.split(&#39;/&#39;).filter(Boolean)</code> (D-03), direct <code>/people/</code> navigation (D-05), H1
+name-extraction with slug fallback and warning (D-06, CD-02), POST <code>/api/job-leads</code> with
+idempotent dedup handling (D-04 + Phase 7).</li>
+<li><code>## Bare-name path (search → disambiguate → /people/)</code> — 5 new sub-steps: direct search URL
+<code>https://www.linkedin.com/search/results/companies/?keywords=&lt;urlencoded&gt;</code> (D-07), top 3–5
+card extraction, markdown numbered list disambiguation (D-10, CD-05), always-confirm pick
+(D-08, D-09), drain-mode backfill via PUT <code>/api/companies/&lt;id&gt;</code> (D-14).</li>
+<li><code>## Shared: 2nd-degree filter + paginate + extract</code> — current Steps 4–5 preserved verbatim
+under <code>Shared Step 4</code> and <code>Shared Step 5</code> headings.</li>
+<li><code>## Historically-stable selectors</code> — appendix table unchanged.</li>
+</ul>
+<p><strong>Key invariants documented:</strong></p>
+<ul>
+<li><code>PUT /api/companies/&lt;id&gt;</code> (not PATCH) for D-14 drain backfill, with explicit reference to
+<code>src/app/api/companies/[id]/route.ts:55</code>.</li>
+<li>Zero-match policy: fail loudly with <code>No companies found for &quot;&lt;name&gt;&quot;. Try a more specific name or pass a LinkedIn company URL.</code></li>
+<li>Company-name extraction fallback: <code>Could not extract company name from &lt;url&gt;; using slug &quot;&lt;slug&gt;&quot; as fallback. Rename in the companies UI if needed.</code></li>
+<li>Always-confirm even on single match (D-08, CD-05) — same 1-item numbered list format.</li>
+</ul>
+<h3>Task 2: Rewrite SKILL.md argument parser + Single-lead Step 3</h3>
+<p><strong>Line-count delta:</strong> 110 → 137 lines (+27 lines net; argument parser rewritten, Overview extended,
+Step 3 Navigate block rewritten)</p>
+<p><strong>Changes:</strong></p>
+<ul>
+<li><code>## Overview</code> — added two bullets noting company-URL and bare-name input shapes; noted drain-mode
+branching on <code>linkedinJobUrl === null</code>.</li>
+<li><code>## Argument parsing</code> — replaced 4-branch parser with 5-branch ordered first-match-wins parser:<ol>
+<li>Empty/whitespace → drain (D-02)</li>
+<li>UUID regex → single-lead UUID flow (unchanged)</li>
+<li>URL with <code>/company/</code> segment → company-URL flow (D-03)</li>
+<li>Any other URL → existing job-URL flow (unchanged)</li>
+<li>Anything else → bare-name flow
+— Removed old <code>&quot;Argument did not look like a UUID or a URL&quot;</code> stop-and-ask terminal branch.
+— Added closing line &quot;No &#39;stop and ask&#39; branch — every non-empty input now routes somewhere.&quot;
+— Added cross-reference paragraph pointing to <code>references/linkedin-navigation.md</code> for
+  Company-URL and Bare-name path navigation details.</li>
+</ol>
+</li>
+<li><code>## Single-lead mode</code> Step 3 (Navigate) — replaced single bullet list with 5-sub-flow router:<ul>
+<li>From URL/UUID job-URL lead → Job-URL path</li>
+<li>From company-URL input → Company-URL path (POST <code>/api/job-leads</code> at Step 4)</li>
+<li>From bare-name input → Bare-name path then Company-URL Step 4</li>
+<li>From company-scope queued lead with <code>companyLinkedinUrl !== null</code> → Company-URL Step 2 (no POST)</li>
+<li>From company-scope queued lead with <code>companyLinkedinUrl === null</code> → Bare-name path + PUT
+<code>/api/companies/&lt;id&gt;</code> (not PATCH) backfill</li>
+</ul>
+</li>
+<li><code>## Setup</code>, <code>## Error handling</code>, <code>## Constraints</code>, <code>## Drain mode</code> — preserved byte-identical.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<p>The one note worth calling out: the acceptance check <code>grep -q &quot;PUT /api/companies&quot;</code> needed the
+text to appear without a backtick between <code>PUT </code> and <code>/api/companies</code>. The Bare-name Step 5 text
+was updated from <code>PUT \</code>/api/companies/...<code>(backtick-wrapped path) to</code>PUT /api/companies/...`
+(bare path) in the action description. This is consistent with the plan&#39;s intent and passes all
+acceptance checks.</p>
+<h2>What 08-03 Will Append on Top</h2>
+<p>Plan 08-03 owns:</p>
+<ul>
+<li><strong>Drain-mode loop rewrite</strong> in <code>SKILL.md</code> — the current <code>## Drain mode</code> section (Step 4:
+&quot;For each approved lead, run the single-lead flow&quot;) will be replaced with the <code>lead.linkedinJobUrl</code>
+branch pseudo-code (D-11, D-14, D-15 SKILL.md sketch from 08-PATTERNS.md).</li>
+<li><strong><code>references/heimdall-api.md</code> additions</strong> — document <code>companyLinkedinUrl</code> in the GET response
+shape (D-13), document the Phase 7 company-scope POST body shape, add PUT <code>/api/companies/&lt;id&gt;</code>
+section (D-14 backfill).</li>
+<li><strong><code>references/troubleshooting.md</code> additions</strong> — three new callouts under existing categories:
+name-extraction failure (warning not hard failure), zero-match on bare-name search (pre-lead
+failure distinct from No prospects found), mid-drain disambiguation prompt (interactive, not
+a failure mode).</li>
+</ul>
+<h2>Known Stubs</h2>
+<p>None. Both files are skill-prompt markdown artifacts. There is no data wired to a UI render
+surface — the skill drives a real browser and calls real REST endpoints; no placeholder values
+exist.</p>
+<h2>Threat Flags</h2>
+<p>No new network endpoints, auth paths, file access patterns, or schema changes introduced.
+Both files are read-only markdown prompts interpreted by an LLM executor. The threat model
+in the plan (<code>T-08-04</code> through <code>T-08-08</code>) covers all URL-construction and disambiguation
+surface introduced — none require new mitigations at the documentation level.</p>
+<h2>Self-Check: PASSED</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> exists</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> exists</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td><code>08-02-SUMMARY.md</code> exists</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit <code>1523191</code> (Task 1: linkedin-navigation.md rewrite)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit <code>fc9a120</code> (Task 2: SKILL.md argument parser rewrite)</td>
+<td>FOUND</td>
+</tr>
+</tbody></table>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

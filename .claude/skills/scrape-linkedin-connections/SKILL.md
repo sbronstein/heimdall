@@ -10,13 +10,24 @@ allowed-tools:
 ## Overview
 
 You are scraping LinkedIn 2nd-degree connections for a Heimdall job lead, using
-`vercel-labs/agent-browser` to drive a real Chrome window. Navigate the canonical
-four-step LinkedIn path, extract prospects in the five-field `ScrapedProspect`
-shape, and write them back to Heimdall via REST.
+`vercel-labs/agent-browser` to drive a real Chrome window. Navigate the appropriate
+LinkedIn path, extract prospects in the five-field `ScrapedProspect` shape, and write
+them back to Heimdall via REST.
+
+The skill now accepts three input shapes in addition to UUID:
+
+- A **LinkedIn company URL** (path containing `/company/<slug>`) — creates a synthetic lead via
+  `POST /api/job-leads { companyName, linkedinCompanyUrl }` and navigates directly to the
+  company's `/people/` page (job-posting step skipped).
+- A **bare company name** (anything that is not a UUID, a URL, or empty) — runs a LinkedIn
+  company search and presents top 3–5 matches inline as a markdown numbered list, then waits for
+  the user's pick before scraping.
+- Drain mode (`linkedinJobUrl === null` leads) now branches directly to `/company/<slug>/people/`
+  navigation when the company URL is known, skipping the job → company → employees chain.
 
 Read first:
 
-- [`references/linkedin-navigation.md`](references/linkedin-navigation.md) — canonical job → company → employees → 2nd-degree filter path + selector hints.
+- [`references/linkedin-navigation.md`](references/linkedin-navigation.md) — three entry-point paths (Job-URL / Company-URL / Bare-name) + shared Steps 4–5 (2nd-degree filter + paginate/extract) + selector hints.
 - [`references/heimdall-api.md`](references/heimdall-api.md) — the four endpoints, bearer-token auth, response envelope.
 - [`references/troubleshooting.md`](references/troubleshooting.md) — known anti-bot patterns mapped to the five error categories.
 
@@ -33,12 +44,25 @@ attempt to fix automatically):
 
 ## Argument parsing
 
-The user's argument is in `$ARGUMENTS`. Branch on its shape:
+The user's argument is in `$ARGUMENTS`. After `trim()`, branch in this order (first match wins):
 
-- **Empty / absent** → drain mode. Go to the "Drain mode" section.
-- **UUID-shaped** (matches `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`) → claim this specific lead by ID. Go to the "Single-lead mode" section.
-- **Starts with `https://`** → URL mode. First POST the URL to `/api/job-leads` to create a `pending` → `scraped` → `queued` lead (the existing cheerio job-page scraper runs in-app), capture the returned UUID, then proceed as if a UUID was given.
-- **Anything else** → surface "Argument did not look like a UUID or a URL: `<value>`" and stop. Do NOT guess.
+1. **Empty / whitespace-only** → drain mode. Go to "Drain mode". (D-02: whitespace-only normalized via `trim()`; quoted-empty shell quirks like `""` and `''` roll into this bucket.)
+
+2. **UUID-shaped** (matches `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`) → single-lead UUID flow. Go to "Single-lead mode".
+
+3. **Parses as a URL AND `pathname.split('/').filter(Boolean)[0] === 'company'`**:
+   - Extract slug via `new URL(arg)` → `pathname.split('/').filter(Boolean)` → take `segments[0]` (must be `'company'`) and `segments[1]` (the slug). Reject if `segments[1]` is undefined.
+   - Canonical URL: `https://www.linkedin.com/company/${slug}/`
+   - Tolerates trailing segments (`/about/`, `/people/`, `/jobs/`, etc.) and query/fragment.
+   - → **Company-URL flow**: navigate via `references/linkedin-navigation.md` § Company-URL path. Per Company-URL Step 4, POST `/api/job-leads` with `{ companyName: <extracted-or-slug>, linkedinCompanyUrl: <canonical-url> }`. Handle 200 and 201 identically — capture the returned `data.id` and claim via PATCH `/status`. Then proceed to Single-lead mode from Step 4 onward (extract / paginate / write-back).
+
+4. **Parses as a URL** (any other shape — e.g., `/jobs/view/123`) → existing job-URL flow. POST `{ linkedinJobUrl: <arg> }` to `/api/job-leads` (the cheerio job-page scraper runs in-app, lead transitions `pending → scraping → scraped`; the existing UI flow handles the manual flip to `queued`). Go to "Single-lead mode" with the returned `data.id`.
+
+5. **Anything else** → bare-name flow. Treat `arg` as a company name (already filtered: not UUID, not URL, non-empty). Follow `references/linkedin-navigation.md` § Bare-name path. After the user picks, POST `/api/job-leads { companyName: arg, linkedinCompanyUrl: <picked-url> }` and proceed to Single-lead mode.
+
+No "stop and ask" branch — every non-empty input now routes somewhere.
+
+For the Company-URL and Bare-name flow navigation details, see `references/linkedin-navigation.md` § Company-URL path and § Bare-name path respectively.
 
 ## Drain mode (no arg)
 
@@ -61,11 +85,14 @@ The user's argument is in `$ARGUMENTS`. Branch on its shape:
    - `400` "Invalid transition" → another instance claimed it; log "Lead `<id>` already claimed, skipping" and exit cleanly. Do NOT write `'failed'`.
    - `404` → lead does not exist; surface and exit.
 2. **Launch agent-browser** against `~/.heimdall/linkedin-profile/`. Subcommands depend on the installed version (consult its README). If attach fails, instruct the user to confirm LinkedIn is signed in in the visible window and continue.
-3. **Navigate** (read `references/linkedin-navigation.md`):
-   - Open `linkedinJobUrl` (from the PATCH response's `data`).
-   - Click the company name link (the `a[href*="/company/"]` near the top).
-   - Click the "X employees" / "View all employees" link.
-   - Apply the "2nd-degree connections" filter.
+3. **Navigate** — choose the entry-point path based on the lead's shape and how it arrived. See `references/linkedin-navigation.md` for the full step lists of each path:
+   - **From URL/UUID job-URL lead** (lead has `linkedinJobUrl !== null`) → follow `references/linkedin-navigation.md` § Job-URL path (Steps 1–3).
+   - **From company-URL input** → follow § Company-URL path. (The POST `/api/job-leads { companyName, linkedinCompanyUrl }` happens at Company-URL Step 4 — the response is 201 newly created OR 200 idempotent dedup; treat both identically and use the returned lead id.)
+   - **From bare-name input** → follow § Bare-name path (search → disambiguate → user picks → derive URL); after the pick, proceed as in the Company-URL path's Step 4 (POST /api/job-leads) and onward.
+   - **From company-scope queued lead** (`lead.linkedinJobUrl === null && lead.companyLinkedinUrl !== null`) → follow § Company-URL path starting at Company-URL Step 2 (direct /people/ navigation). Do NOT POST `/api/job-leads` again — the lead already exists.
+   - **From company-scope queued lead with `companyLinkedinUrl === null`** → run § Bare-name path inline (D-14 mid-drain fallback). After the pick, PUT /api/companies/<lead.companyId> `{ linkedinUrl: <picked> }` to backfill — **note: PUT, not PATCH** (the route is `src/app/api/companies/[id]/route.ts:55`'s PUT handler). Then proceed to Company-URL Step 2.
+
+   All paths converge at `## Shared` Step 4 (apply 2nd-degree filter) in the navigation doc.
 4. **Extract** five fields per `ScrapedProspect`:
    - `name` (required, 1–200 chars)
    - `title` (0–300 chars or null)
