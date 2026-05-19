@@ -82,6 +82,48 @@ img { max-width: 100%; height: auto; }
 </tr>
 </tbody></table>
 <p>These are independent of the Phase 7 schema change. They affect a code path (<code>prioritization.ts</code>) that this plan does not modify. <code>npm run build</code> and the Vitest suite still pass; only <code>npx tsc --noEmit</code> reports them. Best fixed in a dedicated typing pass or as part of a future Job Leads cleanup.</p>
+<h2>Pre-existing test timeouts in <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code></h2>
+<p>Discovered during Plan 07-01 overall verification (step 1 — <code>npx vitest run</code>). Confirmed pre-existing by checking out the source files at <code>6ee48f0</code> (last commit before Phase 7) and re-running the same test file; the same 5 tests time out at 60s in both states.</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Line</th>
+<th>Failure mode</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Test 1: POST 5 prospects flips status to found, bulk-inserts, emits <code>job_lead_search_complete</code></td>
+<td>58</td>
+<td>timeout at 60000 ms</td>
+</tr>
+<tr>
+<td>Test 1b: profileSnippet round-trip — each row persists the input snippet (including null)</td>
+<td>132</td>
+<td>timeout at 60000 ms</td>
+</tr>
+<tr>
+<td>Test 6: bulk insert uses single statement (regression — row count matches input length)</td>
+<td>445</td>
+<td>timeout at 60000 ms</td>
+</tr>
+<tr>
+<td>Test 7: inline matchConnections inserts bridges for matched mutual connections (D-01, D-04)</td>
+<td>295</td>
+<td>timeout at 60000 ms</td>
+</tr>
+<tr>
+<td>Test 9: second call to same lead returns 400 (status check rejects), DB state unchanged</td>
+<td>394</td>
+<td>timeout at 60000 ms</td>
+</tr>
+</tbody></table>
+<p>5 of 10 tests in the file fail (Tests 2, 3, 4, 5, 8 still pass). Root cause is not the Phase 7 schema change — every failing test uses a fixture with <code>linkedinJobUrl: &#39;https://...&#39;</code> (non-null), so the dropped NOT NULL constraint cannot affect them. Likely a PGlite-batch-shim regression introduced by a prior phase (last modified by Phase 6-02 commit <code>c736282</code>). Best diagnosed via <code>--testTimeout=300000</code> to surface the underlying error rather than the timeout symptom.</p>
+<p><strong>This blocks the Plan 07-01 &quot;full vitest suite exits 0&quot; verification step.</strong> Recommend either:</p>
+<ol>
+<li>Fix the pre-existing prospects test timeouts before merging Plan 07-01 (separate, focused bug fix), OR</li>
+<li>Acknowledge the pre-existing failure in the Plan 07-01 SUMMARY and proceed to Plan 07-02 — the Phase 7 schema work itself is verified correct (new <code>__phase7_schema__.test.ts</code> passes, live DB confirmed nullable, single-ALTER migration validated).</li>
+</ol>
 
 
 

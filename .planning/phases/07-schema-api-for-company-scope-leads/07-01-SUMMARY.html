@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 07-schema-api-for-company-scope-leads
+plan: 01
+subsystem: database
+tags: [drizzle, schema, migration, neon, postgres, zod, regression-test]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 06-performance
+provides: companies_name_idx (Plan 02-bridge index used downstream in Plan 07-02 by D-07 case-insensitive company lookup)</li>
+<li>phase: 02-test-infrastructure
+provides: PGlite + Drizzle test harness (src/test-utils/pglite.ts) — applies all migrations including new 0009 automatically
+provides:</li>
+<li>nullable job_leads.linkedin_job_url column (schema, migration, live DB)</li>
+<li>COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; sentinel constant</li>
+<li>drizzle/migrations/0009_allow_company_scope_job_leads.sql checked in and applied</li>
+<li>PGlite regression test pinning the nullable shape
+affects: [07-02 (route extension consumes nullable column + sentinel), 07-03 (D-17 regression tests against null-URL leads), 08-skill (POSTs null linkedinJobUrl via API), 09-ui (renders null linkedinJobUrl)]</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: []  # no new packages — drizzle-kit, @neondatabase/serverless, vitest, @electric-sql/pglite all pre-existing
+  patterns:
+    - Phase-N PGlite schema regression test (sibling to <strong>phase6_indexes</strong>.test.ts) — pattern reusable for any future ALTER-COLUMN migration</p>
+<p>key-files:
+  created:
+    - drizzle/migrations/0009_allow_company_scope_job_leads.sql
+    - drizzle/migrations/meta/0009_snapshot.json
+    - src/lib/db/<strong>phase7_schema</strong>.test.ts
+    - .planning/phases/07-schema-api-for-company-scope-leads/deferred-items.md
+  modified:
+    - drizzle/schema/job-leads.ts (line 19 — drop .notNull())
+    - drizzle/migrations/meta/_journal.json (Drizzle Kit appended 0009 entry)
+    - src/lib/domain/types.ts (export COMPANY_SCOPE_ROLE_TITLE)
+    - src/features/job-leads/components/scrape-results.tsx (null-guard on linkedinJobUrl link — Rule 3 inline fix)</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Migration is a single ALTER COLUMN DROP NOT NULL — Drizzle Kit emitted the expected minimal shape; no hand-edit needed (CD-01)&quot;</li>
+<li>&quot;Prepended one-line runbook comment per CD-03 explaining the constraint relaxation&quot;</li>
+<li>&quot;Regression test uses Drizzle insert+select (not pg_indexes introspection) — column nullability is easier to verify by a successful insert than by querying information_schema (matches the analog in 07-PATTERNS.md note)&quot;</li>
+<li>&quot;Defensive 2nd test case pins both linkedinJobUrl AND roleTitle null (Phase 7 SC #2 wording: &#39;both fields null&#39;) — confirms no coupling introduced between the two nullable columns&quot;</li>
+<li>&quot;Live DB migration verified end-to-end via Neon HTTP driver: information_schema confirms is_nullable=YES + probe insert with NULL succeeded + probe row cleaned up&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Phase-N schema regression test: src/lib/db/<strong>phaseN_schema</strong>.test.ts that uses createTestDb() and asserts the DDL change via a successful Drizzle operation (insert/select)&quot;</li>
+<li>&quot;Runbook header comment on non-trivial migrations: prepend a single &#39;-- explanation&#39; line to the generated .sql so the intent is visible at git-log / file-open time without leaving the file&quot;</li>
+</ul>
+<p>requirements-completed: [JL-C4]</p>
+<h1>Metrics</h1>
+<h2>duration: ~20min
+completed: 2026-05-19</h2>
+<h1>Phase 07 Plan 01: Schema migration to nullable linkedin_job_url Summary</h1>
+<p><strong>Dropped NOT NULL on <code>job_leads.linkedin_job_url</code> in schema + Drizzle migration 0009 + live Neon dev DB; exported <code>COMPANY_SCOPE_ROLE_TITLE</code> sentinel; pinned the nullable shape with a PGlite regression test. Plans 07-02 and 07-03 are now unblocked.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~20 min</li>
+<li><strong>Started:</strong> 2026-05-19T19:45Z</li>
+<li><strong>Completed:</strong> 2026-05-19T20:04Z</li>
+<li><strong>Tasks:</strong> 5/5 (Task 4 is a runtime side effect — no source file commit)</li>
+<li><strong>Files modified:</strong> 4</li>
+<li><strong>Files created:</strong> 4</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><code>drizzle/schema/job-leads.ts:19</code> declares <code>linkedinJobUrl</code> as a nullable text column (D-05)</li>
+<li><code>COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; as const</code> exported from <code>@/lib/domain/types</code> (D-10, D-11)</li>
+<li><code>0009_allow_company_scope_job_leads.sql</code> checked in with the single expected ALTER statement and CD-03 runbook header</li>
+<li>Live Neon dev DB now reports <code>is_nullable = &#39;YES&#39;</code> for <code>job_leads.linkedin_job_url</code>; probe insert with NULL succeeded and was cleaned up</li>
+<li><code>src/lib/db/__phase7_schema__.test.ts</code> pins the nullable shape (2 it blocks, both pass on PGlite) — analog of <code>__phase6_indexes__.test.ts</code></li>
+</ul>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically:</p>
+<ol>
+<li><strong>Task 1: Drop NOT NULL on linkedinJobUrl in Drizzle schema</strong> — <code>d1528c6</code> (feat)</li>
+<li><strong>Task 2: Add COMPANY_SCOPE_ROLE_TITLE constant to domain types</strong> — <code>6700df8</code> (feat)</li>
+<li><strong>Task 3: [BLOCKING] Generate Drizzle migration 0009_allow_company_scope_job_leads</strong> — <code>e390dd9</code> (feat)</li>
+<li><strong>Task 4: [BLOCKING] Apply migration to live dev database</strong> — no commit (DB-only side effect; the migration file itself was committed in Task 3)</li>
+<li><strong>Task 5: Schema regression test (D-06) — insert linkedinJobUrl: null via Drizzle</strong> — <code>103a762</code> (test)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<h3>Created</h3>
+<ul>
+<li><code>drizzle/migrations/0009_allow_company_scope_job_leads.sql</code> — single <code>ALTER TABLE &quot;job_leads&quot; ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL;</code> with CD-03 runbook header</li>
+<li><code>drizzle/migrations/meta/0009_snapshot.json</code> — Drizzle Kit snapshot of the post-migration schema</li>
+<li><code>src/lib/db/__phase7_schema__.test.ts</code> — D-06 regression test (2 it blocks, both pass)</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/deferred-items.md</code> — out-of-scope pre-existing issues discovered during verification</li>
+</ul>
+<h3>Modified</h3>
+<ul>
+<li><code>drizzle/schema/job-leads.ts</code> — line 19: dropped <code>.notNull()</code> on <code>linkedinJobUrl</code></li>
+<li><code>drizzle/migrations/meta/_journal.json</code> — Drizzle Kit appended the 0009 entry</li>
+<li><code>src/lib/domain/types.ts</code> — appended <code>COMPANY_SCOPE_ROLE_TITLE</code> constant with docstring after <code>jobLeadStatusValues</code></li>
+<li><code>src/features/job-leads/components/scrape-results.tsx</code> — wrapped &quot;View Job Posting&quot; link in <code>lead.linkedinJobUrl &amp;&amp; (...)</code> null-guard (Rule 3 inline fix for the type error introduced by the schema change)</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 3 - Blocking] Type error in scrape-results.tsx after schema change</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 (post-edit <code>npx tsc --noEmit</code>)</li>
+<li><strong>Issue:</strong> Dropping <code>.notNull()</code> on <code>linkedinJobUrl</code> typed it as <code>string | null</code> instead of <code>string</code>, breaking <code>&lt;a href={lead.linkedinJobUrl}&gt;</code> in <code>src/features/job-leads/components/scrape-results.tsx:34</code> (TS2322 — null not assignable to string | undefined). Pre-Phase-7 builds did not have this error (verified via <code>git stash</code> against <code>main</code>).</li>
+<li><strong>Fix:</strong> Wrapped the <code>&lt;a&gt;</code> element in <code>{lead.linkedinJobUrl &amp;&amp; (...)}</code> — render-only-when-non-null. This aligns with D-12 (Phase 9 UI keys off <code>linkedinJobUrl === null</code>) and is the minimal change to unblock TypeScript.</li>
+<li><strong>Files modified:</strong> <code>src/features/job-leads/components/scrape-results.tsx</code></li>
+<li><strong>Commit:</strong> <code>d1528c6</code> (folded into Task 1 commit; same logical schema-change atomic unit)</li>
+</ul>
+<p>No other deviations. All 5 tasks executed as planned.</p>
+<h2>Authentication Gates</h2>
+<p>None. Migration ran against the local <code>DATABASE_URL</code> in <code>.env.local</code>; no interactive auth.</p>
+<h2>Verification Results</h2>
+<p>All 6 plan-level verification steps run; results below:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Full <code>npx vitest run</code> exits 0</td>
+<td><strong>Partial fail</strong> — new <code>__phase7_schema__.test.ts</code> passes; 5 pre-existing tests in <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> time out at 60 s. Reproduced against <code>main</code> HEAD <code>6ee48f0</code> with Phase 7 files reverted — same 5 timeouts. <strong>Not caused by Phase 7.</strong> Documented in <code>deferred-items.md</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>grep -n &quot;linkedinJobUrl&quot; drizzle/schema/job-leads.ts | grep -c &quot;notNull&quot;</code> returns 0</td>
+<td>PASS — 0 matches</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>grep -c &quot;ALTER COLUMN \&quot;linkedin_job_url\&quot; DROP NOT NULL&quot; drizzle/migrations/0009_allow_company_scope_job_leads.sql</code> returns 1</td>
+<td>PASS — 1 match</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Live DB <code>information_schema.columns.is_nullable = &#39;YES&#39;</code> for <code>job_leads.linkedin_job_url</code></td>
+<td>PASS — confirmed via Neon HTTP query</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>grep -c &quot;COMPANY_SCOPE_ROLE_TITLE&quot; src/lib/domain/types.ts</code> returns 1</td>
+<td>PASS — 1 match</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>npx tsc --noEmit</code> exits 0</td>
+<td><strong>Pre-existing fail</strong> — 4 pre-existing errors in <code>src/features/job-leads/lib/prioritization.ts</code> (TS2802 + 3× TS7006). Confirmed pre-existing via <code>git stash</code> against <code>main</code>. Not introduced by Phase 7. Documented in <code>deferred-items.md</code>. The 1 new error caused by the schema change (in <code>scrape-results.tsx</code>) was auto-fixed under Rule 3 in Task 1&#39;s commit.</td>
+</tr>
+</tbody></table>
+<h2>Deferred Issues</h2>
+<p>See <code>.planning/phases/07-schema-api-for-company-scope-leads/deferred-items.md</code> for:</p>
+<ul>
+<li>Pre-existing TypeScript errors in <code>src/features/job-leads/lib/prioritization.ts</code> (4 errors)</li>
+<li>Pre-existing test timeouts in <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> (5 tests)</li>
+</ul>
+<p>Both confirmed independent of the Phase 7 schema change. <strong>Plan 07-01 work itself is verified correct</strong> — the failing items predate this plan and should be addressed separately.</p>
+<h2>Known Stubs</h2>
+<p>None. This plan delivers schema + a regression test; no UI rendering or data wiring was added that could stub out.</p>
+<h2>Threat Flags</h2>
+<p>None. The plan&#39;s <code>&lt;threat_model&gt;</code> covered every surface modified:</p>
+<ul>
+<li>T-07-01 (Drizzle Kit over-generation) — mitigated by inspecting the emitted SQL; single ALTER as expected</li>
+<li>T-07-02 (db:migrate failure) — accepted; ran cleanly</li>
+<li>T-07-05 (migration audit trail) — mitigated by Drizzle journal + git commit <code>e390dd9</code></li>
+</ul>
+<p>No new security-relevant surface introduced (no new endpoint, no auth change, no trust-boundary change).</p>
+<h2>Self-Check: PASSED</h2>
+<p>Files created — all exist:</p>
+<ul>
+<li><code>drizzle/migrations/0009_allow_company_scope_job_leads.sql</code> — FOUND</li>
+<li><code>drizzle/migrations/meta/0009_snapshot.json</code> — FOUND</li>
+<li><code>src/lib/db/__phase7_schema__.test.ts</code> — FOUND</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/deferred-items.md</code> — FOUND</li>
+</ul>
+<p>Commits referenced — all exist in <code>git log</code>:</p>
+<ul>
+<li><code>d1528c6</code> (Task 1) — FOUND</li>
+<li><code>6700df8</code> (Task 2) — FOUND</li>
+<li><code>e390dd9</code> (Task 3) — FOUND</li>
+<li><code>103a762</code> (Task 5) — FOUND</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
