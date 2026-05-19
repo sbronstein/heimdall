@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 07-schema-api-for-company-scope-leads
+plan: 02
+subsystem: api-route
+tags: [next-js, drizzle, zod, neon, postgres, vitest, api-route, job-leads]
+requirements_addressed: [JL-C3]</p>
+<p>requires:</p>
+<ul>
+<li>&#39;Phase 7 Plan 01: drizzle/schema/job-leads.ts linkedin_job_url NULLABLE&#39;</li>
+<li>&#39;Phase 7 Plan 01: COMPANY_SCOPE_ROLE_TITLE constant exported from src/lib/domain/types.ts&#39;</li>
+<li>&#39;Migration 0009_allow_company_scope_job_leads applied to live DB&#39;
+provides:</li>
+<li>&#39;POST /api/job-leads accepts { companyName, linkedinCompanyUrl? } body shape&#39;</li>
+<li>&#39;Discriminated z.union schema with first-match-wins resolution on ambiguous bodies&#39;</li>
+<li>&#39;Idempotent dedup against in-flight company-scope leads (200 on existing, 201 on new)&#39;</li>
+<li>&#39;Auto-create + linkedinUrl backfill for companies row resolution&#39;</li>
+<li>&#39;job_lead_created timeline event with metadata.scope=company tag&#39;</li>
+<li>&#39;7 POST contract tests pinning the company-scope behavior&#39;
+affects:</li>
+<li>Phase 8 (skill input-parsing) — POSTs to this endpoint with company-scope body</li>
+<li>Phase 9 (UI) — renders rows where linkedinJobUrl === null (per D-12)</li>
+<li>GET /api/job-leads?status=queued queue — company-scope leads now appear here</li>
+</ul>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &#39;discriminated Zod union (z.union) with implicit field-presence narrowing via in-operator&#39;
+    - &#39;idempotent POST with HTTP status code as signal (200 existing vs 201 new)&#39;
+    - &#39;case-insensitive name lookup via sql<code>lower(...) = lower(...)</code> reusing companies_name_idx&#39;
+    - &#39;vi.spyOn for module-level function mocking in route tests (restored via afterEach)&#39;</p>
+<p>key-files:
+  created:
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-02-SUMMARY.md
+  modified:
+    - src/app/api/job-leads/route.ts
+    - src/app/api/job-leads/route.test.ts</p>
+<p>decisions:</p>
+<ul>
+<li>&#39;Used drizzle and(...) helper for the fixed-shape dedup WHERE (matches Anti-Pattern guidance in ARCHITECTURE.md vs. the GET handler&#39;&#39;s sql.join used for dynamic-length conditions).&#39;</li>
+<li>&#39;Inline-first per CD-02/CD-05: company-scope branch lives inline in the route handler, not extracted to src/lib/db/companies.ts (no second caller yet).&#39;</li>
+<li>&#39;Used vi.spyOn(scrapeJobPageModule, &#39;&#39;scrapeJobPage&#39;&#39;) for Test C7 ambiguous-body case, mirroring the pattern at src/app/api/job-leads/[id]/prospects/route.test.ts:341. afterEach calls vi.restoreAllMocks() so the mock never leaks.&#39;</li>
+<li>&#39;Test C7 mock asserts the scraper&#39;&#39;s ScrapedJobData shape (4 fields: companyName, roleTitle, location, companyLinkedinUrl) per the type at src/features/job-leads/lib/scrape-job-page.ts:3-8.&#39;</li>
+</ul>
+<h2>metrics:
+  duration_minutes: ~8
+  tasks_completed: 2
+  files_modified: 2
+  files_created: 1
+  tests_added: 7
+  tests_passing: 10
+  date_completed: 2026-05-19</h2>
+<h1>Phase 7 Plan 02: API route extension for company-scope job leads — Summary</h1>
+<p>POST /api/job-leads now accepts a second body shape <code>{ companyName, linkedinCompanyUrl? }</code> via a discriminated Zod union, resolves the company (case-insensitive name match → auto-create stub on miss → linkedinUrl backfill on match-with-null without overwrite), idempotently dedups against in-flight leads, inserts the new lead with <code>linkedinJobUrl: null</code>, <code>roleTitle: &#39;Company-wide scrape&#39;</code>, <code>status: &#39;queued&#39;</code>, and emits a <code>job_lead_created</code> timeline event tagged with <code>metadata.scope: &#39;company&#39;</code>.</p>
+<h2>What was built</h2>
+<h3>Task 1 — POST handler extension (<code>src/app/api/job-leads/route.ts</code>)</h3>
+<p>Replaced the single-shape Zod schema with a discriminated <code>z.union([...])</code> where the job-URL shape sits first (first-match-wins per D-02). Added a header comment block documenting the union order and ambiguous-body resolution. Wrapped the existing job-URL POST logic (lines 66-127 of the prior implementation) verbatim inside an <code>if (&#39;linkedinJobUrl&#39; in validated)</code> narrow. Added the company-scope branch as the else path:</p>
+<ol>
+<li><p><strong>Company resolution (D-07/D-08/D-09)</strong> — case-insensitive name lookup against <code>companies</code> (hits the Phase 6 <code>companies_name_idx</code>). On match: capture id, backfill <code>linkedinUrl</code> <em>only</em> if existing value is null AND request supplied one (never overwrites). On miss: insert minimum stub <code>{ name, linkedinUrl: linkedinCompanyUrl ?? null }</code> and let schema defaults supply <code>priority/stage/status/remotePolicy</code>.</p>
+</li>
+<li><p><strong>Idempotent dedup (D-13/D-14)</strong> — SELECT for an in-flight company-scope lead using <code>and(eq(jobLeads.companyId, companyId), isNull(jobLeads.linkedinJobUrl), inArray(jobLeads.status, [&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;]), isNull(jobLeads.archivedAt))</code>. If found, return <code>success(existing)</code> (HTTP 200). If not, proceed.</p>
+</li>
+<li><p><strong>Lead insert (D-03/D-10/D-11)</strong> — INSERT with <code>{ linkedinJobUrl: null, roleTitle: COMPANY_SCOPE_ROLE_TITLE, companyName, companyId, status: &#39;queued&#39; }</code>. The <code>&#39;queued&#39;</code> status bypasses the state machine because INSERT is unrestricted (gates apply to PATCH only).</p>
+</li>
+<li><p><strong>Timeline event (D-04)</strong> — <code>await logTimeline({ eventType: &#39;job_lead_created&#39;, title: \</code>Company scrape: ${companyName}`, companyId, metadata: { jobLeadId, scope: &#39;company&#39; } })`. Reuses the existing event type; the metadata flag distinguishes the scrape origin.</p>
+</li>
+<li><p><strong>Response</strong> — <code>created(lead)</code> (HTTP 201).</p>
+</li>
+</ol>
+<p>Imports updated: added <code>and</code> to drizzle-orm, <code>success</code> to <code>@/lib/api/types</code>, <code>COMPANY_SCOPE_ROLE_TITLE</code> from <code>@/lib/domain/types</code>. Outer try/catch preserved verbatim (still maps <code>ZodError → validationError(...)</code>, everything else → <code>serverError(...)</code>).</p>
+<h3>Task 2 — POST test suite (<code>src/app/api/job-leads/route.test.ts</code>)</h3>
+<p>Added a new <code>describe(&#39;POST /api/job-leads (company-scope, D-01..D-15)&#39;, ...)</code> block with 7 scenarios; existing 3 GET tests preserved verbatim. Reused the existing <code>vi.hoisted + Proxy</code> mock for the DB. Added <code>afterEach(() =&gt; vi.restoreAllMocks())</code> so Test C7&#39;s <code>vi.spyOn(scrapeJobPageModule, &#39;scrapeJobPage&#39;)</code> cannot leak into other tests.</p>
+<ul>
+<li><strong>C1</strong>: empty DB → 201 + correct lead shape + companies row + timeline event with <code>metadata.scope=&#39;company&#39;</code></li>
+<li><strong>C2</strong>: pre-seeded in-flight lead → second POST returns 200 with same <code>data.id</code>, exactly 1 <code>job_leads</code> row, 0 timeline events</li>
+<li><strong>C3</strong>: pre-seeded company with <code>linkedinUrl: null</code> → after POST with <code>linkedinCompanyUrl</code>, matched row&#39;s <code>linkedinUrl</code> is set; only 1 companies row exists</li>
+<li><strong>C4</strong>: pre-seeded company with non-null <code>linkedinUrl</code> → after POST with a different <code>linkedinCompanyUrl</code>, matched row&#39;s <code>linkedinUrl</code> remains unchanged (user-curated data protected)</li>
+<li><strong>C5</strong>: no existing company, POST with name only → auto-created stub has <code>linkedinUrl: null</code> and all schema-default fields (<code>stage=&#39;unknown&#39;</code>, <code>priority=&#39;exploring&#39;</code>, <code>remotePolicy=&#39;unknown&#39;</code>, <code>status=&#39;active&#39;</code>)</li>
+<li><strong>C6</strong>: POST <code>{}</code> → 400 envelope; 0 leads, 0 companies, 0 timeline events</li>
+<li><strong>C7</strong>: POST <code>{ linkedinJobUrl, companyName }</code> ambiguous body → resolves to job-URL branch (Test asserts <code>data.companyName === &#39;ScrapedCo&#39;</code> from the mocked scraper, not <code>&#39;AcmeCo&#39;</code> from the request body; also asserts no lead with <code>linkedinJobUrl: null</code> exists)</li>
+</ul>
+<p>All 10 tests pass in ~10s on PGlite.</p>
+<h2>Verification</h2>
+<pre><code>$ npx vitest run src/app/api/job-leads/route.test.ts --reporter=verbose
+ ✓ Test 12, 13, 14 (GET ?status filter — pre-existing, regression-pinned)
+ ✓ Test C1: company-scope create → 201 + lead + companies + timeline
+ ✓ Test C2: dedup → 200 + same id + 1 lead + 0 new timeline events
+ ✓ Test C3: backfill linkedinUrl on match-with-null
+ ✓ Test C4: no-overwrite on existing linkedinUrl
+ ✓ Test C5: auto-create stub with schema defaults
+ ✓ Test C6: Zod reject empty body → 400, 0 rows
+ ✓ Test C7: ambiguous body → job-URL branch wins (D-02)
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Duration  9.82s
+</code></pre>
+<p><code>npx tsc --noEmit</code> is clean apart from the pre-existing 4 errors in <code>src/features/job-leads/lib/prioritization.ts</code> documented in <code>deferred-items.md</code> (<code>TS2802</code> + 3× <code>TS7006</code>). These existed at main HEAD <code>6ee48f0</code> prior to Phase 7 and are out of scope for this plan.</p>
+<p>All Task-1 acceptance greps return their expected counts: <code>z.union(\[</code> = 1, <code>&#39;linkedinJobUrl&#39; in validated</code> = 1, <code>COMPANY_SCOPE_ROLE_TITLE</code> = 2 (import + usage), <code>scope: &#39;company&#39;</code> = 1, <code>and(</code> = 1, <code>isNull(jobLeads.archivedAt)</code> = 2 (GET dedup + company-scope dedup), <code>return success(existing)</code> = 1, <code>scrapeJobPage(validated.linkedinJobUrl)</code> = 1, <code>first-match-wins</code> = 1 (header comment).</p>
+<h2>Deviations from Plan</h2>
+<p>None. Plan executed exactly as written. The implementation matches the code sketches in <code>07-PATTERNS.md §&quot;src/app/api/job-leads/route.ts&quot;</code> and <code>07-CONTEXT.md §specifics</code> line-for-line.</p>
+<p>Test C7&#39;s <code>vi.spyOn</code> mock asserts the full <code>ScrapedJobData</code> shape (4 fields including the <code>companyLinkedinUrl</code> field that the plan&#39;s example omitted) — this was a faithful match of the type at <code>src/features/job-leads/lib/scrape-job-page.ts:3-8</code>, not a deviation. The plan said &quot;synthetic <code>{ companyName, roleTitle, ... }</code>&quot; and the four-field object satisfies the type contract.</p>
+<h2>Known Stubs</h2>
+<p>None. The company-scope branch writes real values to all required columns: <code>linkedinJobUrl: null</code> (intentional sentinel), <code>roleTitle: COMPANY_SCOPE_ROLE_TITLE</code> (deliberate sentinel string per D-10/D-11), <code>status: &#39;queued&#39;</code> (deliberate, drains via existing skill queue). The stub companies row created on no-match (D-08) is also intentional and matches JL-C3 SC #3 verbatim (&quot;created on the fly if absent&quot;).</p>
+<h2>Commits</h2>
+<ul>
+<li><code>68a3a7b</code> — <code>feat(07-02): extend POST /api/job-leads with company-scope branch</code></li>
+<li><code>ac9ecb5</code> — <code>test(07-02): add 7 POST tests for company-scope create + dedup contract</code></li>
+</ul>
+<h2>Hand-off to Phase 8 / Plan 03</h2>
+<ul>
+<li>Plan 03 (the only remaining plan in Phase 7 — <code>[id]/status</code> + <code>[id]/prospects</code> regression coverage for null-URL leads) is unblocked. The route this plan touches is independent of Plan 03&#39;s two route files; no merge conflict expected.</li>
+<li>Phase 8 (skill) can now POST <code>{ companyName, linkedinCompanyUrl? }</code> directly. Re-POST during drain retries is safe (idempotent dedup returns 200 with the same row).</li>
+<li>Phase 9 (UI) gets the structural guarantee that <code>linkedinJobUrl === null</code> ⟺ company-scope lead (D-12). The <code>roleTitle</code> is always populated (<code>&#39;Company-wide scrape&#39;</code>) so no null-guard is needed in the title render path.</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/app/api/job-leads/route.ts</code> — FOUND (modified, hash <code>68a3a7b</code>)</li>
+<li><code>src/app/api/job-leads/route.test.ts</code> — FOUND (modified, hash <code>ac9ecb5</code>)</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-02-SUMMARY.md</code> — FOUND (this file)</li>
+<li>Commit <code>68a3a7b</code> — FOUND (<code>git log --oneline</code> confirms)</li>
+<li>Commit <code>ac9ecb5</code> — FOUND (<code>git log --oneline</code> confirms)</li>
+<li><code>npx vitest run src/app/api/job-leads/route.test.ts</code> exits 0 with 10/10 tests passing — CONFIRMED</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
