@@ -16,7 +16,7 @@ export const jobLeads = pgTable('job_leads', {
   id: uuid('id').defaultRandom().primaryKey(),
 
   // Core
-  linkedinJobUrl: text('linkedin_job_url').notNull(),
+  linkedinJobUrl: text('linkedin_job_url'),
   roleTitle: text('role_title'),
   companyName: text('company_name'),
 

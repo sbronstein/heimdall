@@ -29,17 +29,19 @@ export function ScrapeResults({ lead }: { lead: JobLead }) {
             {scraped.location}
           </div>
         )}
-        <div className='flex gap-2'>
-          <a
-            href={lead.linkedinJobUrl}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='text-primary flex items-center gap-1 text-sm hover:underline'
-          >
-            <IconExternalLink className='h-3.5 w-3.5' />
-            View Job Posting
-          </a>
-        </div>
+        {lead.linkedinJobUrl && (
+          <div className='flex gap-2'>
+            <a
+              href={lead.linkedinJobUrl}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-primary flex items-center gap-1 text-sm hover:underline'
+            >
+              <IconExternalLink className='h-3.5 w-3.5' />
+              View Job Posting
+            </a>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
