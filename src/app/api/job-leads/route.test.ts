@@ -107,6 +107,64 @@ describe('GET /api/job-leads (status filter)', () => {
   });
 });
 
+describe('GET /api/job-leads (companyLinkedinUrl projection — D-13 / CD-04)', () => {
+  beforeEach(async () => {
+    dbRef.current = await createTestDb();
+  });
+
+  it('Test 15 (D-13/CD-04): GET response includes companyLinkedinUrl on both lead types', async () => {
+    // Inline fixture — DRY threshold not met for a single test (CD-04 / 08-PATTERNS.md)
+    const [company] = await dbRef.current!
+      .insert(companies)
+      .values({ name: 'AcmeCo', linkedinUrl: 'https://www.linkedin.com/company/acme' })
+      .returning();
+
+    await dbRef.current!.insert(jobLeads).values([
+      {
+        linkedinJobUrl: null,
+        companyId: company.id,
+        companyName: 'AcmeCo',
+        roleTitle: 'Company-wide scrape',
+        status: 'queued'
+      },
+      {
+        linkedinJobUrl: 'https://www.linkedin.com/jobs/view/100',
+        companyId: company.id,
+        companyName: 'AcmeCo',
+        status: 'queued'
+      }
+    ]);
+
+    const { GET } = await import('@/app/api/job-leads/route');
+
+    const { status, body } = await callRoute(
+      GET as unknown as Parameters<typeof callRoute>[0],
+      { method: 'GET', searchParams: { status: 'queued' } }
+    );
+
+    expect(status).toBe(200);
+    const data = (body as {
+      data: Array<{ linkedinJobUrl: string | null; companyLinkedinUrl: string | null }>;
+    }).data;
+    expect(data).toHaveLength(2);
+
+    // Both rows must include companyLinkedinUrl (both joined to the same company)
+    for (const row of data) {
+      expect(row).toHaveProperty('companyLinkedinUrl');
+      expect(row.companyLinkedinUrl).toBe('https://www.linkedin.com/company/acme');
+    }
+
+    // Verify the two leads have different linkedinJobUrl shapes (one null, one URL)
+    const sortedByLinkedinJobUrl = [...data].sort((a, b) => {
+      if (a.linkedinJobUrl === null) return -1;
+      if (b.linkedinJobUrl === null) return 1;
+      return 0;
+    });
+    expect(sortedByLinkedinJobUrl[0].linkedinJobUrl).toBeNull();
+    expect(sortedByLinkedinJobUrl[1].linkedinJobUrl).toMatch(/\/jobs\/view\//);
+  });
+});
+
 describe('POST /api/job-leads (company-scope, D-01..D-15)', () => {
   beforeEach(async () => {
     dbRef.current = await createTestDb();
