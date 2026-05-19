@@ -215,6 +215,13 @@ export const jobLeadStatusValues = [
   'failed'
 ] as const;
 
+/**
+ * Reserved roleTitle for company-scope job leads (no source job URL).
+ * Convention: only the company-scope branch of POST /api/job-leads writes this.
+ * Phase 7 D-10/D-11. Phase 9 UI keys off `linkedinJobUrl === null`, not this sentinel.
+ */
+export const COMPANY_SCOPE_ROLE_TITLE = 'Company-wide scrape' as const;
+
 export const seniorityLevelValues = [
   'c_suite',
   'vp',
