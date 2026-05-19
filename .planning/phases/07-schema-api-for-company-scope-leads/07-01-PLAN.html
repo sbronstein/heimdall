@@ -69,11 +69,13 @@ tags: [drizzle, schema, migration, neon, postgres, zod]</li>
 </ul>
 <p>must_haves:
   truths:
-    - &quot;Drizzle schema for job_leads has linkedinJobUrl as a nullable text column with no .notNull() chain&quot;
-    - &quot;A new Drizzle migration file (0009_allow_company_scope_job_leads.sql) exists and contains &#39;ALTER TABLE &quot;job_leads&quot; ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL&#39;&quot;
-    - &quot;The live dev database accepts inserts into job_leads with linkedin_job_url IS NULL after migration is applied&quot;
-    - &quot;COMPANY_SCOPE_ROLE_TITLE constant &#39;Company-wide scrape&#39; is exported from src/lib/domain/types.ts&quot;
-    - &quot;Vitest regression test inserts a job_leads row with linkedinJobUrl: null via Drizzle, reads it back, and the assertion passes&quot;
+    - &quot;D-05: Drizzle schema for job_leads has linkedinJobUrl as a nullable text column with no .notNull() chain — Edit drizzle/schema/job-leads.ts line 19 to drop .notNull()&quot;
+    - &quot;D-05: A new Drizzle migration file (0009_allow_company_scope_job_leads.sql) exists and contains &#39;ALTER TABLE &quot;job_leads&quot; ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL&#39;&quot;
+    - &quot;D-05: The live dev database accepts inserts into job_leads with linkedin_job_url IS NULL after npm run db:migrate is applied&quot;
+    - &quot;D-10, D-11: COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; constant is exported from src/lib/domain/types.ts as the sentinel for company-scope leads (Phase 9 UI keys off linkedinJobUrl === null per D-12, not this sentinel)&quot;
+    - &quot;D-06: Vitest regression test in src/lib/db/<strong>phase7_schema</strong>.test.ts inserts a job_leads row with linkedinJobUrl: null via Drizzle, reads it back, and the assertion passes — pins the nullable shape against regression&quot;
+    - &quot;CD-01: The generated migration SQL is a single ALTER COLUMN DROP NOT NULL statement; hand-edit only if Drizzle Kit emits something weirder (table recreation, unrelated touches)&quot;
+    - &quot;CD-03: The migration file is prepended with a one-line runbook header comment explaining the constraint relaxation&quot;
   artifacts:
     - path: &quot;drizzle/schema/job-leads.ts&quot;
       provides: &quot;nullable linkedinJobUrl column&quot;

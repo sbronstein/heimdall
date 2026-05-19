@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 7: Schema + API for Company-Scope Leads - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-05-19
+<strong>Files analyzed:</strong> 8 (4 source modifications/additions, 4 test files)
+<strong>Analogs found:</strong> 8 / 8</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>New/Modified</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/job-leads.ts</code></td>
+<td>modify</td>
+<td>schema (table definition)</td>
+<td>n/a (DDL)</td>
+<td><code>drizzle/schema/companies.ts</code> (already-nullable column)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/0009_allow_company_scope_job_leads.sql</code></td>
+<td>new</td>
+<td>migration</td>
+<td>n/a (DDL)</td>
+<td><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code></td>
+<td>exact (single <code>ALTER</code> shape)</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/route.ts</code></td>
+<td>modify</td>
+<td>API route (POST)</td>
+<td>request-response</td>
+<td>self (existing job-URL branch, lines 66-134)</td>
+<td>exact (extension of same handler)</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code></td>
+<td>modify</td>
+<td>domain constants</td>
+<td>n/a (compile-time)</td>
+<td>existing <code>*Values as const</code> exports in same file</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/route.test.ts</code></td>
+<td>extend</td>
+<td>test (route)</td>
+<td>request-response</td>
+<td>self (existing <code>GET ?status=queued</code> tests) + <code>[id]/status/route.test.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/lib/db/__phase7_schema__.test.ts</code></td>
+<td>new</td>
+<td>test (schema regression)</td>
+<td>DDL introspection</td>
+<td><code>src/lib/db/__phase6_indexes__.test.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/status/route.test.ts</code></td>
+<td>extend</td>
+<td>test (route)</td>
+<td>request-response</td>
+<td>self (Tests 1-8 in same file)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/prospects/route.test.ts</code></td>
+<td>extend</td>
+<td>test (route)</td>
+<td>request-response</td>
+<td>self (Test 1, Test 1b in same file)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td>optional extend</td>
+<td>test fixture helper</td>
+<td>n/a</td>
+<td>self (<code>createTestDb</code> function)</td>
+<td>exact</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>drizzle/schema/job-leads.ts</code> (schema, DDL)</h3>
+<p><strong>Analog:</strong> <code>drizzle/schema/companies.ts:25</code> (column declared nullable — no <code>.notNull()</code>)</p>
+<p><strong>Current state</strong> (<code>drizzle/schema/job-leads.ts:18-19</code>):</p>
+<pre><code class="language-typescript">// Core
+linkedinJobUrl: text(&#39;linkedin_job_url&#39;).notNull(),
+roleTitle: text(&#39;role_title&#39;),
+</code></pre>
+<p><strong>Pattern to apply</strong> — drop <code>.notNull()</code>, matching the nullable-text shape of <code>companies.linkedinUrl</code> (<code>drizzle/schema/companies.ts:25</code>):</p>
+<pre><code class="language-typescript">linkedinUrl: text(&#39;linkedin_url&#39;),
+</code></pre>
+<p><strong>Resulting line 19</strong> (D-05):</p>
+<pre><code class="language-typescript">linkedinJobUrl: text(&#39;linkedin_job_url&#39;),
+</code></pre>
+<p>No other column changes. <code>roleTitle</code> (line 20) and <code>companyName</code> (line 21) are already nullable.</p>
+<hr>
+<h3><code>drizzle/migrations/0009_allow_company_scope_job_leads.sql</code> (migration, DDL)</h3>
+<p><strong>Analog:</strong> <code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> (single-table <code>ALTER</code> migration)</p>
+<p><strong>Pattern from analog</strong> (the entire file is 4 lines — Drizzle Kit&#39;s standard <code>ALTER</code> output with <code>--&gt; statement-breakpoint</code> separators):</p>
+<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;queued&#39; BEFORE &#39;searching&#39;;--&gt; statement-breakpoint
+ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;failed&#39;;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error&quot; text;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error_at&quot; timestamp with time zone;
+</code></pre>
+<p><strong>Expected output for Phase 7</strong> (CD-01):</p>
+<pre><code class="language-sql">ALTER TABLE &quot;job_leads&quot; ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL;
+</code></pre>
+<p><strong>Generation command</strong> (CD-01):</p>
+<pre><code class="language-bash">npm run db:generate -- --name=allow_company_scope_job_leads
+</code></pre>
+<p><strong>Optional one-line header comment</strong> (CD-03):</p>
+<pre><code class="language-sql">-- Allow company-scope job leads: drop NOT NULL on linkedin_job_url so synthetic leads created from a company name/URL can exist
+</code></pre>
+<p>Also need to verify <code>drizzle/migrations/meta/_journal.json</code> is appended with the <code>0009</code> entry — Drizzle Kit handles this automatically; planner just verifies.</p>
+<hr>
+<h3><code>src/app/api/job-leads/route.ts</code> (API route, request-response)</h3>
+<p><strong>Analog:</strong> Itself — the existing POST handler at <code>src/app/api/job-leads/route.ts:66-134</code> is the closest analog, since this phase extends the same handler in place.</p>
+<p><strong>Imports pattern</strong> (lines 1-11) — extend with <code>and</code>, <code>isNull</code>, <code>inArray</code> (already imported), and <code>success</code> (currently only <code>created</code> and <code>paginated</code>):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { jobLeads } from &#39;../../../../drizzle/schema&#39;;
+import { desc, inArray, isNull, lt, sql, eq } from &#39;drizzle-orm&#39;;
+import { created, paginated } from &#39;@/lib/api/types&#39;;
+import { serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { parseArrayParam, parseCursor, parseLimit } from &#39;@/lib/api/filters&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+import { scrapeJobPage } from &#39;@/features/job-leads/lib/scrape-job-page&#39;;
+import { companies } from &#39;../../../../drizzle/schema&#39;;
+import { jobLeadStatusValues } from &#39;@/lib/domain/types&#39;;
+</code></pre>
+<p><strong>Required additions for Phase 7:</strong></p>
+<ul>
+<li><code>and</code> to <code>drizzle-orm</code> import (for D-13&#39;s compound WHERE)</li>
+<li><code>success</code> to <code>@/lib/api/types</code> import (for D-13&#39;s 200 response on dedup)</li>
+<li><code>COMPANY_SCOPE_ROLE_TITLE</code> from <code>@/lib/domain/types</code></li>
+</ul>
+<p><strong>Current Zod schema</strong> (line 13-15) — to be replaced with discriminated union:</p>
+<pre><code class="language-typescript">const createJobLeadSchema = z.object({
+  linkedinJobUrl: z.string().url()
+});
+</code></pre>
+<p><strong>Discriminated Zod union pattern</strong> (D-01, D-02 — sketch from CONTEXT §specifics):</p>
+<pre><code class="language-typescript">const createJobLeadSchema = z.union([
+  z.object({ linkedinJobUrl: z.string().url() }),
+  z.object({
+    companyName: z.string().min(1).max(200),
+    linkedinCompanyUrl: z.string().url().optional()
+  })
+]);
+type CreateJobLeadInput = z.infer&lt;typeof createJobLeadSchema&gt;;
+// Narrow at use site: `if (&#39;linkedinJobUrl&#39; in validated) { ...existing job-URL branch... }`
+</code></pre>
+<p><strong>Existing job-URL POST flow</strong> (lines 66-134) — kept verbatim, wrapped in the <code>if (&#39;linkedinJobUrl&#39; in validated)</code> branch.</p>
+<p><strong>Existing company-match pattern</strong> (lines 87-94 — reused for D-07 verbatim, including the <code>sql\</code>lower(...) = lower(...)`` template tag):</p>
+<pre><code class="language-typescript">let companyId: string | null = null;
+if (scraped.companyName) {
+  const [match] = await db
+    .select()
+    .from(companies)
+    .where(
+      sql`lower(${companies.name}) = lower(${scraped.companyName})`
+    )
+    .limit(1);
+  if (match) companyId = match.id;
+}
+</code></pre>
+<p><strong>Existing timeline-after-write pattern</strong> (lines 110-115 — reused for D-04 with <code>metadata.scope: &#39;company&#39;</code>):</p>
+<pre><code class="language-typescript">await logTimeline({
+  eventType: &#39;job_lead_created&#39;,
+  title: `New job lead: ${scraped.roleTitle || &#39;Unknown Role&#39;} at ${scraped.companyName || &#39;Unknown Company&#39;}`,
+  companyId: companyId || undefined,
+  metadata: { jobLeadId: lead.id }
+});
+</code></pre>
+<p><strong>Existing error handling pattern</strong> (lines 128-133 — kept verbatim wrapping the whole handler):</p>
+<pre><code class="language-typescript">} catch (err) {
+  if (err instanceof z.ZodError) {
+    return validationError(err.issues[0].message);
+  }
+  return serverError(err);
+}
+</code></pre>
+<p><strong>Company-scope branch — full sketch from CONTEXT §specifics (apply after <code>if (&#39;linkedinJobUrl&#39; in validated)</code> returns false):</strong></p>
+<pre><code class="language-typescript">// Lookup-or-create company (D-07, D-08, D-09)
+const [match] = await db
+  .select()
+  .from(companies)
+  .where(sql`lower(${companies.name}) = lower(${validated.companyName})`)
+  .limit(1);
+
+let companyId: string;
+if (match) {
+  companyId = match.id;
+  // D-09: backfill linkedinUrl if missing and we have one
+  if (match.linkedinUrl == null &amp;&amp; validated.linkedinCompanyUrl) {
+    await db
+      .update(companies)
+      .set({ linkedinUrl: validated.linkedinCompanyUrl, updatedAt: new Date() })
+      .where(eq(companies.id, match.id));
+  }
+} else {
+  // D-08: auto-create stub
+  const [createdCompany] = await db
+    .insert(companies)
+    .values({
+      name: validated.companyName,
+      linkedinUrl: validated.linkedinCompanyUrl ?? null
+      // priority, stage, status, remotePolicy default via schema
+    })
+    .returning();
+  companyId = createdCompany.id;
+}
+
+// Idempotent dedup check (D-13, D-14)
+const [existing] = await db
+  .select()
+  .from(jobLeads)
+  .where(
+    and(
+      eq(jobLeads.companyId, companyId),
+      isNull(jobLeads.linkedinJobUrl),
+      inArray(jobLeads.status, [&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;]),
+      isNull(jobLeads.archivedAt)
+    )
+  )
+  .limit(1);
+if (existing) return success(existing); // 200, not 201
+
+// Insert new lead (D-03, D-10, D-11)
+const [lead] = await db
+  .insert(jobLeads)
+  .values({
+    linkedinJobUrl: null,
+    roleTitle: COMPANY_SCOPE_ROLE_TITLE,
+    companyName: validated.companyName,
+    companyId,
+    status: &#39;queued&#39;
+  })
+  .returning();
+
+// Timeline (D-04 — reuse job_lead_created with scope metadata)
+await logTimeline({
+  eventType: &#39;job_lead_created&#39;,
+  title: `Company scrape: ${validated.companyName}`,
+  companyId,
+  metadata: { jobLeadId: lead.id, scope: &#39;company&#39; }
+});
+
+return created(lead);
+</code></pre>
+<p><strong>Header comment</strong> (D-02 — document first-match-wins on Zod union for ambiguous bodies):</p>
+<pre><code class="language-typescript">// POST /api/job-leads
+//
+// Accepts a discriminated body (Zod z.union — first-match-wins):
+//   1. { linkedinJobUrl }                            — existing job-URL flow (scrapes immediately)
+//   2. { companyName, linkedinCompanyUrl? }          — company-scope flow (D-01..D-04, D-07..D-09, D-13..D-15)
+//
+// If a body matches BOTH shapes (e.g., both linkedinJobUrl and companyName present),
+// the union resolves to shape (1) — the job-URL branch — because z.union returns
+// the first-successful parse.
+</code></pre>
+<hr>
+<h3><code>src/lib/domain/types.ts</code> (constants)</h3>
+<p><strong>Analog:</strong> Existing <code>*Values as const</code> arrays in the same file (e.g., <code>jobLeadStatusValues</code> at lines 205-216).</p>
+<p><strong>Pattern from analog</strong> (style — <code>export const NAME = ... as const;</code>):</p>
+<pre><code class="language-typescript">export const jobLeadStatusValues = [
+  &#39;pending&#39;,
+  &#39;scraping&#39;,
+  &#39;scraped&#39;,
+  &#39;queued&#39;,
+  &#39;searching&#39;,
+  &#39;found&#39;,
+  &#39;ready&#39;,
+  &#39;actioned&#39;,
+  &#39;archived&#39;,
+  &#39;failed&#39;
+] as const;
+</code></pre>
+<p><strong>Phase 7 addition</strong> (D-11 — from CONTEXT §specifics, place near the <code>*Values</code> block):</p>
+<pre><code class="language-typescript">/**
+ * Reserved roleTitle for company-scope job leads (no source job URL).
+ * Convention: only the company-scope branch of POST /api/job-leads writes this.
+ * Phase 7 D-10/D-11. Phase 9 UI keys off `linkedinJobUrl === null`, not this sentinel.
+ */
+export const COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; as const;
+</code></pre>
+<p>No type alias needed (single literal string, not a union). Convention-only — no runtime enforcement (D-11).</p>
+<hr>
+<h3><code>src/lib/db/__phase7_schema__.test.ts</code> (new — schema regression test)</h3>
+<p><strong>Analog:</strong> <code>src/lib/db/__phase6_indexes__.test.ts</code> (sibling phase-N schema regression file)</p>
+<p><strong>Imports pattern</strong> (<code>__phase6_indexes__.test.ts:1-2</code>):</p>
+<pre><code class="language-typescript">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { sql } from &#39;drizzle-orm&#39;;
+</code></pre>
+<p><strong>describe block pattern</strong> (lines 4-22):</p>
+<pre><code class="language-typescript">describe(&#39;Phase 6 schema indexes regression (D-20)&#39;, () =&gt; {
+  it(&#39;migrations create the 5 hot-path indexes from D-13&#39;, async () =&gt; {
+    const db = await createTestDb();
+    const result = await db.execute(sql`
+      SELECT indexname, tablename, indexdef
+      FROM pg_indexes
+      WHERE schemaname = &#39;public&#39;
+        AND tablename IN (&#39;contacts&#39;, &#39;companies&#39;)
+    `);
+    const rows = result.rows as Array&lt;{ indexname: string; tablename: string; indexdef: string }&gt;;
+    const indexNames = rows.map((r) =&gt; r.indexname);
+    expect(indexNames).toEqual(expect.arrayContaining([
+      &#39;contacts_archived_at_idx&#39;,
+      // ...
+    ]));
+  });
+});
+</code></pre>
+<p><strong>Pattern to apply for Phase 7</strong> (D-06 — insert + read-back assertion for <code>linkedinJobUrl: null</code>):</p>
+<pre><code class="language-typescript">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { jobLeads, companies } from &#39;../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+
+describe(&#39;Phase 7 schema regression (D-06)&#39;, () =&gt; {
+  it(&#39;job_leads accepts linkedinJobUrl: null after 0009 migration&#39;, async () =&gt; {
+    const db = await createTestDb();
+
+    // Seed a company so the FK is valid
+    const [company] = await db
+      .insert(companies)
+      .values({ name: &#39;TestCo&#39; })
+      .returning();
+
+    // INSERT with linkedinJobUrl: null — the constraint relaxation under test
+    const [inserted] = await db
+      .insert(jobLeads)
+      .values({
+        linkedinJobUrl: null,
+        roleTitle: &#39;Company-wide scrape&#39;,
+        companyName: &#39;TestCo&#39;,
+        companyId: company.id,
+        status: &#39;queued&#39;
+      })
+      .returning();
+
+    expect(inserted.linkedinJobUrl).toBeNull();
+    expect(inserted.status).toBe(&#39;queued&#39;);
+
+    // Read back
+    const [readBack] = await db
+      .select()
+      .from(jobLeads)
+      .where(eq(jobLeads.id, inserted.id));
+
+    expect(readBack.linkedinJobUrl).toBeNull();
+    expect(readBack.roleTitle).toBe(&#39;Company-wide scrape&#39;);
+  });
+});
+</code></pre>
+<p><strong>Note:</strong> The <code>__phase6_indexes__.test.ts</code> analog uses raw SQL introspection (querying <code>pg_indexes</code>). Phase 7&#39;s test uses the higher-level Drizzle insert+select pattern because the constraint under test is column nullability, which is easier to verify via a successful insert than by querying <code>information_schema.columns</code>. Both patterns are valid; the planner picks the simpler one.</p>
+<hr>
+<h3><code>src/app/api/job-leads/route.test.ts</code> (extend — POST tests)</h3>
+<p><strong>Analog:</strong> Itself (existing <code>GET /api/job-leads?status=queued</code> tests at lines 19-102) for fixture setup pattern, and <code>[id]/status/route.test.ts</code> for the route-test scaffold (<code>vi.hoisted</code>, <code>vi.mock(&#39;@/lib/db&#39;)</code> Proxy pattern).</p>
+<p><strong>Imports pattern</strong> (lines 1-3 of <code>route.test.ts</code>, mirrored from <code>[id]/status/route.test.ts:1-10</code>):</p>
+<pre><code class="language-typescript">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { callRoute } from &#39;@/test-utils/call-route&#39;;
+import { companies, jobLeads } from &#39;../../../../drizzle/schema&#39;;
+</code></pre>
+<p><strong>Hoisted mock pattern</strong> (lines 5-17 — verbatim from existing tests):</p>
+<pre><code class="language-typescript">const { dbRef } = vi.hoisted(() =&gt; ({
+  dbRef: { current: null as Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt; | null }
+}));
+
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({
+  db: new Proxy(
+    {},
+    {
+      get: (_: object, prop: string | symbol) =&gt;
+        (dbRef.current as unknown as Record&lt;string | symbol, unknown&gt;)[prop]
+    }
+  )
+}));
+</code></pre>
+<p><strong>beforeEach + fixture pattern</strong> (lines 22-51 — adapted from GET tests but tailored to POST):</p>
+<pre><code class="language-typescript">beforeEach(async () =&gt; {
+  dbRef.current = await createTestDb();
+  // No fixtures needed — POST creates the rows
+});
+</code></pre>
+<p>For the dedup test, seed an in-flight company-scope lead first:</p>
+<pre><code class="language-typescript">const [company] = await dbRef.current.insert(companies).values({ name: &#39;AcmeCo&#39; }).returning();
+await dbRef.current.insert(jobLeads).values({
+  linkedinJobUrl: null,
+  companyId: company.id,
+  companyName: &#39;AcmeCo&#39;,
+  roleTitle: &#39;Company-wide scrape&#39;,
+  status: &#39;queued&#39;
+});
+</code></pre>
+<p><strong>callRoute POST pattern</strong> (from <code>[id]/status/route.test.ts:50-60</code>):</p>
+<pre><code class="language-typescript">const { POST } = await import(&#39;@/app/api/job-leads/route&#39;);
+
+const { status, body } = await callRoute(
+  POST as unknown as Parameters&lt;typeof callRoute&gt;[0],
+  {
+    method: &#39;POST&#39;,
+    body: { companyName: &#39;AcmeCo&#39;, linkedinCompanyUrl: &#39;https://linkedin.com/company/acme&#39; }
+  }
+);
+</code></pre>
+<p><strong>Assertion pattern</strong> (from existing tests):</p>
+<pre><code class="language-typescript">expect(status).toBe(201);  // 200 for dedup path
+expect(body).toMatchObject({
+  success: true,
+  data: expect.objectContaining({
+    linkedinJobUrl: null,
+    roleTitle: &#39;Company-wide scrape&#39;,
+    status: &#39;queued&#39;
+  })
+});
+</code></pre>
+<p><strong>Timeline-verification pattern</strong> (from <code>[id]/status/route.test.ts:71-74</code>):</p>
+<pre><code class="language-typescript">const rows = await dbRef.current!.select().from(timelineEvents);
+expect(rows).toHaveLength(1);
+expect(rows[0].eventType).toBe(&#39;job_lead_created&#39;);
+const meta = rows[0].metadata as Record&lt;string, unknown&gt;;
+expect(meta.scope).toBe(&#39;company&#39;);
+</code></pre>
+<p><strong>Tests to add</strong> (CONTEXT §specifics):</p>
+<ul>
+<li>(a) company-scope create path — new row, returns 201</li>
+<li>(b) company-scope dedup path — in-flight match returns 200, no duplicate row inserted</li>
+<li>(c) backfill of <code>companies.linkedinUrl</code> on existing-match-with-null path</li>
+<li>(d) auto-create of stub company on no-match path</li>
+<li>(e) discriminated Zod rejection for empty body / both fields present (D-02 — verify first-match-wins resolves both-present to the job-URL branch)</li>
+</ul>
+<p><strong>Caveat for tests covering the existing job-URL branch:</strong> <code>scrapeJobPage</code> performs a real HTTP fetch. Existing POST tests may already mock it; the new company-scope tests do NOT call <code>scrapeJobPage</code> so no mock is needed for them. The &quot;both fields present&quot; Zod resolution test (e) DOES hit the job-URL branch — planner decides whether to <code>vi.mock(&#39;@/features/job-leads/lib/scrape-job-page&#39;)</code> or skip the scrape verification and just assert the route doesn&#39;t take the company-scope path.</p>
+<hr>
+<h3><code>src/app/api/job-leads/[id]/status/route.test.ts</code> (extend — D-17 regression)</h3>
+<p><strong>Analog:</strong> Itself (Tests 1-8 already in the file).</p>
+<p><strong>beforeEach fixture pattern</strong> (lines 28-48 — extend or duplicate with a null-URL variant):</p>
+<pre><code class="language-typescript">beforeEach(async () =&gt; {
+  dbRef.current = await createTestDb();
+
+  const [company] = await dbRef.current
+    .insert(companies)
+    .values({ name: &#39;AcmeCo&#39; })
+    .returning();
+  companyId = company.id;
+
+  const [lead] = await dbRef.current
+    .insert(jobLeads)
+    .values({
+      linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/4001&#39;,
+      companyId,
+      companyName: &#39;AcmeCo&#39;,
+      roleTitle: &#39;VP Data&#39;,
+      status: &#39;scraped&#39;
+    })
+    .returning();
+  leadId = lead.id;
+});
+</code></pre>
+<p><strong>Pattern to apply for Phase 7 D-17</strong> — add a new <code>describe</code> block (or extend the existing one) with a fixture using <code>linkedinJobUrl: null</code>:</p>
+<pre><code class="language-typescript">describe(&#39;PATCH /api/job-leads/[id]/status — company-scope leads (D-17)&#39;, () =&gt; {
+  let leadId: string;
+  let companyId: string;
+
+  beforeEach(async () =&gt; {
+    dbRef.current = await createTestDb();
+
+    const [company] = await dbRef.current
+      .insert(companies)
+      .values({ name: &#39;AcmeCo&#39; })
+      .returning();
+    companyId = company.id;
+
+    const [lead] = await dbRef.current
+      .insert(jobLeads)
+      .values({
+        linkedinJobUrl: null,                       // company-scope shape
+        roleTitle: &#39;Company-wide scrape&#39;,
+        companyId,
+        companyName: &#39;AcmeCo&#39;,
+        status: &#39;queued&#39;                            // start at queued
+      })
+      .returning();
+    leadId = lead.id;
+  });
+
+  it(&#39;queued -&gt; searching -&gt; found traversal works on a null-URL lead&#39;, async () =&gt; {
+    // Same callRoute pattern as Tests 1-4 — verifies the PATCH handler
+    // is input-shape agnostic w.r.t. linkedinJobUrl.
+  });
+});
+</code></pre>
+<p>The state-machine-traversal pattern is exactly what Tests 1-4 already exercise; the only delta is the fixture&#39;s <code>linkedinJobUrl: null</code>.</p>
+<hr>
+<h3><code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> (extend — D-17 regression)</h3>
+<p><strong>Analog:</strong> Itself (Tests 1, 1b already in the file).</p>
+<p><strong>beforeEach pattern</strong> (lines 36-56 — fixture creates a <code>searching</code> lead, since prospects route requires <code>status = &#39;searching&#39;</code>):</p>
+<pre><code class="language-typescript">const [lead] = await dbRef.current
+  .insert(jobLeads)
+  .values({
+    linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/4001&#39;,
+    companyId,
+    companyName: &#39;AcmeCo&#39;,
+    roleTitle: &#39;VP Data&#39;,
+    status: &#39;searching&#39;
+  })
+  .returning();
+</code></pre>
+<p><strong>Pattern to apply for Phase 7 D-17</strong> — new describe block with the same shape but <code>linkedinJobUrl: null</code>:</p>
+<pre><code class="language-typescript">describe(&#39;POST /api/job-leads/[id]/prospects — company-scope leads (D-17)&#39;, () =&gt; {
+  let leadId: string;
+  let companyId: string;
+
+  beforeEach(async () =&gt; {
+    dbRef.current = await createTestDb();
+    const [company] = await dbRef.current
+      .insert(companies)
+      .values({ name: &#39;AcmeCo&#39; })
+      .returning();
+    companyId = company.id;
+    const [lead] = await dbRef.current
+      .insert(jobLeads)
+      .values({
+        linkedinJobUrl: null,                       // company-scope shape
+        roleTitle: &#39;Company-wide scrape&#39;,
+        companyId,
+        companyName: &#39;AcmeCo&#39;,
+        status: &#39;searching&#39;                         // ready for prospects insert
+      })
+      .returning();
+    leadId = lead.id;
+  });
+
+  it(&#39;bulk-prospects + status flip works on a null-URL lead&#39;, async () =&gt; {
+    // Reuse Test 1&#39;s prospect array shape and assertion pattern verbatim
+  });
+});
+</code></pre>
+<p>The bulk-insert + status-flip assertion pattern is identical to Test 1 (lines 99-130); only the fixture changes.</p>
+<hr>
+<h3><code>src/test-utils/pglite.ts</code> (optional — CD-04 fixture helper)</h3>
+<p><strong>Analog:</strong> Itself — the existing <code>createTestDb</code> function (lines 14-55).</p>
+<p><strong>Existing export pattern</strong> (line 14):</p>
+<pre><code class="language-typescript">export async function createTestDb() { ... }
+</code></pre>
+<p><strong>Pattern to apply (only if more than one test reuses the fixture — DRY threshold per CD-04):</strong></p>
+<pre><code class="language-typescript">import { jobLeads } from &#39;../../drizzle/schema&#39;;
+import { COMPANY_SCOPE_ROLE_TITLE } from &#39;@/lib/domain/types&#39;;
+
+/**
+ * Phase 7 D-17 / CD-04: minimal in-flight company-scope lead fixture.
+ * Use when a test needs a job_leads row with linkedinJobUrl: null but doesn&#39;t
+ * care about the exact status (caller passes status).
+ */
+export async function createCompanyScopeLead(
+  db: Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt;,
+  opts: { companyId: string; status?: &#39;queued&#39; | &#39;searching&#39; | &#39;failed&#39; }
+) {
+  const [lead] = await db
+    .insert(jobLeads)
+    .values({
+      linkedinJobUrl: null,
+      roleTitle: COMPANY_SCOPE_ROLE_TITLE,
+      companyId: opts.companyId,
+      status: opts.status ?? &#39;queued&#39;
+    })
+    .returning();
+  return lead;
+}
+</code></pre>
+<p><strong>Decision rule from CD-04:</strong> extract only if 2+ tests use the same fixture. Inline first; refactor on the second test.</p>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>Response Envelope (200 vs 201)</h3>
+<p><strong>Source:</strong> <code>src/lib/api/types.ts:12-20</code>
+<strong>Apply to:</strong> All API route returns</p>
+<pre><code class="language-typescript">export function success&lt;T&gt;(data: T, status = 200): Response {
+  return Response.json({ success: true, data } satisfies ApiResponse&lt;T&gt;, { status });
+}
+
+export function created&lt;T&gt;(data: T): Response {
+  return success(data, 201);
+}
+</code></pre>
+<p>Phase 7 D-13 uses both: <code>success(lead)</code> for the dedup-existing path (200), <code>created(lead)</code> for the new-row path (201).</p>
+<hr>
+<h3>Zod Validation Error Mapping</h3>
+<p><strong>Source:</strong> <code>src/app/api/job-leads/route.ts:128-133</code> + <code>src/lib/api/errors.ts:8-13</code>
+<strong>Apply to:</strong> All POST/PATCH handlers</p>
+<pre><code class="language-typescript">} catch (err) {
+  if (err instanceof z.ZodError) {
+    return validationError(err.issues[0].message);
+  }
+  return serverError(err);
+}
+</code></pre>
+<p>Phase 7&#39;s extended POST handler keeps this verbatim.</p>
+<hr>
+<h3>Hoisted <code>vi.mock(&#39;@/lib/db&#39;)</code> Proxy Pattern</h3>
+<p><strong>Source:</strong> <code>src/app/api/job-leads/[id]/status/route.test.ts:10-22</code> (used in every API route test in the codebase)
+<strong>Apply to:</strong> All new/extended API route tests in Phase 7</p>
+<pre><code class="language-typescript">const { dbRef } = vi.hoisted(() =&gt; ({
+  dbRef: { current: null as Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt; | null }
+}));
+
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({
+  db: new Proxy(
+    {},
+    {
+      get: (_: object, prop: string | symbol) =&gt;
+        (dbRef.current as unknown as Record&lt;string | symbol, unknown&gt;)[prop]
+    }
+  )
+}));
+</code></pre>
+<p>This pattern is mandated by Phase 2&#39;s D-05/D-07 / 02-03-PLAN — non-negotiable for all route tests.</p>
+<hr>
+<h3>Dynamic Route Import in Tests</h3>
+<p><strong>Source:</strong> <code>src/app/api/job-leads/[id]/status/route.test.ts:51, 73, 83</code> (every test imports the handler dynamically inside the <code>it</code> block)
+<strong>Apply to:</strong> All Phase 7 route tests</p>
+<pre><code class="language-typescript">const { POST } = await import(&#39;@/app/api/job-leads/route&#39;);
+const { PATCH } = await import(&#39;@/app/api/job-leads/[id]/status/route&#39;);
+</code></pre>
+<p>Required because the <code>vi.mock(&#39;@/lib/db&#39;)</code> hoist must be applied before the route module&#39;s top-level <code>import { db } from &#39;@/lib/db&#39;</code> runs.</p>
+<hr>
+<h3>Timeline-After-Write Invariant</h3>
+<p><strong>Source:</strong> <code>src/lib/db/timeline.ts:17-22</code> + every API route mutation
+<strong>Apply to:</strong> Every write in Phase 7&#39;s company-scope branch</p>
+<pre><code class="language-typescript">export async function logTimeline(input: TimelineInput) {
+  return db.insert(timelineEvents).values({
+    ...input,
+    occurredAt: new Date()
+  });
+}
+</code></pre>
+<p>Phase 7 D-04 emits <code>job_lead_created</code> with <code>metadata.scope: &#39;company&#39;</code> — never skip the timeline write.</p>
+<hr>
+<h3>Drizzle Multi-Condition WHERE via <code>and(...)</code></h3>
+<p><strong>Source:</strong> Codebase convention (<code>drizzle-orm</code> re-exports <code>and</code>, <code>eq</code>, <code>isNull</code>, <code>inArray</code>)
+<strong>Apply to:</strong> D-13&#39;s dedup query</p>
+<pre><code class="language-typescript">import { and, eq, isNull, inArray } from &#39;drizzle-orm&#39;;
+
+const [existing] = await db
+  .select()
+  .from(jobLeads)
+  .where(
+    and(
+      eq(jobLeads.companyId, companyId),
+      isNull(jobLeads.linkedinJobUrl),
+      inArray(jobLeads.status, [&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;]),
+      isNull(jobLeads.archivedAt)
+    )
+  )
+  .limit(1);
+</code></pre>
+<p><strong>Note:</strong> The GET handler in <code>src/app/api/job-leads/route.ts:24-42</code> uses a <code>conditions[]</code>-array + <code>sql.join</code> pattern for dynamic WHERE construction. Phase 7&#39;s dedup query is statically-shaped (always 4 conditions, no dynamic optional filters), so the simpler <code>and(...)</code> form is preferred. Both patterns exist in the codebase; pick by shape (<code>and(...)</code> for fixed, <code>sql.join(conditions)</code> for variable-length).</p>
+<hr>
+<h3>Schema Soft-Delete Convention</h3>
+<p><strong>Source:</strong> <code>drizzle/schema/job-leads.ts:43</code> + project-wide pattern (CLAUDE.md)
+<strong>Apply to:</strong> D-13&#39;s dedup check</p>
+<pre><code class="language-typescript">archivedAt: timestamp(&#39;archived_at&#39;)
+</code></pre>
+<p>Always include <code>isNull(jobLeads.archivedAt)</code> in dedup/list queries. Phase 7 D-13 honors this.</p>
+<hr>
+<h3>Case-Insensitive Name Match (Hits <code>companies_name_idx</code>)</h3>
+<p><strong>Source:</strong> <code>src/app/api/job-leads/route.ts:91</code> (the existing companies-match pattern)
+<strong>Apply to:</strong> D-07&#39;s company lookup</p>
+<pre><code class="language-typescript">.where(sql`lower(${companies.name}) = lower(${input})`)
+</code></pre>
+<p>This is the one legitimate <code>sql</code> template tag use in the codebase (per CLAUDE.md &quot;no raw SQL except for pgvector&quot;). Phase 6&#39;s <code>companies_name_idx</code> (migration 0008, line 1) supports this lookup. Phase 7 reuses verbatim.</p>
+<hr>
+<h2>No Analog Found</h2>
+<p>None. Every Phase 7 file has a strong (exact or extension-of-self) analog in the codebase. Phase 7 is intentionally a tight extension of existing patterns — no new architectural primitives introduced.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong></p>
+<ul>
+<li><code>src/app/api/job-leads/**</code> (existing POST + sibling routes)</li>
+<li><code>src/lib/db/**</code> (test files + helpers)</li>
+<li><code>src/lib/api/**</code> (response/error helpers)</li>
+<li><code>src/lib/domain/**</code> (constants + state machine)</li>
+<li><code>src/test-utils/**</code> (PGlite + callRoute harness)</li>
+<li><code>drizzle/schema/**</code> (table definitions)</li>
+<li><code>drizzle/migrations/**</code> (prior ALTER migrations)</li>
+</ul>
+<p><strong>Files scanned:</strong> 18</p>
+<p><strong>Pattern extraction date:</strong> 2026-05-19</p>
+<p><strong>Key invariants pinned:</strong></p>
+<ul>
+<li>Discriminated Zod union with first-match-wins (D-01, D-02)</li>
+<li>200 vs 201 status-code signaling for idempotent dedup (D-13)</li>
+<li>Reuse <code>job_lead_created</code> event with <code>metadata.scope: &#39;company&#39;</code> (D-04)</li>
+<li>Case-insensitive name match hits <code>companies_name_idx</code> (D-07)</li>
+<li><code>archived_at IS NULL</code> in dedup query (project-wide soft-delete convention)</li>
+<li><code>vi.hoisted + Proxy</code> mock pattern for all route tests</li>
+<li>Dynamic <code>await import(&#39;@/app/api/...&#39;)</code> after the mock hoist</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
