@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 8: Skill Input Parsing, Navigation Branching + Drain - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-19
+<strong>Phase:</strong> 8-Skill Input Parsing, Navigation Branching + Drain
+<strong>Areas discussed:</strong> Argument parsing, Company-URL → display name, Disambiguation, Drain-mode URL data flow</p>
+<hr>
+<h2>Argument Parsing</h2>
+<h3>Q1: How should the skill detect input shape?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Strict LinkedIn URL regex</td>
+<td>Branch order: empty → drain; UUID → single-lead; matches <code>/jobs/</code> → job-URL; matches <code>/company/&lt;slug&gt;</code> → company-URL; any other https:// → error; else → bare name. Tightest detection.</td>
+<td></td>
+</tr>
+<tr>
+<td>Permissive URL routing</td>
+<td>Branch order: empty → drain; UUID → single-lead; URL with <code>/company/</code> in path → company-URL; any other URL → job-URL (preserves existing behavior); else → bare name. Existing job-URL behavior unchanged.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>URL parser + path check</td>
+<td>URL constructor try/catch; LinkedIn host gated; first path segment switch. Most defensive.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Permissive URL routing
+<strong>Notes:</strong> Preserves the current behavior of any URL falling into the job-URL branch — non-LinkedIn URLs hit the same downstream error pattern as today. Less aggressive than a strict LinkedIn-only allowlist.</p>
+<h3>Q2: How should the company-URL regex handle slug variations?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Match <code>/company/&lt;slug&gt;/*</code> with optional www and trailing path</td>
+<td>Regex anchored, captures slug. Matches JL-C1 verbatim.</td>
+<td></td>
+</tr>
+<tr>
+<td>Match strict canonical form only</td>
+<td>https + lowercase slug + optional trailing slash. Rejects deeper paths.</td>
+<td></td>
+</tr>
+<tr>
+<td>Strip trailing segments before regex match</td>
+<td>Parse URL, split pathname, check <code>segments[1] === &#39;company&#39; &amp;&amp; segments[2]</code>. Tolerant of messy paste.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Strip trailing segments before regex match
+<strong>Notes:</strong> Most user-friendly approach — the user pastes from arbitrary LinkedIn pages (e.g., <code>/about/</code>, <code>/people/</code>, <code>?utm=...</code>) and the parser absorbs the noise. Re-derives the canonical company URL from the slug.</p>
+<h3>Q3: What should happen when the input is empty whitespace or quotes?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Treat as drain mode</td>
+<td>Empty / quoted-empty / whitespace → drain. Matches current SKILL.md.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Drain only on truly absent arg; reject empty quotes</td>
+<td>Force the user to be explicit when they pass empty.</td>
+<td></td>
+</tr>
+<tr>
+<td>Trim then check</td>
+<td>Trim whitespace; length 0 → drain. Else proceed.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Treat as drain mode
+<strong>Notes:</strong> Matches current behavior. <code>.trim() === &#39;&#39;</code> covers all variants.</p>
+<h3>Q4: How should bare-name vs UUID look-alike collisions be handled?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>UUID regex wins</td>
+<td>If input matches the UUID regex exactly, treat as lead ID. Else fall through. Near-zero risk.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Bare name length floor</td>
+<td>≥2 chars + at least one non-hex char rule. Defensive but burdens the user.</td>
+<td></td>
+</tr>
+<tr>
+<td>Treat suspiciously-UUID-shaped names as bare</td>
+<td>Verify via <code>GET /api/job-leads/&lt;id&gt;</code> round-trip first. Belt-and-suspenders.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> UUID regex wins
+<strong>Notes:</strong> Hex-only-with-dashes company names are vanishingly rare. Strict regex match keeps the parser simple.</p>
+<hr>
+<h2>Company-URL → Display Name</h2>
+<h3>Q1: When the user passes a LinkedIn company URL, where should the human-readable company name come from?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pre-scrape company page</td>
+<td>Skill extracts name from page header before POSTing. Phase 7&#39;s case-insensitive matcher catches dedup against existing companies.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Use slug as <code>companyName</code></td>
+<td>POST with slug; user renames later. Fast; misses dedup.</td>
+<td></td>
+</tr>
+<tr>
+<td>Prompt user inline</td>
+<td>Skill asks for display name. Best dedup but worst UX in drain-style usage.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Pre-scrape company page
+<strong>Notes:</strong> Data quality wins over single-keystroke speed. Phase 7&#39;s <code>companies_name_idx</code> lookup hits the cleaned name properly.</p>
+<h3>Q2: Where exactly does the skill extract the company name from the LinkedIn company page?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H1 heading on <code>/company/&lt;slug&gt;/about/</code></td>
+<td>Most stable canonical header on the overview page.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>&lt;title&gt;</code> tag of the page</td>
+<td>Easy to extract, less DOM-dependent; needs suffix trimming.</td>
+<td></td>
+</tr>
+<tr>
+<td>Snapshot tree, first matching aria-label</td>
+<td>Most agent-browser-native; fuzzier than H1 lookup.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> H1 heading on <code>/company/&lt;slug&gt;/about/</code>
+<strong>Notes:</strong> Most stable extraction target. (Note: combined with Q3&#39;s pick, the actual extraction happens on the <code>/people/</code> page header — same H1 element appears there.)</p>
+<h3>Q3: What if the H1 extraction fails (page DOM shifted, sign-in wall, captcha)?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fall back to slug, warn user</td>
+<td>Lead proceeds with slug as name; user renames later. Matches &quot;never block happy path on cosmetic data&quot;.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Fail loudly, abort</td>
+<td>Cleaner but blocks otherwise-fine scrapes on a cosmetic issue.</td>
+<td></td>
+</tr>
+<tr>
+<td>Prompt user inline</td>
+<td>Best UX for one-off pastes; extra friction.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Fall back to slug, warn user
+<strong>Notes:</strong> Don&#39;t gate scrape progress on cosmetic data. User can curate company name later in the companies UI.</p>
+<h3>Q4: Should the skill do a single navigation (about + people via tabs) or two separate navigations?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Navigate to <code>/about/</code>, extract name, click &#39;People&#39; tab</td>
+<td>Mirrors real user browse; one session, two transitions.</td>
+<td></td>
+</tr>
+<tr>
+<td>Navigate to <code>/company/&lt;slug&gt;/</code>, extract, then navigate to <code>/people/</code></td>
+<td>Two goto() calls. Simpler agent-browser flow.</td>
+<td></td>
+</tr>
+<tr>
+<td>Navigate directly to <code>/people/</code>, extract name from page header there</td>
+<td>Single navigation; relies on /people/ page header being reliable.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Navigate directly to <code>/people/</code>, extract name from page header there
+<strong>Notes:</strong> One page load. The People page also has a company-name header in the sticky bar; combine name extraction with the destination landing. Documents the H1 heuristic in <code>linkedin-navigation.md</code>.</p>
+<hr>
+<h2>Disambiguation</h2>
+<h3>Q1: On single LinkedIn company-search match, what should the skill do?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Always confirm, even for single match</td>
+<td>Catches fuzzy-match weirdness. Slight friction.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Auto-pick single match</td>
+<td>Matches JL-C5&#39;s &quot;more than one&quot; wording. Faster.</td>
+<td></td>
+</tr>
+<tr>
+<td>Auto-pick + show brief confirmation line</td>
+<td>Middle ground; informational.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Always confirm, even for single match
+<strong>Notes:</strong> Maximum safety. Single match still requires <code>1</code> / Enter from the user before proceeding.</p>
+<h3>Q2: On zero LinkedIn company-search matches, what should the skill do?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fail loudly</td>
+<td>Surface error, exit cleanly. No DB pollution.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Offer to create company-only stub anyway</td>
+<td>Captures the name for future curation.</td>
+<td></td>
+</tr>
+<tr>
+<td>Retry with broader query</td>
+<td>Strip <code>Inc</code> / <code>LLC</code> suffixes and retry.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Fail loudly
+<strong>Notes:</strong> Auto-stripping suffixes is opaque; users prefer explicit &quot;no match → try again with a URL&quot;. No DB pollution.</p>
+<h3>Q3: What LinkedIn search URL/path should the skill use to find companies?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Direct search URL pattern</td>
+<td><code>https://www.linkedin.com/search/results/companies/?keywords=&lt;encoded&gt;</code>. Deterministic.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Global search bar + Enter</td>
+<td>UI-driven; mirrors real user. More fragile.</td>
+<td></td>
+</tr>
+<tr>
+<td>Try URL first, fall back to UI</td>
+<td>Belt-and-suspenders. Adds prompt complexity.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Direct search URL pattern
+<strong>Notes:</strong> Matches the existing skill&#39;s preference for deterministic URL paths over UI clicks (Step 4 already prefers URL params over filter chips).</p>
+<h3>Q4: How should the skill render the disambiguation list to the user?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Markdown numbered list with three columns</td>
+<td><code>1. **Name** — N employees — Industry</code>. Compact, scannable.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Markdown table</td>
+<td>More visual structure; more vertical space.</td>
+<td></td>
+</tr>
+<tr>
+<td>JSON block + numbered summary</td>
+<td>LLM-friendly; uglier for user.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Markdown numbered list with three columns
+<strong>Notes:</strong> Terminal-friendly. User types a number; the skill picks the corresponding URL.</p>
+<hr>
+<h2>Drain-Mode URL Data Flow</h2>
+<h3>Q1: In drain mode, how should the skill get the LinkedIn company URL for a company-scope lead?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Extend <code>GET /api/job-leads</code> to join <code>companies.linkedinUrl</code></td>
+<td>One round-trip per drain; minimal API change.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Separate <code>GET /api/companies/[id]</code> per lead</td>
+<td>Two round-trips per lead. No API change.</td>
+<td></td>
+</tr>
+<tr>
+<td>Re-run LinkedIn company search by name</td>
+<td>Max friction; defeats persistent URLs.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Extend <code>GET /api/job-leads</code> to join <code>companies.linkedinUrl</code>
+<strong>Notes:</strong> Cleanest API. Confirmed <code>src/app/api/job-leads/route.ts</code> already loads the company FK — adding <code>companyLinkedinUrl</code> to the projection is a one-line change.</p>
+<h3>Q2: Should the GET response shape include the full company object, or just <code>linkedinUrl</code>?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Add <code>lead.companyLinkedinUrl</code> (single field)</td>
+<td>Minimal; no nesting; easy to type-narrow.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Add <code>lead.company</code> (full joined row)</td>
+<td>Useful for future callers wanting <code>company.priority</code>, etc.</td>
+<td></td>
+</tr>
+<tr>
+<td>Conditional include via <code>?with=company</code> query param</td>
+<td>Backwards-compatible opt-in.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Add <code>lead.companyLinkedinUrl</code> (single field)
+<strong>Notes:</strong> Smallest API surface change. Other callers don&#39;t accidentally inherit company internals. A future <code>?with=company</code> opt-in can come later if needed.</p>
+<h3>Q3: What if a company-scope lead has no <code>linkedinCompanyUrl</code> persisted (<code>companies.linkedinUrl</code> is null)?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fall back to LinkedIn company search by name + disambiguate</td>
+<td>Mid-drain disambiguation prompt for that lead only.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Skip the lead, write &#39;failed&#39;</td>
+<td>Cleaner skill code; worse UX.</td>
+<td></td>
+</tr>
+<tr>
+<td>Abort the drain batch</td>
+<td>Loud but disruptive.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Fall back to LinkedIn company search by name + disambiguate
+<strong>Notes:</strong> Consistent with the bare-name input path. User completes disambiguation once, the URL gets backfilled (Q4), and subsequent drains skip the prompt.</p>
+<h3>Q4: When mid-drain disambiguation surfaces a URL for a null-URL company, should the skill backfill <code>companies.linkedinUrl</code>?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Yes — PATCH companies after disambiguation pick</td>
+<td>Next drain doesn&#39;t re-prompt. PATCH route already supports it.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>No — leave <code>companies.linkedinUrl</code> null</td>
+<td>Each drain re-prompts. Useful for one-off scrapes only.</td>
+<td></td>
+</tr>
+<tr>
+<td>Ask user inline per lead</td>
+<td>User-driven; more prompts per drain.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Yes — PATCH companies after disambiguation pick
+<strong>Notes:</strong> Verified <code>src/app/api/companies/[id]/route.ts</code> PATCH route already accepts <code>linkedinUrl</code>. One-time pain for permanent gain across the company&#39;s future drain cycles.</p>
+<h3>Q5: In drain mode, should the loop branch be a single conditional or two sub-routines?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Single loop, branch on <code>lead.linkedinJobUrl</code></td>
+<td>Matches JL-C7 (&quot;single loop&quot;). Smallest skill-prompt diff.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Two sub-routines invoked from one loop</td>
+<td>Cleaner for future independent extensions.</td>
+<td></td>
+</tr>
+<tr>
+<td>Refactor single-lead flow into helper, call from drain + single-lead</td>
+<td>Larger refactor; behavior parity guarantee.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Single loop, branch on <code>lead.linkedinJobUrl</code>
+<strong>Notes:</strong> Smallest diff to the existing skill. Steps 4–5 of <code>linkedin-navigation.md</code> (2nd-degree filter + paginate/extract + write-back) stay shared at the bottom across all three input paths.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>The planner has discretion on the following decisions (captured in CONTEXT.md as <code>CD-01</code> through <code>CD-05</code>):</p>
+<ul>
+<li><strong>CD-01:</strong> Section ordering and heading style of the rewritten <code>linkedin-navigation.md</code> (recommended structure provided).</li>
+<li><strong>CD-02:</strong> Exact a11y-tree heuristic for picking the H1 / heading element to extract company name from <code>/company/&lt;slug&gt;/people/</code> (e.g., filtering out nav-level H1s). Document the heuristic inline.</li>
+<li><strong>CD-03:</strong> Whether to add a helper shell/node script for disambiguation rendering. Recommended: probably not at this scope.</li>
+<li><strong>CD-04:</strong> Test fixture location and shape for the <code>GET /api/job-leads</code> <code>companyLinkedinUrl</code> regression test (one test in <code>route.test.ts</code>).</li>
+<li><strong>CD-05:</strong> Whether to use a dedicated single-match disambiguation copy vs. reusing the multi-match numbered-list format. Recommended: same format for consistency.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Auto-pick disambiguation for single matches — declined in D-08.</li>
+<li>Retry-with-broader-query on zero results — declined in D-09.</li>
+<li>Re-run LinkedIn search every drain regardless of persisted URL — declined in favor of caching.</li>
+<li>Full company object in <code>GET /api/job-leads</code> response — declined in favor of single field.</li>
+<li>Disambiguation helper script — CD-03 leaves it inline.</li>
+<li>Mid-drain disambiguation as a separate prompt format — declined; reuse bare-name format.</li>
+<li>Captcha / rate-limit backoff — already deferred as JL2-03 (v2).</li>
+<li>Pagination beyond page 10 — already deferred as JL2-04 (v2).</li>
+<li>Skill relocation to <code>~/.claude/skills/</code> — declined in Phase 5 D-01.</li>
+<li>Refactor single-lead + drain into shared dispatch helper — declined; overkill at v1.1 scope.</li>
+<li>Sentinel runtime enforcement for <code>COMPANY_SCOPE_ROLE_TITLE</code> — declined in Phase 7 D-11.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

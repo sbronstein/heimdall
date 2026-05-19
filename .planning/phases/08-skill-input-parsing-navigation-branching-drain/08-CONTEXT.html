@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 8: Skill Input Parsing, Navigation Branching + Drain - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-19
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>Extend the existing <code>.claude/skills/scrape-linkedin-connections/</code> skill (shipped in Phase 5) to:</p>
+<ol>
+<li><strong>Accept LinkedIn company URLs</strong> (<code>https://(www.)?linkedin.com/company/&lt;slug&gt;(/.*)?</code>) as a positional argument — creates a synthetic job lead via Phase 7&#39;s <code>POST /api/job-leads { companyName, linkedinCompanyUrl }</code> and navigates directly to the company&#39;s <code>/people/</code> page (skipping the job-posting → company-page step).</li>
+<li><strong>Accept bare company-name strings</strong> (anything that isn&#39;t a UUID, an https URL, or empty) — runs a LinkedIn company search via direct URL, presents top 3–5 matches inline (name + employee count + industry) as a markdown numbered list, waits for the user&#39;s pick, and uses the picked company&#39;s URL.</li>
+<li><strong>Branch navigation on <code>linkedinJobUrl IS NULL</code></strong> — when the lead has no source URL, navigation starts directly at <code>/company/&lt;slug&gt;/people/</code>; when non-null, the existing four-step job → company → employees → 2nd-degree flow runs unchanged.</li>
+<li><strong>Drain company-scope leads from the same queue</strong> — <code>GET /api/job-leads?status=queued</code> returns both lead types; a single <code>for each lead</code> loop branches on <code>lead.linkedinJobUrl</code>.</li>
+<li><strong>Update <code>references/linkedin-navigation.md</code></strong> to document both navigation paths alongside the existing job-URL path.</li>
+</ol>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>Argument parser extension in <code>SKILL.md</code>: empty/whitespace → drain; UUID → single-lead; URL with <code>/company/</code> in path → company-URL flow; any other URL → existing job-URL flow; else → bare-name flow. Existing four-branch parser is replaced.</li>
+<li>Slug extraction from company URLs: <code>new URL(arg)</code>, split pathname, validate <code>segments[1] === &#39;company&#39; &amp;&amp; segments[2]</code>, capture <code>segments[2]</code> as slug, ignore trailing segments (e.g., <code>/about/</code>, <code>/people/</code>, <code>?utm=...</code>).</li>
+<li>Pre-scrape the LinkedIn company People page (<code>/company/&lt;slug&gt;/people/</code>) to extract the human-readable company name from the page header (H1 / aria-label). Fall back to the slug if extraction fails — log a warning so the user knows to rename in the companies UI.</li>
+<li>For URL input: POST to <code>POST /api/job-leads</code> with <code>{ companyName: &lt;extracted-or-slug&gt;, linkedinCompanyUrl: &lt;input-url&gt; }</code>. Phase 7&#39;s idempotent dedup returns 200 if an in-flight company-scope lead already exists for that company; the skill handles both 200 and 201 the same way (use the returned lead).</li>
+<li>For bare-name input: navigate to <code>https://www.linkedin.com/search/results/companies/?keywords=&lt;urlencoded&gt;</code>; extract the top 3–5 results (name + employee count + industry) from agent-browser snapshot; render as markdown numbered list (<code>1. **Name** — N employees — Industry</code>); always confirm the pick even when there&#39;s exactly one match (user types the number, or <code>1</code> / <code>y</code> / Enter for the single-match case if the model interprets that intent); zero matches → fail loudly with <code>No companies found for &quot;&lt;name&gt;&quot;. Try a more specific name or pass a LinkedIn company URL.</code></li>
+<li>Once a company URL is resolved (URL input directly, or disambiguation pick from bare-name input): POST <code>/api/job-leads</code>, then navigate directly to <code>/company/&lt;slug&gt;/people/</code> (skipping Steps 1-2 of the existing navigation doc), then proceed with Steps 4-5 (2nd-degree filter, extract, paginate, write back) unchanged.</li>
+<li>Drain mode <code>for each lead in queued</code>: branch on <code>lead.linkedinJobUrl</code>. Null → company-scope branch (navigate to <code>/company/&lt;slug&gt;/people/</code> using <code>lead.companyLinkedinUrl</code> from the joined response); non-null → existing job-URL branch. Both converge at Step 4 (2nd-degree filter) and below.</li>
+<li>Extend <code>GET /api/job-leads</code> response shape to include <code>companyLinkedinUrl</code> (single top-level field per lead row, joined from <code>companies.linkedinUrl</code>).</li>
+<li>Mid-drain fallback: if <code>lead.companyLinkedinUrl</code> is null on a company-scope lead, the skill runs the same bare-name search/disambiguation flow using <code>lead.companyName</code>, gets a URL, then PATCHes <code>/api/companies/&lt;lead.companyId&gt;</code> with <code>{ linkedinUrl: &lt;picked&gt; }</code> so the next drain doesn&#39;t re-prompt for that company. PATCH route already supports <code>linkedinUrl</code> updates (verified in <code>src/app/api/companies/[id]/route.ts</code>).</li>
+<li>Rewrite <code>references/linkedin-navigation.md</code>: split the existing job-URL flow into a &quot;Job-URL path&quot; section (current content) and add a &quot;Company-URL path&quot; section (slug extraction, direct <code>/people/</code> navigation, name extraction, fallback rules) and a &quot;Bare-name path&quot; section (search URL, disambiguation render format, single/zero-match policy, backfill rule). Steps 4-5 (2nd-degree filter + paginate/extract) stay shared at the bottom.</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li>Schema changes to <code>job_leads</code> or <code>companies</code> — Phase 7 already shipped nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> and <code>companies.linkedinUrl</code> was already nullable.</li>
+<li>New API routes — only <code>GET /api/job-leads</code> response shape is extended (single field added); <code>POST /api/job-leads</code>, <code>PATCH /status</code>, <code>POST /prospects</code>, <code>PATCH /api/companies/[id]</code> are all reused as-is.</li>
+<li>UI changes — Phase 9 (JL-C8, JL-C9) handles the detail-page badge, hidden &quot;View job posting&quot; link, and list-view discriminator.</li>
+<li>Captcha / rate-limit detection or backoff — carried forward as JL2-03 in v2 deferred.</li>
+<li>Pagination beyond page 10 — JL2-04 cap stays in place.</li>
+<li>Multi-lead claim parallelism — single-user / single-skill-run-at-a-time pattern stands (D-11 from Phase 5).</li>
+<li>Auto-pick or threshold-based disambiguation — every match (even single match) requires confirmation.</li>
+<li>Retry-with-broader-query for zero search results — fail loudly is the v1 policy.</li>
+<li>Backfilling historical leads — no migration of existing rows; Phase 7&#39;s constraint relaxation handled forward compatibility only.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Argument Parsing</h3>
+<ul>
+<li><p><strong>D-01:</strong> <strong>Permissive URL routing.</strong> Branch order in the skill&#39;s argument parser: (1) empty / whitespace-only → drain mode; (2) matches UUID regex (<code>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$</code>) → single-lead UUID flow; (3) parses as a URL AND pathname contains <code>/company/</code> segment → company-URL flow; (4) parses as a URL (any other shape) → existing job-URL flow (creates a <code>pending</code> lead via the existing cheerio job-page scrape, then proceeds); (5) anything else → bare-name flow. The existing job-URL behavior is preserved exactly; non-LinkedIn URLs fall through to the same downstream error as today. UUID regex wins over bare-name interpretation; the company-name &quot;abc-def-...&quot; collision risk is effectively zero in practice.</p>
+</li>
+<li><p><strong>D-02:</strong> <strong>Empty/whitespace input → drain mode.</strong> Matches the current SKILL.md contract verbatim. Whitespace-only inputs (<code> </code>, <code>&quot;&quot;</code>, <code>&#39;&#39;</code>) are normalized via <code>trim()</code> and treated as drain. Quoted-empty shell quirks roll into the same bucket.</p>
+</li>
+<li><p><strong>D-03:</strong> <strong>Company-URL slug extraction via URL constructor + path-segment check.</strong> Parse with <code>new URL(arg)</code>, take <code>url.pathname.split(&#39;/&#39;).filter(Boolean)</code>, validate <code>segments[0] === &#39;company&#39; &amp;&amp; typeof segments[1] === &#39;string&#39;</code>, capture <code>segments[1]</code> as the canonical slug. This tolerates trailing segments (<code>/about/</code>, <code>/people/</code>, <code>/jobs/</code>), trailing slashes, query strings, and fragment identifiers — strips all of them and re-derives the canonical company URL as <code>https://www.linkedin.com/company/&lt;slug&gt;/</code>. Rejected: brittle anchored regex; the user pastes from arbitrary LinkedIn pages and the parser must absorb that.</p>
+</li>
+</ul>
+<h3>Company URL → Display Name</h3>
+<ul>
+<li><p><strong>D-04:</strong> <strong>Pre-scrape the LinkedIn company page to extract the human-readable name.</strong> Before POSTing to <code>/api/job-leads</code>, the skill navigates agent-browser to the canonical company URL and extracts the company name from the page header. This gives Phase 7&#39;s case-insensitive company-name matcher (D-07 in Phase 7&#39;s CONTEXT) the best shot at deduping against existing <code>companies</code> rows that have a properly-cased name. Rejected: posting the slug verbatim — would proliferate stub companies named &quot;openai&quot;, &quot;stripe-inc&quot;, etc., that the user has to rename later.</p>
+</li>
+<li><p><strong>D-05:</strong> <strong>Navigate directly to <code>/company/&lt;slug&gt;/people/</code> and extract the name from the page header there.</strong> Single navigation; the People page also shows the company name in the sticky header / breadcrumb. Saves a page load vs. visiting <code>/about/</code> first. The People page is the destination anyway — combine the &quot;extract name&quot; pass with the &quot;land on People&quot; pass. The page-header element to extract is documented in <code>references/linkedin-navigation.md</code> (rewritten in this phase) as an H1 / heading-role node near the top of the snapshot.</p>
+</li>
+<li><p><strong>D-06:</strong> <strong>Fall back to slug + warn user on extraction failure.</strong> If the page-header extraction returns null/empty (DOM shift, sign-in wall, captcha, or the page just didn&#39;t render the header), the skill logs <code>Could not extract company name from &lt;url&gt;; using slug &quot;&lt;slug&gt;&quot; as fallback. Rename in the companies UI if needed.</code> and POSTs with <code>companyName: &lt;slug&gt;</code>. The lead proceeds; the user can curate the company-name later. Matches the project&#39;s &quot;never block the happy path on cosmetic data&quot; philosophy. Rejected: failing loudly — extraction is best-effort and shouldn&#39;t gate scrape progress.</p>
+</li>
+</ul>
+<h3>Bare Name Disambiguation</h3>
+<ul>
+<li><p><strong>D-07:</strong> <strong>Direct search URL pattern.</strong> Navigate to <code>https://www.linkedin.com/search/results/companies/?keywords=&lt;urlencoded name&gt;</code>. Deterministic, no autocomplete timing dependencies. Mirrors the existing &quot;URL parameter preferred over UI filter&quot; pattern from Step 4 of the current <code>linkedin-navigation.md</code>. Rejected: global search bar + Enter (autocomplete dropdown is fragile and depends on focus/timing behavior).</p>
+</li>
+<li><p><strong>D-08:</strong> <strong>Always confirm, even for single match.</strong> When LinkedIn returns exactly one result, the skill still presents the result and asks the user to confirm before proceeding. Catches LinkedIn&#39;s fuzzy-match weirdness (e.g., &quot;OpenAI&quot; partial-matching the wrong &quot;OpenAI Inc&quot;). Adds a small confirmation step in the common case; the user can reply with <code>1</code> or just hit Enter. The cost is one extra round-trip; the benefit is never silently scraping the wrong company.</p>
+</li>
+<li><p><strong>D-09:</strong> <strong>Fail loudly on zero matches.</strong> Skill surfaces <code>No companies found for &quot;&lt;name&gt;&quot;. Try a more specific name or pass a LinkedIn company URL.</code> and exits cleanly. No DB row is created. User retries with a better name or pastes the URL directly. Rejected: auto-create a Heimdall stub anyway (pollutes the DB) and retry-with-broader-query (auto-stripping suffixes is opaque and unpredictable).</p>
+</li>
+<li><p><strong>D-10:</strong> <strong>Markdown numbered list with three columns.</strong> Render disambiguation as:</p>
+<pre><code>1. **OpenAI** — 5,200 employees — Software / AI Research
+2. **OpenAI Foundation** — 12 employees — Non-profit
+3. ...
+</code></pre>
+<p>Compact, terminal-friendly, easy for the user to skim. The skill then asks &quot;Pick a number (1–N), or type the company URL directly:&quot; and waits for input. Rejected: markdown table (wider, less scannable) and JSON block (LLM-friendly but ugly for the user).</p>
+</li>
+</ul>
+<h3>Navigation Branching</h3>
+<ul>
+<li><p><strong>D-11:</strong> <strong>Drain loop is a single <code>for each lead</code> with an inline branch on <code>lead.linkedinJobUrl</code>.</strong> When <code>linkedinJobUrl !== null</code> → existing job-URL flow (Steps 1–4 of <code>linkedin-navigation.md</code> job-URL path); when <code>linkedinJobUrl === null</code> → company-scope flow (navigate directly to <code>lead.companyLinkedinUrl</code>&#39;s <code>/people/</code> path, skipping Steps 1–2). Steps 4–5 (2nd-degree filter, extract, paginate, write back) are shared at the bottom of the navigation doc. Matches JL-C7 verbatim (&quot;single loop&quot;). Rejected: two sub-routines (more skill-prompt text without behavior parity benefits at v1.1 scope) and full helper-extraction refactor (overkill for two branches that share a common tail).</p>
+</li>
+<li><p><strong>D-12:</strong> <strong>The structural discriminator everywhere is <code>lead.linkedinJobUrl === null</code>.</strong> Both the skill&#39;s drain-loop branch and (per Phase 7 D-12) the Phase 9 UI&#39;s &quot;is this company-scope?&quot; check key off the same nullness predicate. The <code>roleTitle === &#39;Company-wide scrape&#39;</code> sentinel is informational only — never used as a control-flow discriminator.</p>
+</li>
+</ul>
+<h3>Drain-Mode URL Data Flow</h3>
+<ul>
+<li><p><strong>D-13:</strong> <strong>Extend <code>GET /api/job-leads</code> to include <code>companyLinkedinUrl</code> as a single top-level field per lead row.</strong> The route already loads <code>companies</code> via the existing companyId FK; add <code>companies.linkedinUrl AS companyLinkedinUrl</code> to the projection. One round-trip per drain; minimal API change; no nesting (so type-narrowing in the skill / future TS consumers stays trivial). Add the field to the standard <code>data: [...]</code> response under each lead alongside <code>linkedinJobUrl</code>, <code>companyName</code>, etc. Rejected: separate <code>GET /api/companies/[id]</code> per lead (extra round-trips per drain) and re-running LinkedIn search by name in drain mode (maximum friction, defeats the point of persisting URLs).</p>
+</li>
+<li><p><strong>D-14:</strong> <strong>Drain-mode fallback when <code>lead.companyLinkedinUrl IS NULL</code>: run the bare-name search + disambiguation flow inline, then backfill.</strong> For a company-scope lead where the company has no persisted URL (e.g., user originally POSTed without <code>linkedinCompanyUrl</code>), the skill runs the same search/disambiguate flow as the bare-name input path using <code>lead.companyName</code>, presents the disambiguation list, accepts the user&#39;s pick, then PATCHes <code>/api/companies/&lt;lead.companyId&gt;</code> with <code>{ linkedinUrl: &lt;picked-url&gt; }</code> so subsequent drains find a non-null <code>companyLinkedinUrl</code>. Verified that <code>src/app/api/companies/[id]/route.ts</code> PATCH already supports <code>linkedinUrl</code>. Rejected: skip the lead with <code>failed</code> status (worse UX; user has to manually re-queue) and abort the drain batch (too disruptive).</p>
+</li>
+<li><p><strong>D-15:</strong> <strong>Drain mode confirms the company-scope branch inline.</strong> When the loop encounters a <code>linkedinJobUrl: null</code> lead, the skill prints <code>Lead &lt;id&gt;: company-scope (&lt;companyName&gt;) — navigating to &lt;companyLinkedinUrl&gt;/people/...</code> so the user can see the branch fired correctly without being interrupted. No interactive prompt unless <code>companyLinkedinUrl</code> is null (D-14 fallback). Mid-drain disambiguation prompts apply only to the null-URL fallback case.</p>
+</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><p><strong>CD-01:</strong> <strong>Where in <code>linkedin-navigation.md</code> the three paths live.</strong> Recommended structure: top-level sections <code>## Job-URL path (Steps 1–4)</code>, <code>## Company-URL path (slug → /people/)</code>, <code>## Bare-name path (search → disambiguate → /people/)</code>, then <code>## Shared: 2nd-degree filter + extract + paginate</code> (Steps 4–5 of the existing doc). Planner picks the exact heading order based on readability. The &quot;Historically-stable selectors&quot; appendix stays at the bottom.</p>
+</li>
+<li><p><strong>CD-02:</strong> <strong>Where to perform name-extraction within the People-page navigation.</strong> Recommended: snapshot the page after first <code>agent-browser snapshot</code> returns, grep the snapshot for the first H1 / heading element above the people-search-result region. If multiple H1s exist (LinkedIn occasionally renders nav-level H1s), prefer the one whose text doesn&#39;t match common nav keywords (&quot;LinkedIn&quot;, &quot;Notifications&quot;, &quot;Messaging&quot;). Planner adds a one-paragraph note in <code>linkedin-navigation.md</code> documenting the heuristic.</p>
+</li>
+<li><p><strong>CD-03:</strong> <strong>Whether to add a tiny helper script for the new paths.</strong> Recommended: probably not. The current skill uses inline <code>curl</code> and <code>agent-browser</code> calls; a <code>disambiguate-companies.sh</code> helper adds indirection without much benefit. Planner decides if the disambiguation rendering grows large enough to justify a helper.</p>
+</li>
+<li><p><strong>CD-04:</strong> <strong>API route test coverage for the GET /api/job-leads change.</strong> Recommended: add one test case to <code>src/app/api/job-leads/route.test.ts</code> that inserts a company-scope lead (using the Phase 7 fixture pattern) and a job-URL lead, hits <code>GET /api/job-leads?status=queued</code>, and asserts both rows in the response include a <code>companyLinkedinUrl</code> field (null or string). Pins D-13 against regression. Planner picks fixture location based on whether <code>src/test-utils/pglite.ts</code> already has a helper for company creation.</p>
+</li>
+<li><p><strong>CD-05:</strong> <strong>How to surface single-match confirmation cleanly.</strong> Recommended: same render as multi-match (numbered list of 1 item) so the user types <code>1</code> or <code>y</code> consistently. Keeps the prompt format uniform. Planner can A/B against a dedicated single-match copy if user testing reveals friction.</p>
+</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.1 milestone trail</h3>
+<ul>
+<li><code>.planning/PROJECT.md</code> §&quot;Current Milestone: v1.1 LinkedIn Scraping by Company&quot; — locked target features</li>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;v1.1 Active — LinkedIn Scraping by Company&quot; — JL-C1..JL-C9; Phase 8 owns JL-C1, JL-C2, JL-C5, JL-C6, JL-C7</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 8: Skill Input Parsing, Navigation Branching + Drain&quot; — goal + 4 success criteria</li>
+<li><code>.planning/STATE.md</code> §&quot;Accumulated Context → Decisions&quot; — locked v1.1 milestone decisions (single queue, single loop, no role filter, etc.)</li>
+</ul>
+<h3>Phase 7 lineage (the API this skill consumes)</h3>
+<ul>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md</code> §&quot;D-01..D-15&quot; — discriminated <code>POST /api/job-leads</code> schema, idempotent dedup (200 vs 201), <code>COMPANY_SCOPE_ROLE_TITLE</code> sentinel, company auto-create / linkedinUrl backfill, state-machine input-shape agnosticism</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-01-PLAN.md</code> — schema migration plan (linkedin_job_url nullable)</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-02-PLAN.md</code> — POST /api/job-leads discriminated branch (the route the skill calls for URL input + bare-name flows)</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-03-PLAN.md</code> — D-17 regression coverage (PATCH /status + POST /prospects accept null-URL leads — the routes Phase 8 calls in the company-scope branch)</li>
+<li><code>src/app/api/job-leads/route.ts</code> — the POST endpoint extended in Phase 7 (Phase 8 reads to understand the response envelope for both branches)</li>
+</ul>
+<h3>Phase 5 lineage (the skill being extended)</h3>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — current skill prompt; argument parser, drain mode, single-lead mode, error handling. <strong>This file is rewritten</strong> in Phase 8 to add the new branches.</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> — current navigation cheat-sheet (Steps 1–5 for the job-URL path). <strong>This file is rewritten</strong> in Phase 8 to add the company-URL and bare-name paths.</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> — current API contract reference; will be lightly updated to mention the new <code>companyLinkedinUrl</code> field in <code>GET /api/job-leads</code> (per D-13) and the bare-name POST shape from Phase 7.</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code> — error-category mapping (Timeout / LinkedIn navigation failed / No prospects found / Browser unavailable / Unknown error); add notes for the new failure modes specific to company-scope branches (name-extraction fallback, zero-match fail-loudly, mid-drain disambiguation).</li>
+<li><code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code> §&quot;D-06..D-09&quot; — state machine, error categories, status enum values (unchanged for Phase 8)</li>
+<li><code>.planning/phases/05-job-leads-completion/05-06-PLAN.md</code> — original skill-creation plan; Phase 8 is the natural successor</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> — TS strict, named exports, REST API (no server actions), Zod on routes</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns&quot; — patterns to avoid</li>
+<li><code>.planning/codebase/STACK.md</code> — Drizzle 0.45.1, Neon serverless HTTP driver, Zod 4, Next.js 16 App Router</li>
+</ul>
+<h3>Source files (read before planning)</h3>
+<ul>
+<li><code>src/app/api/job-leads/route.ts</code> — extend GET projection to include <code>companyLinkedinUrl</code> from the join (D-13). POST route from Phase 7 already supports the company-scope branch the skill calls.</li>
+<li><code>src/app/api/job-leads/[id]/status/route.ts</code> — PATCH /status; unchanged for Phase 8 (Phase 7 D-17 already pinned the null-URL invariant). Skill writes <code>searching</code> / <code>failed</code> here for company-scope leads exactly as for job-URL leads.</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.ts</code> — POST /prospects; unchanged for Phase 8. Bulk write + auto-flip to <code>found</code> works identically for null-URL leads.</li>
+<li><code>src/app/api/companies/[id]/route.ts</code> — PATCH route used for D-14 backfill of <code>companies.linkedinUrl</code>. Already supports <code>linkedinUrl</code> updates (verified).</li>
+<li><code>drizzle/schema/job-leads.ts</code> — <code>linkedinJobUrl</code> is nullable as of Phase 7 (migration 0009); the GET join in D-13 pulls from <code>companies.linkedinUrl</code>.</li>
+<li><code>drizzle/schema/companies.ts</code> — <code>linkedinUrl</code> already nullable; D-14 backfill writes here.</li>
+</ul>
+<h3>Reusable helpers</h3>
+<ul>
+<li><code>src/lib/api/types.ts</code> — <code>success()</code> (200) and <code>created()</code> (201) envelopes; skill handles both responses from Phase 7&#39;s POST /api/job-leads</li>
+<li><code>src/lib/api/errors.ts</code> — standard error envelopes</li>
+<li><code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code> — Phase 2 harness; reused for CD-04 GET /api/job-leads response-shape regression test</li>
+<li><code>src/lib/domain/types.ts</code> — <code>COMPANY_SCOPE_ROLE_TITLE</code> constant (Phase 7 D-11); the skill does not import this directly (it&#39;s a TS constant; the skill is a markdown prompt) but the planner should reference it in the <code>heimdall-api.md</code> doc when documenting the synthetic-lead POST response shape</li>
+</ul>
+<h3>External references (no new docs needed)</h3>
+<ul>
+<li>No new external specs or ADRs. The skill is markdown-driven; agent-browser version specifics are deferred to the installed README (as today).</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong>Existing <code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></strong> — the argument parser, claim/scrape/write-back loop, error handling, and drain-mode harness are kept verbatim; Phase 8 adds two new branches to the parser and a single nullness check inside the drain loop. The &quot;User-side prerequisites&quot; section at the top stays unchanged.</li>
+<li><strong><code>POST /api/job-leads</code> (Phase 7)</strong> — <code>src/app/api/job-leads/route.ts</code> accepts <code>{ companyName, linkedinCompanyUrl? }</code> and returns either 201 (new) or 200 (in-flight dedup) with the full lead row. Skill handles both identically (use the returned lead).</li>
+<li><strong><code>PATCH /api/companies/[id]</code></strong> — verified to accept <code>linkedinUrl</code> updates; used by D-14 for mid-drain backfill.</li>
+<li><strong><code>linkedin-navigation.md</code> Steps 4–5</strong> — the 2nd-degree filter + paginate/extract path is shared across all three input shapes; only Steps 1–2 (or their replacement) differ. Phase 8 rewrites Steps 1–3 only.</li>
+<li><strong>agent-browser snapshot + ref-based click</strong> — same primitives the existing skill uses; the new paths (search URL, /people/ direct nav, name extraction from H1) all stay inside that model.</li>
+<li><strong><code>prospects</code> table + <code>ScrapedProspect</code> Zod shape</strong> — unchanged. The company-scope branch produces the same five-field shape from the same /search/results/people/ pages.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>REST API for all writes, even from the skill</strong> (CLAUDE.md + bearer-token middleware shipped in Phase 5) — the new POST for synthetic-lead creation goes through <code>/api/job-leads</code>; the new PATCH for company linkedinUrl backfill goes through <code>/api/companies/[id]</code>. No direct DB access from the skill.</li>
+<li><strong>Deterministic URL paths preferred over UI clicks</strong> (existing <code>linkedin-navigation.md</code> Step 4 — &quot;URL parameter preferred over UI filter chip&quot;) — the company-search direct URL (D-07) and the <code>/people/</code> direct navigation (D-05) follow this convention.</li>
+<li><strong>Best-effort cosmetic data with graceful fallback</strong> (project-wide) — name extraction falls back to slug on failure (D-06) rather than blocking the scrape.</li>
+<li><strong>State-machine PATCH for claim → scrape → write-back</strong> (Phase 5 D-08, D-11) — unchanged for the company-scope branch. Same <code>queued → searching → found</code> / <code>failed</code> transitions.</li>
+<li><strong>Single-loop drain with inline branching</strong> (existing skill&#39;s drain mode) — extended in Phase 8 with one nullness check on <code>lead.linkedinJobUrl</code>.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Skill → Phase 7 POST API</strong>: URL input flow and disambiguation pick both POST <code>{ companyName, linkedinCompanyUrl }</code> to <code>/api/job-leads</code>. Phase 7&#39;s idempotent dedup handles double-invocations gracefully.</li>
+<li><strong>Skill → Phase 9 UI</strong>: Phase 9 will display these company-scope leads in the detail page and list view. The discriminator across both phases is <code>lead.linkedinJobUrl === null</code> (Phase 7 D-12, Phase 8 D-12). The <code>roleTitle === &#39;Company-wide scrape&#39;</code> sentinel is informational only.</li>
+<li><strong>Skill → companies API</strong>: PATCH <code>/api/companies/[id]</code> is called in mid-drain backfill (D-14). No new route; no new fields.</li>
+<li><strong>GET /api/job-leads response shape</strong> (D-13): adding <code>companyLinkedinUrl</code> is the only API change in Phase 8. All other routes and shapes are unchanged. Existing UI consumers should treat the new field as optional/null-tolerant (they don&#39;t render it today; no breakage).</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Whether to add a new entity for company-scope leads (locked: no — synthetic <code>job_leads</code> row per Phase 7)</li>
+<li>Whether to add a separate queue / status (locked: no — same <code>queued</code> status, same <code>?status=queued</code> endpoint, single loop per JL-C7)</li>
+<li>Whether to support role-filtered scraping at the company (locked: no — all 2nd-degree connections, per milestone)</li>
+<li>Whether to add new state-machine transitions (no — same <code>queued → searching → found / failed</code> flow)</li>
+<li>Whether to use Stagehand or another browser library (locked: agent-browser, per Phase 5 D-04)</li>
+<li>Whether to auto-pick disambiguation single matches (D-08: no, always confirm)</li>
+<li>Whether to retry-with-broader-query on zero results (D-09: no, fail loudly)</li>
+</ul>
+<h3>What the Planner DOES Need to Verify / Decide</h3>
+<ul>
+<li><strong>Exact Drizzle projection syntax for adding <code>companyLinkedinUrl</code> to the GET response</strong> (D-13). Check whether the existing route uses a single <code>leftJoin(companies)</code> and how it currently shapes the row — extend the projection accordingly. Likely a single-line addition.</li>
+<li><strong>Page-header element to extract company name from <code>/company/&lt;slug&gt;/people/</code></strong> (D-05, CD-02). Open LinkedIn in dev tools, inspect; document the H1 / aria-label heuristic in <code>linkedin-navigation.md</code>. If the People page doesn&#39;t reliably show the company name in the header (LinkedIn variations), fall back to a brief <code>/company/&lt;slug&gt;/</code> visit before <code>/people/</code>.</li>
+<li><strong>Whether agent-browser version&#39;s search-results page exposes employee-count / industry in the snapshot a11y tree</strong> (D-10). If LinkedIn renders these in collapsible cards that require expansion, the disambiguation list may need a different rendering. Planner verifies in a single manual test.</li>
+<li><strong>Test fixture for the new GET projection</strong> (CD-04). Decide whether to extend <code>src/test-utils/pglite.ts</code> with a <code>createCompanyWithLinkedinUrl()</code> helper or inline in the single test case.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><p><strong>Argument-parser sketch</strong> (concrete shape for the planner — pseudocode in the skill prompt):</p>
+<pre><code>arg = $ARGUMENTS.trim()
+if arg == &quot;&quot;:
+  → drain mode
+elif arg matches UUID regex:
+  → single-lead UUID flow
+elif arg parses as URL:
+  parsed = new URL(arg)
+  segments = parsed.pathname.split(&#39;/&#39;).filter(Boolean)
+  if segments[0] == &#39;company&#39; &amp;&amp; segments[1]:
+    slug = segments[1]
+    canonical = `https://www.linkedin.com/company/${slug}/`
+    → company-URL flow with (canonical, slug)
+  else:
+    → existing job-URL flow (unchanged)
+else:
+  → bare-name flow with arg
+</code></pre>
+</li>
+<li><p><strong>Company-URL → /people/ navigation flow</strong> (the new branch the planner adds to <code>linkedin-navigation.md</code>):</p>
+<ol>
+<li>Navigate to <code>https://www.linkedin.com/company/&lt;slug&gt;/people/</code></li>
+<li>Wait for snapshot to settle</li>
+<li>Extract company name from the topmost H1 / heading-role element. Fall back to slug on failure (log warning).</li>
+<li>POST <code>/api/job-leads { companyName: extracted-or-slug, linkedinCompanyUrl: canonical-url }</code>. Capture the returned lead (200 or 201). Use lead&#39;s id for PATCH <code>/status</code> claim.</li>
+<li>PATCH <code>/api/job-leads/&lt;id&gt;/status { status: &quot;searching&quot; }</code> (D-11 flow — claim the lead).</li>
+<li>Apply the 2nd-degree filter (existing Step 4) and proceed to extract + paginate.</li>
+</ol>
+</li>
+<li><p><strong>Bare-name → disambiguate → /people/ navigation flow</strong>:</p>
+<ol>
+<li>Navigate to <code>https://www.linkedin.com/search/results/companies/?keywords=&lt;urlencoded name&gt;</code></li>
+<li>Wait for snapshot; extract top 3–5 company cards (name, employee count, industry).</li>
+<li>If 0 results → fail loudly with <code>No companies found for &quot;&lt;name&gt;&quot;. Try a more specific name or pass a LinkedIn company URL.</code></li>
+<li>Render markdown numbered list (<code>1. **Name** — N employees — Industry</code>) and ask: &quot;Pick a number (1–N), or type the company URL directly:&quot;</li>
+<li>User picks → resolve to the picked card&#39;s company URL → derive slug → continue as company-URL flow from step 4 (POST <code>/api/job-leads</code>).</li>
+<li>(Drain-mode fallback variant): after the user picks, also PATCH <code>/api/companies/&lt;lead.companyId&gt;</code> with <code>{ linkedinUrl: &lt;picked&gt; }</code> to backfill (D-14).</li>
+</ol>
+</li>
+<li><p><strong>GET /api/job-leads response extension</strong> (concrete shape for the planner — added field is the last one in the projection):</p>
+<pre><code class="language-ts">// Current row shape (rough sketch from heimdall-api.md):
+{ id, linkedinJobUrl, roleTitle, companyName, status, lastError, updatedAt }
+// Phase 8 extension (one new field):
+{ id, linkedinJobUrl, roleTitle, companyName, companyLinkedinUrl, status, lastError, updatedAt }
+</code></pre>
+<p>Drizzle projection sketch (planner verifies against actual route):</p>
+<pre><code class="language-ts">.select({
+  id: jobLeads.id,
+  linkedinJobUrl: jobLeads.linkedinJobUrl,
+  roleTitle: jobLeads.roleTitle,
+  companyName: jobLeads.companyName,
+  companyLinkedinUrl: companies.linkedinUrl, // NEW
+  status: jobLeads.status,
+  lastError: jobLeads.lastError,
+  updatedAt: jobLeads.updatedAt,
+})
+.from(jobLeads)
+.leftJoin(companies, eq(jobLeads.companyId, companies.id)) // verify join already exists
+</code></pre>
+</li>
+<li><p><strong>Drain-mode loop sketch</strong> (replaces the existing single loop in SKILL.md &quot;Drain mode&quot; section):</p>
+<pre><code>for each lead in queued:
+  print(`Lead ${lead.id}: ${lead.linkedinJobUrl ? &#39;job-URL&#39; : &#39;company-scope&#39;} (${lead.companyName})`)
+  if lead.linkedinJobUrl == null:
+    url = lead.companyLinkedinUrl
+    if url == null:
+      # D-14 fallback: run bare-name search + disambiguate + backfill
+      url = await runBareNameFlow(lead.companyName)
+      await PATCH(`/api/companies/${lead.companyId}`, { linkedinUrl: url })
+    navigate(`${url.endsWith(&#39;/&#39;) ? url : url + &#39;/&#39;}people/`)
+  else:
+    # existing job-URL branch: navigate to lead.linkedinJobUrl, click company, click employees
+    navigateJobUrlBranch(lead.linkedinJobUrl)
+  # Shared from here: apply 2nd-degree filter, extract, paginate, POST /prospects
+  applyFilterAndExtract(lead.id)
+</code></pre>
+</li>
+<li><p><strong>Tests to ship in this phase</strong> (concrete file targets — narrow surface):</p>
+<ul>
+<li><code>src/app/api/job-leads/route.test.ts</code> — extend with: GET response includes <code>companyLinkedinUrl</code> (CD-04). Use a mixed fixture (one company-scope lead, one job-URL lead, the company-scope lead&#39;s <code>companies</code> row has a non-null <code>linkedinUrl</code>).</li>
+<li>No other server-side tests required: PATCH /status, POST /prospects, PATCH /api/companies were already covered by Phase 7 D-17 and earlier phases against the null-URL invariant.</li>
+<li>Skill changes are exercised in dev (the skill drives a real browser; agent-browser-driven flows are not unit-testable — follows Phase 5 D-21 precedent).</li>
+</ul>
+</li>
+<li><p><strong><code>linkedin-navigation.md</code> rewrite structure</strong> (the planner produces this):</p>
+<pre><code># LinkedIn Navigation Cheat-Sheet
+## Choosing the entry point
+- Job-URL lead (linkedinJobUrl !== null) → Job-URL path
+- Company-URL input (or company-scope lead with companyLinkedinUrl) → Company-URL path
+- Bare-name input (or null companyLinkedinUrl fallback) → Bare-name path
+## Job-URL path
+- Step 1 (open job posting) / Step 2 (click company) / Step 3 (click employees)
+  → converges into the shared 2nd-degree filter section
+## Company-URL path
+- Slug extraction (D-03), direct /people/ nav (D-05), name extraction (D-05 + CD-02), fallback to slug (D-06)
+  → converges into the shared 2nd-degree filter section
+## Bare-name path
+- Search URL (D-07), zero-match policy (D-09), disambiguation render (D-10), always-confirm rule (D-08), single-match policy (CD-05), drain-mode backfill (D-14)
+  → after pick, behaves like the Company-URL path
+## Shared: 2nd-degree filter + paginate + extract
+- (current Steps 4 + 5, unchanged)
+## Historically-stable selectors (appendix)
+- (unchanged from current doc)
+</code></pre>
+</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><p><strong>Auto-pick disambiguation for single matches</strong> — declined in D-08 in favor of always-confirm. Revisit only if friction in the single-match case becomes a recurring complaint.</p>
+</li>
+<li><p><strong>Retry-with-broader-query on zero search results</strong> — declined in D-09. The user-friendly version (auto-strip &quot;Inc&quot;/&quot;LLC&quot;) is opaque and unpredictable; fail-loudly is the v1 policy. Revisit only if zero-match rate is high in practice.</p>
+</li>
+<li><p><strong>Re-run LinkedIn search every drain regardless of persisted URL</strong> — declined in D-13 in favor of caching <code>companies.linkedinUrl</code> via the GET join. Revisit only if LinkedIn company URLs go stale frequently (low probability).</p>
+</li>
+<li><p><strong>Full company object in GET /api/job-leads response</strong> — declined in favor of the single <code>companyLinkedinUrl</code> field. If a future UI surface wants <code>company.priority</code> / <code>company.stage</code> in the lead list, that&#39;s a separate API decision and can opt into <code>?with=company</code> then.</p>
+</li>
+<li><p><strong>Helper script for disambiguation rendering</strong> — CD-03 leaves it as inline. Extract only if rendering grows non-trivially.</p>
+</li>
+<li><p><strong>Mid-drain disambiguation as a separate, friendlier prompt format</strong> — declined; reuses the bare-name disambiguation format for consistency. Revisit if drain runs become awkward.</p>
+</li>
+<li><p><strong>Captcha / rate-limit detection with backoff</strong> — already deferred as JL2-03 (v2). Phase 8 inherits the same boundary.</p>
+</li>
+<li><p><strong>Pagination beyond page 10</strong> — already deferred as JL2-04 (v2). Phase 8 inherits the same boundary.</p>
+</li>
+<li><p><strong>Moving the skill to a per-user (<code>~/.claude/skills/</code>) location</strong> — declined in Phase 5 D-01 (per-project). Unchanged in Phase 8.</p>
+</li>
+<li><p><strong>Refactor single-lead and drain modes into a shared dispatch helper</strong> — declined in D-11 (overkill at v1.1 scope). Revisit if the two modes diverge significantly in future phases.</p>
+</li>
+<li><p><strong>Sentinel runtime enforcement for <code>COMPANY_SCOPE_ROLE_TITLE</code></strong> — already declined in Phase 7 D-11. Phase 8 inherits.</p>
+</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos in <code>.planning/STATE.md</code> matched Phase 8&#39;s scope.</p>
+</deferred><hr>
+<p><em>Phase: 08-Skill Input Parsing, Navigation Branching + Drain</em>
+<em>Context gathered: 2026-05-19</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
