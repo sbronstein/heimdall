@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports (completed 2026-05-13)
 - [x] **Phase 5: Job Leads Completion** - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)
 - [x] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)
-- [ ] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL
+- [x] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)
 - [ ] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches
 - [ ] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances
 
@@ -157,11 +157,11 @@ Plans:
 **Plans**: 3 plans
 Plans:
 **Wave 1**
-- [ ] 07-01-PLAN.md — Schema migration (drop NOT NULL on linkedin_job_url), COMPANY_SCOPE_ROLE_TITLE constant, [BLOCKING] live-DB migrate, PGlite regression test (D-05/D-06/D-10/D-11/CD-01)
+- [x] 07-01-PLAN.md — Schema migration (drop NOT NULL on linkedin_job_url), COMPANY_SCOPE_ROLE_TITLE constant, [BLOCKING] live-DB migrate, PGlite regression test (D-05/D-06/D-10/D-11/CD-01)
 
 **Wave 2** *(both plans parallel — disjoint file sets, both blocked on Wave 1)*
-- [ ] 07-02-PLAN.md — POST /api/job-leads discriminated Zod union + company-scope branch (auto-create/backfill/dedup/timeline) + 7 route tests (D-01/D-02/D-03/D-04/D-07..D-09/D-13..D-15)
-- [ ] 07-03-PLAN.md — D-17 regression: PATCH /status + POST /prospects route tests against null-URL fixtures (no production code changes)
+- [x] 07-02-PLAN.md — POST /api/job-leads discriminated Zod union + company-scope branch (auto-create/backfill/dedup/timeline) + 7 route tests (D-01/D-02/D-03/D-04/D-07..D-09/D-13..D-15)
+- [x] 07-03-PLAN.md — D-17 regression: PATCH /status + POST /prospects route tests against null-URL fixtures (no production code changes)
 
 ### Phase 8: Skill Input Parsing, Navigation Branching + Drain
 **Goal**: The `scrape-linkedin-connections` skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue
@@ -199,6 +199,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Starter-Template Cleanup | 5/5 | Complete | 2026-05-13 |
 | 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
 | 6. Performance | 5/5 | Complete | 2026-05-14 |
-| 7. Schema + API for Company-Scope Leads | 0/3 | Not started | - |
+| 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
 | 8. Skill Input Parsing, Navigation Branching + Drain | 0/TBD | Not started | - |
 | 9. UI for Company-Scope Leads | 0/TBD | Not started | - |
