@@ -108,6 +108,31 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [x] **TEST-A2**: Cover the load-bearing logic — API response envelope shape, `canTransition()` pipeline graph, `logTimeline()` side-effect, LinkedIn CSV parsing, bridge-score computation
 - [x] **TEST-A3**: Add a regression test for the hydration sidebar crash (BUG-01)
 
+## v1.1 Active — LinkedIn Scraping by Company
+
+> Extends the v1 `scrape-linkedin-connections` skill (JL-B1..JL-B5) so it can scrape 2nd-degree connections at any target company, not just at companies attached to a specific LinkedIn job posting. Reuses the existing `job_leads` + `prospects` tables via "synthetic" leads where `linkedinJobUrl` is null.
+
+### Skill Input Parsing
+- [ ] **JL-C1**: `/scrape-linkedin-connections` accepts a LinkedIn company URL (`https://(www.)?linkedin.com/company/<slug>(/.*)?`) as a positional argument and uses it as the navigation entry point — distinct from the existing job-URL branch which starts at `/jobs/...`. Verifiable via the skill's argument-parsing block branching on URL path shape.
+- [ ] **JL-C2**: `/scrape-linkedin-connections` accepts a bare company-name string (anything that isn't a UUID, an https URL, or empty) as a positional argument; the skill performs a LinkedIn company search and selects/disambiguates the target company before scraping. Verifiable via the skill prompt body invoking agent-browser against LinkedIn's company search results.
+
+### Company-Scope Job Lead Creation
+- [ ] **JL-C3**: The Heimdall API accepts a company-scope job-lead creation request — either `POST /api/job-leads` with `{ companyName, linkedinCompanyUrl? }` and no job URL, or a dedicated route — and returns a `job_leads` row with `linkedinJobUrl = null`, `roleTitle = null` (or a canonical "Company-wide scrape" sentinel), `status = 'queued'`, and a foreign-key link to a `companies` row (created on the fly if absent). Verifiable via a route test that POSTs without `linkedinJobUrl` and confirms the resulting row + envelope.
+- [ ] **JL-C4**: The `job_leads` schema permits the company-scope row shape end-to-end — `linkedinJobUrl` is nullable, `roleTitle` is nullable, no constraints/indexes/types assume non-null on these columns. Verifiable via Drizzle schema inspection + a regression test that inserts a row with both fields null and reads it back.
+
+### Disambiguation UX
+- [ ] **JL-C5**: When the skill's bare-company-name input matches more than one LinkedIn company, the skill extracts the top 3–5 results from LinkedIn's company search page (name + employee count + industry), presents them inline as a numbered list, waits for the user to pick one, and uses the picked company's URL for the remaining scrape. Verifiable via `references/linkedin-navigation.md` documenting the search → disambiguate path and the skill prompt body's selection branch.
+
+### Navigation Branching
+- [ ] **JL-C6**: The skill's LinkedIn navigation logic branches on the lead's `linkedinJobUrl`: when null, navigation starts directly at the company employees page (`/company/<slug>/people/`); when non-null, the existing job → company → employees flow runs unchanged. Verifiable via the skill prompt body's null-branch + `references/linkedin-navigation.md` documenting both paths.
+
+### Drain Mode Integration
+- [ ] **JL-C7**: Drain mode (no-arg invocation) processes company-scope leads via the same `GET /api/job-leads?status=queued` endpoint as job-URL leads and runs the `linkedinJobUrl=null` nav branch automatically — no separate queue, no separate status enum value, no separate route. Verifiable via a manual drain run mixing both lead types + the skill prompt body using a single loop.
+
+### UI for Company-Scope Leads
+- [ ] **JL-C8**: The job-lead detail page renders gracefully when `linkedinJobUrl` is null — the "View job posting" link/affordance is hidden (not broken), a "Company scrape" label/badge replaces the role-title display area, and the company name + employee count (once scraped) are shown prominently. Verifiable via a rendered component snapshot or DOM-shape test with a `linkedinJobUrl: null` fixture.
+- [ ] **JL-C9**: The job-lead list view visually distinguishes company-scope leads from job-URL leads (different icon, label, or row badge) so the user can scan the queue without opening every lead. Verifiable via the rendered list with a mixed-lead fixture.
+
 ## v2 (deferred)
 
 ### Job Leads — Production-Grade Scraping
@@ -182,4 +207,4 @@ These are the requirements GSD will track to completion. The roadmap will group 
 
 ---
 *Requirements defined: 2026-05-12*
-*Last updated: 2026-05-13 — JL-A1..A5 superseded by JL-B1..B5 for the Phase 5 reshape (Claude Code skill + agent-browser direction)*
+*Last updated: 2026-05-19 — milestone v1.1 added (JL-C1..JL-C9 for LinkedIn Scraping by Company). v1.0 active items JL-B1..JL-B5 + PERF-A1..A5 shipped in Phase 5/6.*

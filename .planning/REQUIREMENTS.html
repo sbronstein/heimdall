@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Heimdall — Requirements</title>
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 36px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 17px; margin: 22px 0 6px; color: var(--accent); }
+  h3.section-muted { color: var(--muted); }
+  p { margin: 10px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+  .meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 22px; margin: 14px 0; }
+  .callout { background: linear-gradient(180deg, #fff8f1, #ffffff); border-left: 4px solid var(--accent-2); font-style: italic; padding: 14px 18px; border-radius: 0 12px 12px 0; }
+  .req-list { list-style: none; margin: 8px 0 0; padding: 0; }
+  .req-list li { padding: 6px 0 6px 32px; position: relative; font-size: 14.5px; }
+  .req-list.shipped li::before { content: "\2713"; position: absolute; left: 6px; color: var(--accent); font-weight: bold; }
+  .req-list.active li::before { content: "\2610"; position: absolute; left: 6px; color: var(--accent-2); font-weight: bold; }
+  .req-list.superseded li::before { content: "\2014"; position: absolute; left: 6px; color: var(--muted); font-weight: bold; }
+  .req-list.oos li::before { content: "\2715"; position: absolute; left: 6px; color: var(--warn); font-weight: bold; }
+  .reqid { font-weight: 700; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; color: var(--accent-2); }
+  .shipped .reqid { color: var(--accent); }
+  .superseded .reqid { color: var(--muted); }
+  .superseded li { text-decoration: line-through; color: var(--muted); }
+  .superseded li .reqid { text-decoration: line-through; }
+  .reason { color: var(--muted); font-size: 13.5px; font-style: italic; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+  thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .badge-pending { background: #f0e7d8; color: #6b5a3a; }
+  .badge-good { background: #e8efe1; color: #4a6a4a; }
+  .badge-complete { background: #e8efe1; color: #4a6a4a; }
+  .badge-superseded { background: #ece6dc; color: #6b6b6b; }
+  .group-title { font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; margin: 18px 0 4px; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer code { background: transparent; padding: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Requirements — Heimdall</h1>
+<div class="meta">Defined 2026-05-12 · Last updated 2026-05-19 (milestone v1.1 — JL-C1..JL-C9 added for LinkedIn Scraping by Company)</div>
+
+<div class="card callout">
+<strong>Core Value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
+</div>
+
+<div class="card">
+<p>Heimdall is brownfield. The <strong>Validated</strong> section captures the shipped surface area inferred from <code>.planning/codebase/</code> and <code>docs/summary.md</code>. The <strong>v1 Active</strong> section captures the next-up work derived from <code>bug.md</code>, the "Needs Debugging" section of <code>docs/summary.md</code>, and <code>.planning/codebase/CONCERNS.md</code>.</p>
+</div>
+
+<h2>Validated <span class="reason">(already shipped)</span></h2>
+
+<h3>Authentication &amp; Access</h3>
+<ul class="req-list shipped"><li><span class="reqid">AUTH-V1</span> · Clerk session auth with single-user email lock on <code>/dashboard/*</code></li></ul>
+
+<h3>Companies</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">COMP-V1</span> · Companies CRUD (priority, stage, funding, research notes, soft-delete)</li>
+  <li><span class="reqid">COMP-V2</span> · Company detail pages with contacts / applications / notes tabs</li>
+  <li><span class="reqid">COMP-V3</span> · Company filters and data table with priority/stage facets</li>
+</ul>
+
+<h3>Contacts &amp; Networking</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">CONT-V1</span> · Contacts CRUD with closeness (8-tier), warmth, outreach status, <code>howMet</code>, <code>metDate</code>, <code>linkedinConnectionDate</code></li>
+  <li><span class="reqid">CONT-V2</span> · LinkedIn Connections CSV import (dedup, per-row closeness, auto-populate connected-on date)</li>
+  <li><span class="reqid">CONT-V3</span> · Keyboard-driven contact triage workflow (autocomplete, year buttons, closeness 1-8, undo/skip, progress bar)</li>
+  <li><span class="reqid">NET-V1</span> · Networking page (closeness tier stats, outreach tracker)</li>
+  <li><span class="reqid">NET-V2</span> · Connection finder by company (with company-detail-page Network tab)</li>
+</ul>
+
+<h3>Pipeline &amp; Applications</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">APP-V1</span> · Applications CRUD with referral attribution ("via [Contact]")</li>
+  <li><span class="reqid">PIPE-V1</span> · Drag-and-drop pipeline kanban with validated transitions and optimistic UI</li>
+  <li><span class="reqid">PIPE-V2</span> · 13-stage pipeline state machine (Researching → Accepted/Rejected/Withdrawn/Ghosted/On Hold)</li>
+</ul>
+
+<h3>Interactions &amp; Activity</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">INTR-V1</span> · Interactions logging (email, call, coffee, interview, intro requested) with auto-update of outreach status</li>
+  <li><span class="reqid">TIME-V1</span> · Timeline events row emitted on every write via <code>logTimeline()</code> side-effect</li>
+  <li><span class="reqid">OVR-V1</span> · Overview dashboard (KPI cards, funnel, activity timeline, source pie chart)</li>
+</ul>
+
+<h3>Tasks &amp; Notes</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">TASK-V1</span> · Tasks CRUD with entity linking, priority, checkbox toggle</li>
+  <li><span class="reqid">NOTE-V1</span> · Notes CRUD with category filters, markdown content, entity linking</li>
+</ul>
+
+<h3>Recruiters &amp; Metrics</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">REC-V1</span> · Recruiters CRUD linked to contacts</li>
+  <li><span class="reqid">METR-V1</span> · Weekly metrics snapshots + trend charts (JSC reporting)</li>
+</ul>
+
+<h3>Search</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">SRCH-V1</span> · Cmd+K cross-entity search (companies, contacts, applications, notes)</li>
+</ul>
+
+<h3>Job Leads <span class="reason">— partial; see Active</span></h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">JL-V1</span> · Create job lead from URL — cheerio scrape extracts company, role, location</li>
+  <li><span class="reqid">JL-V2</span> · LinkedIn browser session bootstrap via CDP (Docker → host Chrome)</li>
+  <li><span class="reqid">JL-V3</span> · Recommendation API scoring + grouping (<code>0.40·seniority + 0.35·closeness + 0.25·recency</code>)</li>
+</ul>
+
+<h3>Platform</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">API-V1</span> · Standard envelope <code>{ success, data, error, meta }</code> across 34 routes; Zod-validated inputs</li>
+  <li><span class="reqid">API-V2</span> · Cursor pagination on <code>updated_at</code></li>
+  <li><span class="reqid">CLI-V1</span> · All mutations via REST API — full CLI ⇄ Web UI parity</li>
+  <li><span class="reqid">DB-V1</span> · Soft-delete via <code>archived_at</code> on every entity</li>
+</ul>
+
+<h2>v1 Active <span class="reason">(next-up work)</span></h2>
+
+<p>These are the requirements GSD will track to completion. The roadmap will group them into phases.</p>
+
+<h3>Bug Fix <span class="reason">— P0; blocks daily use after large imports</span></h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">BUG-01</span> · Eliminate React hydration crash in <code>app-sidebar.tsx</code> so sidebar navigation stays alive after LinkedIn import</li>
+  <li><span class="reqid">BUG-02</span> · Guard <code>emailAddresses[0]</code> access — <code>user?.emailAddresses[0]?.emailAddress ?? ''</code> in <code>user-avatar-profile.tsx:31</code> and <code>user-nav.tsx:38</code></li>
+</ul>
+
+<h3>Job Leads Completion</h3>
+
+<div class="card callout">
+<strong>SUPERSEDED 2026-05-13.</strong> Phase 5 was reshaped from an in-app-scraper-fix direction to a Claude Code skill driving <code>vercel-labs/agent-browser</code>. JL-A1..A5 targeted code that is being deleted (<code>src/features/job-leads/lib/scrape-connections.ts</code>, the fire-and-forget IIFE, the polling <code>SearchProgress</code> component). The new requirement set is <strong>JL-B1..JL-B5</strong>; the JL-A items remain below for audit trail.
+</div>
+
+<div class="group-title">Superseded</div>
+<ul class="req-list superseded">
+  <li><span class="reqid">JL-A1</span> · Replace hardcoded <code>'point'</code> company name in <code>scrape-connections.ts:62</code> with the lead's actual <code>companyName</code></li>
+  <li><span class="reqid">JL-A2</span> · Tune Playwright navigation — <code>waitUntil: 'domcontentloaded'</code> + targeted <code>waitForSelector</code> instead of fixed <code>waitForTimeout</code></li>
+  <li><span class="reqid">JL-A3</span> · Strip 20+ <code>console.log</code> dumps and the "leave browser open" pattern</li>
+  <li><span class="reqid">JL-A4</span> · Bound fire-and-forget IIFE with <code>Promise.race()</code> timeout; revert stuck leads from <code>searching</code> back to <code>scraped</code></li>
+  <li><span class="reqid">JL-A5</span> · Surface scrape errors to the user; currently the async path swallows them and the lead silently stalls</li>
+</ul>
+
+<div class="group-title">Active</div>
+<ul class="req-list active">
+  <li><span class="reqid">JL-B1</span> · A Claude Code skill at <code>.claude/skills/scrape-linkedin-connections/</code> accepts a job-lead UUID or LinkedIn URL as a positional argument, OR drains all leads with <code>status = 'queued'</code> when invoked with no argument.</li>
+  <li><span class="reqid">JL-B2</span> · The skill drives <code>vercel-labs/agent-browser</code> through the canonical LinkedIn nav: job posting → company page → employees list → 2nd-degree filter, extracting prospects in the existing <code>ScrapedProspect</code> shape.</li>
+  <li><span class="reqid">JL-B3</span> · The skill writes results back through <code>POST /api/job-leads/[id]/prospects</code> (new bulk-insert route) and <code>PATCH /api/job-leads/[id]/status</code>. The fire-and-forget IIFE, <code>scrape-connections.ts</code>, and <code>search-progress.tsx</code> are <strong>deleted</strong>.</li>
+  <li><span class="reqid">JL-B4</span> · <code>job_lead_status</code> gets two new values — <code>'queued'</code> and <code>'failed'</code> — plus nullable <code>last_error</code> (text, ≤200) and <code>last_error_at</code> (timestamp). State machine enforces <code>scraped → queued → searching → found|failed → queued</code>.</li>
+  <li><span class="reqid">JL-B5</span> · Detail page renders: (a) on <code>queued</code> — subtle badge + Copy skill invocation button (sonner toast); (b) on <code>failed</code> — destructive banner with error category + truncated detail + Retry button that POSTs to flip back to <code>queued</code>.</li>
+</ul>
+
+<h3>Security Hardening</h3>
+<ul class="req-list active">
+  <li><span class="reqid">SEC-A1</span> · Add Clerk <code>auth()</code> check (or a <code>middleware.ts</code> matcher) to every <code>/api/*</code> route — currently 0/34 routes authenticate</li>
+  <li><span class="reqid">SEC-A2</span> · Remove the no-op "Continue with GitHub" auth button and the residual external <code>api.github.com</code> star fetch on sign-in/sign-up pages</li>
+</ul>
+
+<h3>Starter-Template Cleanup <span class="reason">— shipped Phase 4</span></h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">DEBT-A1</span> · Delete <code>src/features/products/</code> and <code>src/app/dashboard/product/</code> routes</li>
+  <li><span class="reqid">DEBT-A2</span> · Delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code> routes and the 805-line <code>src/components/ui/infobar.tsx</code></li>
+  <li><span class="reqid">DEBT-A3</span> · Decide on Kanban route — either back it with <code>tasks</code> via <code>/api/tasks</code> or remove the route entirely</li>
+  <li><span class="reqid">DEBT-A4</span> · Remove the <code>__CLEANUP__/</code> directory once the optional features above are stripped</li>
+  <li><span class="reqid">DEBT-A5</span> · Drop the unused <code>computeBridgeScore</code> import in <code>src/app/api/job-leads/[id]/search/route.ts:10</code></li>
+</ul>
+
+<h3>Performance <span class="reason">— shipped Phase 6</span></h3>
+<ul class="req-list active">
+  <li><span class="reqid">PERF-A1</span> · Bulk-insert prospects in <code>/api/job-leads/[id]/search</code> (replace <code>for...of await db.insert(...)</code> with a single batch insert)</li>
+  <li><span class="reqid">PERF-A2</span> · Bulk-insert prospect bridges in <code>match-connections.ts</code> (<code>.values(bridgeValues).onConflictDoNothing()</code>)</li>
+  <li><span class="reqid">PERF-A3</span> · Batch the closeness updates in <code>/api/contacts/import/categorize</code> (CASE WHEN or transaction)</li>
+  <li><span class="reqid">PERF-A4</span> · Add Drizzle <code>index()</code> definitions on hot columns — <code>contacts(archived_at)</code>, <code>contacts(linkedin_url)</code>, <code>contacts(company_id)</code>, <code>contacts(linkedin_connection_date)</code>, <code>companies(name)</code></li>
+  <li><span class="reqid">PERF-A5</span> · Replace full <code>SELECT * FROM contacts</code> scans in <code>/api/contacts/import</code> and <code>match-connections.ts</code> with DB-side dedup (<code>ON CONFLICT DO NOTHING</code>)</li>
+</ul>
+
+<h3>Test Infrastructure <span class="reason">— shipped Phase 2</span></h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">TEST-A1</span> · Stand up Vitest with TypeScript + Drizzle-compatible test DB harness</li>
+  <li><span class="reqid">TEST-A2</span> · Cover the load-bearing logic — API envelope, <code>canTransition()</code>, <code>logTimeline()</code> side-effect, LinkedIn CSV parsing, bridge-score</li>
+  <li><span class="reqid">TEST-A3</span> · Add a regression test for the hydration sidebar crash (BUG-01)</li>
+</ul>
+
+<h2>v1.1 Active <span class="reason">— LinkedIn Scraping by Company</span></h2>
+
+<div class="card">
+<p>Extends the v1 <code>scrape-linkedin-connections</code> skill (JL-B1..JL-B5) so it can scrape 2nd-degree connections at any target company, not just at companies attached to a specific LinkedIn job posting. Reuses the existing <code>job_leads</code> + <code>prospects</code> tables via "synthetic" leads where <code>linkedinJobUrl</code> is null.</p>
+</div>
+
+<h3>Skill Input Parsing</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL-C1</span> · Skill accepts a LinkedIn company URL (<code>https://(www.)?linkedin.com/company/&lt;slug&gt;(/.*)?</code>) as a positional argument and uses it as the navigation entry point — distinct from the existing job-URL branch.</li>
+  <li><span class="reqid">JL-C2</span> · Skill accepts a bare company-name string (not a UUID, not an https URL, not empty); the skill performs a LinkedIn company search and selects/disambiguates the target company before scraping.</li>
+</ul>
+
+<h3>Company-Scope Job Lead Creation</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL-C3</span> · The Heimdall API accepts a company-scope job-lead creation request and returns a <code>job_leads</code> row with <code>linkedinJobUrl = null</code>, <code>roleTitle = null</code> (or canonical "Company-wide scrape"), <code>status = 'queued'</code>, FK-linked to a <code>companies</code> row (created on the fly if absent).</li>
+  <li><span class="reqid">JL-C4</span> · The <code>job_leads</code> schema permits the company-scope row shape end-to-end — <code>linkedinJobUrl</code> and <code>roleTitle</code> are nullable; no constraints/indexes/types assume non-null.</li>
+</ul>
+
+<h3>Disambiguation UX</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL-C5</span> · On multi-match company names, the skill extracts the top 3–5 LinkedIn results (name + employees + industry), presents them inline as a numbered list, waits for the user to pick one, and uses the picked company's URL for the remaining scrape.</li>
+</ul>
+
+<h3>Navigation Branching</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL-C6</span> · Skill nav branches on the lead's <code>linkedinJobUrl</code>: null → navigation starts directly at <code>/company/&lt;slug&gt;/people/</code>; non-null → existing job → company → employees flow runs unchanged.</li>
+</ul>
+
+<h3>Drain Mode Integration</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL-C7</span> · Drain mode (no-arg invocation) processes company-scope leads via the same <code>GET /api/job-leads?status=queued</code> endpoint as job-URL leads and runs the <code>linkedinJobUrl=null</code> nav branch automatically — no separate queue, no separate status enum, no separate route.</li>
+</ul>
+
+<h3>UI for Company-Scope Leads</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL-C8</span> · The job-lead detail page renders gracefully when <code>linkedinJobUrl</code> is null — the "View job posting" affordance is hidden, a "Company scrape" label/badge replaces the role-title display, and the company name + employee count (once scraped) are shown prominently.</li>
+  <li><span class="reqid">JL-C9</span> · The job-lead list view visually distinguishes company-scope leads from job-URL leads (different icon, label, or row badge) so the user can scan the queue without opening every lead.</li>
+</ul>
+
+<h2>v2 <span class="reason">(deferred)</span></h2>
+
+<h3 class="section-muted">Job Leads — Production-Grade Scraping</h3>
+<ul class="req-list active">
+  <li><span class="reqid">JL2-01</span> · Decouple scrape worker from API route — long-running sidecar or remote browser service (Browserless / Playwright Cloud) reachable from Vercel</li>
+  <li><span class="reqid">JL2-02</span> · Move <code>playwright</code> from <code>dependencies</code> to <code>devDependencies</code> (or configure <code>serverExternalPackages: ['playwright']</code>)</li>
+  <li><span class="reqid">JL2-03</span> · Captcha / rate-limit detection with backoff</li>
+  <li><span class="reqid">JL2-04</span> · Pagination beyond first results page</li>
+</ul>
+
+<h3 class="section-muted">Phase 2 (per CLAUDE.md)</h3>
+<ul class="req-list active">
+  <li><span class="reqid">VEC-01</span> · pgvector embeddings on the same Neon instance for semantic search over notes, interactions, and job descriptions</li>
+  <li><span class="reqid">VEC-02</span> · OpenAI embedding pipeline (<code>OPENAI_API_KEY</code> already documented in env)</li>
+</ul>
+
+<h3 class="section-muted">Quality</h3>
+<ul class="req-list active">
+  <li><span class="reqid">OBS-01</span> · Structured logging beyond <code>console.error</code> — error reporting integration (Sentry instrumentation is currently no-op)</li>
+  <li><span class="reqid">OBS-02</span> · Background-job dashboard for scrape status</li>
+</ul>
+
+<h3 class="section-muted">UX</h3>
+<ul class="req-list active">
+  <li><span class="reqid">UX-01</span> · Mobile-responsive polish (currently desktop-first)</li>
+  <li><span class="reqid">UX-02</span> · Bulk-edit operations beyond triage categorize</li>
+</ul>
+
+<h2>Out of Scope</h2>
+
+<table>
+  <thead><tr><th>Feature</th><th>Reason</th></tr></thead>
+  <tbody>
+    <tr><td>Multi-tenant / multi-user</td><td>Personal CRM; Clerk middleware hardcodes <code>steve@bronstein.org</code></td></tr>
+    <tr><td>Mobile / native app</td><td>Web-first during the active search; deferred indefinitely</td></tr>
+    <tr><td>Real-time chat / messaging</td><td>Outside CRM scope</td></tr>
+    <tr><td>OAuth providers beyond Clerk's built-in</td><td>Clerk handles auth; the residual GitHub button is starter residue to delete, not implement</td></tr>
+    <tr><td>Server-side scraping on Vercel serverless</td><td>Playwright + Chromium exceed Vercel's bundle/FS limits — scraping stays local-dev/Docker</td></tr>
+    <tr><td>DB-backed <code>/dashboard/kanban</code></td><td>Starter-template residue; removed under DEBT-A3</td></tr>
+    <tr><td>Video or audio content</td><td>Not a CRM concern</td></tr>
+    <tr><td>Public-facing pages</td><td>The whole app is <code>/dashboard/*</code> behind the single-user lock</td></tr>
+  </tbody>
+</table>
+
+<h2>Traceability</h2>
+
+<p class="reason">Phase mapping populated by <code>gsd-roadmapper</code> on 2026-05-12.</p>
+
+<table>
+  <thead><tr><th>Requirement</th><th>Phase</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td><span class="reqid">BUG-01</span></td><td>Phase 1</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">BUG-02</span></td><td>Phase 1</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">TEST-A1</span></td><td>Phase 2</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">TEST-A2</span></td><td>Phase 2</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">TEST-A3</span></td><td>Phase 2</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">SEC-A1</span></td><td>Phase 3</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">SEC-A2</span></td><td>Phase 3</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">DEBT-A1</span></td><td>Phase 4</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">DEBT-A2</span></td><td>Phase 4</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">DEBT-A3</span></td><td>Phase 4</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">DEBT-A4</span></td><td>Phase 4</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">DEBT-A5</span></td><td>Phase 4</td><td><span class="badge badge-complete">Complete</span></td></tr>
+    <tr><td><span class="reqid">JL-A1</span></td><td>Phase 5</td><td><span class="badge badge-superseded">Superseded</span></td></tr>
+    <tr><td><span class="reqid">JL-A2</span></td><td>Phase 5</td><td><span class="badge badge-superseded">Superseded</span></td></tr>
+    <tr><td><span class="reqid">JL-A3</span></td><td>Phase 5</td><td><span class="badge badge-superseded">Superseded</span></td></tr>
+    <tr><td><span class="reqid">JL-A4</span></td><td>Phase 5</td><td><span class="badge badge-superseded">Superseded</span></td></tr>
+    <tr><td><span class="reqid">JL-A5</span></td><td>Phase 5</td><td><span class="badge badge-superseded">Superseded</span></td></tr>
+    <tr><td><span class="reqid">JL-B1</span></td><td>Phase 5</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">JL-B2</span></td><td>Phase 5</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">JL-B3</span></td><td>Phase 5</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">JL-B4</span></td><td>Phase 5</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">JL-B5</span></td><td>Phase 5</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">PERF-A1</span></td><td>Phase 6</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">PERF-A2</span></td><td>Phase 6</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">PERF-A3</span></td><td>Phase 6</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">PERF-A4</span></td><td>Phase 6</td><td><span class="badge badge-pending">Pending</span></td></tr>
+    <tr><td><span class="reqid">PERF-A5</span></td><td>Phase 6</td><td><span class="badge badge-pending">Pending</span></td></tr>
+  </tbody>
+</table>
+
+<div class="card">
+<p><strong>Coverage:</strong></p>
+<ul>
+  <li>v1 Active requirements: 22 total (5 superseded; net 22 active, with JL-A1..A5 replaced by JL-B1..B5)</li>
+  <li>Mapped to phases: 22 ✓</li>
+  <li>Unmapped: 0 ✓</li>
+</ul>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/REQUIREMENTS.md</code> · This HTML companion is for readability and may lag behind. · Requirements defined 2026-05-12 · Last updated 2026-05-19 (milestone v1.1).
+</footer>
+
+</div>
+</body>
+</html>
