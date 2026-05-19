@@ -154,7 +154,14 @@ Plans:
   2. The Drizzle schema for `job_leads` has `linkedinJobUrl` and `roleTitle` as nullable columns with no non-null constraints, and a Drizzle migration ensures the live database matches — verified by a route test that inserts and reads back a row with both fields null
   3. The created synthetic lead is linked to a `companies` row (matched by name or created on the fly) so recommendations and contact-bridging work unchanged for company-scope leads
   4. The existing `PATCH /api/job-leads/[id]/status` and `POST /api/job-leads/[id]/prospects` routes accept company-scope leads (where `linkedinJobUrl` is null) without errors — the state machine is input-shape agnostic
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+- [ ] 07-01-PLAN.md — Schema migration (drop NOT NULL on linkedin_job_url), COMPANY_SCOPE_ROLE_TITLE constant, [BLOCKING] live-DB migrate, PGlite regression test (D-05/D-06/D-10/D-11/CD-01)
+
+**Wave 2** *(both plans parallel — disjoint file sets, both blocked on Wave 1)*
+- [ ] 07-02-PLAN.md — POST /api/job-leads discriminated Zod union + company-scope branch (auto-create/backfill/dedup/timeline) + 7 route tests (D-01/D-02/D-03/D-04/D-07..D-09/D-13..D-15)
+- [ ] 07-03-PLAN.md — D-17 regression: PATCH /status + POST /prospects route tests against null-URL fixtures (no production code changes)
 
 ### Phase 8: Skill Input Parsing, Navigation Branching + Drain
 **Goal**: The `scrape-linkedin-connections` skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue
@@ -192,6 +199,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Starter-Template Cleanup | 5/5 | Complete | 2026-05-13 |
 | 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
 | 6. Performance | 5/5 | Complete | 2026-05-14 |
-| 7. Schema + API for Company-Scope Leads | 0/TBD | Not started | - |
+| 7. Schema + API for Company-Scope Leads | 0/3 | Not started | - |
 | 8. Skill Input Parsing, Navigation Branching + Drain | 0/TBD | Not started | - |
 | 9. UI for Company-Scope Leads | 0/TBD | Not started | - |

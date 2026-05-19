@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 07-schema-api-for-company-scope-leads
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>drizzle/schema/job-leads.ts</li>
+<li>drizzle/migrations/0009_allow_company_scope_job_leads.sql</li>
+<li>drizzle/migrations/meta/_journal.json</li>
+<li>drizzle/migrations/meta/0009_snapshot.json</li>
+<li>src/lib/domain/types.ts</li>
+<li>src/lib/db/<strong>phase7_schema</strong>.test.ts
+autonomous: true
+requirements: [JL-C4]
+requirements_addressed: [JL-C4]
+tags: [drizzle, schema, migration, neon, postgres, zod]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;Drizzle schema for job_leads has linkedinJobUrl as a nullable text column with no .notNull() chain&quot;
+    - &quot;A new Drizzle migration file (0009_allow_company_scope_job_leads.sql) exists and contains &#39;ALTER TABLE &quot;job_leads&quot; ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL&#39;&quot;
+    - &quot;The live dev database accepts inserts into job_leads with linkedin_job_url IS NULL after migration is applied&quot;
+    - &quot;COMPANY_SCOPE_ROLE_TITLE constant &#39;Company-wide scrape&#39; is exported from src/lib/domain/types.ts&quot;
+    - &quot;Vitest regression test inserts a job_leads row with linkedinJobUrl: null via Drizzle, reads it back, and the assertion passes&quot;
+  artifacts:
+    - path: &quot;drizzle/schema/job-leads.ts&quot;
+      provides: &quot;nullable linkedinJobUrl column&quot;
+      contains: &quot;linkedinJobUrl: text(&#39;linkedin_job_url&#39;),&quot;
+    - path: &quot;drizzle/migrations/0009_allow_company_scope_job_leads.sql&quot;
+      provides: &quot;DROP NOT NULL migration&quot;
+      contains: &quot;ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL&quot;
+    - path: &quot;src/lib/domain/types.ts&quot;
+      provides: &quot;COMPANY_SCOPE_ROLE_TITLE constant&quot;
+      contains: &quot;export const COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; as const&quot;
+    - path: &quot;src/lib/db/<strong>phase7_schema</strong>.test.ts&quot;
+      provides: &quot;regression test pinning the nullable shape&quot;
+      contains: &quot;expect(inserted.linkedinJobUrl).toBeNull()&quot;
+  key_links:
+    - from: &quot;drizzle/schema/job-leads.ts&quot;
+      to: &quot;drizzle/migrations/0009_allow_company_scope_job_leads.sql&quot;
+      via: &quot;drizzle-kit generate&quot;
+      pattern: &quot;ALTER TABLE &quot;job_leads&quot; ALTER COLUMN &quot;linkedin_job_url&quot; DROP NOT NULL&quot;
+    - from: &quot;drizzle/migrations/0009_allow_company_scope_job_leads.sql&quot;
+      to: &quot;live dev database&quot;
+      via: &quot;npm run db:migrate&quot;
+      pattern: &quot;migration applied to public.job_leads&quot;
+    - from: &quot;src/lib/db/<strong>phase7_schema</strong>.test.ts&quot;
+      to: &quot;drizzle/schema/job-leads.ts&quot;
+      via: &quot;Drizzle insert with linkedinJobUrl: null&quot;
+  pattern: &quot;db.insert(jobLeads).values\(\{ linkedinJobUrl: null&quot;
+</p>
+<hr>
+<objective>
+Land the schema change that underpins the entire phase: `job_leads.linkedin_job_url` becomes nullable so that synthetic, company-scope job leads can exist. Generate and apply the Drizzle migration against the live dev database, add the `COMPANY_SCOPE_ROLE_TITLE` canonical constant, and pin the nullable shape with a Vitest regression test against the PGlite harness.<p>Purpose: This is the foundation Plan 02 (route extension) and Plan 03 (regression tests on existing routes) both depend on. Without the migration applied to the live DB, the production POST route will reject <code>linkedinJobUrl: null</code> even though TypeScript would compile cleanly (types come from the schema source, not the live DB) — that is the false-positive verification trap called out in the phase planning context.</p>
+<p>Output: nullable schema column, migration file 0009 checked in, live DB migrated, <code>COMPANY_SCOPE_ROLE_TITLE</code> constant exported, schema regression test passing on PGlite.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md
+@.planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md
+@CLAUDE.md
+@.planning/codebase/CONVENTIONS.md
+@drizzle/schema/job-leads.ts
+@drizzle/schema/companies.ts
+@src/lib/domain/types.ts
+@src/lib/db/__phase6_indexes__.test.ts
+@drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql<interfaces>
+<!-- Key contracts the executor needs. Extracted from the codebase. -->
+<!-- Use these directly — no further exploration required. --><p>From drizzle/schema/job-leads.ts (CURRENT line 19 — to be changed):</p>
+<pre><code class="language-typescript">linkedinJobUrl: text(&#39;linkedin_job_url&#39;).notNull(),
+roleTitle: text(&#39;role_title&#39;),
+companyName: text(&#39;company_name&#39;),
+</code></pre>
+<p>From src/lib/domain/types.ts (style pattern for new constant, near jobLeadStatusValues at ~line 205):</p>
+<pre><code class="language-typescript">export const jobLeadStatusValues = [
+  &#39;pending&#39;, &#39;scraping&#39;, &#39;scraped&#39;, &#39;queued&#39;, &#39;searching&#39;,
+  &#39;found&#39;, &#39;ready&#39;, &#39;actioned&#39;, &#39;archived&#39;, &#39;failed&#39;
+] as const;
+</code></pre>
+<p>From src/test-utils/pglite.ts:</p>
+<ul>
+<li><code>createTestDb(): Promise&lt;PgliteDatabase&gt;</code> — already exists; applies all migrations, returns a Drizzle client</li>
+</ul>
+<p>From drizzle/migrations/0008 entry in <code>drizzle/migrations/meta/_journal.json</code>:</p>
+<ul>
+<li>Drizzle Kit auto-appends a journal entry on <code>db:generate</code>; do not hand-edit unless generation drifts.</li>
+</ul>
+<p>From package.json scripts:</p>
+<ul>
+<li><code>npm run db:generate</code> → <code>drizzle-kit generate</code> (accepts <code>-- --name=&lt;slug&gt;</code>)</li>
+<li><code>npm run db:migrate</code> → applies pending migrations against <code>DATABASE_URL</code></interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto">
+  <name>Task 1: Drop NOT NULL on linkedinJobUrl in Drizzle schema</name>
+  <files>drizzle/schema/job-leads.ts</files>
+  <read_first>
+    - drizzle/schema/job-leads.ts (whole file — only 86 lines; current shape of jobLeads + sibling tables)
+    - drizzle/schema/companies.ts (the analog — line 25 shows the nullable-text shape to mirror)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (D-05 — schema change rationale)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md (§"drizzle/schema/job-leads.ts" pattern block)
+  </read_first>
+  <action>
+    Edit `drizzle/schema/job-leads.ts` line 19 per D-05: change `linkedinJobUrl: text('linkedin_job_url').notNull(),` to `linkedinJobUrl: text('linkedin_job_url'),` — drop only the `.notNull()` chain, keep the column name and type identical. Touch no other line. Do NOT touch `roleTitle` (line 20) or `companyName` (line 21) — both are already nullable per D-05 and the spec's success criterion 2.
+  </action>
+  <verify>
+    <automated>grep -n "linkedinJobUrl" drizzle/schema/job-leads.ts | grep -v "notNull" | grep -c "text('linkedin_job_url')"</automated>
+  </verify>
+  <acceptance_criteria>
+    - `drizzle/schema/job-leads.ts` line 19 reads exactly: `linkedinJobUrl: text('linkedin_job_url'),`
+    - Grep for `.notNull()` on the same line returns 0 matches: `grep -n "linkedinJobUrl.*notNull" drizzle/schema/job-leads.ts` outputs nothing
+    - Lines 20 (`roleTitle`) and 21 (`companyName`) are unchanged
+    - `npx tsc --noEmit` exits 0 (no type errors propagate from this single-token deletion)
+  </acceptance_criteria>
+  <done>
+    Schema source declares `linkedin_job_url` as a nullable text column; downstream Drizzle Kit generation will emit the corresponding DDL.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Add COMPANY_SCOPE_ROLE_TITLE constant to domain types</name>
+  <files>src/lib/domain/types.ts</files>
+  <read_first>
+    - src/lib/domain/types.ts (whole file — see existing `*Values as const` patterns at lines 48–228)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (D-10, D-11, §specifics block "COMPANY_SCOPE_ROLE_TITLE constant")
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md (§"src/lib/domain/types.ts" pattern block)
+  </read_first>
+  <action>
+    Append a new `export const COMPANY_SCOPE_ROLE_TITLE = 'Company-wide scrape' as const;` immediately after the `jobLeadStatusValues` block (currently lines 205-216). Precede it with the docstring from CONTEXT §specifics referencing Phase 7 D-10/D-11 and noting that Phase 9 UI keys off `linkedinJobUrl === null` (not this sentinel). No type alias — single literal string is sufficient. No imports needed; pure constant.
+  </action>
+  <verify>
+    <automated>grep -c "export const COMPANY_SCOPE_ROLE_TITLE = 'Company-wide scrape' as const" src/lib/domain/types.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `grep -c "COMPANY_SCOPE_ROLE_TITLE" src/lib/domain/types.ts` returns 1
+    - The export literal value is exactly the string `'Company-wide scrape'` (single quotes per project style)
+    - The const declaration uses `as const` per the file's existing convention
+    - `npx tsc --noEmit` exits 0
+    - The constant is exported at module scope (importable via `import { COMPANY_SCOPE_ROLE_TITLE } from '@/lib/domain/types'`)
+  </acceptance_criteria>
+  <done>
+    `COMPANY_SCOPE_ROLE_TITLE` is exported from `@/lib/domain/types` and ready for Plan 02's POST handler import.
+  </done>
+</task><task type="auto">
+  <name>Task 3: [BLOCKING] Generate Drizzle migration 0009_allow_company_scope_job_leads</name>
+  <files>drizzle/migrations/0009_allow_company_scope_job_leads.sql, drizzle/migrations/meta/_journal.json, drizzle/migrations/meta/0009_snapshot.json</files>
+  <read_first>
+    - drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql (analog — single-table ALTER migration shape)
+    - drizzle/migrations/0008_phase6_indexes.sql (most recent migration — confirms numbering scheme)
+    - drizzle.config.ts (Drizzle Kit config — confirms schema path and migrations path)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (CD-01, CD-03)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md (§"drizzle/migrations/0009_allow_company_scope_job_leads.sql" pattern block)
+  </read_first>
+  <action>
+    Run `npm run db:generate -- --name=allow_company_scope_job_leads` per CD-01. This must execute AFTER Task 1 (schema edit). Inspect the emitted SQL: the expected content is exactly the single statement `ALTER TABLE "job_leads" ALTER COLUMN "linkedin_job_url" DROP NOT NULL;`. Per CD-01: if Drizzle Kit emits anything weirder (e.g., a table-recreation, dropping/recreating constraints unnecessarily, touching unrelated columns), STOP — hand-edit the file down to the single ALTER statement and document the divergence in a one-line header comment. Per CD-03: prepend the runbook comment `-- Allow company-scope job leads: drop NOT NULL on linkedin_job_url so synthetic leads created from a company name/URL can exist` to the migration file (one line, no separate doc). Verify `drizzle/migrations/meta/_journal.json` has been appended with an entry for tag `0009_allow_company_scope_job_leads` and that `drizzle/migrations/meta/0009_snapshot.json` was created. This task is `[BLOCKING]` — execute-phase must pause if the emitted SQL diverges from the single-ALTER expectation, surface the diff for human review, and only continue once the migration file matches the expected single-statement shape.
+  </action>
+  <verify>
+    <automated>test -f drizzle/migrations/0009_allow_company_scope_job_leads.sql && grep -c 'ALTER TABLE "job_leads" ALTER COLUMN "linkedin_job_url" DROP NOT NULL' drizzle/migrations/0009_allow_company_scope_job_leads.sql && grep -c '"tag": "0009_allow_company_scope_job_leads"' drizzle/migrations/meta/_journal.json && test -f drizzle/migrations/meta/0009_snapshot.json</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `drizzle/migrations/0009_allow_company_scope_job_leads.sql` exists
+    - File contains the exact substring `ALTER TABLE "job_leads" ALTER COLUMN "linkedin_job_url" DROP NOT NULL` (single occurrence)
+    - File does NOT contain `DROP TABLE`, `CREATE TABLE "job_leads"`, or any reference to columns other than `linkedin_job_url` (verified by `grep -E 'DROP TABLE|CREATE TABLE \"job_leads\"|role_title|company_name|status|prospect_count|last_error|scraped_data' drizzle/migrations/0009_allow_company_scope_job_leads.sql` returning no matches)
+    - File starts with the runbook header comment per CD-03
+    - `drizzle/migrations/meta/_journal.json` contains `"tag": "0009_allow_company_scope_job_leads"`
+    - `drizzle/migrations/meta/0009_snapshot.json` exists
+    - Migration generation command exit code was 0
+  </acceptance_criteria>
+  <done>
+    Migration file `0009_allow_company_scope_job_leads.sql` is checked in with the single ALTER DROP NOT NULL statement; Drizzle Kit journal + snapshot are updated; the migration is ready to apply.
+  </done>
+</task><task type="auto">
+  <name>Task 4: [BLOCKING] Apply migration to live dev database</name>
+  <files></files>
+  <read_first>
+    - drizzle/migrations/0009_allow_company_scope_job_leads.sql (the migration just generated in Task 3)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (§schema_push_requirement reasoning — types come from schema source, not live DB, so build alone cannot catch a missing migration)
+    - CLAUDE.md (§Commands — confirms `npm run db:migrate` is the apply command)
+  </read_first>
+  <action>
+    Execute `npm run db:migrate` against the live dev database (uses `DATABASE_URL` from `.env.local`). This task is `[BLOCKING]` and must run AFTER Task 3 and BEFORE any tests in Task 5 or in downstream plans. After the migrate command exits, verify by running a Postgres query through the Neon HTTP driver (use a small one-off `node -e` script or the `db:studio` introspection) that `information_schema.columns` shows `is_nullable = 'YES'` for `job_leads.linkedin_job_url`. If the migrate command fails (e.g., already-applied marker mismatch, connection error), surface the full output for human review — do NOT manually edit `drizzle/migrations/meta/_journal.json` to force-skip. The phase CANNOT advance past this task without the live DB confirmed to accept null values.
+  </action>
+  <verify>
+    <automated>node -e "const {neon}=require('@neondatabase/serverless');require('dotenv').config({path:'.env.local'});(async()=>{const sql=neon(process.env.DATABASE_URL);const r=await sql\`SELECT is_nullable FROM information_schema.columns WHERE table_name='job_leads' AND column_name='linkedin_job_url'\`;if(r[0]?.is_nullable!=='YES'){process.exit(1)}})().catch(e=>{console.error(e);process.exit(1)})"</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npm run db:migrate` exit code is 0 (or already-applied is acknowledged as success)
+    - Postgres `information_schema.columns` reports `is_nullable = 'YES'` for column `linkedin_job_url` on table `job_leads` in the connected `DATABASE_URL`
+    - A manual `INSERT INTO job_leads (linkedin_job_url, status, company_name) VALUES (NULL, 'queued', 'TestProbe') RETURNING id;` (executed via `node -e` one-off) succeeds and returns a UUID (and is then deleted to keep dev DB clean)
+    - No journal-mismatch error in stdout
+  </acceptance_criteria>
+  <done>
+    Live dev Postgres reflects the nullable shape; downstream tests + the production route can write `linkedin_job_url = NULL` rows without DB-side rejection.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 5: Schema regression test (D-06) — insert linkedinJobUrl: null via Drizzle</name>
+  <files>src/lib/db/__phase7_schema__.test.ts</files>
+  <read_first>
+    - src/lib/db/__phase6_indexes__.test.ts (analog — sibling phase-N regression test; same harness pattern, different verification mechanism)
+    - src/test-utils/pglite.ts (whole file — confirms `createTestDb()` signature and which migrations it applies; PGlite must apply 0009 for this test to validate the constraint relaxation)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (D-06 — regression-test requirement)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md (§"src/lib/db/__phase7_schema__.test.ts" pattern block — full code sketch)
+  </read_first>
+  <behavior>
+    - Test 1: Insert a `job_leads` row with `linkedinJobUrl: null, roleTitle: COMPANY_SCOPE_ROLE_TITLE, companyName: 'TestCo', companyId: <seeded>, status: 'queued'` succeeds (no DB-side rejection)
+    - Test 2: Read back the same row by id — `linkedinJobUrl` is `null`, `roleTitle` is `'Company-wide scrape'`, `status` is `'queued'`
+    - Test 3 (defensive): Insert another row with `linkedinJobUrl: null, roleTitle: null` (both fields null per the success criterion 2 wording "inserts and reads back a row with both fields null") — also succeeds; read-back confirms both fields are null
+  </behavior>
+  <action>
+    Create new file `src/lib/db/__phase7_schema__.test.ts`. Use the full PGlite + Drizzle insert/select pattern from `07-PATTERNS.md` (§"src/lib/db/__phase7_schema__.test.ts" pattern block). Imports: `createTestDb` from `@/test-utils/pglite`, `jobLeads, companies` from `'../../../drizzle/schema'`, `eq` from `'drizzle-orm'`, `COMPANY_SCOPE_ROLE_TITLE` from `@/lib/domain/types`. Wrap in `describe('Phase 7 schema regression (D-06)', ...)`. Seed a `companies` row first to satisfy the FK on `companyId`. Cover the three behaviors listed above as three `it` blocks (or two — collapse the `both fields null` case into the same `it` if test setup overhead matters). Use the same `expect().toBeNull()` / `expect().toBe(...)` style as `__phase6_indexes__.test.ts`. NO `vi.mock('@/lib/db')` needed — this test uses the real PGlite database directly, not the route layer.
+  </action>
+  <verify>
+    <automated>npx vitest run src/lib/db/__phase7_schema__.test.ts --reporter=verbose</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/lib/db/__phase7_schema__.test.ts` exists
+    - `npx vitest run src/lib/db/__phase7_schema__.test.ts` exits 0
+    - All three (or two) `it` blocks pass
+    - Test imports include `COMPANY_SCOPE_ROLE_TITLE` from `@/lib/domain/types` (verified by `grep -c "COMPANY_SCOPE_ROLE_TITLE" src/lib/db/__phase7_schema__.test.ts` returning >= 1)
+    - Test asserts `inserted.linkedinJobUrl === null` and `readBack.linkedinJobUrl === null` after a fresh insert (verified by `grep -c "toBeNull" src/lib/db/__phase7_schema__.test.ts` returning >= 2)
+    - The describe block name contains "Phase 7" and "D-06"
+  </acceptance_criteria>
+  <done>
+    Regression test pins the nullable-column shape against future schema changes; running the full Vitest suite catches any reintroduction of `.notNull()` on `linkedin_job_url`.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>developer→source repo</td>
+<td>Hand-edited schema + migration files; reviewed via PR/commit before merge</td>
+</tr>
+<tr>
+<td>Drizzle Kit→<code>drizzle/migrations/*.sql</code></td>
+<td>Auto-generated DDL; reviewed by human before <code>db:migrate</code></td>
+</tr>
+<tr>
+<td><code>npm run db:migrate</code>→live Postgres</td>
+<td>DDL applied against <code>DATABASE_URL</code> (Neon dev branch); single-statement, non-destructive</td>
+</tr>
+<tr>
+<td>Vitest harness→PGlite</td>
+<td>In-process Postgres for the regression test; no network egress</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-07-01</td>
+<td>Tampering</td>
+<td>Drizzle Kit emitted SQL (could over-generate, e.g., recreate the entire <code>job_leads</code> table and drop data)</td>
+<td>mitigate</td>
+<td>Task 3 explicitly requires inspecting the emitted SQL; the <code>[BLOCKING]</code> tag pauses execution if the file contains <code>DROP TABLE</code>, <code>CREATE TABLE &quot;job_leads&quot;</code>, or references to columns other than <code>linkedin_job_url</code> — verified by the grep in Task 3&#39;s acceptance criteria</td>
+</tr>
+<tr>
+<td>T-07-02</td>
+<td>Denial of Service</td>
+<td><code>npm run db:migrate</code> failure on live Postgres (lock contention, connection drop)</td>
+<td>accept</td>
+<td>Single-user dev DB; non-destructive ALTER COLUMN DROP NOT NULL takes a brief AccessExclusiveLock; rollback is trivial (re-add NOT NULL — though no data would yet violate it). Risk is low and self-bounded.</td>
+</tr>
+<tr>
+<td>T-07-03</td>
+<td>Tampering</td>
+<td>Schema regression test could be deleted later without anyone noticing</td>
+<td>accept</td>
+<td>Phase 2&#39;s test infrastructure runs the full Vitest suite in pre-push hook; a deleted phase-N test reduces total count but Vitest does not fail on &quot;fewer tests than before&quot;. This is a known limitation; not blocking Phase 7.</td>
+</tr>
+<tr>
+<td>T-07-04</td>
+<td>Information Disclosure</td>
+<td>Migration runbook header comment exposes intent in source control</td>
+<td>accept</td>
+<td>Comment is informational; no secrets or internal-only data. Public-by-default OSS-style repo hygiene.</td>
+</tr>
+<tr>
+<td>T-07-05</td>
+<td>Repudiation</td>
+<td>Migration applied to live DB without traceable record</td>
+<td>mitigate</td>
+<td><code>drizzle/migrations/meta/_journal.json</code> records the migration tag + hash; git commit on the migration file provides the source-control audit trail per <code>commit_docs=true</code></td>
+</tr>
+<tr>
+<td>T-07-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>mitigate</td>
+<td>No new packages installed in this plan; <code>drizzle-kit</code>, <code>vitest</code>, <code>@neondatabase/serverless</code> are pre-existing dependencies. Package legitimacy gate N/A.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+After all tasks complete:
+1. `npx vitest run` — full suite exits 0, including the new `__phase7_schema__.test.ts`
+2. `grep -n "linkedinJobUrl" drizzle/schema/job-leads.ts | grep -c "notNull"` returns 0
+3. `grep -c "ALTER COLUMN \"linkedin_job_url\" DROP NOT NULL" drizzle/migrations/0009_allow_company_scope_job_leads.sql` returns 1
+4. Live DB query confirms `information_schema.columns.is_nullable = 'YES'` for `job_leads.linkedin_job_url`
+5. `grep -c "COMPANY_SCOPE_ROLE_TITLE" src/lib/domain/types.ts` returns 1
+6. `npx tsc --noEmit` exits 0
+</verification><success_criteria>
+- Schema source (`drizzle/schema/job-leads.ts`) declares `linkedin_job_url` as nullable
+- Migration `0009_allow_company_scope_job_leads.sql` exists, contains the single ALTER statement, and is journaled
+- Live dev Postgres reports `is_nullable='YES'` for `job_leads.linkedin_job_url`
+- `COMPANY_SCOPE_ROLE_TITLE` constant exists and is importable from `@/lib/domain/types`
+- Regression test `src/lib/db/__phase7_schema__.test.ts` exists and passes
+- Rolls up to ROADMAP Phase 7 success criterion #2 ("Drizzle schema for job_leads has linkedinJobUrl and roleTitle as nullable columns with no non-null constraints, and a Drizzle migration ensures the live database matches — verified by a route test that inserts and reads back a row with both fields null")
+- Unblocks Plan 02 (route extension) and Plan 03 (D-17 regression tests)
+</success_criteria><output>
+Create `.planning/phases/07-schema-api-for-company-scope-leads/07-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 07-schema-api-for-company-scope-leads
+plan: 02
+type: execute
+wave: 2
+depends_on: [&#39;07-01&#39;]
+files_modified:</p>
+<ul>
+<li>src/app/api/job-leads/route.ts</li>
+<li>src/app/api/job-leads/route.test.ts
+autonomous: true
+requirements: [JL-C3]
+requirements_addressed: [JL-C3]
+tags: [next-js, drizzle, zod, neon, postgres, vitest, api-route]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;POST /api/job-leads with body { companyName, linkedinCompanyUrl? } and no linkedinJobUrl creates a job_leads row where linkedinJobUrl is null, roleTitle is &#39;Company-wide scrape&#39;, status is &#39;queued&#39;, and companyId references a companies row&quot;
+    - &quot;When no companies row matches the case-insensitive company name, the route auto-creates a minimal companies stub (name + optional linkedinUrl + schema defaults)&quot;
+    - &quot;When a companies row matches by name but its linkedinUrl is null AND the request includes linkedinCompanyUrl, the matched row&#39;s linkedinUrl is backfilled (UPDATE)&quot;
+    - &quot;When a companies row matches AND its linkedinUrl is non-null, the matched row is NOT overwritten&quot;
+    - &quot;When an in-flight company-scope lead already exists for the resolved companyId (linkedinJobUrl IS NULL AND status IN (&#39;queued&#39;,&#39;searching&#39;,&#39;failed&#39;) AND archived_at IS NULL), the route returns HTTP 200 with the existing row (no duplicate insert)&quot;
+    - &quot;When no in-flight match exists, the route returns HTTP 201 with the newly created row&quot;
+    - &quot;Every successful create emits a job_lead_created timeline event with metadata.scope === &#39;company&#39;&quot;
+    - &quot;Bodies that match neither shape (e.g., {}) return 400 via Zod validation error&quot;
+    - &quot;Bodies that match both shapes (e.g., { linkedinJobUrl, companyName }) resolve to the job-URL branch per Zod union first-match-wins&quot;
+  artifacts:
+    - path: &quot;src/app/api/job-leads/route.ts&quot;
+      provides: &quot;POST handler with discriminated Zod union + company-scope branch + dedup&quot;
+      contains: &quot;z.union([&quot;
+    - path: &quot;src/app/api/job-leads/route.test.ts&quot;
+      provides: &quot;POST test suite covering company-scope create, dedup, backfill, auto-create, Zod rejection&quot;
+      contains: &quot;describe(&#39;POST /api/job-leads (company-scope, D-01..D-15)&quot;
+  key_links:
+    - from: &quot;src/app/api/job-leads/route.ts POST&quot;
+      to: &quot;drizzle/schema/companies.ts&quot;
+      via: &quot;case-insensitive name lookup + auto-create + linkedinUrl backfill&quot;
+      pattern: &quot;lower\(\$\{companies\.name\}\) = lower\(&quot;
+    - from: &quot;src/app/api/job-leads/route.ts POST&quot;
+      to: &quot;drizzle/schema/job-leads.ts&quot;
+      via: &quot;dedup SELECT + INSERT with linkedinJobUrl: null + status: &#39;queued&#39;&quot;
+      pattern: &quot;isNull\(jobLeads\.linkedinJobUrl\)&quot;
+    - from: &quot;src/app/api/job-leads/route.ts POST&quot;
+      to: &quot;src/lib/db/timeline.ts&quot;
+      via: &quot;logTimeline call with eventType &#39;job_lead_created&#39; and metadata.scope=&#39;company&#39;&quot;
+      pattern: &quot;scope:\s*&#39;company&#39;&quot;
+    - from: &quot;src/app/api/job-leads/route.ts POST&quot;
+      to: &quot;src/lib/domain/types.ts&quot;
+      via: &quot;import COMPANY_SCOPE_ROLE_TITLE&quot;
+  pattern: &quot;import.<em>COMPANY_SCOPE_ROLE_TITLE.</em>@/lib/domain/types&quot;
+</p>
+<hr>
+<objective>
+Extend the existing `POST /api/job-leads` handler to accept a second body shape — `{ companyName, linkedinCompanyUrl? }` — that creates a company-scope job lead with `linkedinJobUrl: null`, `roleTitle: 'Company-wide scrape'`, and `status: 'queued'`. Resolve the company by case-insensitive name (auto-create stub on miss, backfill `linkedinUrl` on existing-match-with-null), enforce idempotent dedup against in-flight company-scope leads, and emit a `job_lead_created` timeline event tagged with `metadata.scope: 'company'`. Extend `src/app/api/job-leads/route.test.ts` with the five scenarios called out in CONTEXT §specifics.<p>Purpose: This route is the entire foundation Phases 8 (skill) and 9 (UI) depend on. The skill will POST to it; the UI will render the rows it creates. Without dedup, drain mode can stack identical leads on every retry; without auto-create, the user has to pre-curate a companies row before scraping; without the sentinel <code>roleTitle</code>, Phase 9 UI needs null-guards everywhere.</p>
+<p>Output: Single API route handler accepts both job-URL and company-scope bodies; five new test scenarios pin the contract.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md
+@.planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md
+@.planning/phases/07-schema-api-for-company-scope-leads/07-01-PLAN.md
+@CLAUDE.md
+@.planning/codebase/CONVENTIONS.md
+@.planning/codebase/ARCHITECTURE.md
+@src/app/api/job-leads/route.ts
+@src/app/api/job-leads/route.test.ts
+@src/app/api/job-leads/[id]/status/route.test.ts
+@src/lib/db/timeline.ts
+@src/lib/api/types.ts
+@src/lib/api/errors.ts
+@src/test-utils/pglite.ts
+@src/test-utils/call-route.ts
+@drizzle/schema/job-leads.ts
+@drizzle/schema/companies.ts
+@src/lib/domain/types.ts<interfaces>
+<!-- Key contracts the executor needs. Extracted from the codebase. --><p>From src/lib/api/types.ts:</p>
+<ul>
+<li><code>success&lt;T&gt;(data: T, status = 200): Response</code> — 200 envelope</li>
+<li><code>created&lt;T&gt;(data: T): Response</code> — 201 envelope (calls <code>success(data, 201)</code>)</li>
+<li>Response shape: <code>{ success: true, data } satisfies ApiResponse&lt;T&gt;</code></li>
+</ul>
+<p>From src/lib/api/errors.ts:</p>
+<ul>
+<li><code>validationError(message: string): Response</code> — 400 envelope</li>
+<li><code>serverError(err: unknown): Response</code> — 500 envelope; logs via <code>console.error(&#39;API Error:&#39;, err)</code></li>
+<li><code>notFound(entity: string): Response</code> — 404 envelope</li>
+</ul>
+<p>From src/lib/db/timeline.ts (signature):</p>
+<ul>
+<li><code>logTimeline(input: { eventType: string; title: string; companyId?: string; contactId?: string; metadata?: Record&lt;string, unknown&gt;; ... }): Promise&lt;unknown&gt;</code><ul>
+<li>Adds <code>occurredAt: new Date()</code> automatically; inserts into <code>timelineEvents</code></li>
+</ul>
+</li>
+</ul>
+<p>From drizzle/schema/companies.ts:</p>
+<ul>
+<li><code>companies</code> columns relevant here: <code>id</code> (uuid), <code>name</code> (text NOT NULL), <code>linkedinUrl</code> (text NULLABLE), <code>stage</code> (default &#39;unknown&#39;), <code>priority</code> (default &#39;exploring&#39;), <code>remotePolicy</code> (default &#39;unknown&#39;), <code>status</code> (default &#39;active&#39;), <code>createdAt</code>/<code>updatedAt</code> (default now)</li>
+<li>Schema defaults supply everything except <code>name</code> — auto-create stub passes only <code>name</code> + optional <code>linkedinUrl</code></li>
+</ul>
+<p>From drizzle/schema/job-leads.ts (after Plan 01):</p>
+<ul>
+<li><code>jobLeads.linkedinJobUrl</code> is now NULLABLE text</li>
+<li><code>jobLeads.roleTitle</code> is NULLABLE text (already was)</li>
+<li><code>jobLeads.companyName</code> is NULLABLE text (already was)</li>
+<li><code>jobLeads.companyId</code> is NULLABLE uuid with FK to <code>companies.id</code></li>
+<li><code>jobLeads.status</code> defaults to &#39;pending&#39; but the route writes &#39;queued&#39; explicitly</li>
+<li><code>jobLeads.archivedAt</code> is NULLABLE timestamp</li>
+</ul>
+<p>From src/lib/domain/types.ts (after Plan 01):</p>
+<ul>
+<li><code>export const COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; as const;</code></li>
+</ul>
+<p>From src/test-utils/call-route.ts:</p>
+<ul>
+<li><code>callRoute(handler, opts: { method, body?, searchParams?, params? }): Promise&lt;{ status: number, body: unknown }&gt;</code></li>
+</ul>
+<p>From the existing POST handler (src/app/api/job-leads/route.ts:66-134):</p>
+<ul>
+<li>Imports: <code>desc, inArray, isNull, lt, sql, eq</code> from drizzle-orm; <code>created, paginated</code> from @/lib/api/types; <code>serverError, validationError</code> from @/lib/api/errors; <code>logTimeline</code> from @/lib/db/timeline; <code>z</code> from zod; <code>scrapeJobPage</code>; <code>companies</code>; <code>jobLeadStatusValues</code></li>
+<li>The existing job-URL branch must be preserved verbatim, wrapped in <code>if (&#39;linkedinJobUrl&#39; in validated)</code></interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Extend POST handler with discriminated Zod union + company-scope branch + dedup + timeline</name>
+  <files>src/app/api/job-leads/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/route.ts (whole file, 134 lines — current POST handler lines 66-134, GET handler lines 17-64, imports lines 1-15)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (D-01, D-02, D-03, D-04, D-07, D-08, D-09, D-13, D-14, D-15 + §specifics block "Discriminated Zod body schema sketch", "Company auto-create / backfill", "Idempotent dedup query", "Lead insert" — all code sketches the executor uses verbatim)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md (§"src/app/api/job-leads/route.ts" pattern block — full extended handler shape)
+    - src/lib/api/types.ts (confirms `success` vs `created` 200/201 split for D-13)
+    - src/lib/db/timeline.ts (confirms logTimeline input shape — `metadata` field is `Record<string, unknown>` so `scope: 'company'` is type-safe)
+    - .planning/codebase/ARCHITECTURE.md §Anti-Patterns (prefer `and(...)` from drizzle-orm over `sql.join` for fixed-shape WHERE — applies to the dedup query)
+  </read_first>
+  <behavior>
+    - Test 1 (job-URL branch preserved): POST `{ linkedinJobUrl: 'https://www.linkedin.com/jobs/view/123' }` continues to flow through the existing `scrapeJobPage` path unchanged — same status code, same envelope shape, same timeline event
+    - Test 2 (company-scope create new): POST `{ companyName: 'AcmeCo', linkedinCompanyUrl: 'https://linkedin.com/company/acme' }` against an empty DB returns 201, creates a `companies` row, creates a `job_leads` row with `linkedinJobUrl: null, roleTitle: 'Company-wide scrape', status: 'queued', companyId: <new companies.id>`, and emits `logTimeline({ eventType: 'job_lead_created', metadata: { jobLeadId, scope: 'company' } })`
+    - Test 3 (company-scope dedup): POST same body twice — second call returns 200 with the existing row; no second `job_leads` insert; no second timeline event
+    - Test 4 (backfill linkedinUrl on match-with-null): seed a `companies` row with `name: 'AcmeCo', linkedinUrl: null`; POST `{ companyName: 'AcmeCo', linkedinCompanyUrl: 'https://linkedin.com/company/acme' }`; the matched row's `linkedinUrl` is updated to the URL; no second `companies` row is created
+    - Test 5 (no overwrite on existing linkedinUrl): seed `companies` with `name: 'AcmeCo', linkedinUrl: 'https://linkedin.com/company/preserved'`; POST with `linkedinCompanyUrl: 'https://linkedin.com/company/different'`; the matched row's `linkedinUrl` remains `'.../preserved'` per D-09
+    - Test 6 (Zod rejects empty body): POST `{}` returns 400 with the standard `validationError` envelope
+    - Test 7 (first-match-wins on ambiguous body): POST `{ linkedinJobUrl: 'https://www.linkedin.com/jobs/view/123', companyName: 'AcmeCo' }` resolves to the job-URL branch per D-02 (Zod union order is `[job-url, company-scope]`, first-success wins)
+  </behavior>
+  <action>
+    Edit `src/app/api/job-leads/route.ts`. Imports: (a) add `and` to the drizzle-orm import (already imports `desc, inArray, isNull, lt, sql, eq`), (b) add `success` to the @/lib/api/types import (currently imports `created, paginated`), (c) add `import { COMPANY_SCOPE_ROLE_TITLE } from '@/lib/domain/types';`. Replace the existing `createJobLeadSchema` (lines 13-15) with a discriminated `z.union([...])` per D-01/D-02 — order MUST be `[ z.object({ linkedinJobUrl: z.string().url() }), z.object({ companyName: z.string().min(1).max(200), linkedinCompanyUrl: z.string().url().optional() }) ]` (first-match-wins). Add a header comment block above the POST handler documenting D-01/D-02's first-match-wins semantics for ambiguous bodies (pattern from 07-PATTERNS.md §"Header comment"). Inside the POST handler `try` block, after `const validated = createJobLeadSchema.parse(body);`, branch on `if ('linkedinJobUrl' in validated) { /* existing 66-127 logic */ } else { /* new company-scope branch */ }`. The company-scope branch implements: (1) D-07 case-insensitive companies lookup via `sql\`lower(${companies.name}) = lower(${validated.companyName})\``, (2) D-08 auto-create stub when no match (insert `{ name, linkedinUrl: linkedinCompanyUrl ?? null }`; let schema defaults supply the rest), (3) D-09 backfill linkedinUrl ONLY if `match.linkedinUrl == null && validated.linkedinCompanyUrl` (UPDATE with `updatedAt: new Date()`), (4) D-13 dedup SELECT using `and(eq(jobLeads.companyId, companyId), isNull(jobLeads.linkedinJobUrl), inArray(jobLeads.status, ['queued', 'searching', 'failed']), isNull(jobLeads.archivedAt))` — if existing, return `success(existing)` (200), (5) INSERT the new lead with `{ linkedinJobUrl: null, roleTitle: COMPANY_SCOPE_ROLE_TITLE, companyName: validated.companyName, companyId, status: 'queued' }`, (6) D-04 `logTimeline({ eventType: 'job_lead_created', title: \`Company scrape: ${validated.companyName}\`, companyId, metadata: { jobLeadId: lead.id, scope: 'company' } })`, (7) return `created(lead)` (201). Preserve the outer try/catch (lines 128-133) verbatim. Use Drizzle's `and(...)` helper for the dedup WHERE per the codebase Anti-Pattern guidance (not `sql.join`). Do NOT extract a helper function (CD-02/CD-05 say inline-first); do NOT touch the existing job-URL branch logic; do NOT add a `findOrCreateCompany` library yet.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit && grep -c "z.union(\[" src/app/api/job-leads/route.ts && grep -c "COMPANY_SCOPE_ROLE_TITLE" src/app/api/job-leads/route.ts && grep -c "scope: 'company'" src/app/api/job-leads/route.ts && grep -c "isNull(jobLeads.linkedinJobUrl)" src/app/api/job-leads/route.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` exits 0
+    - `grep -c "z.union(\[" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "z.object({ linkedinJobUrl: z.string().url() })" src/app/api/job-leads/route.ts` returns 1 (first union member preserved verbatim, no `companyName` field on the job-URL shape)
+    - `grep -c "z.object({" src/app/api/job-leads/route.ts | tr -d '\n'` returns at least 2 (job-URL shape + company-scope shape)
+    - `grep -c "companyName: z.string().min(1).max(200)" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "linkedinCompanyUrl: z.string().url().optional()" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "if ('linkedinJobUrl' in validated)" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "COMPANY_SCOPE_ROLE_TITLE" src/app/api/job-leads/route.ts` returns >= 2 (import + usage)
+    - `grep -c "scope: 'company'" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "and(" src/app/api/job-leads/route.ts` returns >= 1 (dedup WHERE uses drizzle `and(...)`)
+    - `grep -c "inArray(jobLeads.status, \['queued', 'searching', 'failed'\])" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "isNull(jobLeads.archivedAt)" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "return success(existing)" src/app/api/job-leads/route.ts` returns 1
+    - `grep -c "return created(lead)" src/app/api/job-leads/route.ts` returns >= 1
+    - The existing job-URL branch's `scrapeJobPage(validated.linkedinJobUrl)` call still exists: `grep -c "scrapeJobPage(validated.linkedinJobUrl)" src/app/api/job-leads/route.ts` returns 1
+    - Header comment block above POST handler documents first-match-wins: `grep -c "first-match-wins" src/app/api/job-leads/route.ts` returns >= 1
+  </acceptance_criteria>
+  <done>
+    POST handler accepts both body shapes; company-scope branch creates leads with `linkedinJobUrl: null + status: 'queued' + roleTitle: COMPANY_SCOPE_ROLE_TITLE`, auto-creates or backfills the company row, dedups in-flight requests, and emits the timeline event with `scope: 'company'` metadata.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Extend POST route tests with 7 scenarios — create, dedup, backfill, no-overwrite, auto-create, Zod-reject, ambiguous-body</name>
+  <files>src/app/api/job-leads/route.test.ts</files>
+  <read_first>
+    - src/app/api/job-leads/route.test.ts (whole file — current GET tests + the `vi.hoisted + Proxy` mock pattern at lines 5-17)
+    - src/app/api/job-leads/[id]/status/route.test.ts (analog — full callRoute POST shape, dynamic route import pattern, timeline-verification pattern at lines 71-74)
+    - src/app/api/job-leads/[id]/prospects/route.test.ts (analog — beforeEach fixture pattern for an in-flight company-scope lead and the `vi.spyOn` mock strategy if needed for `scrapeJobPage` in Test 7)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md (§specifics "Tests to ship in this phase" — lists scenarios a-e; this task expands to seven by splitting (c) into match-with-null vs match-with-existing-url, and adding the ambiguous-body Zod resolution check)
+    - .planning/phases/07-schema-api-for-company-scope-leads/07-PATTERNS.md (§"src/app/api/job-leads/route.test.ts" pattern block — full test scaffold, fixture pattern, callRoute pattern, assertion patterns, timeline-verification pattern)
+    - src/test-utils/call-route.ts (whole file — callRoute signature; confirms POST body marshalling)
+    - src/test-utils/pglite.ts (whole file — `createTestDb` signature)
+  </read_first>
+  <behavior>
+    - Test C1: POST `{ companyName: 'AcmeCo', linkedinCompanyUrl: 'https://linkedin.com/company/acme' }` against empty DB returns 201; response `data.linkedinJobUrl` is null, `data.roleTitle` is `'Company-wide scrape'`, `data.status` is `'queued'`, `data.companyId` is a UUID; a `companies` row exists with `name: 'AcmeCo'` and `linkedinUrl: 'https://linkedin.com/company/acme'`; a timeline_events row exists with `eventType: 'job_lead_created'` and `metadata.scope: 'company'`
+    - Test C2 (dedup): seed an in-flight company-scope lead (`linkedinJobUrl: null, status: 'queued', companyId: <seeded>`); POST `{ companyName: 'AcmeCo' }`; response status is 200 (not 201); response `data.id` equals the seeded lead's id; row count in `job_leads` remains 1; no second timeline_events row is emitted
+    - Test C3 (backfill on match-with-null): seed `companies` row with `name: 'AcmeCo', linkedinUrl: null`; POST `{ companyName: 'AcmeCo', linkedinCompanyUrl: 'https://linkedin.com/company/acme' }`; matched companies row's `linkedinUrl` is now `'https://linkedin.com/company/acme'`; no second companies row created
+    - Test C4 (no-overwrite on existing-url): seed `companies` row with `name: 'AcmeCo', linkedinUrl: 'https://linkedin.com/company/preserved'`; POST `{ companyName: 'AcmeCo', linkedinCompanyUrl: 'https://linkedin.com/company/different' }`; matched companies row's `linkedinUrl` remains `'https://linkedin.com/company/preserved'`
+    - Test C5 (auto-create stub on no-match): empty `companies` table; POST `{ companyName: 'BrandNewCo' }` (no `linkedinCompanyUrl`); a `companies` row with `name: 'BrandNewCo', linkedinUrl: null` is created; the lead's `companyId` points to it; default fields (`stage`, `priority`, `status`, `remotePolicy`) are populated from schema defaults
+    - Test C6 (Zod rejects empty body): POST `{}` returns 400; envelope is `{ success: false, error: <string> }`; no rows inserted in `job_leads` or `companies` or `timeline_events`
+    - Test C7 (ambiguous body resolves to job-URL branch per first-match-wins, D-02): POST `{ linkedinJobUrl: 'https://www.linkedin.com/jobs/view/999', companyName: 'AcmeCo' }`; with `scrapeJobPage` mocked via `vi.spyOn` (mockResolvedValueOnce returning a synthetic `{ companyName: 'ScrapedCo', roleTitle: 'Scraped Role', ... }`), the resulting lead has the SCRAPED `companyName` (not 'AcmeCo'), confirming the job-URL branch ran and the company-scope branch did NOT. Asserts the route does NOT insert a row with `linkedinJobUrl: null`. (Test 7 is the contract assertion for D-02 — without it, an accidental refactor that reorders the union or switches to `z.discriminatedUnion` could silently break the contract.)
+  </behavior>
+  <action>
+    Edit `src/app/api/job-leads/route.test.ts`. Preserve the existing GET tests verbatim (the `describe('GET /api/job-leads (status filter)', ...)` block at lines 19-102). Reuse the existing `vi.hoisted + Proxy` mock at the top of the file (lines 5-17) — do NOT duplicate it. Add a new top-level `describe('POST /api/job-leads (company-scope, D-01..D-15)', () => { ... })` block. Inside, set up `let companyId: string;` and a `beforeEach` that creates a fresh PGlite db via `dbRef.current = await createTestDb()` (no fixtures by default; individual tests seed what they need). Implement the seven scenarios above (C1..C7) as separate `it` blocks using the patterns from 07-PATTERNS.md §"src/app/api/job-leads/route.test.ts" (full code sketches there). For Test C7, use `vi.spyOn(scrapeJobPageModule, 'scrapeJobPage').mockResolvedValueOnce({ companyName: 'ScrapedCo', roleTitle: 'Scraped Role', location: null, description: null })` — the same `vi.spyOn` strategy used in `[id]/prospects/route.test.ts:341` for `matchConnections`. Import `scrapeJobPage` module as `import * as scrapeJobPageModule from '@/features/job-leads/lib/scrape-job-page';` at the top. Use the dynamic `const { POST } = await import('@/app/api/job-leads/route');` inside each `it` block (post-mock-hoist pattern). For timeline assertions, import `timelineEvents` from `'../../../../drizzle/schema'` and query via `dbRef.current!.select().from(timelineEvents)`. Restore the spy in a `finally` (or use `mockRestore` in `afterEach`) so Test C7's mock does not leak into other tests.
+  </action>
+  <verify>
+    <automated>npx vitest run src/app/api/job-leads/route.test.ts --reporter=verbose</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx vitest run src/app/api/job-leads/route.test.ts` exits 0
+    - File contains exactly one new describe block matching `/^describe\('POST \/api\/job-leads \(company-scope/`: `grep -c "describe('POST /api/job-leads (company-scope" src/app/api/job-leads/route.test.ts` returns 1
+    - File contains 7 new `it(` blocks within the POST describe (verified by counting `it(` minus the 3 existing GET tests): `grep -c "it(" src/app/api/job-leads/route.test.ts` returns 10 (3 GET + 7 POST)
+    - `grep -c "expect(status).toBe(201)" src/app/api/job-leads/route.test.ts` returns >= 2 (C1 + C5; C7 may also assert 201)
+    - `grep -c "expect(status).toBe(200)" src/app/api/job-leads/route.test.ts` returns >= 4 (3 existing GET tests + C2 dedup)
+    - `grep -c "expect(status).toBe(400)" src/app/api/job-leads/route.test.ts` returns >= 1 (C6)
+    - Test C2 asserts `data.id` equality between POST response and pre-seeded lead: `grep -c "expect(data.id).toBe" src/app/api/job-leads/route.test.ts` returns >= 1
+    - Test C2 asserts `job_leads` row count is 1 after second POST: `grep -c "toHaveLength(1)" src/app/api/job-leads/route.test.ts` returns >= 1
+    - Test C7 uses `vi.spyOn(scrapeJobPageModule, 'scrapeJobPage')`: `grep -c "scrapeJobPageModule" src/app/api/job-leads/route.test.ts` returns >= 1
+    - Test C1 asserts `metadata.scope === 'company'` on the timeline event: `grep -c "scope" src/app/api/job-leads/route.test.ts | grep -v '^0$'`
+    - Test C3 asserts the matched companies row's `linkedinUrl` is updated; Test C4 asserts it is NOT overwritten (verified by both tests reading back the row via `db.select().from(companies)` and asserting on `linkedinUrl`)
+    - The existing 3 GET tests (Test 12, Test 13, Test 14) still pass after the file is extended
+    - `npx tsc --noEmit` exits 0 (no type errors in extended test file)
+  </acceptance_criteria>
+  <done>
+    Route test suite covers all five CONTEXT §specifics scenarios plus the ambiguous-body Zod-resolution invariant; full Vitest run exits 0; the company-scope contract is pinned against future refactors.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>browser/CLI→POST /api/job-leads</td>
+<td>Untrusted request body; Clerk middleware in <code>src/proxy.ts</code> gates the route (single-user lock)</td>
+</tr>
+<tr>
+<td>POST handler→companies table</td>
+<td>INSERTs a stub on miss; UPDATEs <code>linkedinUrl</code> on match-with-null; never overwrites a non-null URL (D-09)</td>
+</tr>
+<tr>
+<td>POST handler→job_leads table</td>
+<td>INSERTs new lead OR returns existing in-flight match per dedup (D-13)</td>
+</tr>
+<tr>
+<td>POST handler→logTimeline</td>
+<td>Side-effect write to <code>timeline_events</code> after the lead INSERT (D-04)</td>
+</tr>
+<tr>
+<td>Concurrent requests→dedup SELECT</td>
+<td>TOCTOU race window (D-16, accepted)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-07-02-01</td>
+<td>Tampering</td>
+<td>Zod input validation for <code>companyName</code> — overlong string could OOM or slow lookup</td>
+<td>mitigate</td>
+<td>D-01 Zod schema enforces <code>z.string().min(1).max(200)</code> on <code>companyName</code>; the case-insensitive <code>lower(...)</code> query hits the <code>companies_name_idx</code> (Phase 6) so even worst-case 200-char input is cheap</td>
+</tr>
+<tr>
+<td>T-07-02-02</td>
+<td>Tampering</td>
+<td>Zod input validation for <code>linkedinCompanyUrl</code> — malicious non-URL string</td>
+<td>mitigate</td>
+<td><code>z.string().url()</code> validates the URL shape; failing values raise <code>ZodError</code> → <code>validationError</code> (400). No SSRF concern because the URL is stored as text, not fetched server-side.</td>
+</tr>
+<tr>
+<td>T-07-02-03</td>
+<td>Elevation of Privilege</td>
+<td>Authorization regression — could the new branch escape the Clerk middleware?</td>
+<td>mitigate</td>
+<td>The matcher in <code>src/proxy.ts</code> covers <code>/api/(.*)</code> (Phase 3 SEC-A1). New branch sits inside the same <code>POST</code> handler under the same route path — middleware coverage is structural, not per-branch. Verified by the route&#39;s existing place in the matcher set (no changes to middleware).</td>
+</tr>
+<tr>
+<td>T-07-02-04</td>
+<td>Tampering</td>
+<td>Race / TOCTOU on dedup SELECT-then-INSERT (D-16)</td>
+<td>accept</td>
+<td>Documented as accepted in D-16. Single-user app; skill runs sequentially. Mitigation (partial UNIQUE index) is a follow-up if a real race surfaces. Low severity.</td>
+</tr>
+<tr>
+<td>T-07-02-05</td>
+<td>Tampering</td>
+<td>Migration safety (constraint relaxation in Plan 01)</td>
+<td>accept</td>
+<td>Plan 01 handled; non-destructive ALTER COLUMN DROP NOT NULL. Existing rows all have values. Low severity.</td>
+</tr>
+<tr>
+<td>T-07-02-06</td>
+<td>Information Disclosure</td>
+<td>Error envelope leaks DB internals</td>
+<td>mitigate</td>
+<td><code>serverError(err)</code> logs internally via <code>console.error(&#39;API Error:&#39;, err)</code> and returns the standard <code>{ success: false, error: ... }</code> envelope. Zod errors return only <code>err.issues[0].message</code> — message text is controlled by the schema, not user input.</td>
+</tr>
+<tr>
+<td>T-07-02-07</td>
+<td>Repudiation</td>
+<td>Lead created but timeline event missing</td>
+<td>mitigate</td>
+<td><code>logTimeline</code> is awaited inline after the INSERT in the company-scope branch (D-04). If logTimeline fails, the outer try/catch returns 500 — failure is loud, not silent. (Plan does NOT wrap the two writes in a transaction; matching the existing pattern at lines 110-115 of the current handler.)</td>
+</tr>
+<tr>
+<td>T-07-02-08</td>
+<td>Denial of Service</td>
+<td>Attacker spams company-scope creates with random names to fill <code>companies</code> and <code>job_leads</code> tables</td>
+<td>accept</td>
+<td>Single-user app behind Clerk; attacker would need a valid Clerk session for <code>steve@bronstein.org</code>. Auth boundary, not application boundary. Low risk.</td>
+</tr>
+<tr>
+<td>T-07-02-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>mitigate</td>
+<td>No new packages installed in this plan; <code>zod</code>, <code>drizzle-orm</code>, <code>@neondatabase/serverless</code> are pre-existing dependencies. Package legitimacy gate N/A.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. `npx vitest run src/app/api/job-leads/route.test.ts` exits 0
+2. `npx vitest run` (full suite) exits 0 — no regressions in other test files
+3. `npx tsc --noEmit` exits 0
+4. `grep -c "z.union(\[" src/app/api/job-leads/route.ts` returns 1
+5. `grep -c "scope: 'company'" src/app/api/job-leads/route.ts` returns 1
+6. POST handler manual smoke: `curl -X POST http://localhost:4000/api/job-leads -H 'Content-Type: application/json' -d '{"companyName":"VerifyCo"}'` (with auth header) returns 201 with the envelope shape (recorded but executor decides whether to run if a dev session is available; the automated vitest assertion already covers the contract)
+</verification><success_criteria>
+- `POST /api/job-leads` accepts `{ companyName, linkedinCompanyUrl? }` and creates a row with `linkedinJobUrl: null, roleTitle: 'Company-wide scrape', status: 'queued'`, linked to a `companies` row
+- Idempotent: re-POSTing the same body while a lead is in-flight returns the existing row (HTTP 200), no duplicate insert
+- Auto-create + linkedinUrl backfill work per D-07/D-08/D-09 (no overwrite of non-null URL)
+- Timeline event `job_lead_created` is emitted with `metadata.scope: 'company'` per D-04
+- Discriminated Zod union resolves ambiguous bodies to the job-URL branch per D-02 — pinned by a test
+- Rolls up to ROADMAP Phase 7 success criteria #1 (body shape + envelope) and #3 (companies row link)
+- Unblocks Phase 8 (skill input parsing + drain) which POSTs to this endpoint
+</success_criteria><output>
+Create `.planning/phases/07-schema-api-for-company-scope-leads/07-02-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

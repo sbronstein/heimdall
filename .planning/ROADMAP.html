@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/ROADMAP.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>.planning/ROADMAP.md</code> · Rendered from markdown · May lag behind</div>
 
 <h1>Roadmap: Heimdall</h1>
 <h2>Overview</h2>
@@ -223,8 +223,18 @@ Plans:
 <li>The Drizzle schema for <code>job_leads</code> has <code>linkedinJobUrl</code> and <code>roleTitle</code> as nullable columns with no non-null constraints, and a Drizzle migration ensures the live database matches — verified by a route test that inserts and reads back a row with both fields null</li>
 <li>The created synthetic lead is linked to a <code>companies</code> row (matched by name or created on the fly) so recommendations and contact-bridging work unchanged for company-scope leads</li>
 <li>The existing <code>PATCH /api/job-leads/[id]/status</code> and <code>POST /api/job-leads/[id]/prospects</code> routes accept company-scope leads (where <code>linkedinJobUrl</code> is null) without errors — the state machine is input-shape agnostic
-<strong>Plans</strong>: TBD</li>
+<strong>Plans</strong>: 3 plans
+Plans:
+<strong>Wave 1</strong></li>
 </ol>
+<ul>
+<li><input disabled="" type="checkbox"> 07-01-PLAN.md — Schema migration (drop NOT NULL on linkedin_job_url), COMPANY_SCOPE_ROLE_TITLE constant, [BLOCKING] live-DB migrate, PGlite regression test (D-05/D-06/D-10/D-11/CD-01)</li>
+</ul>
+<p><strong>Wave 2</strong> <em>(both plans parallel — disjoint file sets, both blocked on Wave 1)</em></p>
+<ul>
+<li><input disabled="" type="checkbox"> 07-02-PLAN.md — POST /api/job-leads discriminated Zod union + company-scope branch (auto-create/backfill/dedup/timeline) + 7 route tests (D-01/D-02/D-03/D-04/D-07..D-09/D-13..D-15)</li>
+<li><input disabled="" type="checkbox"> 07-03-PLAN.md — D-17 regression: PATCH /status + POST /prospects route tests against null-URL fixtures (no production code changes)</li>
+</ul>
 <h3>Phase 8: Skill Input Parsing, Navigation Branching + Drain</h3>
 <p><strong>Goal</strong>: The <code>scrape-linkedin-connections</code> skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue
 <strong>Depends on</strong>: Phase 7
@@ -300,7 +310,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 </tr>
 <tr>
 <td>7. Schema + API for Company-Scope Leads</td>
-<td>0/TBD</td>
+<td>0/3</td>
 <td>Not started</td>
 <td>-</td>
 </tr>
@@ -321,7 +331,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 
 <footer>
-Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/ROADMAP.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>.planning/ROADMAP.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>
