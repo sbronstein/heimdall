@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: LinkedIn Scraping by Company
-status: executing
-stopped_at: Phase 8 context gathered
-last_updated: "2026-05-19T21:21:00.557Z"
+status: ready_to_plan
+stopped_at: Phase 08 complete (3/3) — ready to discuss Phase 9
+last_updated: 2026-05-19T21:51:54.410Z
 last_activity: 2026-05-19 -- Phase 08 execution started
 progress:
   total_phases: 9
   completed_phases: 7
   total_plans: 31
-  completed_plans: 28
+  completed_plans: 31
   percent: 78
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-**Current focus:** Phase 08 — Skill Input Parsing, Navigation Branching + Drain
+**Current focus:** Phase 9 — ui for company scope leads
 
 ## Current Position
 
-Phase: 08 (Skill Input Parsing, Navigation Branching + Drain) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 08
-Last activity: 2026-05-19 -- Phase 08 execution started
+Phase: 9
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-05-19
 
 **v1.1 Progress Rail:** Phase 7 · Phase 8 · Phase 9
 
@@ -36,7 +36,7 @@ Last activity: 2026-05-19 -- Phase 08 execution started
 
 **Velocity (v1.0 reference):**
 
-- Total plans completed: 28 (Phases 1–6)
+- Total plans completed: 31 (Phases 1–6)
 - Average duration: ~10 min/plan
 
 **By Phase (v1.0):**
@@ -50,6 +50,7 @@ Last activity: 2026-05-19 -- Phase 08 execution started
 | 05-job-leads-completion | 7 | TBD | TBD |
 | 06-performance | 5 | TBD | TBD |
 | 07 | 3 | - | - |
+| 08 | 3 | - | - |
 
 **v1.1 plans completed:** 0 / TBD
 
