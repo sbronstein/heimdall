@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a96587306c3b6a16a/.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 08-skill-input-parsing-navigation-branching-drain
+plan: &quot;01&quot;
+subsystem: api/job-leads
+tags: [drizzle, leftjoin, projection, regression-test]
+dependency_graph:
+  requires:
+    - 07-01 (nullable linkedinJobUrl migration)
+    - 07-02 (company-scope POST branch)
+  provides:
+    - GET /api/job-leads response includes companyLinkedinUrl (D-13)
+    - Test 15 regression pin for D-13 projection
+  affects:
+    - src/app/api/job-leads/route.ts
+    - src/app/api/job-leads/route.test.ts
+tech_stack:
+  added: []
+  patterns:
+    - Drizzle leftJoin with explicit projection object (from recruiters/route.ts analog)
+key_files:
+  created: []
+  modified:
+    - src/app/api/job-leads/route.ts
+    - src/app/api/job-leads/route.test.ts
+    - src/features/job-leads/lib/prioritization.ts
+decisions:</p>
+<ul>
+<li>&quot;leftJoin (not innerJoin) so leads with companyId IS NULL still appear in response with companyLinkedinUrl: null&quot;</li>
+<li>&quot;Explicit projection over .select() — flat field, not nested company object (D-13)&quot;</li>
+<li>&quot;Sibling describe block for Test 15 — preserves Tests 12-14 without requiring them to assert on the new field&quot;</li>
+<li>&quot;Inline fixture in Test 15 — DRY threshold not met for a single test caller (CD-04)&quot;
+metrics:
+  duration: &quot;~6 minutes&quot;
+  completed: &quot;2026-05-19T21:27:34Z&quot;
+  tasks_completed: 2
+  files_modified: 3</li>
+</ul>
+<hr>
+<h1>Phase 08 Plan 01: GET /api/job-leads companyLinkedinUrl Projection Summary</h1>
+<p><strong>One-liner:</strong> Extended GET /api/job-leads with Drizzle leftJoin to companies and explicit projection, surfacing <code>companyLinkedinUrl</code> as a flat top-level field on every lead row per D-13.</p>
+<h2>What Was Built</h2>
+<h3>Task 1: Switch GET handler to explicit projection with leftJoin</h3>
+<p>Modified <code>src/app/api/job-leads/route.ts</code> GET handler to replace <code>.select()</code> (full-row, no join) with an explicit 15-field projection object and <code>.leftJoin(companies, eq(jobLeads.companyId, companies.id))</code>. The new field <code>companyLinkedinUrl: companies.linkedinUrl</code> surfaces the joined company&#39;s LinkedIn URL as a flat top-level field. All 14 existing <code>jobLeads</code> column projections are preserved verbatim, ensuring no breaking change to existing consumers.</p>
+<p>Key implementation details:</p>
+<ul>
+<li><code>leftJoin</code> (not <code>innerJoin</code>) ensures leads without a <code>companyId</code> still appear with <code>companyLinkedinUrl: null</code></li>
+<li>No import changes needed — both <code>companies</code> (line 10) and <code>eq</code> (line 3) were already imported</li>
+<li>POST handler (lines 73–225) untouched — Phase 7 owns it</li>
+<li>Cursor pagination still keys off <code>data[data.length - 1].updatedAt.toISOString()</code> — <code>updatedAt</code> remains a top-level field</li>
+</ul>
+<h3>Task 2: Test 15 — D-13/CD-04 regression test</h3>
+<p>Added a new <code>describe(&#39;GET /api/job-leads (companyLinkedinUrl projection — D-13 / CD-04)&#39;)</code> block as a sibling to the existing GET describe block. The new block has its own <code>beforeEach</code> that seeds:</p>
+<ul>
+<li>One company with <code>linkedinUrl: &#39;https://www.linkedin.com/company/acme&#39;</code></li>
+<li>One company-scope lead (<code>linkedinJobUrl: null</code>, <code>roleTitle: &#39;Company-wide scrape&#39;</code>)</li>
+<li>One job-URL lead (<code>linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/100&#39;</code>)</li>
+</ul>
+<p>Test 15 asserts:</p>
+<ul>
+<li><code>GET /api/job-leads?status=queued</code> returns 2 rows</li>
+<li>Every row has <code>companyLinkedinUrl === &#39;https://www.linkedin.com/company/acme&#39;</code></li>
+<li>Rows are distinguishable by <code>linkedinJobUrl</code> (null vs matching <code>/jobs/view/</code>)</li>
+</ul>
+<p>Fixture is inline per CD-04 / 08-PATTERNS.md (DRY threshold: 1 caller, no extract to pglite.ts needed).</p>
+<h2>Test Counts</h2>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tests 12–14 (GET status filter)</td>
+<td>3</td>
+<td>3 (unchanged)</td>
+</tr>
+<tr>
+<td>Tests C1–C7 (POST company-scope)</td>
+<td>7</td>
+<td>7 (unchanged)</td>
+</tr>
+<tr>
+<td>Test 15 (new: companyLinkedinUrl projection)</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>10</strong></td>
+<td><strong>11</strong></td>
+</tr>
+</tbody></table>
+<pre><code> Test Files  1 passed (1)
+      Tests  11 passed (11)
+</code></pre>
+<h2>Line-Count Delta</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>+/-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>src/app/api/job-leads/route.ts</td>
+<td>+17 lines</td>
+</tr>
+<tr>
+<td>src/app/api/job-leads/route.test.ts</td>
+<td>+58 lines</td>
+</tr>
+<tr>
+<td>src/features/job-leads/lib/prioritization.ts</td>
+<td>+1/-1 (bug fix)</td>
+</tr>
+</tbody></table>
+<h2>What Unlocks for 08-03</h2>
+<p>With <code>companyLinkedinUrl</code> now present as a top-level field on every row returned by <code>GET /api/job-leads?status=queued</code>, the Plan 08-03 drain loop can branch on <code>lead.linkedinJobUrl === null</code> and then use <code>lead.companyLinkedinUrl</code> to navigate directly to <code>/company/&lt;slug&gt;/people/</code> — eliminating the per-lead <code>GET /api/companies/&lt;id&gt;</code> round-trip that would otherwise be required for company-scope leads. For leads where <code>companyLinkedinUrl</code> is null (D-14 fallback), the drain loop invokes the bare-name disambiguation flow using <code>lead.companyName</code> and backfills the company URL via <code>PUT /api/companies/&lt;lead.companyId&gt;</code>. This plan&#39;s projection change is the single API prerequisite that enables the D-11 single-loop drain with inline branching.</p>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] Pre-existing MapIterator TypeScript error in prioritization.ts</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 build verification</li>
+<li><strong>Issue:</strong> <code>src/features/job-leads/lib/prioritization.ts:70</code> used <code>for (const rec of byContact.values())</code> — <code>Map.values()</code> returns a <code>MapIterator</code> which is not iterable under TypeScript&#39;s <code>es5</code> target without <code>downlevelIteration</code> flag. This was a pre-existing failure (confirmed via <code>git stash</code> check — same error on base commit).</li>
+<li><strong>Fix:</strong> Changed to <code>for (const rec of Array.from(byContact.values()))</code> which is ES5-compatible.</li>
+<li><strong>Files modified:</strong> <code>src/features/job-leads/lib/prioritization.ts</code></li>
+<li><strong>Commit:</strong> d0141c5 (bundled with Task 1 as it blocked the build verification criterion)</li>
+</ul>
+<h2>Known Stubs</h2>
+<p>None — all fields are live data sourced from the DB.</p>
+<h2>Self-Check</h2>
+<p><strong>Created files exist:</strong></p>
+<ul>
+<li><code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-SUMMARY.md</code> — this file</li>
+</ul>
+<p><strong>Commits exist:</strong></p>
+<ul>
+<li><code>d0141c5</code> — feat(08-01): extend GET /api/job-leads with leftJoin(companies) + companyLinkedinUrl projection</li>
+<li><code>c1167c1</code> — test(08-01): add D-13/CD-04 regression — companyLinkedinUrl on both lead types in GET response</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a96587306c3b6a16a/.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
