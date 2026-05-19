@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 08-skill-input-parsing-navigation-branching-drain
+reviewed: 2026-05-19T21:43:46Z
+depth: standard
+files_reviewed: 7
+files_reviewed_list:</p>
+<ul>
+<li>src/app/api/job-leads/route.ts</li>
+<li>src/app/api/job-leads/route.test.ts</li>
+<li>src/features/job-leads/lib/prioritization.ts</li>
+<li>.claude/skills/scrape-linkedin-connections/SKILL.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+findings:
+  critical: 0
+  warning: 3
+  info: 4
+  total: 7
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 8: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-05-19T21:43:46Z
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 7
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 8 is documentation-heavy: four skill-prompt <code>.md</code> artifacts plus one executable change
+(<code>GET /api/job-leads</code> projection + leftJoin), one regression test file, and a one-line ES5
+iterator fix in <code>prioritization.ts</code>.</p>
+<p>I verified the cross-module claims the docs lean on against the live code:</p>
+<ul>
+<li><code>PUT /api/companies/[id]</code> — confirmed: handler exports <code>PUT</code> at <code>route.ts:55</code>; docs correctly
+flag it as PUT (not PATCH). <code>updateCompanySchema.linkedinUrl</code> is
+<code>z.string().url().optional().nullable()</code> at line 18 — matches the doc.</li>
+<li><code>companies.linkedinUrl</code> — confirmed nullable text column (<code>drizzle/schema/companies.ts:25</code>),
+consistent with the leftJoin selecting it as possibly-null.</li>
+<li><code>jobLeads.updatedAt</code> — <code>notNull</code>, so <code>data[data.length-1].updatedAt.toISOString()</code>
+(route.ts:81) cannot NPE on a join miss; the <code>data.length &gt; 0</code> guard covers empty results.</li>
+</ul>
+<p>The executable change is correct. The leftJoin is one-to-one on <code>companyId</code>, so it does not
+duplicate <code>jobLeads</code> rows, does not destabilize the <code>updatedAt</code> cursor, and does not change
+<code>hasMore</code> semantics. No BLOCKER-class defects found. The findings below are doc/code-drift and
+test-coverage gaps that should be fixed before this ships as the scraper&#39;s contract.</p>
+<p>No structural-findings block was provided; all findings below are narrative.</p>
+<h2>Narrative Findings (AI reviewer)</h2>
+<h2>Warnings</h2>
+<h3>WR-01: Scraped job-URL leads never persist <code>companyLinkedinUrl</code>, but the drain doc promises it</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/route.ts:132-141</code> (also <code>heimdall-api.md:75</code>, <code>SKILL.md:75</code>)
+<strong>Issue:</strong> The job-URL POST branch scrapes <code>companyLinkedinUrl</code> (it is part of <code>ScrapedJobData</code>
+— <code>scrape-job-page.ts:7,90</code>) and stores the whole object in <code>scrapedData</code>, but it never backfills
+<code>companies.linkedinUrl</code> the way the company-scope branch does (route.ts:178-186). The GET response&#39;s
+<code>companyLinkedinUrl</code> is left-joined <em>from <code>companies.linkedinUrl</code></em>, so for a lead that arrived via a
+job URL whose matched company row has a null <code>linkedinUrl</code>, <code>companyLinkedinUrl</code> will be <code>null</code> even
+though the scraper successfully extracted the company&#39;s LinkedIn URL. <code>SKILL.md:75</code> and
+<code>heimdall-api.md:75/105</code> state job-URL leads &quot;carry <code>companyLinkedinUrl</code> (joined from the same
+<code>companies</code> row)&quot; — true mechanically, but the value is frequently null because nothing writes the
+scraped URL back to the company. A reader of the drain doc will assume the scraper populated it.
+<strong>Fix:</strong> Either (a) backfill in the job-URL branch when a company match exists and its
+<code>linkedinUrl</code> is null, mirroring the company-scope logic:</p>
+<pre><code class="language-ts">if (companyId &amp;&amp; scraped.companyLinkedinUrl) {
+  await db.update(companies)
+    .set({ linkedinUrl: scraped.companyLinkedinUrl, updatedAt: new Date() })
+    .where(and(eq(companies.id, companyId), isNull(companies.linkedinUrl)));
+}
+</code></pre>
+<p>or (b) soften the doc to &quot;may be null for job-URL leads even when the job page exposed a company URL.&quot;</p>
+<h3>WR-02: New <code>companyLinkedinUrl</code> projection field is undocumented in the GET handler and untested for the null-company case</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/route.test.ts:110-165</code>
+<strong>Issue:</strong> Test 15 only covers the happy path where every lead is joined to a company that <em>has</em> a
+non-null <code>linkedinUrl</code>. The two most important null paths for the drain skill&#39;s D-14 fallback are
+untested:</p>
+<ol>
+<li>A lead with <code>companyId = null</code> (no join target) → <code>companyLinkedinUrl</code> must be <code>null</code>.</li>
+<li>A lead joined to a company whose <code>linkedinUrl</code> is <code>null</code> → <code>companyLinkedinUrl</code> must be <code>null</code>.
+The entire D-14 mid-drain disambiguation branch in <code>SKILL.md:85-98</code> triggers on
+<code>companyLinkedinUrl == null</code>. If the projection ever regressed to omit the column or coalesce it to
+<code>&quot;&quot;</code>, the drain loop&#39;s <code>if (url == null)</code> check would silently break and skip the backfill — and no
+test would catch it.
+<strong>Fix:</strong> Add a fixture with (a) a lead with <code>companyId: null</code> and (b) a lead joined to a company
+with <code>linkedinUrl: null</code>, asserting <code>companyLinkedinUrl === null</code> for both. This is the regression
+the phase claims to protect (the test&#39;s own title cites D-13/CD-04).</li>
+</ol>
+<h3>WR-03: GET response shape documented in <code>heimdall-api.md</code> omits fields the handler actually returns</h3>
+<p><strong>File:</strong> <code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md:83-100</code>
+<strong>Issue:</strong> The documented <code>GET /api/job-leads</code> response object lists 7 fields, but the handler&#39;s
+projection (route.ts:52-67) returns 16 (<code>companyId</code>, <code>applicationId</code>, <code>scrapedData</code>,
+<code>prospectCount</code>, <code>lastErrorAt</code>, <code>createdAt</code>, <code>archivedAt</code> are all returned but undocumented). For a
+contract doc that the skill author treats as ground truth, the omission of <code>companyId</code> is the most
+load-bearing gap: the D-14 backfill step does <code>PUT /api/companies/&lt;lead.companyId&gt;</code>
+(<code>SKILL.md:94</code>, <code>linkedin-navigation.md:320</code>) and relies on <code>companyId</code> being present in the GET
+row. The doc never tells the reader that field is available in the drain payload — they&#39;d have to
+read the source to know the <code>companyId</code> they need is right there.
+<strong>Fix:</strong> Add <code>companyId</code> (and ideally <code>prospectCount</code>, <code>scrapedData</code>) to the documented response
+example, or add a one-line note: &quot;row also includes <code>companyId</code>, <code>applicationId</code>, <code>scrapedData</code>,
+<code>prospectCount</code>, <code>lastErrorAt</code>, <code>createdAt</code>, <code>archivedAt</code>.&quot;</p>
+<h2>Info</h2>
+<h3>IN-01: <code>prioritization.ts</code> allocates two arrays from the same map; the ES5 fix is correct but redundant</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/lib/prioritization.ts:70,75</code>
+<strong>Issue:</strong> The <code>Array.from(byContact.values())</code> fix (line 70) correctly avoids the ES5
+down-level iteration issue for <code>for...of</code> over a <code>MapIterator</code>. It is the right fix. Minor: line 75
+calls <code>Array.from(byContact.values())</code> a second time. The map could be materialized once into a
+<code>const recs = Array.from(byContact.values())</code> and reused for both the scoring loop and the final
+sort. Not a bug — purely an allocation tidy-up.
+<strong>Fix:</strong> <code>const recs = Array.from(byContact.values()); for (const rec of recs) {...}; return recs.sort(...)</code>.</p>
+<h3>IN-02: <code>Math.max(...rec.prospects.map(...))</code> will throw on an empty prospects array</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/lib/prioritization.ts:71</code>
+<strong>Issue:</strong> <code>Math.max()</code> with no args returns <code>-Infinity</code>; <code>Math.max(...[])</code> spreads to the same.
+A <code>rec</code> is only created inside the loop that immediately pushes a prospect (lines 57-66), so in the
+current call path <code>rec.prospects</code> is never empty when line 71 runs — no live bug. Flagging because
+it is a latent footgun: any future code path that creates a <code>rec</code> without pushing a prospect would
+set <code>score = -Infinity</code> and silently sort that contact last. Not in scope to fix now (this line was
+not changed in this phase), recorded for awareness.
+<strong>Fix:</strong> None required this phase. If touched later, guard: <code>rec.prospects.length ? Math.max(...) : 0</code>.</p>
+<h3>IN-03: <code>route.test.ts</code> casts <code>GET</code>/<code>POST</code> to <code>unknown</code> then to the harness param type</h3>
+<p><strong>File:</strong> <code>src/app/api/job-leads/route.test.ts:63-64, 80-81, 138-141, 180-181, ...</code>
+<strong>Issue:</strong> Every <code>callRoute(GET as unknown as Parameters&lt;typeof callRoute&gt;[0], ...)</code> double-casts
+through <code>unknown</code>. This defeats the type checker at the call boundary — if <code>callRoute</code>&#39;s expected
+handler signature drifts from the real route handler signature, the test would still compile and
+could pass against a stale shape. Project convention discourages <code>as any</code>-style escape hatches.
+<strong>Fix:</strong> Type <code>callRoute</code>&#39;s first parameter as the actual route-handler signature
+(<code>(req: Request, ctx?: { params: Promise&lt;Record&lt;string,string&gt;&gt; }) =&gt; Promise&lt;Response&gt;</code>) so the
+casts can be dropped and a signature drift becomes a compile error.</p>
+<h3>IN-04: SKILL.md drain pseudo-code uses <code>url.endsWith(&#39;/&#39;)</code> join logic that the <code>runBareNameFlow</code> branch can desync</h3>
+<p><strong>File:</strong> <code>.claude/skills/scrape-linkedin-connections/SKILL.md:93-97</code>
+<strong>Issue:</strong> In the D-14 fallback, <code>url = runBareNameFlow(...)</code> returns a picked URL of unknown
+trailing-slash shape, then <code>PUT .../companies/&lt;id&gt; { linkedinUrl: url }</code> persists it verbatim, then
+<code>navigate(url.endsWith(&#39;/&#39;) ? </code>${url}people/<code>:</code>${url}/people/<code>)</code>. On the <em>next</em> drain run the
+persisted <code>companyLinkedinUrl</code> is read back and run through the same join — consistent. But the
+canonicalization rule in <code>linkedin-navigation.md</code> § Company-URL Step 1 normalizes to a
+trailing-slash canonical (<code>https://www.linkedin.com/company/${slug}/</code>), while this backfill persists
+the raw picked URL without canonicalizing. Result: stored URLs can be inconsistent
+(<code>/company/acme</code> vs <code>/company/acme/</code>) depending on entry path. Cosmetic, but it means the same
+company can have two different stored <code>linkedinUrl</code> spellings across runs.
+<strong>Fix:</strong> Canonicalize the picked URL via the Company-URL Step 1 extraction (<code>new URL</code> → slug →
+<code>https://www.linkedin.com/company/${slug}/</code>) before both the PUT and the navigate, so stored values
+are stable.</p>
+<hr>
+<p><em>Reviewed: 2026-05-19T21:43:46Z</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
