@@ -10,6 +10,7 @@ import {
 } from '../../../../../../drizzle/schema';
 import { eq } from 'drizzle-orm';
 import * as matchConnectionsModule from '@/features/job-leads/lib/match-connections';
+import { COMPANY_SCOPE_ROLE_TITLE } from '@/lib/domain/types';
 
 // No vi.mock for matchConnections. Tests 1, 1b, 2, 4, 5, 6 use the real
 // implementation via the seeded PGlite database. Test 3 uses vi.spyOn +
@@ -468,5 +469,116 @@ describe('POST /api/job-leads/[id]/prospects (bulk insert)', () => {
       .from(prospects)
       .where(eq(prospects.jobLeadId, leadId));
     expect(persisted).toHaveLength(5);
+  });
+});
+
+// D-17: Pin the input-shape-agnostic invariant for the POST prospects route.
+// The handler operates on `id` lookups and branches only on `lead.status`
+// (never on `linkedinJobUrl`). A regression test with `linkedinJobUrl: null`
+// locks this against a future refactor accidentally adding an
+// `if (lead.linkedinJobUrl)` guard that would break the company-scope drain.
+describe('POST /api/job-leads/[id]/prospects — company-scope leads (D-17)', () => {
+  let leadId: string;
+  let companyId: string;
+
+  beforeEach(async () => {
+    dbRef.current = await createTestDb();
+
+    const [company] = await dbRef.current
+      .insert(companies)
+      .values({ name: 'AcmeCo' })
+      .returning();
+    companyId = company.id;
+
+    const [lead] = await dbRef.current
+      .insert(jobLeads)
+      .values({
+        linkedinJobUrl: null, // company-scope shape — the D-17 invariant
+        roleTitle: COMPANY_SCOPE_ROLE_TITLE,
+        companyId,
+        companyName: 'AcmeCo',
+        status: 'searching' // prospects route precondition — ready for bulk insert
+      })
+      .returning();
+    leadId = lead.id;
+  });
+
+  it('Test P1: bulk-prospects + status flip works on null-URL lead (D-17)', async () => {
+    const { POST } = await import('@/app/api/job-leads/[id]/prospects/route');
+
+    // Mirror Test 1's shape: 5 prospects with mixed null/string fields covering
+    // every nullable column (title, linkedinUrl, profileSnippet) and both
+    // empty / non-empty mutualConnectionNames arrays.
+    const inputProspects = [
+      {
+        name: 'Alice',
+        title: 'CTO',
+        linkedinUrl: 'https://linkedin.com/in/alice',
+        profileSnippet: 'Building data infra. ex-Stripe.',
+        mutualConnectionNames: []
+      },
+      {
+        name: 'Bob',
+        title: 'VP Eng',
+        linkedinUrl: 'https://linkedin.com/in/bob',
+        profileSnippet: 'Eng leader',
+        mutualConnectionNames: ['Carol']
+      },
+      {
+        name: 'Carol',
+        title: 'Director',
+        linkedinUrl: 'https://linkedin.com/in/carol',
+        profileSnippet: null,
+        mutualConnectionNames: []
+      },
+      {
+        name: 'Dave',
+        title: null,
+        linkedinUrl: null,
+        profileSnippet: null,
+        mutualConnectionNames: []
+      },
+      {
+        name: 'Eve',
+        title: 'Senior Manager',
+        linkedinUrl: 'https://linkedin.com/in/eve',
+        profileSnippet: 'Operations',
+        mutualConnectionNames: ['Fred']
+      }
+    ];
+
+    const { status, body } = await callRoute(
+      POST as unknown as Parameters<typeof callRoute>[0],
+      {
+        method: 'POST',
+        body: { prospects: inputProspects },
+        params: { id: leadId }
+      }
+    );
+
+    expect(status).toBe(201);
+    expect(body).toMatchObject({
+      success: true,
+      data: expect.objectContaining({ insertedCount: inputProspects.length })
+    });
+
+    // Read back the lead — assert status flip + null-URL invariant + clean error fields
+    const [updatedLead] = await dbRef.current!
+      .select()
+      .from(jobLeads)
+      .where(eq(jobLeads.id, leadId));
+    expect(updatedLead.status).toBe('found');
+    expect(updatedLead.prospectCount).toBe(inputProspects.length);
+    expect(updatedLead.lastError).toBeNull();
+    expect(updatedLead.lastErrorAt).toBeNull();
+    // D-17 invariant pin: handler did not mutate the null-URL shape
+    expect(updatedLead.linkedinJobUrl).toBeNull();
+
+    // Timeline emitted with the search-complete event
+    const events = await dbRef.current!.select().from(timelineEvents);
+    expect(events).toHaveLength(1);
+    expect(events[0].eventType).toBe('job_lead_search_complete');
+    const meta = events[0].metadata as Record<string, unknown>;
+    expect(meta.prospectCount).toBe(inputProspects.length);
   });
 });
