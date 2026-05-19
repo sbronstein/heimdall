@@ -4,6 +4,8 @@
 
 Heimdall is brownfield — the executive job-search CRM is already shipped and in daily use. This roadmap covers the 22 v1 Active requirements that close out the current improvement cycle: an urgent navigation-breaking hydration bug, a test harness to land subsequent work safely, an authentication hardening pass on the open `/api/*` surface, deletion of starter-template residue, completion of the in-flight Job Leads scraper, and the performance work (N+1 elimination + indexes) that the 1500-contact dataset is already straining against. Each phase is a coherent improvement layer rather than a new end-to-end user feature, reflecting the horizontal-layers character of the work.
 
+**Milestone v1.1 — LinkedIn Scraping by Company (Phases 7–9):** Extends the `scrape-linkedin-connections` skill to accept a LinkedIn company URL or bare company name as input, creating "synthetic" job leads (no job URL) that run through the same queue and prospects pipeline as job-URL leads.
+
 ## Phases
 
 **Phase Numbering:**
@@ -17,7 +19,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Security Hardening** - Authenticate every `/api/*` route and strip starter-template auth artifacts (completed 2026-05-13)
 - [x] **Phase 4: Starter-Template Cleanup** - Delete unused routes, components, and dead imports (completed 2026-05-13)
 - [x] **Phase 5: Job Leads Completion** - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)
-- [ ] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes
+- [x] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)
+- [ ] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL
+- [ ] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches
+- [ ] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances
 
 ## Phase Details
 
@@ -140,10 +145,44 @@ Plans:
 - [x] 06-04-PLAN.md — PERF-A5 (import half): bulk INSERT + onConflictDoNothing on linkedin_url partial UNIQUE + narrowed name+company dedup in /api/contacts/import
 - [x] 06-05-PLAN.md — Incidental fold #3: GET /api/job-leads/[id]/recommendations becomes a pure read (Variant B per D-15 — compute scores on-the-fly via prioritization.ts:55 fallback)
 
+### Phase 7: Schema + API for Company-Scope Leads
+**Goal**: The Heimdall data layer and REST API fully support creating and retrieving synthetic job leads that have no associated job URL — the foundation all skill and UI work depends on
+**Depends on**: Phase 6
+**Requirements**: JL-C3, JL-C4
+**Success Criteria** (what must be TRUE):
+  1. `POST /api/job-leads` (or a dedicated route) accepts `{ companyName, linkedinCompanyUrl? }` with no `linkedinJobUrl` field and returns a `job_leads` row where `linkedinJobUrl` is null, `roleTitle` is null, and `status` is `'queued'`
+  2. The Drizzle schema for `job_leads` has `linkedinJobUrl` and `roleTitle` as nullable columns with no non-null constraints, and a Drizzle migration ensures the live database matches — verified by a route test that inserts and reads back a row with both fields null
+  3. The created synthetic lead is linked to a `companies` row (matched by name or created on the fly) so recommendations and contact-bridging work unchanged for company-scope leads
+  4. The existing `PATCH /api/job-leads/[id]/status` and `POST /api/job-leads/[id]/prospects` routes accept company-scope leads (where `linkedinJobUrl` is null) without errors — the state machine is input-shape agnostic
+**Plans**: TBD
+
+### Phase 8: Skill Input Parsing, Navigation Branching + Drain
+**Goal**: The `scrape-linkedin-connections` skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue
+**Depends on**: Phase 7
+**Requirements**: JL-C1, JL-C2, JL-C5, JL-C6, JL-C7
+**Success Criteria** (what must be TRUE):
+  1. Invoking the skill with a `https://linkedin.com/company/<slug>` argument (or `https://www.linkedin.com/company/<slug>`) creates a synthetic job lead via the Phase 7 API route, then navigates directly to the company's `/people/` employees page — the job-posting step is skipped entirely
+  2. Invoking the skill with a bare company name string (not a UUID, not a URL, not empty) triggers a LinkedIn company search; the skill presents the top 3–5 matches (name + employee count + industry) as a numbered list and waits for the user to confirm their pick before proceeding
+  3. When drain mode processes a lead whose `linkedinJobUrl` is null, the skill navigates via the null branch (direct company employees URL) rather than the job-URL branch — both lead types drain from the same `GET /api/job-leads?status=queued` endpoint in a single loop
+  4. `references/linkedin-navigation.md` documents both navigation paths (company-URL branch and company-search → disambiguate → employees branch) alongside the existing job-URL path
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 9: UI for Company-Scope Leads
+**Goal**: The job-lead detail page and list view render company-scope leads (where `linkedinJobUrl` is null) cleanly — no broken links, clear labeling, scannable at a glance
+**Depends on**: Phase 8
+**Requirements**: JL-C8, JL-C9
+**Success Criteria** (what must be TRUE):
+  1. The job-lead detail page hides the "View job posting" link when `linkedinJobUrl` is null and instead shows a "Company scrape" badge in the role-title display area — verified by a rendered component test with a null `linkedinJobUrl` fixture
+  2. The job-lead list view displays a distinct icon or badge for company-scope leads so a user scanning a mixed queue can tell at a glance which leads came from job URLs and which from company searches — verified by a rendered list test with a mixed-lead fixture
+  3. Company name and employee count (once scraped) are displayed prominently on the detail page for company-scope leads, giving the same informational density as a job-URL lead's role + company block
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -152,4 +191,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Security Hardening | 2/2 | Complete   | 2026-05-13 |
 | 4. Starter-Template Cleanup | 5/5 | Complete | 2026-05-13 |
 | 5. Job Leads Completion | 7/7 | Complete   | 2026-05-14 |
-| 6. Performance | 0/5 | Plans created | - |
+| 6. Performance | 5/5 | Complete | 2026-05-14 |
+| 7. Schema + API for Company-Scope Leads | 0/TBD | Not started | - |
+| 8. Skill Input Parsing, Navigation Branching + Drain | 0/TBD | Not started | - |
+| 9. UI for Company-Scope Leads | 0/TBD | Not started | - |

@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROADMAP</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/ROADMAP.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Roadmap: Heimdall</h1>
+<h2>Overview</h2>
+<p>Heimdall is brownfield — the executive job-search CRM is already shipped and in daily use. This roadmap covers the 22 v1 Active requirements that close out the current improvement cycle: an urgent navigation-breaking hydration bug, a test harness to land subsequent work safely, an authentication hardening pass on the open <code>/api/*</code> surface, deletion of starter-template residue, completion of the in-flight Job Leads scraper, and the performance work (N+1 elimination + indexes) that the 1500-contact dataset is already straining against. Each phase is a coherent improvement layer rather than a new end-to-end user feature, reflecting the horizontal-layers character of the work.</p>
+<p><strong>Milestone v1.1 — LinkedIn Scraping by Company (Phases 7–9):</strong> Extends the <code>scrape-linkedin-connections</code> skill to accept a LinkedIn company URL or bare company name as input, creating &quot;synthetic&quot; job leads (no job URL) that run through the same queue and prospects pipeline as job-URL leads.</p>
+<h2>Phases</h2>
+<p><strong>Phase Numbering:</strong></p>
+<ul>
+<li>Integer phases (1, 2, 3): Planned milestone work</li>
+<li>Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)</li>
+</ul>
+<p>Decimal phases appear between their surrounding integers in numeric order.</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 1: Critical Bug Fix</strong> - Eliminate the sidebar hydration crash that breaks navigation after LinkedIn imports</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 2: Test Infrastructure</strong> - Stand up Vitest + cover load-bearing logic and regression-pin BUG-01 (completed 2026-05-12)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 3: Security Hardening</strong> - Authenticate every <code>/api/*</code> route and strip starter-template auth artifacts (completed 2026-05-13)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 4: Starter-Template Cleanup</strong> - Delete unused routes, components, and dead imports (completed 2026-05-13)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 5: Job Leads Completion</strong> - LinkedIn scraping moved out of app into a Claude Code skill driving vercel-labs/agent-browser; queue + categorized failures surface in the DB (completed 2026-05-14, reshaped 2026-05-13)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 6: Performance</strong> - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)</li>
+<li><input disabled="" type="checkbox"> <strong>Phase 7: Schema + API for Company-Scope Leads</strong> - Nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> schema + API route for creating synthetic job leads without a job URL</li>
+<li><input disabled="" type="checkbox"> <strong>Phase 8: Skill Input Parsing, Navigation Branching + Drain</strong> - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches</li>
+<li><input disabled="" type="checkbox"> <strong>Phase 9: UI for Company-Scope Leads</strong> - Detail page and list view render company-scope leads cleanly without broken job-URL affordances</li>
+</ul>
+<h2>Phase Details</h2>
+<h3>Phase 1: Critical Bug Fix</h3>
+<p><strong>Goal</strong>: Restore reliable dashboard navigation after large LinkedIn imports
+<strong>Depends on</strong>: Nothing (first phase)
+<strong>Requirements</strong>: BUG-01, BUG-02
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li>After importing 1500+ LinkedIn contacts, every sidebar nav link on every dashboard page remains clickable and routes correctly</li>
+<li>Loading any <code>/dashboard/*</code> page produces no React hydration warnings or errors in the browser console</li>
+<li><code>UserAvatarProfile</code> renders correctly inside <code>SidebarMenuButton</code> for both signed-in users and edge-case users with no email addresses (no runtime crash on <code>emailAddresses[0]</code> access)
+<strong>Plans</strong>: 1 plan
+Plans:</li>
+</ol>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 01-01-PLAN.md — Audit pre-existing BUG-01 working-tree edits, apply BUG-02 optional-chain guards, dev-server smoke verify, surgical commits per requirement
+<strong>UI hint</strong>: yes</li>
+</ul>
+<h3>Phase 2: Test Infrastructure</h3>
+<p><strong>Goal</strong>: A working test harness exists and pins the load-bearing logic + the BUG-01 regression
+<strong>Depends on</strong>: Phase 1
+<strong>Requirements</strong>: TEST-A1, TEST-A2, TEST-A3
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li><code>npm test</code> runs a Vitest suite against the TypeScript codebase and exits 0 on a clean checkout</li>
+<li>Tests assert the <code>{ success, data, error, meta }</code> API envelope shape, valid/invalid <code>canTransition()</code> pipeline moves, <code>logTimeline()</code> side-effect on writes, LinkedIn CSV parsing, and bridge-score computation</li>
+<li>A regression test fails if the <code>app-sidebar.tsx</code> hydration mismatch from BUG-01 is reintroduced
+<strong>Plans</strong>: 5 plans
+Plans:
+<strong>Wave 1</strong></li>
+</ol>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 02-01-PLAN.md — Vitest + PGlite harness foundation (config, scripts, createTestDb, callRoute)</li>
+</ul>
+<p><strong>Wave 2</strong> <em>(blocked on Wave 1 completion)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 02-02-PLAN.md — Pure-logic coverage (pipeline, envelope, filters, seniority, bridge-score)</li>
+<li><input checked="" disabled="" type="checkbox"> 02-03-PLAN.md — DB-backed API route coverage (status transition + CSV import with timeline side-effect via PGlite)</li>
+<li><input checked="" disabled="" type="checkbox"> 02-04-PLAN.md — BUG-01 regression tests (SSR structural + jsdom hydration mount)</li>
+</ul>
+<p><strong>Wave 3</strong> <em>(blocked on Wave 2 completion)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 02-05-PLAN.md — Husky pre-push integration (gated on &lt;10s suite runtime per CD-01)</li>
+</ul>
+<h3>Phase 3: Security Hardening</h3>
+<p><strong>Goal</strong>: No <code>/api/*</code> route is reachable without a valid Clerk session, and starter-template auth artifacts are removed
+<strong>Depends on</strong>: Phase 2
+<strong>Requirements</strong>: SEC-A1, SEC-A2
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li>Every <code>/api/*</code> route returns 401 when called without a valid Clerk session (verified by automated test against all 34 routes)</li>
+<li>The &quot;Continue with GitHub&quot; no-op button no longer appears on the sign-in or sign-up pages</li>
+<li>Sign-in and sign-up pages no longer issue an outbound fetch to <code>api.github.com/repos/...</code> on render
+<strong>Plans</strong>: 2 plans
+Plans:
+<strong>Wave 1</strong> <em>(both plans parallel — disjoint file sets)</em></li>
+</ol>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 03-01-PLAN.md — Activate <code>src/middleware.ts</code> (rename from <code>src/proxy.ts</code>), expand matcher to <code>/api/(.*)</code>, explicit 401 envelope short-circuit, two-layer verification test (SEC-A1)</li>
+<li><input checked="" disabled="" type="checkbox"> 03-02-PLAN.md — Delete <code>github-auth-button.tsx</code>, remove its references, strip <code>api.github.com</code> fetch + <code>stars</code> prop + dead Link block from auth pages/views (SEC-A2)</li>
+</ul>
+<h3>Phase 4: Starter-Template Cleanup</h3>
+<p><strong>Goal</strong>: Dead starter-template code is gone — the repo contains only Heimdall code
+<strong>Depends on</strong>: Phase 3
+<strong>Requirements</strong>: DEBT-A1, DEBT-A2, DEBT-A3, DEBT-A4, DEBT-A5
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li>Visiting <code>/dashboard/product</code>, <code>/dashboard/exclusive</code>, <code>/dashboard/workspaces</code>, or <code>/dashboard/billing</code> returns 404</li>
+<li><code>src/features/products/</code>, the 805-line <code>src/components/ui/infobar.tsx</code>, and the <code>__CLEANUP__/</code> directory no longer exist in the repo</li>
+<li>The <code>/dashboard/kanban</code> route is either backed by <code>/api/tasks</code> or removed (decision recorded in PROJECT.md)</li>
+<li><code>npm run build</code> succeeds with no unused-import warnings for <code>computeBridgeScore</code> in the job-leads search route
+<strong>Plans</strong>: 5 plans
+Plans:
+<strong>Wave 1</strong> <em>(four plans parallel — disjoint file sets)</em></li>
+</ol>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 04-01-PLAN.md — DEBT-A1: delete products feature + dead support (mock-api.ts, data.ts product types, breadcrumb entry)</li>
+<li><input checked="" disabled="" type="checkbox"> 04-02-PLAN.md — DEBT-A2: delete starter routes (exclusive, workspaces, billing) + Infobar machinery transitive teardown</li>
+<li><input checked="" disabled="" type="checkbox"> 04-03-PLAN.md — DEBT-A3: delete /dashboard/kanban route + features/kanban folder + record decision in PROJECT.md</li>
+<li><input checked="" disabled="" type="checkbox"> 04-04-PLAN.md — DEBT-A5: drop unused computeBridgeScore import in job-leads search route</li>
+</ul>
+<p><strong>Wave 2</strong> <em>(blocked on Wave 1 completion — must be last)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 04-05-PLAN.md — DEBT-A4: rm -rf <strong>CLEANUP</strong>/ + add filesystem-existence verification test
+<strong>UI hint</strong>: yes</li>
+</ul>
+<h3>Phase 5: Job Leads Completion — <em>RESHAPED 2026-05-13</em></h3>
+<p><strong>Goal</strong>: LinkedIn connection scraping is reliable. Scraping moves <strong>out of the app</strong> into a Claude Code skill driving <code>vercel-labs/agent-browser</code>; the app holds the queue and the results, scraping runs out-of-band, failures surface back into the UI via the DB.
+<strong>Depends on</strong>: Phase 4
+<strong>Requirements</strong>: JL-B1, JL-B2, JL-B3, JL-B4, JL-B5 (defined in <code>.planning/REQUIREMENTS.md</code> §Job Leads Completion; JL-A1..A5 superseded 2026-05-13 — see <code>.planning/phases/05-job-leads-completion/05-03-PLAN.md</code>)
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li>A Claude Code skill exists (under <code>.claude/skills/</code> or per-project skill location) that accepts a job URL argument <strong>or</strong>, when invoked with no argument, drains unprocessed job leads from the Heimdall DB</li>
+<li>The skill drives <code>vercel-labs/agent-browser</code> to navigate job → company → employees → 2nd-degree filter and extract prospects in the same <code>ScrapedProspect</code> shape the existing UI consumes</li>
+<li>The skill writes results back to the DB through existing REST routes; the in-app fire-and-forget Playwright IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code> and <code>src/features/job-leads/lib/scrape-connections.ts</code> are <strong>deleted</strong> (the hardcoded <code>&#39;point&#39;</code>, the <code>waitForTimeout</code> antipatterns, and the 20+ debug <code>console.log</code> dumps go with them)</li>
+<li>Job-lead status in the DB cleanly represents the scraping queue — at minimum: needs-scrape, in-progress (by the skill), scraped, failed-with-category — so the skill knows what to drain and the UI knows what to show</li>
+<li>The job-lead detail UI surfaces a clear &quot;Run scrape from Claude Code&quot; affordance for unprocessed leads and a categorized failure surface when the skill last attempted and failed, with a retry that re-queues the lead</li>
+</ol>
+<p><strong>Plans</strong>: 7 plans
+Plans:
+<strong>Wave 1</strong> <em>(three plans parallel — disjoint file sets)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 05-01-PLAN.md — Schema additions (queued/failed enum values, last_error columns), ScrapedProspect type relocation, Drizzle migration</li>
+<li><input checked="" disabled="" type="checkbox"> 05-02-PLAN.md — Middleware bearer-token bypass + token-generation script + env example placeholders</li>
+<li><input checked="" disabled="" type="checkbox"> 05-03-PLAN.md — REQUIREMENTS.md supersession of JL-A1..A5, definition of JL-B1..JL-B5, HTML companion regen</li>
+</ul>
+<p><strong>Wave 2</strong> <em>(blocked on Wave 1)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 05-04-PLAN.md — API routes: state-machine module, PATCH /status, POST /prospects (bulk), POST /search (thin flip), GET /job-leads status filter + tests</li>
+</ul>
+<p><strong>Wave 3</strong> <em>(blocked on Waves 1 + 2)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 05-05-PLAN.md — Job-lead detail UI rewrite: queued badge, copy-skill-invocation button, categorized failure banner, retry; list-view status rendering</li>
+<li><input checked="" disabled="" type="checkbox"> 05-06-PLAN.md — Skill assets at .claude/skills/scrape-linkedin-connections/ (SKILL.md + three references docs)</li>
+</ul>
+<p><strong>Wave 4</strong> <em>(blocked on Waves 1, 2, 3 — must be last)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 05-07-PLAN.md — Delete scrape-connections.ts + search-progress.tsx; lock the deletions in src/<strong>cleanup</strong>.test.ts</li>
+</ul>
+<p><strong>Note</strong>: This phase&#39;s old <code>05-CONTEXT.md</code> (363 lines of context for the in-app-scraper-fix direction) is preserved at <code>.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md</code> and reflects the prior plan. A fresh <code>05-CONTEXT.md</code> for the new direction will be produced by <code>/gsd-discuss-phase 5</code>.</p>
+<h3>Phase 6: Performance</h3>
+<p><strong>Goal</strong>: The 1500-contact dataset operations (import, scrape match, triage categorize) run without N+1 round-trips, and hot-path columns are indexed
+<strong>Depends on</strong>: Phase 5
+<strong>Requirements</strong>: PERF-A1, PERF-A2, PERF-A3, PERF-A4, PERF-A5
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li><code>/api/job-leads/[id]/prospects</code> (the route Phase 5 introduced for bulk prospect writes) performs a single bulk insert of scraped prospects, and <code>match-connections.ts</code> performs a single bulk insert of prospect bridges (<code>onConflictDoNothing()</code> on the <code>prospect_bridge_unique</code> constraint). The entire <code>POST /prospects</code> handler runs inside <code>db.transaction()</code> so prospect insert + bridge insert + status flip commit or roll back together.</li>
+<li><code>/api/contacts/import/categorize</code> updates closeness for all selected contacts in a single batched statement (or transaction) instead of one UPDATE per contact</li>
+<li>Drizzle <code>index()</code> definitions exist on <code>contacts(archived_at)</code>, <code>contacts(linkedin_url)</code>, <code>contacts(company_id)</code>, <code>contacts(linkedin_connection_date)</code>, and <code>companies(name)</code>, applied via a migration</li>
+<li><code>/api/contacts/import</code> and <code>match-connections.ts</code> no longer load the entire <code>contacts</code> table into memory for dedup — dedup is pushed to the database (<code>ON CONFLICT DO NOTHING</code> or equivalent)
+<strong>Plans</strong>: 5 plans
+Plans:
+<strong>Wave 1</strong></li>
+</ol>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 06-01-PLAN.md — Schema additions (5 index() + 1 partial UNIQUE index on contacts/companies), migration 0008 generation + apply, pg_indexes regression test (D-20)</li>
+</ul>
+<p><strong>Wave 2</strong> <em>(four plans parallel — disjoint file sets — all blocked on Wave 1)</em></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 06-02-PLAN.md — PERF-A1 (bridges half) + PERF-A2: transactional POST /prospects with inline matchConnections, bulk bridge insert with onConflictDoNothing, narrowed contacts SELECT; ROADMAP SC #1 wording refresh in the same commit</li>
+<li><input checked="" disabled="" type="checkbox"> 06-03-PLAN.md — PERF-A3: bulk UPDATE ... FROM unnest() in /api/contacts/import/categorize replacing per-row loop</li>
+<li><input checked="" disabled="" type="checkbox"> 06-04-PLAN.md — PERF-A5 (import half): bulk INSERT + onConflictDoNothing on linkedin_url partial UNIQUE + narrowed name+company dedup in /api/contacts/import</li>
+<li><input checked="" disabled="" type="checkbox"> 06-05-PLAN.md — Incidental fold #3: GET /api/job-leads/[id]/recommendations becomes a pure read (Variant B per D-15 — compute scores on-the-fly via prioritization.ts:55 fallback)</li>
+</ul>
+<h3>Phase 7: Schema + API for Company-Scope Leads</h3>
+<p><strong>Goal</strong>: The Heimdall data layer and REST API fully support creating and retrieving synthetic job leads that have no associated job URL — the foundation all skill and UI work depends on
+<strong>Depends on</strong>: Phase 6
+<strong>Requirements</strong>: JL-C3, JL-C4
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li><code>POST /api/job-leads</code> (or a dedicated route) accepts <code>{ companyName, linkedinCompanyUrl? }</code> with no <code>linkedinJobUrl</code> field and returns a <code>job_leads</code> row where <code>linkedinJobUrl</code> is null, <code>roleTitle</code> is null, and <code>status</code> is <code>&#39;queued&#39;</code></li>
+<li>The Drizzle schema for <code>job_leads</code> has <code>linkedinJobUrl</code> and <code>roleTitle</code> as nullable columns with no non-null constraints, and a Drizzle migration ensures the live database matches — verified by a route test that inserts and reads back a row with both fields null</li>
+<li>The created synthetic lead is linked to a <code>companies</code> row (matched by name or created on the fly) so recommendations and contact-bridging work unchanged for company-scope leads</li>
+<li>The existing <code>PATCH /api/job-leads/[id]/status</code> and <code>POST /api/job-leads/[id]/prospects</code> routes accept company-scope leads (where <code>linkedinJobUrl</code> is null) without errors — the state machine is input-shape agnostic
+<strong>Plans</strong>: TBD</li>
+</ol>
+<h3>Phase 8: Skill Input Parsing, Navigation Branching + Drain</h3>
+<p><strong>Goal</strong>: The <code>scrape-linkedin-connections</code> skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue
+<strong>Depends on</strong>: Phase 7
+<strong>Requirements</strong>: JL-C1, JL-C2, JL-C5, JL-C6, JL-C7
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li>Invoking the skill with a <code>https://linkedin.com/company/&lt;slug&gt;</code> argument (or <code>https://www.linkedin.com/company/&lt;slug&gt;</code>) creates a synthetic job lead via the Phase 7 API route, then navigates directly to the company&#39;s <code>/people/</code> employees page — the job-posting step is skipped entirely</li>
+<li>Invoking the skill with a bare company name string (not a UUID, not a URL, not empty) triggers a LinkedIn company search; the skill presents the top 3–5 matches (name + employee count + industry) as a numbered list and waits for the user to confirm their pick before proceeding</li>
+<li>When drain mode processes a lead whose <code>linkedinJobUrl</code> is null, the skill navigates via the null branch (direct company employees URL) rather than the job-URL branch — both lead types drain from the same <code>GET /api/job-leads?status=queued</code> endpoint in a single loop</li>
+<li><code>references/linkedin-navigation.md</code> documents both navigation paths (company-URL branch and company-search → disambiguate → employees branch) alongside the existing job-URL path
+<strong>Plans</strong>: TBD
+<strong>UI hint</strong>: yes</li>
+</ol>
+<h3>Phase 9: UI for Company-Scope Leads</h3>
+<p><strong>Goal</strong>: The job-lead detail page and list view render company-scope leads (where <code>linkedinJobUrl</code> is null) cleanly — no broken links, clear labeling, scannable at a glance
+<strong>Depends on</strong>: Phase 8
+<strong>Requirements</strong>: JL-C8, JL-C9
+<strong>Success Criteria</strong> (what must be TRUE):</p>
+<ol>
+<li>The job-lead detail page hides the &quot;View job posting&quot; link when <code>linkedinJobUrl</code> is null and instead shows a &quot;Company scrape&quot; badge in the role-title display area — verified by a rendered component test with a null <code>linkedinJobUrl</code> fixture</li>
+<li>The job-lead list view displays a distinct icon or badge for company-scope leads so a user scanning a mixed queue can tell at a glance which leads came from job URLs and which from company searches — verified by a rendered list test with a mixed-lead fixture</li>
+<li>Company name and employee count (once scraped) are displayed prominently on the detail page for company-scope leads, giving the same informational density as a job-URL lead&#39;s role + company block
+<strong>Plans</strong>: TBD
+<strong>UI hint</strong>: yes</li>
+</ol>
+<h2>Progress</h2>
+<p><strong>Execution Order:</strong>
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Plans Complete</th>
+<th>Status</th>
+<th>Completed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. Critical Bug Fix</td>
+<td>1/1</td>
+<td>Complete</td>
+<td>2026-05-12</td>
+</tr>
+<tr>
+<td>2. Test Infrastructure</td>
+<td>5/5</td>
+<td>Complete</td>
+<td>2026-05-12</td>
+</tr>
+<tr>
+<td>3. Security Hardening</td>
+<td>2/2</td>
+<td>Complete</td>
+<td>2026-05-13</td>
+</tr>
+<tr>
+<td>4. Starter-Template Cleanup</td>
+<td>5/5</td>
+<td>Complete</td>
+<td>2026-05-13</td>
+</tr>
+<tr>
+<td>5. Job Leads Completion</td>
+<td>7/7</td>
+<td>Complete</td>
+<td>2026-05-14</td>
+</tr>
+<tr>
+<td>6. Performance</td>
+<td>5/5</td>
+<td>Complete</td>
+<td>2026-05-14</td>
+</tr>
+<tr>
+<td>7. Schema + API for Company-Scope Leads</td>
+<td>0/TBD</td>
+<td>Not started</td>
+<td>-</td>
+</tr>
+<tr>
+<td>8. Skill Input Parsing, Navigation Branching + Drain</td>
+<td>0/TBD</td>
+<td>Not started</td>
+<td>-</td>
+</tr>
+<tr>
+<td>9. UI for Company-Scope Leads</td>
+<td>0/TBD</td>
+<td>Not started</td>
+<td>-</td>
+</tr>
+</tbody></table>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/ROADMAP.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

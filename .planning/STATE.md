@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: LinkedIn Scraping by Company
 status: planning
-last_updated: "2026-05-19T17:22:01.497Z"
+last_updated: "2026-05-19T00:00:00.000Z"
 last_activity: 2026-05-19
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,49 +17,41 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-12)
+See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-**Current focus:** Phase 06 — 06-performance
+**Current focus:** Phase 07 — Schema + API for Company-Scope Leads
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 7 — Schema + API for Company-Scope Leads (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-19 — Milestone v1.1 started
+Status: Roadmap defined; awaiting phase planning
+Last activity: 2026-05-19 — Milestone v1.1 roadmap created (Phases 7–9, 9 requirements)
+
+**v1.1 Progress Rail:** Phase 7 · Phase 8 · Phase 9
 
 ## Performance Metrics
 
-**Velocity:**
+**Velocity (v1.0 reference):**
 
-- Total plans completed: 12
-- Average duration: ~15 min
-- Total execution time: ~15 min (phase 2, plan 1)
+- Total plans completed: 25 (Phases 1–6)
+- Average duration: ~10 min/plan
 
-**By Phase:**
+**By Phase (v1.0):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 02-test-infrastructure | 1/4 | ~15 min | ~15 min |
-| 2 | 5 | - | - |
-| 06 | 5 | - | - |
+| 01-critical-bug-fix | 1 | ~15 min | ~15 min |
+| 02-test-infrastructure | 5 | ~75 min | ~15 min |
+| 03-security-hardening | 2 | ~20 min | ~10 min |
+| 04-starter-template-cleanup | 5 | ~23 min | ~5 min |
+| 05-job-leads-completion | 7 | TBD | TBD |
+| 06-performance | 5 | TBD | TBD |
 
-**Recent Trend:**
-
-- Last 5 plans: 02-01 (15 min)
-- Trend: On target
+**v1.1 plans completed:** 0 / TBD
 
 *Updated after each plan completion*
-| Phase 02-test-infrastructure P02 | 25 | 3 tasks | 6 files |
-| Phase 02-test-infrastructure P03 | 5min | 3 tasks | 4 files |
-| Phase 02-test-infrastructure P04 | 25min | 2 tasks | 4 files |
-| Phase 02-test-infrastructure P05 | 2 | 2 tasks | 1 files |
-| Phase 04-starter-template-cleanup P01 | 5min | 3 tasks | 12 files |
-| Phase 04-starter-template-cleanup P02 | 7min | 3 tasks tasks | 11 files files |
-| Phase 04-starter-template-cleanup P03 | 2min | 2 tasks | 12 files |
-| Phase 04-starter-template-cleanup P04 | 5min | 1 task | 1 file |
-| Phase 04-starter-template-cleanup P05 | 4min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -68,18 +60,11 @@ Last activity: 2026-05-19 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Roadmap mode: standard (horizontal layers) — active work is horizontal improvements to an already-vertical shipped product, not new end-to-end user features
-- Phase 1 = BUG-01 + BUG-02 (shortest path to value; user is currently blocked from daily use after large imports)
-- Phase 2 = Test infrastructure placed before security/cleanup/perf so subsequent phases land safely; TEST-A3 pins the BUG-01 regression
-- Vitest 4 exits code 1 on no test files — passWithNoTests: true added to vitest.config.ts to satisfy clean-checkout exit-0 contract
-- PGlite bootstrap = raw SQL replay of drizzle/migrations/*.sql (CD-04); each createTestDb() call returns a fresh in-memory DB (CD-05)
-- [Phase ?]: Integrate pre-push test gate: suite measured at 5.80s (< 10s CD-01 threshold), npm run test:run appended to .husky/pre-push
-- [Phase ?]: Phase 4 plan 01: CD-01 exercised — src/constants/data.ts deleted entirely (Product/SaleUser/recentSalesData were its only exports)
-- [Phase ?]: Phase 4 plan 01: D-19 atomic-per-DEBT commit pattern honored — DEBT-A1 shipped as single commit 0323e90 covering all 3 plan tasks
-- [Phase ?]: Phase 4 plan 02: DEBT-A2 transitive removal — infobar.tsx + 3 satellite files + layout wrapper + infoContent prop removed in single atomic commit ca82a84; edit-ordering per CONTEXT.md specifics (prop-drop first, infobar.tsx deleted last) kept build deterministic
-- [Phase 04-starter-template-cleanup]: Phase 4 plan 03: DEBT-A3 — kanban removed (not wired); zustand persist + localStorage anti-pattern eliminated; PROJECT.md '(Removed in Phase 4)' append per D-02 satisfies SC #3; single atomic commit 8fa1aa9 per D-19
-- [Phase 04-starter-template-cleanup]: Phase 4 plan 04: DEBT-A5 — one-line edit (search/route.ts line 10 removed); export and consumers (recommendations/route.ts, prioritization.test.ts) untouched; SC #4 satisfied (no new computeBridgeScore unused-import warning); single atomic commit 114dd34 per D-19
-- [Phase 04-starter-template-cleanup]: Phase 4 plan 05: DEBT-A4 — rm -rf __CLEANUP__/ (15 files); src/__cleanup__.test.ts added with 13 fs.existsSync()=false + 1 source-string assertion (D-16); CD-03 used Vitest it.each; CD-05 verified no cleanup script in package.json (zero edit needed); Wave 2 ordering (D-14) sequenced last — eliminates T-04-11 tampering risk; atomic commit c7524c3 per D-19; PHASE 4 COMPLETE — all 5 DEBT-A* requirements landed; ROADMAP SC #1-4 verifiable via npm run test:run on a clean checkout
+- v1.1 data model: synthetic `job_leads` row (`linkedinJobUrl = null`, `roleTitle = null` or "Company-wide scrape"). No new entity, no new table for company scrapes. Reuse existing routes/UI/state machine.
+- v1.1 role filter: none — the skill returns all 2nd-degree connections at the company.
+- v1.1 disambiguation: when a bare company name matches multiple LinkedIn companies, the skill presents top 3–5 results inline (name + employee count + industry) and waits for user pick.
+- v1.1 drain mode: same `/api/job-leads?status=queued` queue. Skill navigation branches on whether `linkedinJobUrl` is null.
+- v1.1 phase structure: Schema + API (Phase 7) → Skill (Phase 8) → UI (Phase 9). Schema first because skill and UI both depend on the nullable-column shape and synthetic-lead creation route.
 
 ### Pending Todos
 
@@ -87,22 +72,21 @@ None yet.
 
 ### Blockers/Concerns
 
-- BUG-01 is actively breaking daily use of the app — Phase 1 should be planned and executed immediately
-- Playwright as a production dependency (not handled by v1 — deferred to v2 as JL2-02)
 - LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)
-- Phase 4: pre-existing TS error src/features/job-leads/lib/prioritization.ts:70 (target=es5 + MapIterator iteration) blocks npm run build for ALL Phase 4 plans — needs tsconfig.json target bump or downlevelIteration:true OR a refactor. Logged at .planning/phases/04-starter-template-cleanup/deferred-items.md.
+- Phase 7 must verify whether `linkedinJobUrl` and `roleTitle` are already nullable in the current schema (Phase 5 may have added nullable `linkedinJobUrl`) — planner should check `drizzle/schema/job-leads.ts` before writing the migration plan
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and carried forward from v1.0:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Performance | pg_trgm GIN for cross-entity ilike search | Deferred to v2 | Phase 6 |
+| Playwright | Move playwright from dependencies to devDependencies | Deferred to v2 as JL2-02 | Phase 5 |
 
 ## Session Continuity
 
-Last session: 2026-05-14T18:35:40.908Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-performance/06-CONTEXT.md
-Next phase: 5 (Job Leads Completion) — JL-A1..JL-A5
+Last session: 2026-05-19
+Stopped at: Roadmap created for milestone v1.1
+Resume file: .planning/ROADMAP.md
+Next action: `/gsd:plan-phase 7`

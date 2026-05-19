@@ -168,7 +168,7 @@ These are the requirements GSD will track to completion. The roadmap will group 
 
 ## Traceability
 
-> Phase mapping populated by `gsd-roadmapper` on 2026-05-12.
+> Phase mapping populated by `gsd-roadmapper` on 2026-05-12. v1.1 rows added 2026-05-19.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -199,10 +199,20 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | PERF-A3 | Phase 6 | Pending |
 | PERF-A4 | Phase 6 | Pending |
 | PERF-A5 | Phase 6 | Pending |
+| JL-C3 | Phase 7 | Pending |
+| JL-C4 | Phase 7 | Pending |
+| JL-C1 | Phase 8 | Pending |
+| JL-C2 | Phase 8 | Pending |
+| JL-C5 | Phase 8 | Pending |
+| JL-C6 | Phase 8 | Pending |
+| JL-C7 | Phase 8 | Pending |
+| JL-C8 | Phase 9 | Pending |
+| JL-C9 | Phase 9 | Pending |
 
 **Coverage:**
 - v1 Active requirements: 22 total (5 superseded; net 22 active, with JL-A1..A5 replaced by JL-B1..B5)
-- Mapped to phases: 22 ✓
+- v1.1 Active requirements: 9 total (JL-C1..JL-C9)
+- Mapped to phases: 31 ✓
 - Unmapped: 0 ✓
 
 ---

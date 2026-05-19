@@ -3,199 +3,183 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Heimdall — State</title>
+<title>STATE</title>
 <style>
-  :root {
-    --bg: #faf8f5;
-    --card: #ffffff;
-    --ink: #2a2a2a;
-    --muted: #6b6b6b;
-    --accent: #6b8e6b;
-    --accent-2: #c97a4a;
-    --warn: #b85a3a;
-    --line: #e4ddd2;
-    --code-bg: #f4efe7;
-  }
-  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
-  h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -0.01em; }
-  h2 { font-size: 22px; margin: 36px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
-  h3 { font-size: 17px; margin: 22px 0 6px; }
-  p { margin: 10px 0; }
-  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
-  .meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin: 14px 0; }
-  .summary-card { background: linear-gradient(180deg, #f6f9f4, #ffffff); border-left: 4px solid var(--accent); }
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
-  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
-  .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .kpi-value { font-size: 24px; font-weight: 700; margin-top: 4px; color: var(--ink); }
-  .kpi-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
-  .badge-complete { background: #e8efe1; color: #4a6a4a; }
-  .badge-current { background: #dde7f0; color: #2a4a6a; }
-  .badge-pending { background: #f0e7d8; color: #6b5a3a; }
-  .badge-blocked { background: #f4d8d0; color: #8a3a2a; }
-  .phase-rail { display: flex; gap: 6px; align-items: center; margin: 14px 0 24px; flex-wrap: wrap; }
-  .phase-dot { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; background: var(--card); }
-  .phase-dot.done { background: #e8efe1; color: #4a6a4a; border-color: #c5d6bd; }
-  .phase-dot.current { background: #dde7f0; color: #2a4a6a; border-color: #b6c8d8; font-weight: 600; }
-  .phase-dot.pending { background: #f0e7d8; color: #6b5a3a; border-color: #ddc9a3; }
-  .phase-dot .num { font-family: "SF Mono", Menlo, Consolas, monospace; font-weight: 700; }
-  .progress { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
-  .progress-bar { flex: 1; height: 10px; background: var(--code-bg); border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
-  thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
-  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  tbody tr:last-child td { border-bottom: none; }
-  .decisions { margin: 6px 0 12px 0; padding: 0; list-style: none; }
-  .decisions li { padding: 6px 0 6px 28px; position: relative; font-size: 14px; }
-  .decisions li::before { content: "\2022"; position: absolute; left: 8px; color: var(--accent-2); font-weight: bold; font-size: 16px; }
-  .blocker-list { margin: 6px 0 12px 0; padding: 0; list-style: none; }
-  .blocker-list li { padding: 6px 0 6px 28px; position: relative; font-size: 14px; }
-  .blocker-list li::before { content: "\26A0"; position: absolute; left: 6px; color: var(--warn); font-weight: bold; }
-  footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
-  footer code { background: transparent; padding: 0; }
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
 </style>
 </head>
 <body>
 <div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/STATE.md</code> · Rendered from markdown · May lag behind</div>
 
+<hr>
+<h2>gsd_state_version: 1.0
+milestone: v1.1
+milestone_name: LinkedIn Scraping by Company
+status: planning
+last_updated: &quot;2026-05-19T00:00:00.000Z&quot;
+last_activity: 2026-05-19
+progress:
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0</h2>
 <h1>Project State</h1>
-<div class="meta">Milestone <code>v1.1</code> LinkedIn Scraping by Company · Status: planning · Last activity 2026-05-19 · Last updated <code>2026-05-19T17:22:01Z</code></div>
-
-<div class="card summary-card">
-<p><strong>Core Value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.</p>
-<p><strong>Project reference:</strong> <code>.planning/PROJECT.md</code> · <strong>Current focus:</strong> v1.1 — defining requirements for company-name input to the scrape skill</p>
-</div>
-
-<h2>Phase Rail</h2>
-<div class="phase-rail">
-  <span class="phase-dot done"><span class="num">01</span> Bug Fix</span>
-  <span class="phase-dot done"><span class="num">02</span> Tests</span>
-  <span class="phase-dot done"><span class="num">03</span> Security</span>
-  <span class="phase-dot done"><span class="num">04</span> Cleanup</span>
-  <span class="phase-dot done"><span class="num">05</span> Job Leads</span>
-  <span class="phase-dot done"><span class="num">06</span> Performance</span>
-  <span class="phase-dot current"><span class="num">07+</span> v1.1 — TBD</span>
-</div>
-
+<h2>Project Reference</h2>
+<p>See: .planning/PROJECT.md (updated 2026-05-19)</p>
+<p><strong>Core value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
+<strong>Current focus:</strong> Phase 07 — Schema + API for Company-Scope Leads</p>
 <h2>Current Position</h2>
-
-<div class="kpi-grid">
-  <div class="kpi"><div class="kpi-label">Phase</div><div class="kpi-value">—</div><div class="kpi-sub">Not started</div></div>
-  <div class="kpi"><div class="kpi-label">Plan</div><div class="kpi-value">—</div><div class="kpi-sub">Defining requirements</div></div>
-  <div class="kpi"><div class="kpi-label">Status</div><div class="kpi-value">Planning</div><div class="kpi-sub">v1.1 started</div></div>
-  <div class="kpi"><div class="kpi-label">Last Activity</div><div class="kpi-value">2026-05-19</div><div class="kpi-sub">Milestone v1.1 started</div></div>
-</div>
-
-<div class="card">
-<div class="progress">
-  <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
-  <strong>0%</strong>
-</div>
-<p class="meta">v1.0 complete (Phases 1–6, 20 / 25 plans) · v1.1 — roadmap not yet created</p>
-</div>
-
+<p>Phase: Phase 7 — Schema + API for Company-Scope Leads (not started)
+Plan: —
+Status: Roadmap defined; awaiting phase planning
+Last activity: 2026-05-19 — Milestone v1.1 roadmap created (Phases 7–9, 9 requirements)</p>
+<p><strong>v1.1 Progress Rail:</strong> Phase 7 · Phase 8 · Phase 9</p>
 <h2>Performance Metrics</h2>
-
-<h3>Velocity</h3>
+<p><strong>Velocity (v1.0 reference):</strong></p>
+<ul>
+<li>Total plans completed: 25 (Phases 1–6)</li>
+<li>Average duration: ~10 min/plan</li>
+</ul>
+<p><strong>By Phase (v1.0):</strong></p>
 <table>
-  <thead><tr><th>Metric</th><th>Value</th></tr></thead>
-  <tbody>
-    <tr><td>Total plans completed</td><td>12</td></tr>
-    <tr><td>Average duration</td><td>~15 min</td></tr>
-    <tr><td>Total execution time</td><td>~15 min (phase 2, plan 1)</td></tr>
-  </tbody>
-</table>
-
-<h3>By Phase</h3>
-<table>
-  <thead><tr><th>Phase</th><th>Plans</th><th>Total</th><th>Avg / Plan</th></tr></thead>
-  <tbody>
-    <tr><td>02 Test Infrastructure</td><td>1/4</td><td>~15 min</td><td>~15 min</td></tr>
-    <tr><td>2</td><td>5</td><td>—</td><td>—</td></tr>
-    <tr><td>06</td><td>5</td><td>—</td><td>—</td></tr>
-  </tbody>
-</table>
-
-<h3>Plan-Level Detail</h3>
-<table>
-  <thead><tr><th>Plan</th><th>Duration</th><th>Tasks</th><th>Files</th></tr></thead>
-  <tbody>
-    <tr><td>Phase 02-test-infrastructure P02</td><td>25 min</td><td>3 tasks</td><td>6 files</td></tr>
-    <tr><td>Phase 02-test-infrastructure P03</td><td>5 min</td><td>3 tasks</td><td>4 files</td></tr>
-    <tr><td>Phase 02-test-infrastructure P04</td><td>25 min</td><td>2 tasks</td><td>4 files</td></tr>
-    <tr><td>Phase 02-test-infrastructure P05</td><td>2 min</td><td>2 tasks</td><td>1 file</td></tr>
-    <tr><td>Phase 04-starter-template-cleanup P01</td><td>5 min</td><td>3 tasks</td><td>12 files</td></tr>
-    <tr><td>Phase 04-starter-template-cleanup P02</td><td>7 min</td><td>3 tasks</td><td>11 files</td></tr>
-    <tr><td>Phase 04-starter-template-cleanup P03</td><td>2 min</td><td>2 tasks</td><td>12 files</td></tr>
-    <tr><td>Phase 04-starter-template-cleanup P04</td><td>5 min</td><td>1 task</td><td>1 file</td></tr>
-    <tr><td>Phase 04-starter-template-cleanup P05</td><td>4 min</td><td>3 tasks</td><td>16 files</td></tr>
-  </tbody>
-</table>
-
+<thead>
+<tr>
+<th>Phase</th>
+<th>Plans</th>
+<th>Total</th>
+<th>Avg/Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01-critical-bug-fix</td>
+<td>1</td>
+<td>~15 min</td>
+<td>~15 min</td>
+</tr>
+<tr>
+<td>02-test-infrastructure</td>
+<td>5</td>
+<td>~75 min</td>
+<td>~15 min</td>
+</tr>
+<tr>
+<td>03-security-hardening</td>
+<td>2</td>
+<td>~20 min</td>
+<td>~10 min</td>
+</tr>
+<tr>
+<td>04-starter-template-cleanup</td>
+<td>5</td>
+<td>~23 min</td>
+<td>~5 min</td>
+</tr>
+<tr>
+<td>05-job-leads-completion</td>
+<td>7</td>
+<td>TBD</td>
+<td>TBD</td>
+</tr>
+<tr>
+<td>06-performance</td>
+<td>5</td>
+<td>TBD</td>
+<td>TBD</td>
+</tr>
+</tbody></table>
+<p><strong>v1.1 plans completed:</strong> 0 / TBD</p>
+<p><em>Updated after each plan completion</em></p>
 <h2>Accumulated Context</h2>
-
-<h3>Recent Decisions</h3>
-<div class="card">
-<p class="meta">Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecting current work:</p>
-<ul class="decisions">
-  <li><strong>Roadmap mode:</strong> standard (horizontal layers) — active work is horizontal improvements to an already-vertical shipped product, not new end-to-end user features</li>
-  <li><strong>Phase 1 scope:</strong> BUG-01 + BUG-02 (shortest path to value; user is currently blocked from daily use after large imports)</li>
-  <li><strong>Phase 2 placement:</strong> Test infrastructure placed before security/cleanup/perf so subsequent phases land safely; TEST-A3 pins the BUG-01 regression</li>
-  <li><strong>Vitest 4 exit-code:</strong> <code>passWithNoTests: true</code> added to <code>vitest.config.ts</code> to satisfy the clean-checkout exit-0 contract</li>
-  <li><strong>PGlite bootstrap:</strong> Raw SQL replay of <code>drizzle/migrations/*.sql</code> (CD-04); each <code>createTestDb()</code> call returns a fresh in-memory DB (CD-05)</li>
-  <li><strong>Pre-push gate:</strong> Suite measured at 5.80s (&lt; 10s CD-01 threshold), <code>npm run test:run</code> appended to <code>.husky/pre-push</code></li>
-  <li><strong>Phase 4 P01:</strong> CD-01 exercised — <code>src/constants/data.ts</code> deleted entirely (Product / SaleUser / recentSalesData were its only exports)</li>
-  <li><strong>Phase 4 P01:</strong> D-19 atomic-per-DEBT commit pattern honored — DEBT-A1 shipped as single commit <code>0323e90</code> covering all 3 plan tasks</li>
-  <li><strong>Phase 4 P02:</strong> DEBT-A2 transitive removal — <code>infobar.tsx</code> + 3 satellite files + layout wrapper + <code>infoContent</code> prop removed in single atomic commit <code>ca82a84</code>; edit-ordering kept build deterministic</li>
-  <li><strong>Phase 4 P03:</strong> DEBT-A3 — kanban removed (not wired); zustand persist + localStorage anti-pattern eliminated; PROJECT.md "(Removed in Phase 4)" append per D-02; single atomic commit <code>8fa1aa9</code></li>
-  <li><strong>Phase 4 P04:</strong> DEBT-A5 — one-line edit (<code>search/route.ts:10</code> removed); export and consumers untouched; single atomic commit <code>114dd34</code></li>
-  <li><strong>Phase 4 P05:</strong> DEBT-A4 — <code>rm -rf __CLEANUP__/</code> (15 files); <code>src/__cleanup__.test.ts</code> added with 13 <code>fs.existsSync()=false</code> + 1 source-string assertion; CD-03 used Vitest <code>it.each</code>; Wave 2 ordering (D-14) sequenced last — eliminates T-04-11 tampering risk; atomic commit <code>c7524c3</code> · <strong>PHASE 4 COMPLETE</strong></li>
+<h3>Decisions</h3>
+<p>Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:</p>
+<ul>
+<li>v1.1 data model: synthetic <code>job_leads</code> row (<code>linkedinJobUrl = null</code>, <code>roleTitle = null</code> or &quot;Company-wide scrape&quot;). No new entity, no new table for company scrapes. Reuse existing routes/UI/state machine.</li>
+<li>v1.1 role filter: none — the skill returns all 2nd-degree connections at the company.</li>
+<li>v1.1 disambiguation: when a bare company name matches multiple LinkedIn companies, the skill presents top 3–5 results inline (name + employee count + industry) and waits for user pick.</li>
+<li>v1.1 drain mode: same <code>/api/job-leads?status=queued</code> queue. Skill navigation branches on whether <code>linkedinJobUrl</code> is null.</li>
+<li>v1.1 phase structure: Schema + API (Phase 7) → Skill (Phase 8) → UI (Phase 9). Schema first because skill and UI both depend on the nullable-column shape and synthetic-lead creation route.</li>
 </ul>
-</div>
-
 <h3>Pending Todos</h3>
-<div class="card">
-<p class="meta">None yet.</p>
-</div>
-
-<h3>Blockers / Concerns</h3>
-<div class="card">
-<ul class="blocker-list">
-  <li><strong>BUG-01</strong> is actively breaking daily use of the app — Phase 1 should be planned and executed immediately</li>
-  <li>Playwright as a production dependency — not handled by v1; deferred to v2 as <code>JL2-02</code></li>
-  <li>LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)</li>
-  <li><strong>Phase 4:</strong> pre-existing TS error <code>src/features/job-leads/lib/prioritization.ts:70</code> (<code>target=es5</code> + MapIterator iteration) blocks <code>npm run build</code> for ALL Phase 4 plans — needs <code>tsconfig.json</code> <code>target</code> bump, <code>downlevelIteration: true</code>, or a refactor. Logged at <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code>.</li>
+<p>None yet.</p>
+<h3>Blockers/Concerns</h3>
+<ul>
+<li>LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)</li>
+<li>Phase 7 must verify whether <code>linkedinJobUrl</code> and <code>roleTitle</code> are already nullable in the current schema (Phase 5 may have added nullable <code>linkedinJobUrl</code>) — planner should check <code>drizzle/schema/job-leads.ts</code> before writing the migration plan</li>
 </ul>
-</div>
-
 <h2>Deferred Items</h2>
-<p class="meta">Items acknowledged and carried forward from previous milestone close:</p>
+<p>Items acknowledged and carried forward from v1.0:</p>
 <table>
-  <thead><tr><th>Category</th><th>Item</th><th>Status</th><th>Deferred At</th></tr></thead>
-  <tbody>
-    <tr><td colspan="4"><em>(none)</em></td></tr>
-  </tbody>
-</table>
-
+<thead>
+<tr>
+<th>Category</th>
+<th>Item</th>
+<th>Status</th>
+<th>Deferred At</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Performance</td>
+<td>pg_trgm GIN for cross-entity ilike search</td>
+<td>Deferred to v2</td>
+<td>Phase 6</td>
+</tr>
+<tr>
+<td>Playwright</td>
+<td>Move playwright from dependencies to devDependencies</td>
+<td>Deferred to v2 as JL2-02</td>
+<td>Phase 5</td>
+</tr>
+</tbody></table>
 <h2>Session Continuity</h2>
-<table>
-  <tbody>
-    <tr><td><strong>Last session</strong></td><td><code>2026-05-14T18:35:40.908Z</code></td></tr>
-    <tr><td><strong>Stopped at</strong></td><td>Phase 6 context gathered</td></tr>
-    <tr><td><strong>Resume file</strong></td><td><code>.planning/phases/06-performance/06-CONTEXT.md</code></td></tr>
-    <tr><td><strong>Next phase</strong></td><td>5 (Job Leads Completion) — JL-A1..JL-A5</td></tr>
-  </tbody>
-</table>
+<p>Last session: 2026-05-19
+Stopped at: Roadmap created for milestone v1.1
+Resume file: .planning/ROADMAP.md
+Next action: <code>/gsd:plan-phase 7</code></p>
+
+
 
 <footer>
-  Source of truth: <code>.planning/STATE.md</code> · This HTML companion is for readability and may lag behind.
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/STATE.md</code> · This HTML companion may lag behind the markdown.
 </footer>
-
 </div>
 </body>
 </html>
