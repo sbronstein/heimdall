@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-HUMAN-UAT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-HUMAN-UAT.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>status: partial
+phase: 08-skill-input-parsing-navigation-branching-drain
+source: [08-VERIFICATION.md]
+started: 2026-05-19T00:00:00Z
+updated: 2026-05-19T00:00:00Z</h2>
+<h2>Current Test</h2>
+<p>[awaiting human testing]</p>
+<h2>Tests</h2>
+<h3>1. Company URL argument → direct /people/ navigation</h3>
+<p>expected: Invoking the skill with <code>https://www.linkedin.com/company/&lt;slug&gt;</code> (or <code>https://linkedin.com/company/&lt;slug&gt;</code>) creates a synthetic job lead via <code>POST /api/job-leads</code>, then navigates agent-browser directly to <code>/company/&lt;slug&gt;/people/</code> — the job-posting step is skipped entirely. Company name is extracted from the People-page header (falls back to slug + warning on extraction failure).
+result: [pending]</p>
+<h3>2. Bare company name → disambiguation → pick → Company-URL path</h3>
+<p>expected: Invoking with a bare company-name string (not UUID/URL/empty) runs a LinkedIn company search, presents the top 3–5 matches as a numbered list (<code>1. **Name** — N employees — Industry</code>), waits for the user&#39;s pick (always confirms, even on a single match), then proceeds via the Company-URL path. Zero matches fails loudly with <code>No companies found for &quot;&lt;name&gt;&quot;...</code> and creates no DB row.
+result: [pending]</p>
+<h3>3. Drain mode — mixed queue, single loop, correct branch per lead type</h3>
+<p>expected: With a <code>queued</code> queue containing both a job-URL lead and a company-scope lead (with a known <code>companyLinkedinUrl</code>), a single <code>GET /api/job-leads?status=queued</code> + single loop processes both — job-URL leads run the job→company→employees flow, company-scope leads navigate directly to <code>companyLinkedinUrl/people/</code>. Each company-scope lead prints the D-15 confirmation line.
+result: [pending]</p>
+<h3>4. Drain mode — D-14 fallback for null companyLinkedinUrl</h3>
+<p>expected: When draining a company-scope lead whose <code>companyLinkedinUrl</code> is null, the skill runs the bare-name search + disambiguation inline using <code>lead.companyName</code>, accepts the pick, then <code>PUT /api/companies/&lt;lead.companyId&gt;</code> with <code>{ linkedinUrl: &lt;picked&gt; }</code> to backfill so the next drain doesn&#39;t re-prompt.
+result: [pending]</p>
+<h2>Summary</h2>
+<p>total: 4
+passed: 0
+issues: 0
+pending: 4
+skipped: 0
+blocked: 0</p>
+<h2>Gaps</h2>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-HUMAN-UAT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

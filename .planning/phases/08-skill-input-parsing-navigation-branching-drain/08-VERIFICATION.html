@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 08-skill-input-parsing-navigation-branching-drain
+verified: 2026-05-19T18:05:00Z
+status: human_needed
+score: 9/9 must-haves verified
+overrides_applied: 0
+human_verification:</p>
+<ul>
+<li>test: &quot;Invoke the skill with a LinkedIn company URL, e.g. <code>/scrape-linkedin-connections https://www.linkedin.com/company/openai/</code>&quot;
+expected: &quot;Skill parses the URL to slug &#39;openai&#39;, navigates directly to /company/openai/people/, extracts a company name from the page H1, POSTs to /api/job-leads with { companyName, linkedinCompanyUrl }, claims the lead via PATCH /status, and proceeds to the 2nd-degree filter — without visiting a job posting&quot;
+why_human: &quot;Agent-browser-driven navigation flow; per Phase 5 D-21, this skill category is verified by source-assertion grep (done above) plus a human smoke test, not by unit tests&quot;</li>
+<li>test: &quot;Invoke the skill with a bare company name, e.g. <code>/scrape-linkedin-connections OpenAI</code>&quot;
+expected: &quot;Skill navigates to linkedin.com/search/results/companies/?keywords=OpenAI, extracts top 3-5 cards, renders a markdown numbered list with Name / employee count / industry, prompts &#39;Pick a number (1–N), or type the company URL directly:&#39;, waits for user pick, then proceeds through Company-URL path from Step 2&quot;
+why_human: &quot;Interactive disambiguation and agent-browser navigation; not unit-testable&quot;</li>
+<li>test: &quot;Run drain mode (/scrape-linkedin-connections with no arg) against a queue containing both a job-URL lead and a company-scope lead (linkedinJobUrl IS NULL, companyLinkedinUrl IS NOT NULL)&quot;
+expected: &quot;Skill fetches GET /api/job-leads?status=queued, renders a table with a &#39;scope&#39; column showing &#39;job-URL&#39; vs &#39;company-scope&#39;, processes both leads in the same loop — job-URL lead uses Job-URL path Steps 1-3, company-scope lead navigates directly to companyLinkedinUrl/people/ — both converge at Shared Step 4&quot;
+why_human: &quot;End-to-end drain-mode execution with both lead types requires a live Heimdall instance, LinkedIn session, and agent-browser&quot;</li>
+<li>test: &quot;Run drain mode against a company-scope lead with companyLinkedinUrl === null (bare-name fallback path)&quot;
+expected: &quot;Skill pauses and runs the bare-name disambiguation flow inline using lead.companyName, waits for user pick, then calls PUT /api/companies/&lt;lead.companyId&gt; with { linkedinUrl: <picked-url> } (not PATCH), then navigates to company employees page and resumes&quot;
+why_human: &quot;D-14 mid-drain fallback requires interactive user input and a live drain run to verify&quot;</li>
+</ul>
+<hr>
+<h1>Phase 8: Skill Input Parsing, Navigation Branching + Drain — Verification Report</h1>
+<p><strong>Phase Goal:</strong> The <code>scrape-linkedin-connections</code> skill accepts a LinkedIn company URL or bare company name, navigates directly to the company employees page when no job URL exists, disambiguates multi-match company searches inline, and drain mode processes company-scope leads through the same single queue.
+<strong>Verified:</strong> 2026-05-19T18:05:00Z
+<strong>Status:</strong> human_needed — all automated checks PASS; 4 agent-browser behavioral flows require human smoke testing
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>GET /api/job-leads response rows include a top-level <code>companyLinkedinUrl</code> field (null or string)</td>
+<td>✓ VERIFIED</td>
+<td><code>route.ts:67</code> — <code>companyLinkedinUrl: companies.linkedinUrl</code> in explicit projection</td>
+</tr>
+<tr>
+<td>2</td>
+<td>The new field is sourced via a leftJoin from <code>companies.linkedinUrl</code> on <code>jobLeads.companyId</code></td>
+<td>✓ VERIFIED</td>
+<td><code>route.ts:70</code> — <code>.leftJoin(companies, eq(jobLeads.companyId, companies.id))</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Skill argument parser branches in 5 ordered cases (first-match-wins): empty→drain, UUID, /company/ URL, other URL, bare-name</td>
+<td>✓ VERIFIED</td>
+<td><code>SKILL.md:47-63</code> — numbered 1-5 list with &quot;first match wins&quot; intro line</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Skill accepts LinkedIn company URL (path containing /company/<slug>) and navigates directly to /company/<slug>/people/</td>
+<td>✓ VERIFIED</td>
+<td><code>SKILL.md:53-57</code>, <code>linkedin-navigation.md §Company-URL path</code> — Branch 3 + Company-URL Step 2 documented</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Skill accepts bare company name, presents top 3-5 matches inline as markdown numbered list, waits for user pick</td>
+<td>✓ VERIFIED</td>
+<td><code>SKILL.md:61</code>, <code>linkedin-navigation.md §Bare-name path Steps 1-4</code> — D-10 format, D-08 always-confirm, D-09 fail-loudly documented</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Drain mode loop branches on <code>lead.linkedinJobUrl === null</code> (not roleTitle sentinel); company-scope branch navigates via <code>companyLinkedinUrl</code>; null <code>companyLinkedinUrl</code> triggers D-14 bare-name fallback</td>
+<td>✓ VERIFIED</td>
+<td><code>SKILL.md:81-110</code> — single loop with <code>if (lead.linkedinJobUrl == null)</code> discriminator; <code>roleTitle</code> not used as control-flow predicate (grep confirmed)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>D-14 mid-drain PUT backfill uses PUT (not PATCH) for <code>/api/companies/[id]</code> everywhere in all skill docs</td>
+<td>✓ VERIFIED</td>
+<td>All four skill files pass `grep -v &#39;^#&#39;</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>references/linkedin-navigation.md</code> has three top-level entry-point paths plus shared section, in specified order</td>
+<td>✓ VERIFIED</td>
+<td>Sections: Choosing the entry point / Job-URL path / Company-URL path / Bare-name path / Shared / Historically-stable selectors — in that order</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Drain mode uses single <code>GET /api/job-leads?status=queued</code> endpoint for both lead types (no separate queue)</td>
+<td>✓ VERIFIED</td>
+<td><code>SKILL.md:72-74</code> — single curl to <code>?status=queued&amp;limit=50</code>; both branches converge after the D-11 inline branch</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 9/9 truths verified</p>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/job-leads/route.ts</code></td>
+<td>GET handler with leftJoin(companies) + explicit projection including companyLinkedinUrl</td>
+<td>✓ VERIFIED</td>
+<td>Lines 51-73: explicit <code>.select({...}).from(jobLeads).leftJoin(companies, ...)</code> with all 15 fields (14 from jobLeads + 1 from companies)</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/route.test.ts</code></td>
+<td>New describe block covering D-13/CD-04 — mixed fixture asserting companyLinkedinUrl on both row types</td>
+<td>✓ VERIFIED</td>
+<td>Lines 110-166: <code>describe(&#39;GET /api/job-leads (companyLinkedinUrl projection — D-13 / CD-04)&#39;)</code> with Test 15; all 11 tests pass</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td>5-branch argument parser + drain loop branches on <code>lead.linkedinJobUrl</code> + D-14 mid-drain PUT backfill + D-15 confirmation line</td>
+<td>✓ VERIFIED</td>
+<td>Argument parsing §:47-63, Drain mode §:67-114 — all required content present</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code></td>
+<td>Three top-level paths (Job-URL / Company-URL / Bare-name) + shared Steps 4-5 + Choosing the entry point table</td>
+<td>✓ VERIFIED</td>
+<td>All 6 required sections present in correct order; required content (slug extraction, search URL, zero-match message, PUT verb, extraction warning) all grep-confirmed</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code></td>
+<td>Documents <code>companyLinkedinUrl</code> on GET response, discriminated POST /api/job-leads body (§5), PUT /api/companies/[id] (§6)</td>
+<td>✓ VERIFIED</td>
+<td>§1 GET extended with companyLinkedinUrl + D-13/D-12 notes; §5 POST /api/job-leads (new); §6 PUT /api/companies/[id] (new); -X PUT curl example present</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code></td>
+<td>Three new failure-mode bullets folded into existing <code>## LinkedIn navigation failed</code> category (5 bullets added total in the file)</td>
+<td>✓ VERIFIED</td>
+<td>Name-extraction fallback, zero-match, mid-drain disambiguation bullets under LinkedIn navigation failed; Auto-pick and Retry-with-broader-query decline bullets under What the skill does NOT handle; exactly 7 top-level <code>## </code> headings</td>
+</tr>
+<tr>
+<td><code>src/app/api/companies/[id]/route.ts</code></td>
+<td>Exports PUT (not PATCH) at line 55; updateCompanySchema accepts linkedinUrl at line 18</td>
+<td>✓ VERIFIED</td>
+<td><code>export async function PUT</code> at line 55; <code>linkedinUrl: z.string().url().optional().nullable()</code> at line 18 — matches all doc claims</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>route.ts</code> GET handler</td>
+<td><code>drizzle/schema/companies.ts</code> linkedinUrl column</td>
+<td><code>leftJoin(companies, eq(jobLeads.companyId, companies.id))</code></td>
+<td>✓ WIRED</td>
+<td><code>companies</code> import at line 10; <code>eq</code> imported at line 3; leftJoin at line 70</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code> Drain mode</td>
+<td>GET /api/job-leads <code>companyLinkedinUrl</code> field</td>
+<td><code>lead.companyLinkedinUrl</code> in D-11 branch</td>
+<td>✓ WIRED</td>
+<td>SKILL.md:87 reads <code>let url = lead.companyLinkedinUrl</code> — consuming the field Plan 08-01 added</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code> D-14 fallback</td>
+<td>PUT /api/companies/[id]</td>
+<td><code>PUT /api/companies/&lt;lead.companyId&gt; body { linkedinUrl: url }</code></td>
+<td>✓ WIRED</td>
+<td>SKILL.md:94 documents the PUT call; heimdall-api.md §6 is the contract reference</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code> Branch 3</td>
+<td><code>linkedin-navigation.md §Company-URL path</code></td>
+<td><code>references/linkedin-navigation.md</code> relative link</td>
+<td>✓ WIRED</td>
+<td>SKILL.md:57 references <code>references/linkedin-navigation.md § Company-URL path</code></td>
+</tr>
+<tr>
+<td><code>SKILL.md</code> Branch 5</td>
+<td><code>linkedin-navigation.md §Bare-name path</code></td>
+<td><code>references/linkedin-navigation.md</code> relative link</td>
+<td>✓ WIRED</td>
+<td>SKILL.md:61 references <code>references/linkedin-navigation.md § Bare-name path</code></td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>Not applicable to skill-prompt markdown artifacts. The one executable component (GET /api/job-leads route) passes Level 4: the leftJoin is a real DB join against the <code>companies</code> table — not a hardcoded empty value — and Test 15 confirms the join produces a non-null <code>companyLinkedinUrl</code> when the companies row has a non-null <code>linkedinUrl</code>.</p>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET /api/job-leads route compiles and tests pass</td>
+<td><code>npx vitest run src/app/api/job-leads/route.test.ts</code></td>
+<td>11 tests passed</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Production build succeeds</td>
+<td><code>npm run build</code></td>
+<td><code>✓ Compiled successfully in 9.2s</code></td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>No PATCH /api/companies anywhere in skill docs</td>
+<td>`grep -v &#39;^#&#39; <file></td>
+<td>grep -c &quot;PATCH /api/companies&quot;` = 0 on all 4 skill files</td>
+<td>0 matches in each file</td>
+</tr>
+<tr>
+<td>roleTitle NOT used as drain discriminator</td>
+<td>`grep -E &quot;roleTitle.*===</td>
+<td>=== .*&#39;Company-wide scrape&#39;&quot; SKILL.md`</td>
+<td>No matches</td>
+</tr>
+<tr>
+<td>Old 4-branch &quot;stop and ask&quot; branch removed</td>
+<td><code>grep &quot;Argument did not look like a UUID or a URL&quot; SKILL.md</code></td>
+<td>No matches</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>5 sub-flow bullets in Single-lead mode Step 3</td>
+<td><code>grep -c &quot;^   - \*\*From&quot; SKILL.md</code></td>
+<td>5</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>troubleshooting.md still has exactly 7 top-level sections</td>
+<td><code>grep -c &quot;^## &quot; troubleshooting.md</code></td>
+<td>7</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Agent-browser navigation flows (company URL, bare name, drain)</td>
+<td>Requires live Heimdall + LinkedIn + agent-browser</td>
+<td>Not runnable without dev server + browser</td>
+<td>? SKIP — human verification required</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<p>No probe scripts declared or conventional for this phase (skill-prompt + documentation phase; per Phase 5 D-21, agent-browser-driven flows are verified by source-assertion grep + human smoke test, not automated probes).</p>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JL-C1</td>
+<td>08-02</td>
+<td>Skill accepts LinkedIn company URL, uses it as navigation entry point</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md §Argument parsing Branch 3 + linkedin-navigation.md §Company-URL path</td>
+</tr>
+<tr>
+<td>JL-C2</td>
+<td>08-02</td>
+<td>Skill accepts bare company-name, performs company search + disambiguate</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md §Argument parsing Branch 5 + linkedin-navigation.md §Bare-name path (Steps 1-4 with D-10 format, D-08 always-confirm, D-09 fail-loudly)</td>
+</tr>
+<tr>
+<td>JL-C5</td>
+<td>08-02</td>
+<td>Multi-match disambiguation: top 3-5 results as numbered list, wait for pick</td>
+<td>✓ SATISFIED</td>
+<td>linkedin-navigation.md §Bare-name Step 3 (D-10 format) + Step 4 (D-08 single-match confirm, D-09 zero-match fail-loud)</td>
+</tr>
+<tr>
+<td>JL-C6</td>
+<td>08-02 + 08-03</td>
+<td>Navigation branches on <code>linkedinJobUrl</code> null: null → direct /people/, non-null → job flow</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md drain mode loop (D-11/D-12), Single-lead mode Step 3 sub-bullets, linkedin-navigation.md §Choosing the entry point table</td>
+</tr>
+<tr>
+<td>JL-C7</td>
+<td>08-01 + 08-03</td>
+<td>Drain mode uses single <code>GET ?status=queued</code> endpoint, single loop for both lead types</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md §Drain mode — one curl to <code>?status=queued</code>; D-11 inline branch; no separate queue/status/route</td>
+</tr>
+</tbody></table>
+<p>All 5 phase requirements (JL-C1, JL-C2, JL-C5, JL-C6, JL-C7) are satisfied. No orphaned requirements — all 5 are claimed by the phase plans and verified.</p>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SKILL.md</code></td>
+<td>57</td>
+<td><code>PATCH /status</code> reference in Branch 3 description</td>
+<td>ℹ️ Info</td>
+<td>&quot;claim via PATCH <code>/status</code>&quot; — this is the correct PATCH for <code>/api/job-leads/[id]/status</code> (a different route from <code>/api/companies/[id]</code>). Not a bug. The hard invariant is about PATCH /api/companies only, which is correctly absent.</td>
+</tr>
+<tr>
+<td><code>references/heimdall-api.md</code></td>
+<td>83-100</td>
+<td>GET response example documents 7 of 16 fields returned by handler; <code>companyId</code> absent from example (though mentioned in D-13 note at line 103 and in POST response at line 295)</td>
+<td>⚠️ Warning</td>
+<td>WR-03 from code review: D-14 backfill relies on <code>companyId</code> from the GET row; skill author must infer it from the D-13 note or source — not from the response example. Advisory only per verification notes.</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/route.test.ts</code></td>
+<td>110-165</td>
+<td>Test 15 covers only happy path (company with non-null linkedinUrl); null paths (companyId=null, or company with null linkedinUrl) untested</td>
+<td>⚠️ Warning</td>
+<td>WR-02 from code review: D-14 mid-drain branch triggers on <code>companyLinkedinUrl == null</code>; regression not covered. Advisory only per verification notes.</td>
+</tr>
+</tbody></table>
+<p>No <code>TBD</code>, <code>FIXME</code>, or <code>XXX</code> markers found in phase-modified files.</p>
+<h3>Human Verification Required</h3>
+<p>The following 4 tests require a running Heimdall dev server + LinkedIn session + installed agent-browser. These are intentionally deferred per Phase 5 D-21 (agent-browser-driven flows are not unit-testable).</p>
+<h4>1. Company URL argument — direct navigation</h4>
+<p><strong>Test:</strong> Invoke <code>/scrape-linkedin-connections https://www.linkedin.com/company/openai/</code>
+<strong>Expected:</strong> Skill parses slug &quot;openai&quot;, navigates directly to <code>/company/openai/people/</code> (no job posting step), extracts company name from H1, POSTs <code>{ companyName: &quot;OpenAI&quot;, linkedinCompanyUrl: &quot;https://www.linkedin.com/company/openai/&quot; }</code> to /api/job-leads (201 newly created OR 200 dedup), claims via PATCH /status, applies 2nd-degree filter, extracts prospects, writes back via POST /prospects
+<strong>Why human:</strong> Full agent-browser navigation flow; cannot execute without a running LinkedIn session</p>
+<h4>2. Bare company name argument — disambiguation</h4>
+<p><strong>Test:</strong> Invoke <code>/scrape-linkedin-connections OpenAI</code>
+<strong>Expected:</strong> Skill navigates to <code>https://www.linkedin.com/search/results/companies/?keywords=OpenAI</code>, extracts top 3-5 company cards, renders markdown numbered list <code>1. **Name** — N employees — Industry</code>, prompts <code>Pick a number (1–N), or type the company URL directly:</code>, waits for user input, then proceeds as Company-URL path from Step 2 onward (direct /people/ navigation)
+<strong>Why human:</strong> Interactive disambiguation UX requires a live agent-browser session and human input</p>
+<h4>3. Drain mode — mixed queue (job-URL + company-scope with known URL)</h4>
+<p><strong>Test:</strong> Seed queue with one job-URL lead and one company-scope lead (linkedinJobUrl=null, companyLinkedinUrl=&#39;<a href="https://www.linkedin.com/company/acme/">https://www.linkedin.com/company/acme/</a>&#39;), then invoke <code>/scrape-linkedin-connections</code> (no arg)
+<strong>Expected:</strong> Skill renders queue table with scope column, offers process-all prompt. For job-URL lead: follows Job-URL path (open job posting → company link → employees link). For company-scope lead: prints D-15 confirmation &quot;Lead <id>: company-scope (AcmeCo) — navigating to .../people/...&quot; and navigates directly to /people/. Both converge at Shared Step 4.
+<strong>Why human:</strong> Requires live drain run with mixed queue against LinkedIn</p>
+<h4>4. Drain mode — D-14 fallback (company-scope lead with null companyLinkedinUrl)</h4>
+<p><strong>Test:</strong> Seed queue with a company-scope lead where companyLinkedinUrl=null, then invoke <code>/scrape-linkedin-connections</code> (no arg)
+<strong>Expected:</strong> Skill pauses mid-drain, runs bare-name search for lead.companyName inline, presents disambiguation list, waits for user pick, then calls <code>PUT /api/companies/&lt;lead.companyId&gt; { linkedinUrl: &lt;picked&gt; }</code> (PUT, not PATCH), then navigates to /people/ and resumes
+<strong>Why human:</strong> D-14 interactive fallback requires live drain run + user input + verification that PUT (not PATCH) is the actual verb used</p>
+<h3>Gaps Summary</h3>
+<p>No gaps. All 9 must-haves are verified. The 4 human verification items are deferred-by-design per Phase 5 D-21 (agent-browser-driven flows are not unit-testable; this category of skill verification has been human-only since Phase 5).</p>
+<p>The code review warnings (WR-01, WR-02, WR-03) are advisory and were explicitly noted as non-blocking per the verification notes. WR-01 (scraped job-URL leads do not backfill companies.linkedinUrl) and WR-02 (Test 15 lacks null-path coverage) are the most materially load-bearing of the three. WR-03 (GET response example omits companyId) is mitigated by the D-13 note at heimdall-api.md:103 which references companyId contextually, and by the POST response example at line 295.</p>
+<hr>
+<p><em>Verified: 2026-05-19T18:05:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
