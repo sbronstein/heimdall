@@ -86,9 +86,10 @@ Status codes:
   "data": [
     {
       "id": "uuid",
-      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/...",
-      "roleTitle": "VP Data",
+      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/..." | null,
+      "roleTitle": "VP Data" | "Company-wide scrape" | null,
       "companyName": "Example Co",
+      "companyLinkedinUrl": "https://www.linkedin.com/company/example" | null,
       "status": "queued",
       "lastError": null,
       "updatedAt": "2026-05-14T08:00:00.000Z"
@@ -97,6 +98,16 @@ Status codes:
   "meta": { "cursor": "2026-05-14T08:00:00.000Z", "hasMore": false }
 }
 ```
+
+**Note (Phase 8 D-13):** `companyLinkedinUrl` is left-joined from `companies.linkedinUrl`.
+It is `null` when the lead has no `companyId`, OR when the linked company row has no
+`linkedinUrl` set. The drain skill uses this field to navigate directly to
+`<companyLinkedinUrl>/people/` for company-scope leads (`linkedinJobUrl === null`),
+skipping the job → company link-clicking dance.
+
+**Note (Phase 7 D-12 + Phase 8 D-12):** The discriminator for "is this a company-scope
+lead?" is `linkedinJobUrl === null`, not `roleTitle === 'Company-wide scrape'`. The
+sentinel role title is informational only.
 
 **Curl:**
 
@@ -237,6 +248,98 @@ The skill itself never POSTs to `/search`; it interacts with `/status` and
    run, prefer telling the user to use the UI's Retry button rather than
    forcing the lead into `'queued'` from the skill — that keeps the audit
    trail clean (the UI retry emits its own timeline event).
+
+---
+
+### 5. `POST /api/job-leads` (Phase 7 + 8)
+
+**Used by:** company-URL input, bare-name input pick. NOT used by drain mode (drain only PATCHes status on existing leads — the leads are already in the queue).
+
+**Body — discriminated union (Phase 7 D-01):** two shapes; first-match-wins via Zod `z.union`.
+
+Shape A — job-URL (existing job-URL flow; UI uses this; skill uses this when Branch 4 of the argument parser fires):
+
+```json
+{ "linkedinJobUrl": "https://www.linkedin.com/jobs/view/..." }
+```
+
+Shape B — company-scope (NEW in Phase 7, used by Phase 8 skill from the company-URL and bare-name flows):
+
+```json
+{
+  "companyName": "OpenAI",
+  "linkedinCompanyUrl": "https://www.linkedin.com/company/openai/"
+}
+```
+
+(`linkedinCompanyUrl` is optional.)
+
+**Side effects** (handled by the route — do NOT replicate in the skill):
+
+1. Looks up `companies` by case-insensitive name match.
+2. On match: backfills `companies.linkedinUrl` if it was null AND the request supplied one. Never overwrites a non-null `linkedinUrl` (protects user-curated data).
+3. On no match: auto-creates a stub `companies` row with `name` + optional `linkedinUrl`, plus schema defaults for everything else.
+4. Idempotent dedup: if an in-flight company-scope lead already exists for this company (status in `queued`/`searching`/`failed`, `archived_at IS NULL`), returns HTTP **200** with the existing row. Otherwise inserts a new lead and returns HTTP **201**.
+5. Emits a `job_lead_created` timeline event with `metadata.scope: 'company'`.
+
+**Response (both branches):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "linkedinJobUrl": null,
+    "roleTitle": "Company-wide scrape",
+    "companyName": "OpenAI",
+    "companyId": "uuid",
+    "status": "queued",
+    "...": "..."
+  }
+}
+```
+
+The skill handles 200 and 201 identically — use the returned lead, claim it via PATCH /status.
+
+**Curl (company-scope):**
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"companyName":"OpenAI","linkedinCompanyUrl":"https://www.linkedin.com/company/openai/"}' \
+  http://localhost:4000/api/job-leads
+```
+
+---
+
+### 6. `PUT /api/companies/[id]` (Phase 8 D-14 backfill)
+
+**Used by:** drain-mode fallback when a company-scope lead has `companyLinkedinUrl === null`. After running the bare-name disambiguation flow (per `references/linkedin-navigation.md` § Bare-name path), the skill backfills the URL so subsequent drains don't re-prompt.
+
+**Note on verb:** The actual route handler is **PUT**, not PATCH. CONTEXT.md refers to it as PATCH but the route exports `PUT` (verified in `src/app/api/companies/[id]/route.ts:55`). Use `-X PUT` in curl.
+
+**Body (the only field the skill writes):**
+
+```json
+{ "linkedinUrl": "https://www.linkedin.com/company/openai/" }
+```
+
+The route's `updateCompanySchema` (line 18 in the same file) declares `linkedinUrl` as `z.string().url().optional().nullable()` — accepts any valid URL or `null`.
+
+**Response:** `{ success: true, data: <updated company row> }`.
+
+**Curl:**
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X PUT \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"linkedinUrl":"https://www.linkedin.com/company/openai/"}' \
+  "http://localhost:4000/api/companies/$COMPANY_ID"
+```
 
 ---
 

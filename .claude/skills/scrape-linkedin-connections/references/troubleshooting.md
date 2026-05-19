@@ -65,6 +65,29 @@ skill needed to be, or LinkedIn pushed an interactive challenge.
   if all of them miss, write the error. The fix is a doc update to
   `linkedin-navigation.md`, not a skill change.
 
+- **Company-name-extraction failure (Phase 8 D-05/D-06).** When the skill navigates to
+  `/company/<slug>/people/`, it extracts the company name from the page H1 / heading-role
+  element. If that extraction returns null/empty (DOM shift, sign-in wall, captcha during
+  load), this is NOT a hard failure: the skill falls back to using the slug as the
+  `companyName` for the POST `/api/job-leads` call, logs the warning `Could not extract company name from <url>; using slug "<slug>" as fallback. Rename in the companies UI if needed.`, and proceeds. Remediation is post-hoc curation in the companies UI; no skill
+  retry needed.
+
+- **Zero matches on bare-name LinkedIn search (Phase 8 D-09).** When the user passes a bare
+  company name and `https://www.linkedin.com/search/results/companies/?keywords=<name>`
+  returns no result cards, the skill writes `No companies found for "<name>". Try a more
+  specific name or pass a LinkedIn company URL.` and exits cleanly. This is BEFORE any
+  Heimdall row is created — no `job_leads` row exists to mark as `failed`; the failure is
+  a user-facing message only. Distinguishable from `No prospects found` (which is
+  post-navigation, after the lead is created and claimed).
+
+- **Mid-drain disambiguation (Phase 8 D-14).** When draining a company-scope lead whose
+  `companyLinkedinUrl IS NULL`, the skill pauses and runs the bare-name disambiguation flow
+  inline using `lead.companyName`. The user picks; the skill PUTs
+  `/api/companies/<lead.companyId>` to backfill the URL (verb is PUT, not PATCH — per
+  `heimdall-api.md` § 6), then resumes navigation. If the user cancels (no pick / Ctrl-C),
+  the skill writes `failed` with `lastError: "LinkedIn navigation failed: user cancelled
+  disambiguation for <companyName>"` and continues to the next lead.
+
 ---
 
 ## `No prospects found`
@@ -168,3 +191,12 @@ JL2-* carry-forward list):
 - **Multi-instance drain.** Two skill instances racing for the same lead is
   handled by the state-machine PATCH (the second instance gets a 400 and
   skips), but coordinated multi-instance scraping at scale is not a goal.
+
+- **Auto-pick disambiguation single matches** (Phase 8 D-08 declined). Even when LinkedIn
+  returns exactly one result for a bare-name search, the skill confirms with the user
+  before proceeding. The cost is one keystroke; the benefit is never silently scraping the
+  wrong company on a fuzzy match.
+
+- **Retry-with-broader-query on zero matches** (Phase 8 D-09 declined). The skill does NOT
+  auto-strip suffixes like "Inc"/"LLC" or fall back to looser searches. Fail-loudly is the
+  v1 policy.
