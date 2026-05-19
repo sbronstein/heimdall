@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 7: Schema + API for Company-Scope Leads - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-19
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>The Heimdall data layer + REST API foundation for <strong>&quot;synthetic&quot; job leads</strong> — <code>job_leads</code> rows with no <code>linkedinJobUrl</code>, created from a company name (and optional LinkedIn company URL). These leads enter the <strong>same queue</strong> (<code>status = &#39;queued&#39;</code>) and downstream pipeline as job-URL leads. Phases 8 (skill input parsing + nav) and 9 (UI for company-scope) both build on this foundation.</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>Drizzle schema migration to drop <code>NOT NULL</code> on <code>job_leads.linkedin_job_url</code></li>
+<li>Extension of <code>POST /api/job-leads</code> with a discriminated Zod schema that accepts a second body shape: <code>{ companyName, linkedinCompanyUrl? }</code> — no <code>linkedinJobUrl</code>, no <code>scrapeJobPage()</code> call</li>
+<li>Auto-create / auto-link logic to a <code>companies</code> row (matched by case-insensitive name; auto-created as a minimal stub on miss; <code>companies.linkedinUrl</code> backfilled on existing rows that don&#39;t already have one)</li>
+<li>A canonical <code>COMPANY_SCOPE_ROLE_TITLE</code> constant in <code>src/lib/domain/types.ts</code> and the route writing it as <code>roleTitle</code> on the new lead</li>
+<li>Idempotent dedup: if an in-flight company-scope lead (<code>status IN (&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;)</code> AND <code>archived_at IS NULL</code>) already exists for the company, the route returns the existing row with HTTP 200 instead of creating a duplicate (HTTP 201)</li>
+<li>Verification that the existing <code>PATCH /api/job-leads/[id]/status</code> and <code>POST /api/job-leads/[id]/prospects</code> routes accept rows where <code>linkedinJobUrl IS NULL</code> without errors (state machine and bulk-prospects write are already input-shape agnostic — pin with a regression test)</li>
+<li>API tests via the Phase 2 PGlite + <code>callRoute</code> harness covering: company-scope create path (new row), company-scope dedup path (existing row returned), schema regression (insert a row with <code>linkedinJobUrl = null</code> and read it back), state-machine + prospects routes accepting <code>linkedinJobUrl IS NULL</code> leads</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li>The skill&#39;s input parsing (URL vs bare name vs UUID), LinkedIn company-search disambiguation UX, navigation branching on <code>linkedinJobUrl IS NULL</code> — all Phase 8 (JL-C1, JL-C2, JL-C5, JL-C6, JL-C7)</li>
+<li>UI affordances for company-scope leads on the detail page and list view (the &quot;Company scrape&quot; badge, hidden &quot;View job posting&quot; link, employee count display) — Phase 9 (JL-C8, JL-C9)</li>
+<li>Extending dedup logic to job-URL leads — kept scoped to the new branch only; the existing POST contract is unchanged</li>
+<li>Allowing multiple parallel in-flight company-scope leads on the same company — explicit dedup is the chosen policy</li>
+<li>Backfill of historical leads — no existing row has <code>linkedinJobUrl = NULL</code> (the migration just drops the constraint; the live data already satisfies the new shape)</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Route Shape</h3>
+<ul>
+<li><p><strong>D-01:</strong> <strong>Single endpoint, discriminated POST body.</strong> Extend <code>POST /api/job-leads</code> (do not add a sibling route). The Zod schema becomes a discriminated union of two <code>z.object</code> shapes — <code>{ linkedinJobUrl: z.string().url() }</code> (existing path) or <code>{ companyName: z.string().min(1).max(200), linkedinCompanyUrl: z.string().url().optional() }</code> (new path). CLI parity stays clean (one URL for both flows); the existing <code>scrapeJobPage()</code> call only runs in the job-URL branch.</p>
+</li>
+<li><p><strong>D-02:</strong> <strong>Implicit discrimination by field presence.</strong> No <code>scope</code> tag, no <code>?kind=company</code> query string. The Zod union resolves on which shape parses successfully. Keeps the API contract minimal — clients post either shape; the route branches on which one matched. If both shapes parse for some malformed input (e.g., both <code>linkedinJobUrl</code> and <code>companyName</code> present), the union&#39;s first-match-wins order treats it as a job-URL request — document this in the route&#39;s header comment.</p>
+</li>
+<li><p><strong>D-03:</strong> <strong>INSERT with <code>status = &#39;queued&#39;</code> directly.</strong> The company-scope branch sets <code>status: &#39;queued&#39;</code> on insert. The state machine (<code>canJobLeadTransition</code>) gates PATCH transitions only — INSERTs are unrestricted, so this is mechanical. The lead is immediately visible to <code>GET /api/job-leads?status=queued</code> and the drain skill picks it up the moment the response returns.</p>
+</li>
+<li><p><strong>D-04:</strong> <strong>Reuse <code>job_lead_created</code> timeline event with a <code>scope: &#39;company&#39;</code> metadata flag.</strong> Existing event type, existing renderer; metadata distinguishes company-scope from job-URL creation. Avoids touching the timeline UI in this phase. (If a future phase wants a dedicated event type, it can split at that point.)</p>
+</li>
+</ul>
+<h3>Schema Migration</h3>
+<ul>
+<li><p><strong>D-05:</strong> <strong>Drop <code>NOT NULL</code> on <code>linkedin_job_url</code>.</strong> Edit <code>drizzle/schema/job-leads.ts:19</code> to remove <code>.notNull()</code>. Run <code>npm run db:generate -- --name=allow_company_scope_job_leads</code>; the migration should emit <code>ALTER TABLE job_leads ALTER COLUMN linkedin_job_url DROP NOT NULL</code>. No data migration — existing rows all have values, so the constraint relaxation is non-destructive. <code>roleTitle</code> and <code>companyName</code> are already nullable; no schema change needed for those.</p>
+</li>
+<li><p><strong>D-06:</strong> <strong>Regression test for the schema change</strong> in the Phase 2 PGlite harness: insert a <code>job_leads</code> row with <code>linkedinJobUrl: null, roleTitle: null</code> (or sentinel) via Drizzle&#39;s <code>db.insert(jobLeads).values({...})</code>, read it back, assert both fields are accepted. Mirrors the spirit of Phase 6&#39;s <code>__phase6_indexes__.test.ts</code> — pins the schema shape against regression.</p>
+</li>
+</ul>
+<h3>Company Linking</h3>
+<ul>
+<li><p><strong>D-07:</strong> <strong>Match strategy: case-insensitive name only.</strong> Reuse the existing pattern from <code>src/app/api/job-leads/route.ts:88-94</code> (<code>lower(companies.name) = lower(input)</code>). Hits the <code>companies_name_idx</code> partial index from Phase 6 (migration 0008). One code path, one query plan. If <code>linkedinCompanyUrl</code> is provided but the name doesn&#39;t match an existing row, we still auto-create (D-08) rather than falling back to URL-based lookup — keeps the matcher predictable.</p>
+</li>
+<li><p><strong>D-08:</strong> <strong>On miss: auto-create a minimum stub.</strong> When no company matches, INSERT a new <code>companies</code> row with <code>{ name: input, linkedinUrl: linkedinCompanyUrl ?? null }</code> and let the schema defaults supply the rest (<code>priority: &#39;exploring&#39;</code>, <code>stage: &#39;unknown&#39;</code>, <code>status: &#39;active&#39;</code>, <code>remotePolicy: &#39;unknown&#39;</code>). Everything else null. The user curates the stub later via the companies UI. Matches JL-C3 / SC #3 verbatim (&quot;created on the fly if absent&quot;). Capture the new <code>companies.id</code> and use it as the lead&#39;s <code>companyId</code> foreign key.</p>
+</li>
+<li><p><strong>D-09:</strong> <strong>Backfill <code>companies.linkedinUrl</code> on existing rows when we have one to add.</strong> If we match an existing companies row whose <code>linkedinUrl IS NULL</code> and the request provided <code>linkedinCompanyUrl</code>, UPDATE that row to set the URL. <strong>Never overwrite a non-null <code>linkedinUrl</code></strong> — that protects user-curated data. This is the only side-effect on the matched company row; everything else (priority, stage, notes) stays untouched.</p>
+</li>
+</ul>
+<h3>roleTitle Representation</h3>
+<ul>
+<li><p><strong>D-10:</strong> <strong>Sentinel string <code>&#39;Company-wide scrape&#39;</code>.</strong> Persist <code>roleTitle = &#39;Company-wide scrape&#39;</code> for company-scope leads (not null, not empty). Simpler UI rendering — Phase 9 components can display <code>lead.roleTitle</code> directly without null guards.</p>
+</li>
+<li><p><strong>D-11:</strong> <strong>Sentinel lives in <code>src/lib/domain/types.ts</code> as a constant.</strong> Add <code>export const COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; as const;</code> next to the existing <code>*Values</code> enum arrays. Single source of truth. Imported by the Phase 7 create route, and (later) by Phase 9 UI if needed. <strong>Convention only</strong> — no runtime enforcement that other code paths can&#39;t write the same string. A docstring on the constant reserves it. Collision risk with a real LinkedIn job title called &quot;Company-wide scrape&quot; is effectively zero.</p>
+</li>
+<li><p><strong>D-12:</strong> <strong>Phase 9 UI discriminator is <code>linkedinJobUrl === null</code>, not the sentinel.</strong> The structural fact (no source URL) is the right discriminator; the sentinel is informational/cosmetic. UI branches on URL nullness for &quot;is this company-scope?&quot; decisions. Mentioned here so the Phase 9 planner doesn&#39;t need to re-decide.</p>
+</li>
+</ul>
+<h3>Duplicate Detection</h3>
+<ul>
+<li><p><strong>D-13:</strong> <strong>Idempotent dedup on company-scope creation.</strong> Before insert, query for an existing in-flight company-scope lead: <code>WHERE companyId = X AND linkedinJobUrl IS NULL AND status IN (&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;) AND archived_at IS NULL</code>. If found, return that row with <strong>HTTP 200</strong> via <code>success(lead)</code>. If not found, proceed with insert and return <strong>HTTP 201</strong> via <code>created(lead)</code>. Standard envelope shape for both. The status code is the signal; no <code>meta.isExisting</code> flag pollutes the envelope.</p>
+</li>
+<li><p><strong>D-14:</strong> <strong>In-flight statuses for dedup: <code>queued</code>, <code>searching</code>, <code>failed</code>.</strong> Includes <code>failed</code> because the D-08 state machine treats it as recoverable (<code>failed → queued</code> retry path). Excludes <code>found</code>, <code>ready</code>, <code>actioned</code> — those represent old completed scrapes that <em>should not</em> block a fresh re-scrape (the user may legitimately want a refreshed view of 2nd-degree connections months later). Archived rows are excluded by <code>archived_at IS NULL</code>.</p>
+</li>
+<li><p><strong>D-15:</strong> <strong>Dedup is scoped to the company-scope branch only.</strong> The existing job-URL POST path (<code>linkedinJobUrl</code> present) is unchanged — it can still create duplicate leads against the same job URL if invoked twice. Phase 7 deliberately does <strong>not</strong> retroactively dedup job-URL leads; that&#39;s a separate decision belonging to its own phase if ever warranted. Keeps the Phase 7 diff tight and the existing contract stable.</p>
+</li>
+<li><p><strong>D-16:</strong> <strong>Race acceptable.</strong> Check-then-insert has a TOCTOU window if two requests arrive simultaneously for the same company. Single-user app + single-skill-run-at-a-time pattern means the race is theoretical. If it ever becomes real, a DB-side partial UNIQUE index (<code>UNIQUE (company_id) WHERE linkedin_job_url IS NULL AND status IN (...) AND archived_at IS NULL</code>) is a follow-up; not in Phase 7 scope.</p>
+</li>
+</ul>
+<h3>Verification of Existing Routes</h3>
+<ul>
+<li><strong>D-17:</strong> <strong>Pin <code>PATCH /api/job-leads/[id]/status</code> and <code>POST /api/job-leads/[id]/prospects</code> against company-scope leads.</strong> Both already operate on <code>id</code> lookups and don&#39;t care about <code>linkedinJobUrl</code>/<code>roleTitle</code> shape, so they should &quot;just work&quot; — but a regression test for each (using a <code>linkedinJobUrl: null</code> fixture lead) locks the invariant explicitly. Counts toward SC #4 (&quot;state machine is input-shape agnostic&quot;). Test files live alongside the existing route tests under <code>src/app/api/job-leads/[id]/.../*.test.ts</code>.</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><p><strong>CD-01:</strong> <strong>Drizzle Kit migration filename.</strong> Recommended: <code>0009_allow_company_scope_job_leads</code>. Planner runs <code>npm run db:generate -- --name=allow_company_scope_job_leads</code> and verifies the emitted SQL is the single <code>ALTER COLUMN ... DROP NOT NULL</code> statement. If Drizzle Kit emits anything weirder (e.g., recreates the table), hand-edit.</p>
+</li>
+<li><p><strong>CD-02:</strong> <strong>Where the in-flight <code>(companyId, scope, status)</code> dedup query sits.</strong> Recommended: inline in the route handler as a focused SELECT before the INSERT. Don&#39;t extract to <code>src/lib/db/job-leads.ts</code> until a second caller materializes. Keeps Phase 7&#39;s code change local.</p>
+</li>
+<li><p><strong>CD-03:</strong> <strong>Whether to also write a brief migration runbook comment.</strong> Recommended: a one-line header comment in the generated migration file explaining what changed (<code>-- Allow company-scope job leads: drop NOT NULL on linkedin_job_url so synthetic leads created from a company name/URL can exist</code>). Inline, no separate doc. Planner skips if Drizzle Kit&#39;s generated SQL is self-explanatory.</p>
+</li>
+<li><p><strong>CD-04:</strong> <strong>Test fixture location.</strong> Recommended: extend <code>src/test-utils/pglite.ts</code> (if needed) with a <code>createCompanyScopeLead({ companyId })</code> helper used by D-06 / D-17&#39;s tests. Or inline the fixture in each test file. Planner picks based on whether more than one test uses the same fixture (DRY threshold).</p>
+</li>
+<li><p><strong>CD-05:</strong> <strong>Whether to fold the <code>companies</code> lookup-or-create logic into a small helper.</strong> Recommended: a private <code>findOrCreateCompany({ name, linkedinUrl })</code> function in the same route file (or <code>src/lib/db/companies.ts</code> if there&#39;s already one). The function encapsulates D-07 + D-08 + D-09 in one place. Planner decides based on whether putting it in <code>src/lib/db/</code> materially helps testability.</p>
+</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.1 milestone trail</h3>
+<ul>
+<li><code>.planning/PROJECT.md</code> §&quot;Current Milestone: v1.1 LinkedIn Scraping by Company&quot; — locked target features for the milestone (synthetic lead model, no new entity, role filter = none)</li>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;v1.1 Active — LinkedIn Scraping by Company&quot; — JL-C1..JL-C9 with verification criteria; JL-C3 and JL-C4 are Phase 7&#39;s</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 7: Schema + API for Company-Scope Leads&quot; — goal + 4 success criteria</li>
+<li><code>.planning/STATE.md</code> §&quot;Accumulated Context → Decisions&quot; — locked v1.1 data-model decisions (synthetic row, no new entity, drain shares queue, phase order)</li>
+</ul>
+<h3>Phase 5 lineage (the in-flight state machine and routes this phase extends)</h3>
+<ul>
+<li><code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code> §&quot;D-06..D-09&quot; — <code>jobLeadStatusEnum</code>, <code>last_error</code> columns, state machine, error categories</li>
+<li><code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code> §&quot;D-20&quot; — API routes the skill calls (<code>GET ?status=queued</code>, <code>PATCH /status</code>, <code>POST /prospects</code>)</li>
+<li><code>.planning/phases/05-job-leads-completion/05-04-PLAN.md</code> — Plan that introduced the state machine module and the prospects route (planner reads to understand the existing route invariants)</li>
+</ul>
+<h3>Phase 6 lineage (the bulk-write pattern and indexes Phase 7 leverages)</h3>
+<ul>
+<li><code>.planning/phases/06-performance/06-CONTEXT.md</code> §&quot;D-02..D-03&quot; — <code>db.batch()</code> atomicity pattern (no interactive transactions on neon-http); used here for the same reasons if any multi-statement write becomes necessary</li>
+<li><code>drizzle/migrations/0008_*.sql</code> — Phase 6 indexes including <code>companies_name_idx</code> (this phase&#39;s company-matcher lookup hits this index)</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> — TS strict, named exports, REST API (no server actions), Zod on routes, <code>{ success, data, error, meta }</code> envelope, soft-delete via <code>archived_at</code></li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, camelCase functions, named exports, <code>import type</code> for type-only imports, <code>satisfies</code> for response shapes</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns&quot; — the patterns to avoid (raw SQL fragments, fire-and-forget IIFEs); Phase 7 stays on the well-trodden path</li>
+<li><code>.planning/codebase/STACK.md</code> — Drizzle 0.45.1, Neon serverless HTTP driver, Zod 4, Next.js 16 App Router</li>
+</ul>
+<h3>Source files (under modification — read before planning)</h3>
+<ul>
+<li><code>drizzle/schema/job-leads.ts:19</code> — <code>linkedin_job_url</code> currently <code>.notNull()</code>; drop for Phase 7 (D-05)</li>
+<li><code>drizzle/schema/companies.ts:25</code> — <code>linkedin_url</code> already nullable; used for D-09 backfill</li>
+<li><code>src/app/api/job-leads/route.ts</code> — current <code>POST</code> handler (lines 66-134); extend Zod schema to a discriminated union + add the company-scope branch (D-01..D-04, D-07..D-09, D-13..D-15)</li>
+<li><code>src/app/api/job-leads/[id]/status/route.ts</code> — existing PATCH; verify it works against <code>linkedinJobUrl IS NULL</code> leads (D-17, no code change)</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.ts</code> — existing POST; verify it works against <code>linkedinJobUrl IS NULL</code> leads (D-17, no code change)</li>
+<li><code>src/lib/domain/types.ts</code> — add <code>COMPANY_SCOPE_ROLE_TITLE</code> constant (D-11)</li>
+<li><code>src/lib/domain/job-lead-pipeline.ts</code> — current state machine; no change for Phase 7 (D-03 + D-17 confirm INSERTs at <code>queued</code> are valid)</li>
+</ul>
+<h3>Reusable helpers</h3>
+<ul>
+<li><code>src/lib/api/types.ts</code> — <code>success(lead)</code> (200) vs <code>created(lead)</code> (201) — used for D-13&#39;s response signaling</li>
+<li><code>src/lib/api/errors.ts</code> — <code>validationError</code>, <code>serverError</code>, <code>notFound</code> — used as-is</li>
+<li><code>src/lib/db/timeline.ts</code> — <code>logTimeline()</code> — used for D-04&#39;s <code>job_lead_created</code> event with <code>metadata.scope: &#39;company&#39;</code></li>
+<li><code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code> — Phase 2 harness; used for D-06 + D-17 + the create-path + dedup-path tests</li>
+</ul>
+<h3>External references (no new docs needed)</h3>
+<ul>
+<li>No external specs or ADRs to research. All decisions follow Phase 5 / Phase 6 patterns already in the repo. Drizzle docs are sufficient for the <code>ALTER COLUMN DROP NOT NULL</code> mechanic.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>POST /api/job-leads</code> handler</strong> (<code>src/app/api/job-leads/route.ts:66-134</code>) — extended in place; the existing companies-lookup-by-lowercase-name pattern (lines 87-94) is the basis for D-07. The <code>scrapeJobPage</code> call (line 82) is conditionally skipped in the company-scope branch.</li>
+<li><strong><code>canJobLeadTransition</code></strong> (<code>src/lib/domain/job-lead-pipeline.ts</code>) — unchanged. State machine gates PATCH only; INSERTs at <code>status = &#39;queued&#39;</code> (D-03) are allowed because no transition is occurring.</li>
+<li><strong><code>logTimeline({ eventType: &#39;job_lead_created&#39;, ... })</code></strong> (<code>src/lib/db/timeline.ts</code>) — already exists; D-04 adds a <code>metadata.scope: &#39;company&#39;</code> key. Timeline UI is metadata-agnostic, so no UI change cascades from this.</li>
+<li><strong><code>companies_name_idx</code></strong> (migration 0008, Phase 6) — partial index on <code>companies(name)</code> for ilike prefilter. D-07&#39;s case-insensitive lookup hits it.</li>
+<li><strong><code>success()</code> / <code>created()</code></strong> (<code>src/lib/api/types.ts</code>) — 200 vs 201 with the standard envelope; D-13&#39;s idempotent-dedup response uses both.</li>
+<li><strong>Phase 2 PGlite + <code>callRoute</code> harness</strong> — D-06, D-17, and the new create-path/dedup-path tests run on it. No new test infrastructure needed.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>REST API for all mutations, no server actions</strong> (CLAUDE.md) — Phase 7 follows. The company-scope create path is a POST; same envelope; no client direct DB access.</li>
+<li><strong>Zod validation on every API route</strong> (CLAUDE.md) — D-01&#39;s discriminated union is the standard pattern for shape variants.</li>
+<li><strong>Drizzle query builder only</strong> (no raw SQL except pgvector) — Phase 7&#39;s queries are all builder-mode; the existing <code>sql\</code>lower(...) = lower(...)`<code>pattern from</code>route.ts:91` is the one legitimate sql-template-tag use (mirrored for D-07).</li>
+<li><strong>Soft delete via <code>archived_at</code></strong> — D-13&#39;s dedup check includes <code>archived_at IS NULL</code> to match the project-wide convention.</li>
+<li><strong>Timeline event after every write</strong> — D-04 keeps the invariant.</li>
+<li><strong><code>{ success, data, error, meta }</code> envelope on every route</strong> — both 200 (existing-lead-returned) and 201 (new-lead-created) responses use it.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Phase 8 (skill) → Phase 7 API</strong>: the skill&#39;s input-parsing branch for company URLs / bare names will POST <code>{ companyName, linkedinCompanyUrl? }</code> to the endpoint defined here. Phase 8 plan must reference D-01&#39;s body shape and D-13&#39;s idempotent semantics.</li>
+<li><strong>Phase 9 (UI) → Phase 7 schema</strong>: the detail page and list-view rendering for company-scope leads keys off <code>linkedinJobUrl === null</code> (D-12). The &quot;Company scrape&quot; badge can display the <code>COMPANY_SCOPE_ROLE_TITLE</code> constant directly or render its own static label — Phase 9 plan decides.</li>
+<li><strong>Existing job-URL POST flow → Phase 7</strong>: unchanged. The discriminated Zod union routes job-URL requests to the existing branch verbatim. The migration drops a constraint, doesn&#39;t add one — so existing inserts continue to satisfy schema.</li>
+<li><strong><code>PATCH /status</code> and <code>POST /prospects</code> → Phase 7 leads</strong>: no code change in those routes; D-17 adds regression tests that pin the input-shape agnostic invariant.</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Whether the state machine needs new transitions (D-03: no — INSERT bypasses transition checks)</li>
+<li>Whether to add a new entity / table for company-scope leads (locked by v1.1 milestone — no)</li>
+<li>Whether <code>linkedinCompanyUrl</code> needs its own column on <code>job_leads</code> (no — stored on <code>companies.linkedinUrl</code>, naturally reused)</li>
+<li>Whether to add new timeline event types (D-04: no, reuse <code>job_lead_created</code> with metadata)</li>
+<li>Whether to allow multiple in-flight leads per company (D-13/D-14: no, idempotent dedup)</li>
+<li>Whether the dedup logic also applies to job-URL leads (D-15: no, company-scope only)</li>
+</ul>
+<h3>What the Planner DOES Need to Verify / Decide</h3>
+<ul>
+<li><strong>Drizzle Kit&#39;s emitted migration SQL for the <code>DROP NOT NULL</code> change</strong> (CD-01). Run <code>npm run db:generate -- --name=allow_company_scope_job_leads</code> and inspect. Likely a single <code>ALTER TABLE job_leads ALTER COLUMN linkedin_job_url DROP NOT NULL;</code>. Hand-edit only if Drizzle Kit emits something weirder (table recreation, etc.).</li>
+<li><strong>Whether <code>companies</code> lookup-or-create should be extracted to a helper</strong> (CD-05). Inline first, refactor later if a second caller appears.</li>
+<li><strong>Test fixture location</strong> (CD-04) — extend <code>src/test-utils/pglite.ts</code> only if the fixture is reused across tests.</li>
+<li><strong>Whether the route&#39;s Zod discriminated union complains on ambiguous bodies</strong> (D-02) — verify Zod 4&#39;s <code>z.union(...)</code> parse order matches first-success semantics for our body shapes. Add a unit test for the ambiguous case (both <code>linkedinJobUrl</code> and <code>companyName</code> present) and document the resolution behavior in the route&#39;s header comment.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><p><strong>Discriminated Zod body schema sketch</strong> (concrete shape for the planner):</p>
+<pre><code class="language-ts">const createJobLeadSchema = z.union([
+  z.object({ linkedinJobUrl: z.string().url() }),
+  z.object({
+    companyName: z.string().min(1).max(200),
+    linkedinCompanyUrl: z.string().url().optional()
+  })
+]);
+type CreateJobLeadInput = z.infer&lt;typeof createJobLeadSchema&gt;;
+// Narrow at use site: `if (&#39;linkedinJobUrl&#39; in validated) { ...existing job-URL branch... }`
+</code></pre>
+</li>
+<li><p><strong><code>COMPANY_SCOPE_ROLE_TITLE</code> constant</strong> in <code>src/lib/domain/types.ts</code>:</p>
+<pre><code class="language-ts">/**
+ * Reserved roleTitle for company-scope job leads (no source job URL).
+ * Convention: only the company-scope branch of POST /api/job-leads writes this.
+ * Phase 7 D-10/D-11. Phase 9 UI keys off `linkedinJobUrl === null`, not this sentinel.
+ */
+export const COMPANY_SCOPE_ROLE_TITLE = &#39;Company-wide scrape&#39; as const;
+</code></pre>
+</li>
+<li><p><strong>Idempotent dedup query</strong> (the SELECT before INSERT, for D-13):</p>
+<pre><code class="language-ts">// After companyId is resolved (existing match or newly-created stub),
+// check for an in-flight company-scope lead on this company.
+const [existing] = await db
+  .select()
+  .from(jobLeads)
+  .where(
+    and(
+      eq(jobLeads.companyId, companyId),
+      isNull(jobLeads.linkedinJobUrl),
+      inArray(jobLeads.status, [&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;]),
+      isNull(jobLeads.archivedAt)
+    )
+  )
+  .limit(1);
+if (existing) return success(existing); // 200, not 201
+</code></pre>
+</li>
+<li><p><strong>Company auto-create / backfill</strong> (D-07..D-09 combined):</p>
+<pre><code class="language-ts">// Inside the company-scope branch
+const [match] = await db
+  .select()
+  .from(companies)
+  .where(sql`lower(${companies.name}) = lower(${validated.companyName})`)
+  .limit(1);
+
+let companyId: string;
+if (match) {
+  companyId = match.id;
+  // D-09: backfill linkedinUrl if missing
+  if (match.linkedinUrl == null &amp;&amp; validated.linkedinCompanyUrl) {
+    await db
+      .update(companies)
+      .set({ linkedinUrl: validated.linkedinCompanyUrl, updatedAt: new Date() })
+      .where(eq(companies.id, match.id));
+  }
+} else {
+  // D-08: create stub
+  const [created] = await db
+    .insert(companies)
+    .values({
+      name: validated.companyName,
+      linkedinUrl: validated.linkedinCompanyUrl ?? null
+      // priority, stage, status, remotePolicy default via schema
+    })
+    .returning();
+  companyId = created.id;
+}
+</code></pre>
+</li>
+<li><p><strong>Lead insert</strong> for the company-scope branch:</p>
+<pre><code class="language-ts">const [lead] = await db
+  .insert(jobLeads)
+  .values({
+    linkedinJobUrl: null,  // D-05 (schema now allows)
+    roleTitle: COMPANY_SCOPE_ROLE_TITLE,  // D-10/D-11
+    companyName: validated.companyName,
+    companyId,  // D-08
+    status: &#39;queued&#39;  // D-03
+  })
+  .returning();
+
+await logTimeline({
+  eventType: &#39;job_lead_created&#39;,  // D-04
+  title: `Company scrape: ${validated.companyName}`,
+  companyId,
+  metadata: { jobLeadId: lead.id, scope: &#39;company&#39; }  // D-04 metadata flag
+});
+
+return created(lead);  // 201, D-13
+</code></pre>
+</li>
+<li><p><strong>Tests to ship in this phase</strong> (concrete file targets):</p>
+<ul>
+<li><code>src/app/api/job-leads/route.test.ts</code> — extend with: (a) company-scope create path (new row, returns 201), (b) company-scope dedup path (in-flight match returns 200, no duplicate row), (c) backfill of <code>companies.linkedinUrl</code> on existing-match-with-null path, (d) auto-create of stub company on no-match path, (e) discriminated Zod rejection for empty body / both fields present</li>
+<li><code>src/lib/db/__phase7_schema__.test.ts</code> (new) — D-06 regression: insert a job_leads row with <code>linkedinJobUrl: null</code> via Drizzle, read it back, assert success</li>
+<li><code>src/app/api/job-leads/[id]/status/route.test.ts</code> — extend with one case using a <code>linkedinJobUrl: null</code> fixture lead, run a full state-machine traversal (queued → searching → found)</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> — extend with one case using a <code>linkedinJobUrl: null</code> fixture lead, verify the bulk-prospects + status flip works</li>
+</ul>
+</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><p><strong>DB-side partial UNIQUE index</strong> to enforce dedup at the schema level (e.g., <code>UNIQUE (company_id) WHERE linkedin_job_url IS NULL AND status IN (&#39;queued&#39;, &#39;searching&#39;, &#39;failed&#39;) AND archived_at IS NULL</code>) — out of scope (D-16). Single-user race window is theoretical. Revisit only if a concurrency bug surfaces.</p>
+</li>
+<li><p><strong>Extending idempotent dedup to job-URL leads</strong> — explicitly out of scope (D-15). The existing job-URL POST contract is unchanged. A separate phase can decide if/when that behavior should change.</p>
+</li>
+<li><p><strong>Adding a dedicated <code>job_lead_company_created</code> timeline event type</strong> — declined in D-04 (reuse <code>job_lead_created</code> with metadata). A future &quot;timeline UI overhaul&quot; phase could split event types if it becomes useful.</p>
+</li>
+<li><p><strong>Sentinel runtime enforcement</strong> (a guard in <code>scrapeJobPage</code> against accidentally returning <code>&#39;Company-wide scrape&#39;</code> as a real role title) — declined in D-11. Convention-only docstring is sufficient. Revisit only if a collision is observed.</p>
+</li>
+<li><p><strong>Backfilling old leads</strong> — no historical leads have <code>linkedinJobUrl = NULL</code>, so no backfill is needed. The migration is purely a constraint relaxation.</p>
+</li>
+<li><p><strong>Dedicated <code>findOrCreateCompany</code> library helper in <code>src/lib/db/</code></strong> — CD-05 leaves it as inline-first. Refactor only when a second caller appears.</p>
+</li>
+<li><p><strong>A skill / CLI command to bulk-import company-scope leads from a list</strong> — not in v1.1 scope. The skill processes one company per invocation (or drains the existing queue). Bulk-import would be a future tool.</p>
+</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — <code>gsd-sdk query todo.match-phase 7</code> not run; the workflow doesn&#39;t surface any pending todos in <code>.planning/STATE.md</code> for Phase 7. No deferred-todo bookkeeping needed.</p>
+</deferred><hr>
+<p><em>Phase: 07-Schema + API for Company-Scope Leads</em>
+<em>Context gathered: 2026-05-19</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 7: Schema + API for Company-Scope Leads - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-19
+<strong>Phase:</strong> 07-schema-api-for-company-scope-leads
+<strong>Areas discussed:</strong> Route shape, Company linking strategy, roleTitle representation, Duplicate detection</p>
+<hr>
+<h2>Route Shape</h2>
+<h3>Q1: Where does the company-scope create endpoint live?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Discriminated POST /api/job-leads</td>
+<td>Extend the existing endpoint. Zod schema becomes a discriminated union. Keeps clients/skill from caring about two shapes.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Dedicated POST /api/job-leads/company</td>
+<td>Add a sibling route specifically for company-scope creation. Two endpoints to maintain.</td>
+<td></td>
+</tr>
+<tr>
+<td>Dedicated POST /api/job-leads/synthetic</td>
+<td>Same as above but named to emphasize &#39;no source URL&#39;.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Discriminated POST /api/job-leads (Recommended)
+<strong>Notes:</strong> Captured as D-01. Single endpoint, single CLI URL.</p>
+<h3>Q2: Discriminator strategy in the Zod schema?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Implicit by presence</td>
+<td><code>z.union(...)</code>. Body shape alone decides the branch.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Explicit &#39;scope&#39; tag</td>
+<td>Body must include <code>scope: &#39;job&#39; | &#39;company&#39;</code>.</td>
+<td></td>
+</tr>
+<tr>
+<td>Explicit &#39;kind&#39; from URL query</td>
+<td><code>POST /api/job-leads?kind=company</code>.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Implicit by presence (Recommended)
+<strong>Notes:</strong> Captured as D-02. The route&#39;s header comment will document first-match-wins behavior for the ambiguous case.</p>
+<h3>Q3: What status does the company-scope branch return its created lead at?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>queued directly</td>
+<td>INSERT with status=&#39;queued&#39;. Skill picks it up immediately.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>scraped then auto-flip to queued</td>
+<td>Mirror the job-URL flow. Adds an unnecessary internal write.</td>
+<td></td>
+</tr>
+<tr>
+<td>Brand-new initial state</td>
+<td>Adds a new enum value just for this. Pollutes the state machine.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> queued directly (Recommended)
+<strong>Notes:</strong> Captured as D-03. Matches SC #1 verbatim.</p>
+<h3>Q4: Timeline event on company-scope create?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reuse &#39;job_lead_created&#39; with metadata flag</td>
+<td>Existing event type, set <code>metadata.scope: &#39;company&#39;</code>.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>New event type &#39;job_lead_company_created&#39;</td>
+<td>Distinct event type. Cleaner classification but adds an event type the timeline UI may not render.</td>
+<td></td>
+</tr>
+<tr>
+<td>Two events: created + queued</td>
+<td>Emit both. Most faithful but two writes per creation.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Reuse &#39;job_lead_created&#39; with metadata flag (Recommended)
+<strong>Notes:</strong> Captured as D-04. Timeline UI is metadata-agnostic; no UI cascade.</p>
+<hr>
+<h2>Company Linking Strategy</h2>
+<h3>Q1: Company match strategy when companyName is provided?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Case-insensitive name only</td>
+<td>Use the existing pattern from <code>POST /api/job-leads</code> (lower-name equality). Hits <code>companies_name_idx</code>.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Name OR linkedinCompanyUrl (broader match)</td>
+<td>Try name first; on miss + URL given, look up by linkedinUrl. More DB round-trips on miss.</td>
+<td></td>
+</tr>
+<tr>
+<td>Strict: require exact name + URL when URL is provided</td>
+<td>Both must match. Fails when LinkedIn URL drifts.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Case-insensitive name only (Recommended)
+<strong>Notes:</strong> Captured as D-07. One code path; reuse existing pattern.</p>
+<h3>Q2: On a miss, what do we auto-create the companies row with?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Minimum stub</td>
+<td>name + linkedinUrl + schema defaults for the rest.</td>
+<td></td>
+</tr>
+<tr>
+<td>Stub + queue for enrichment</td>
+<td>Same as above plus an &#39;auto-created-from-scrape&#39; tag for filtering.</td>
+<td></td>
+</tr>
+<tr>
+<td>Reject if not found</td>
+<td>Force explicit company creation.</td>
+<td>✓ (first answer)</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Initially &quot;Reject if not found&quot;; reconsidered after follow-up question.
+<strong>Notes:</strong> First answer conflicted with JL-C3 SC #3 (&quot;created on the fly if absent&quot;); reconciled in Q3.</p>
+<h3>Q3 (reconciliation): Reject conflicts with JL-C3 SC #3. How to reconcile?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Update the SC — reject + return 404</td>
+<td>Change SC #3; tighter data hygiene; user creates company first.</td>
+<td></td>
+</tr>
+<tr>
+<td>Re-enable auto-create with minimum stub</td>
+<td>Revert to auto-create; matches the original spec.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Hybrid: auto-create only if linkedinCompanyUrl is provided</td>
+<td>Trust URL input, distrust bare names.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Re-enable auto-create with minimum stub
+<strong>Notes:</strong> Final position captured as D-08. Defaults supply most fields; user curates the stub later.</p>
+<h3>Q4: If we match an existing company that has no linkedinUrl but the request provides one, do we update the company row?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Yes — backfill linkedinUrl on existing row</td>
+<td>Only if existing linkedinUrl IS NULL. Never overwrites a non-null value.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>No — leave existing companies untouched</td>
+<td>Existing rows are user-managed; cleaner separation.</td>
+<td></td>
+</tr>
+<tr>
+<td>Always overwrite with the latest provided URL</td>
+<td>Risk of clobbering curated values.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Yes — backfill linkedinUrl on existing row (Recommended)
+<strong>Notes:</strong> Captured as D-09. Non-destructive enrichment.</p>
+<hr>
+<h2>roleTitle Representation</h2>
+<h3>Q1: How does a company-scope lead represent roleTitle in the DB?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>null</td>
+<td>Persist <code>roleTitle = null</code>. Column already nullable. Cleanest data semantics.</td>
+<td></td>
+</tr>
+<tr>
+<td>&#39;Company-wide scrape&#39; sentinel</td>
+<td>Persist the sentinel string. Simpler UI rendering, no null guards.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Empty string &#39;&#39;</td>
+<td>Worst of both.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> &#39;Company-wide scrape&#39; sentinel
+<strong>Notes:</strong> Captured as D-10. Differs from the recommendation; user prioritized UI simplicity over null-purity.</p>
+<h3>Q2: Where does the sentinel string live?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Constant in src/lib/domain/types.ts</td>
+<td><code>export const COMPANY_SCOPE_ROLE_TITLE = &#39;...&#39; as const;</code>. Single source of truth.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Inline string in the API route</td>
+<td>Hard-code in route.ts; UI matches by literal equality. Drift risk.</td>
+<td></td>
+</tr>
+<tr>
+<td>Drizzle column default</td>
+<td>Implicit; risks every lead getting it.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Constant in src/lib/domain/types.ts (Recommended)
+<strong>Notes:</strong> Captured as D-11.</p>
+<h3>Q3: Should the API also enforce &#39;no other route sets this sentinel&#39;?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Convention only — documented, not enforced</td>
+<td>Reserve by convention with a docstring.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Add a runtime guard in scrapeJobPage</td>
+<td>Override if returned. Defensive.</td>
+<td></td>
+</tr>
+<tr>
+<td>No reservation — sentinel can collide</td>
+<td>Accept the near-zero risk.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Convention only — documented, not enforced (Recommended)
+<strong>Notes:</strong> Captured as D-11.</p>
+<h3>Q4: Phase 9 UI detection logic for &#39;is this a company-scope lead&#39;?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>linkedinJobUrl === null</code></td>
+<td>Structural fact. UI keys off URL nullness. Resilient.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>roleTitle === COMPANY_SCOPE_ROLE_TITLE</code></td>
+<td>Use the sentinel as the discriminator.</td>
+<td></td>
+</tr>
+<tr>
+<td>Both must be true</td>
+<td>Belt and suspenders.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> <code>linkedinJobUrl === null</code> (Recommended)
+<strong>Notes:</strong> Captured as D-12. Decouples Phase 9 from the sentinel string.</p>
+<hr>
+<h2>Duplicate Detection</h2>
+<h3>Q1: If the user creates a company-scope lead for a company that already has an in-flight lead, what does the API do?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Return the existing in-flight lead</td>
+<td>Idempotent UX; 200 OK.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Always create a new lead</td>
+<td>Allow parallel/sequential leads.</td>
+<td></td>
+</tr>
+<tr>
+<td>Reject with 409 Conflict</td>
+<td>Force archive-then-create.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Return the existing in-flight lead (Recommended)
+<strong>Notes:</strong> Captured as D-13. Idempotent semantics for skill re-runs.</p>
+<h3>Q2: What counts as &#39;in-flight&#39; for the dedup check — which statuses block a new creation?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>queued | searching | failed</td>
+<td>Active + recoverable.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Add <code>found</code> too</td>
+<td>Block if any non-archived lead has prospects.</td>
+<td></td>
+</tr>
+<tr>
+<td>Only queued | searching (exclude failed)</td>
+<td>Failed leads can be replaced.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> queued | searching | failed (Recommended)
+<strong>Notes:</strong> Captured as D-14. <code>failed</code> is recoverable per Phase 5 D-08.</p>
+<h3>Q3: How does the response signal &#39;we returned an existing lead&#39; vs &#39;we created a new one&#39;?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTTP status code: 200 vs 201</td>
+<td>success() vs created(). Standard envelope both ways.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Add a meta.isExisting flag in envelope</td>
+<td>Always 201, with meta flag.</td>
+<td></td>
+</tr>
+<tr>
+<td>Two response shapes</td>
+<td>Breaks the envelope.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> HTTP status code: 200 vs 201 (Recommended)
+<strong>Notes:</strong> Captured as D-13.</p>
+<h3>Q4: Same dedup logic for job-URL leads, or scoped strictly to company-scope?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Company-scope only</td>
+<td>Don&#39;t change existing job-URL behavior.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Apply to job-URL leads too</td>
+<td>Extend dedup to both branches.</td>
+<td></td>
+</tr>
+<tr>
+<td>Let user decide later</td>
+<td>Defer.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Company-scope only (Recommended)
+<strong>Notes:</strong> Captured as D-15. Phase 7 stays scoped tight.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>Captured as <strong>CD-01..CD-05</strong> in CONTEXT.md:</p>
+<ul>
+<li><strong>CD-01:</strong> Drizzle Kit migration filename and SQL verification</li>
+<li><strong>CD-02:</strong> Where the in-flight dedup SELECT lives (inline vs library)</li>
+<li><strong>CD-03:</strong> Whether to add a one-line header comment to the generated migration file</li>
+<li><strong>CD-04:</strong> Test fixture location (inline vs <code>src/test-utils/pglite.ts</code> helper)</li>
+<li><strong>CD-05:</strong> Whether to fold <code>companies</code> lookup-or-create into a <code>findOrCreateCompany</code> helper</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<p>Captured in CONTEXT.md <code>&lt;deferred&gt;</code> section:</p>
+<ul>
+<li>DB-side partial UNIQUE index for race-proof dedup (deferred to &quot;if a concurrency bug surfaces&quot;)</li>
+<li>Extending idempotent dedup to job-URL leads (separate phase if ever warranted)</li>
+<li>Dedicated <code>job_lead_company_created</code> timeline event type (future timeline UI overhaul)</li>
+<li>Runtime enforcement of the <code>COMPANY_SCOPE_ROLE_TITLE</code> sentinel reservation</li>
+<li>Backfilling old leads (not needed — no historical NULL rows)</li>
+<li><code>findOrCreateCompany</code> library helper (refactor when a second caller appears)</li>
+<li>Bulk-import skill / CLI for company-scope leads (not v1.1)</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/07-schema-api-for-company-scope-leads/07-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
