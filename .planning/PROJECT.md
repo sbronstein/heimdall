@@ -1,5 +1,17 @@
 # Heimdall — Job Search Command Center
 
+## Current Milestone: v1.1 LinkedIn Scraping by Company
+
+**Goal:** Let the `scrape-linkedin-connections` skill accept a company name or LinkedIn company URL as input (in addition to the existing job ID/URL inputs), so 2nd-degree connections at any target company can be scraped without first needing a specific job posting.
+
+**Target features:**
+- Skill accepts a LinkedIn company URL (`https://linkedin.com/company/...`) and navigates directly to the employees page, skipping the job → company step
+- Skill accepts a bare company name, runs a LinkedIn company search, and disambiguates inline when multiple matches exist (top 3–5 by employee count + industry)
+- Synthetic job-lead row is created for company-scope scrapes (`linkedinJobUrl = null`, `roleTitle = null` or "Company-wide scrape") — reuses existing `prospects` table and `/api/job-leads/[id]/{status,prospects}` routes; no new entity
+- Drain mode processes company-scope leads from the same queue as job-URL leads — skill nav branches on whether `linkedinJobUrl` is null
+- Job-lead detail and list-view UI render company-only leads cleanly (no broken "View job posting" link; clear "Company scrape" label)
+- All 2nd-degree connections at the company are returned — no role filter
+
 ## What This Is
 
 A personal CRM and pipeline tracker for an executive job search targeting VP Data/AI roles at growth-stage companies. Built for dual interaction — full-featured web UI **and** Claude Code CLI parity through a REST API surface. Single-user by design (Clerk middleware locks `/dashboard` to `steve@bronstein.org`).
@@ -112,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-14 after Phase 6 (Performance) completion — PERF-A1..A5 shipped; v1.0 milestone complete*
+*Last updated: 2026-05-19 — started milestone v1.1 (LinkedIn Scraping by Company). v1.0 milestone complete (Phases 1-6).*

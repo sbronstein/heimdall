@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Heimdall — Project</title>
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --ink: #2a2a2a;
+    --muted: #6b6b6b;
+    --accent: #6b8e6b;
+    --accent-2: #c97a4a;
+    --warn: #b85a3a;
+    --line: #e4ddd2;
+    --code-bg: #f4efe7;
+  }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h1 .codename { color: var(--muted); font-weight: normal; font-size: 18px; }
+  h2 { font-size: 22px; margin: 36px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 17px; margin: 22px 0 6px; }
+  p { margin: 10px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+  .meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin: 14px 0; }
+  .core-value { background: linear-gradient(180deg, #fff8f1, #ffffff); border-left: 4px solid var(--accent-2); font-style: italic; }
+  .what-this-is { background: linear-gradient(180deg, #f6f9f4, #ffffff); border-left: 4px solid var(--accent); }
+  .req-list { list-style: none; margin: 8px 0 0; padding: 0; }
+  .req-list li { padding: 6px 0 6px 32px; position: relative; font-size: 14.5px; }
+  .req-list.shipped li::before { content: "\2713"; position: absolute; left: 6px; color: var(--accent); font-weight: bold; }
+  .req-list.active li::before { content: "\2610"; position: absolute; left: 6px; color: var(--accent-2); font-weight: bold; }
+  .req-list.oos li::before { content: "\2715"; position: absolute; left: 6px; color: var(--warn); font-weight: bold; }
+  .reqid { font-weight: 700; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; color: var(--accent-2); }
+  .shipped .reqid { color: var(--accent); }
+  .reason { color: var(--muted); font-size: 13.5px; font-style: italic; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+  thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .badge-pending { background: #f0e7d8; color: #6b5a3a; }
+  .badge-good { background: #e8efe1; color: #4a6a4a; }
+  .badge-revisit { background: #f3e0d0; color: #8a553a; }
+  .badge-blocked { background: #f4d8d0; color: #8a3a2a; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer code { background: transparent; padding: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Heimdall <span class="codename">— Job Search Command Center</span></h1>
+<div class="meta">Last updated 2026-05-19 · milestone v1.1 (LinkedIn Scraping by Company) started · v1.0 complete (Phases 1–6) · <code>steve@bronstein.org</code> single-user lock</div>
+
+<div class="card what-this-is" style="border-left-color: #c97a4a;">
+<strong>Current Milestone — v1.1 LinkedIn Scraping by Company:</strong> Extend the <code>scrape-linkedin-connections</code> skill to accept a company name or LinkedIn company URL as input (in addition to the existing job ID / URL inputs), so 2nd-degree connections at any target company can be scraped without first needing a specific job posting.
+<ul class="req-list active" style="margin-top: 10px;">
+  <li>Skill accepts a LinkedIn company URL (<code>https://linkedin.com/company/...</code>) and navigates directly to the employees page, skipping the job → company step</li>
+  <li>Skill accepts a bare company name, runs a LinkedIn company search, and disambiguates inline when multiple matches exist (top 3–5 by employee count + industry)</li>
+  <li>Synthetic job-lead row created for company-scope scrapes (<code>linkedinJobUrl = null</code>, <code>roleTitle = null</code> or "Company-wide scrape") — reuses existing <code>prospects</code> table and <code>/api/job-leads/[id]/{status,prospects}</code> routes; no new entity</li>
+  <li>Drain mode processes company-scope leads from the same queue as job-URL leads — skill nav branches on whether <code>linkedinJobUrl</code> is null</li>
+  <li>Job-lead detail and list-view UI render company-only leads cleanly (no broken "View job posting" link; clear "Company scrape" label)</li>
+  <li>All 2nd-degree connections at the company are returned — no role filter</li>
+</ul>
+</div>
+
+<div class="card what-this-is">
+<strong>What This Is:</strong> A personal CRM and pipeline tracker for an executive job search targeting VP Data/AI roles at growth-stage companies. Built for dual interaction — full-featured web UI <strong>and</strong> Claude Code CLI parity through a REST API surface. Single-user by design (Clerk middleware locks <code>/dashboard</code> to <code>steve@bronstein.org</code>).
+</div>
+
+<div class="card core-value">
+<strong>Core Value:</strong> The owner can run their entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths for any role — without leaving the app. If everything else fails, the pipeline state machine and the timeline activity feed must work: that is the system of record for the search.
+</div>
+
+<h2>Requirements</h2>
+
+<h3>Validated <span class="reason">— shipped surface area, inferred from <code>.planning/codebase/</code></span></h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">AUTH-V1</span> · Clerk auth with single-user email lock (<code>src/proxy.ts</code>)</li>
+  <li><span class="reqid">COMP-V1</span> · Companies CRUD with priority, stage, funding, research notes — soft-delete via <code>archived_at</code></li>
+  <li><span class="reqid">CONT-V1</span> · Contacts CRUD with 8-tier closeness, outreach status, warmth, <code>howMet</code>, <code>metDate</code>, <code>linkedinConnectionDate</code></li>
+  <li><span class="reqid">CONT-V2</span> · LinkedIn Connections CSV import — dedup by URL then name+company, per-row closeness selection, auto-populates <code>linkedinConnectionDate</code></li>
+  <li><span class="reqid">CONT-V3</span> · Keyboard-driven contact triage workflow — <code>howMet</code> autocomplete, year buttons, closeness 1-8, undo/skip</li>
+  <li><span class="reqid">APP-V1</span> · Applications CRUD linked to companies with referral-source tracking ("via [Contact]" attribution)</li>
+  <li><span class="reqid">PIPE-V1</span> · Pipeline kanban board with drag-and-drop and validated stage transitions via <code>canTransition()</code> state machine</li>
+  <li><span class="reqid">PIPE-V2</span> · 13 pipeline stages (Researching → Applied → Recruiter Screen → Phone → Onsite → Final → Offer → Negotiating → Accepted/Rejected/Withdrawn/Ghosted/On Hold)</li>
+  <li><span class="reqid">INTR-V1</span> · Interactions logging (emails, calls, coffee chats, interviews, intros) with auto-update of outreach status</li>
+  <li><span class="reqid">TASK-V1</span> · Tasks CRUD with entity linking and priority filters</li>
+  <li><span class="reqid">NOTE-V1</span> · Notes CRUD with category filters and markdown content</li>
+  <li><span class="reqid">REC-V1</span> · Recruiters tracking linked to contacts</li>
+  <li><span class="reqid">TIME-V1</span> · Timeline events — every write emits a <code>timeline_events</code> row via <code>logTimeline()</code> side-effect</li>
+  <li><span class="reqid">OVR-V1</span> · Overview dashboard with KPI cards, pipeline funnel, activity timeline, source breakdown pie chart</li>
+  <li><span class="reqid">METR-V1</span> · Weekly metrics snapshots + trend charts for JSC reporting</li>
+  <li><span class="reqid">SRCH-V1</span> · Cross-entity search (companies, contacts, applications, notes) via Cmd+K command palette</li>
+  <li><span class="reqid">NET-V1</span> · Networking page with closeness-tier stats, outreach tracker, connection finder</li>
+  <li><span class="reqid">JL-V1</span> · Job lead creation from URL — cheerio job page scrape extracts company name, role, location</li>
+  <li><span class="reqid">JL-V2</span> · LinkedIn browser session setup via CDP — Docker → headed Chrome on host with <code>BROWSER_CDP_ENDPOINT</code></li>
+  <li><span class="reqid">JL-V3</span> · Recommendation scoring — composite <code>0.40·seniority + 0.35·closeness + 0.25·recency</code>, grouped by mutual connection</li>
+  <li><span class="reqid">API-V1</span> · Standard response envelope <code>{ success, data, error, meta }</code> and cursor pagination on <code>updated_at</code> across 34 routes</li>
+  <li><span class="reqid">CLI-V1</span> · All mutations routed through REST API — no server actions — so the Claude Code CLI has full parity with the web UI</li>
+</ul>
+
+<h3>Active <span class="reason">— current scope; hypotheses until shipped and validated</span></h3>
+<ul class="req-list active">
+  <li><span class="reqid">BUG-01</span> · Fix React hydration crash in sidebar — remove <code>{user &amp;&amp; ...}</code> guard around <code>UserAvatarProfile</code> in <code>src/components/layout/app-sidebar.tsx</code>; kills all sidebar navigation after LinkedIn import</li>
+  <li><span class="reqid">JL-A1</span> · Finish Job Leads scraper — parameterize hardcoded <code>'point'</code> company name, tune Playwright timeouts, surface scrape errors to UI, strip debug <code>console.log</code> flood + leaked-browser pattern</li>
+  <li><span class="reqid">JL-A2</span> · Add timeout bound to fire-and-forget search IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code> so leads can't get stuck in <code>searching</code> indefinitely</li>
+  <li><span class="reqid">SEC-A1</span> · Add Clerk auth check to all <code>/api/*</code> routes — currently 0 of 34 routes call <code>auth()</code>; only the <code>/dashboard</code> middleware lock prevents access</li>
+  <li><span class="reqid">DEBT-A1</span> · Strip Next.js starter-template residue — <code>src/features/products/</code>, several <code>/dashboard/*</code> stubs, the 805-line unused <code>infobar.tsx</code>, the no-op GitHub auth button, the external <code>api.github.com/repos/...</code> fetch, and the <code>__CLEANUP__/</code> directory</li>
+</ul>
+
+<h3>Active — Shipped This Cycle</h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">PERF-A1..A5</span> · N+1 patterns eliminated and hot-path indexes shipped in Phase 6. Bulk inserts via <code>onConflictDoNothing</code>, transactional prospect writes, bulk UPDATE with <code>VALUES</code>, narrowed contacts SELECT. Migration 0008 adds 5 indexes (partial UNIQUE on <code>linkedin_url</code> scoped to active rows + 4 hot-column indexes). Pinned by <code>__phase6_indexes__.test.ts</code> against <code>pg_indexes</code>. <em>completed 2026-05-14</em></li>
+  <li><span class="reqid">TEST-A1</span> · Vitest harness with PGlite-backed Drizzle DB — <code>npm run test:run</code> exits 0 in ~6s. Pre-push hook runs build + tests. <em>completed 2026-05-12</em></li>
+  <li><span class="reqid">TEST-A2</span> · Load-bearing logic coverage — API envelope, <code>canTransition()</code>, <code>logTimeline()</code> verified via PGlite, LinkedIn CSV parsing, <code>computeBridgeScore</code>. 79 tests passing across 10 files. <em>completed 2026-05-12</em></li>
+  <li><span class="reqid">TEST-A3</span> · BUG-01 regression pinned via SSR structural test + hydration mount test. <em>completed 2026-05-12</em></li>
+</ul>
+
+<h3>Out of Scope</h3>
+<ul class="req-list oos">
+  <li><strong>Multi-tenant / multi-user</strong> <span class="reason">— explicitly single-user; Clerk middleware hardcodes <code>steve@bronstein.org</code>. Not a v1 goal.</span></li>
+  <li><strong>Mobile / native app</strong> <span class="reason">— web-first; not a goal during the active search</span></li>
+  <li><strong>Real-time chat or messaging</strong> <span class="reason">— outside the CRM scope</span></li>
+  <li><strong>OAuth providers beyond Clerk's own</strong> <span class="reason">— Clerk handles auth; the residual "Continue with GitHub" starter button will be deleted, not implemented</span></li>
+  <li><strong>Server-side LinkedIn scraping on Vercel</strong> <span class="reason">— Playwright + Chromium cannot run on Vercel serverless (250MB bundle, no persistent FS). Scraping stays local-dev/Docker via CDP.</span></li>
+  <li><strong>Video/voice posts or content</strong> <span class="reason">— not a CRM concern</span></li>
+  <li><strong>Database-backed Kanban</strong> <span class="reason">— starter-template residue; removed in Phase 4</span></li>
+</ul>
+
+<h2>Context</h2>
+
+<div class="card">
+<p><strong>User.</strong> Single owner running an active executive job search (VP Data/AI, growth-stage). The product is also the user's daily driver — bugs that break navigation are show-stoppers, not annoyances.</p>
+
+<p><strong>Dual-interface design.</strong> Every data mutation goes through <code>/app/api/*</code> so the Claude Code CLI has full parity with the browser UI. This is a load-bearing constraint, not a stylistic choice.</p>
+
+<p><strong>Existing codebase.</strong> ~95 feature component files, 34 API routes, 13 database tables, 17 enums, 7 migrations. Built on the Next.js Shadcn dashboard starter — substantial starter residue still in the tree (<code>__CLEANUP__/</code>, <code>src/features/products/</code>, etc.).</p>
+
+<p><strong>Active development.</strong> Job Leads (LinkedIn scrape → prioritized intro paths) was the most recent feature and still has documented rough edges in <code>docs/summary.md</code>.</p>
+
+<p><strong>Codebase analysis.</strong> <code>.planning/codebase/</code> was generated 2026-05-12 by <code>/gsd-map-codebase</code> and is the up-to-date reference for stack, architecture, conventions, integrations, structure, testing posture, and concerns.</p>
+</div>
+
+<h2>Constraints</h2>
+
+<table>
+  <thead><tr><th>Type</th><th>What</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Tech stack</td><td>Next.js 16 (App Router, RSC) + Neon Postgres + Drizzle ORM + shadcn/ui + Tailwind v4 + Clerk + Recharts</td><td>Fixed for this project; no framework migrations</td></tr>
+    <tr><td>Auth</td><td>Clerk only, single-user lock on <code>steve@bronstein.org</code></td><td>No multi-tenancy</td></tr>
+    <tr><td>No server actions</td><td>All mutations via REST API routes</td><td>CLI parity depends on it</td></tr>
+    <tr><td>No raw SQL</td><td>Drizzle query builder only, except pgvector queries (Phase 2 — not yet active)</td><td>Schema-validated types; pgvector escape hatch when needed</td></tr>
+    <tr><td>Validation</td><td>All API routes use Zod and return <code>{ success, data, error, meta }</code></td><td>Single source of truth for request shapes; consistent envelope</td></tr>
+    <tr><td>Deletes</td><td>Soft deletes only — set <code>archived_at</code></td><td>Never lose history during the active search</td></tr>
+    <tr><td>Hosting</td><td>Vercel</td><td>Playwright/Chromium incompatible with serverless; scraping is local-dev / Docker only</td></tr>
+    <tr><td>Performance</td><td>1500+ contacts; queries that scan <code>contacts</code> fully or do N+1 inserts are already noticeable</td><td>Phase 6 addressed; future work should respect the same constraint</td></tr>
+  </tbody>
+</table>
+
+<h2>Key Decisions</h2>
+
+<table>
+  <thead><tr><th>Decision</th><th>Rationale</th><th>Outcome</th></tr></thead>
+  <tbody>
+    <tr><td>REST API for all mutations (no server actions)</td><td>CLI parity — Claude Code can drive everything the web UI can over HTTP</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Single-user Clerk lock in middleware</td><td>Personal app; multi-tenancy is unnecessary complexity for an exec job search</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Drizzle types as single source of truth (<code>$inferSelect</code>/<code>$inferInsert</code>)</td><td>No DTO layer; schema changes propagate to TS automatically</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Soft deletes via <code>archived_at</code></td><td>Never lose history during an active search; preserves timeline integrity</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Timeline events emitted from every write</td><td>Denormalized activity feed; one cheap row per mutation</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Cursor pagination on <code>updated_at</code></td><td>Stable under inserts; offsets would shift under writes</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Job Leads scraping via Playwright + CDP</td><td>Only reliable way to drive LinkedIn's heavily-obfuscated UI; accept Vercel incompatibility</td><td><span class="badge badge-revisit">Revisit</span> — scraper brittle; hardcoded <code>'point'</code> debug artifact still present</td></tr>
+    <tr><td>Pipeline state machine via <code>canTransition()</code></td><td>Prevents invalid stage moves at the API boundary</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>8-tier closeness orthogonal to warmth</td><td>Closeness measures underlying relationship strength; warmth measures recent engagement — they decouple cleanly</td><td><span class="badge badge-good">Good</span></td></tr>
+  </tbody>
+</table>
+
+<h2>Evolution</h2>
+
+<div class="card">
+<p><strong>After each phase transition</strong> (via <code>/gsd-transition</code>):</p>
+<ol>
+  <li>Requirements invalidated? → Move to Out of Scope with reason</li>
+  <li>Requirements validated? → Move to Validated with phase reference</li>
+  <li>New requirements emerged? → Add to Active</li>
+  <li>Decisions to log? → Add to Key Decisions</li>
+  <li>"What This Is" still accurate? → Update if drifted</li>
+</ol>
+<p><strong>After each milestone</strong> (via <code>/gsd-complete-milestone</code>):</p>
+<ol>
+  <li>Full review of all sections</li>
+  <li>Core Value check — still the right priority?</li>
+  <li>Audit Out of Scope — reasons still valid?</li>
+  <li>Update Context with current state</li>
+</ol>
+</div>
+
+<footer>
+  Source of truth: <code>.planning/PROJECT.md</code> · This HTML companion is for readability and may lag behind.
+</footer>
+
+</div>
+</body>
+</html>
