@@ -67,7 +67,7 @@ export function buildRecommendations(
   }
 
   // Overall contact score = max of their bridge scores
-  for (const rec of byContact.values()) {
+  for (const rec of Array.from(byContact.values())) {
     rec.score = Math.max(...rec.prospects.map((p) => p.bridgeScore));
     rec.prospects.sort((a, b) => b.bridgeScore - a.bridgeScore);
   }

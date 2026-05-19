@@ -49,8 +49,25 @@ export async function GET(request: Request) {
         : conditions[0];
 
     const results = await db
-      .select()
+      .select({
+        id: jobLeads.id,
+        linkedinJobUrl: jobLeads.linkedinJobUrl,
+        roleTitle: jobLeads.roleTitle,
+        companyName: jobLeads.companyName,
+        companyId: jobLeads.companyId,
+        applicationId: jobLeads.applicationId,
+        status: jobLeads.status,
+        scrapedData: jobLeads.scrapedData,
+        prospectCount: jobLeads.prospectCount,
+        lastError: jobLeads.lastError,
+        lastErrorAt: jobLeads.lastErrorAt,
+        createdAt: jobLeads.createdAt,
+        updatedAt: jobLeads.updatedAt,
+        archivedAt: jobLeads.archivedAt,
+        companyLinkedinUrl: companies.linkedinUrl
+      })
       .from(jobLeads)
+      .leftJoin(companies, eq(jobLeads.companyId, companies.id))
       .where(where)
       .orderBy(desc(jobLeads.updatedAt))
       .limit(limit + 1);
