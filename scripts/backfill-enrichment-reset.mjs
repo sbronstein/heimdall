@@ -48,6 +48,13 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
+// Normalize the connection string. Some environments export DATABASE_URL with
+// the query-string separators HTML-entity-encoded (`&amp;`) or wrapped in quotes
+// (common with `.env.local` values or copy/paste through web tooling). Neither is
+// ever valid in a real Postgres URL, so strip them defensively — a no-op when the
+// value is already clean.
+databaseUrl = databaseUrl.replace(/^["']|["']$/g, '').replace(/&amp;/g, '&');
+
 const sql = neon(databaseUrl);
 const applyMode = process.argv.includes('--apply');
 
