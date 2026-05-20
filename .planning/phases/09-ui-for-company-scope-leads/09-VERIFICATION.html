@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 09-ui-for-company-scope-leads
+verified: 2026-05-20T23:07:30Z
+status: gaps_found
+score: 4/5 must-haves verified
+overrides_applied: 0
+gaps:</p>
+<ul>
+<li>truth: &quot;Company name and employee count (once scraped) are displayed prominently on the detail page for company-scope leads (ROADMAP SC #3)&quot;
+status: partial
+reason: &quot;Company name is now shown prominently in the CardTitle slot (shipped). Employee count display is intentionally absent — documented as deferred in 09-CONTEXT.md <deferred> section before planning began. No later milestone phase in ROADMAP.md picks this up; it is an open roadmap item.&quot;
+artifacts:<ul>
+<li>path: &quot;src/features/job-leads/components/scrape-results.tsx&quot;
+issue: &quot;Employee-count line deliberately omitted. No join to companies.employeeCount; scrape-results.tsx does not read scrapedData.employeeCount. Detail page RSC (app/dashboard/job-leads/[id]/page.tsx) does not join companies table.&quot;
+missing:</li>
+<li>&quot;When the skill starts writing employeeCount during the /people/ scrape, the detail RSC must join companies (or read scrapedData.employeeCount) and scrape-results.tsx must render a count line under the company-name CardTitle slot&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>Phase 9: UI for Company-Scope Leads — Verification Report</h1>
+<p><strong>Phase Goal:</strong> The job-lead detail page and list view render company-scope leads (where <code>linkedinJobUrl</code> is null) cleanly — no broken links, clear labeling, scannable at a glance.
+<strong>Verified:</strong> 2026-05-20T23:07:30Z
+<strong>Status:</strong> gaps_found — 1 gap (ROADMAP SC #3 employee count, pre-planned deferral)
+<strong>Re-verification:</strong> No — initial verification</p>
+<hr>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>D-01: Company-scope lead detail shows company name in CardTitle + &quot;Company scrape&quot; Badge variant=&#39;secondary&#39;; role-title line absent; no broken link</td>
+<td>✓ VERIFIED</td>
+<td><code>scrape-results.tsx:9</code> — <code>const isCompanyScope = lead.linkedinJobUrl === null</code>; line 21-27 — ternary renders <code>&lt;div className=&#39;flex items-center gap-2&#39;&gt;&lt;CardTitle&gt;{lead.companyName || &#39;Company scrape&#39;}&lt;/CardTitle&gt;&lt;Badge variant=&#39;secondary&#39;&gt;Company scrape&lt;/Badge&gt;&lt;/div&gt;</code> when isCompanyScope</td>
+</tr>
+<tr>
+<td>2</td>
+<td>D-02: Job-URL lead detail unchanged — role title as CardTitle, company name as subtitle, &quot;View Job Posting&quot; link present via existing null-guard</td>
+<td>✓ VERIFIED</td>
+<td><code>scrape-results.tsx:29-37</code> — false branch renders <code>&lt;CardTitle&gt;{lead.roleTitle || &#39;Unknown Role&#39;}&lt;/CardTitle&gt;</code> + <code>&lt;p&gt;{lead.companyName || &#39;Unknown Company&#39;}&lt;/p&gt;</code>; null-guard at line 46 <code>{lead.linkedinJobUrl &amp;&amp; (...)}</code> untouched</td>
+</tr>
+<tr>
+<td>3</td>
+<td>D-03: Company-scope list row shows IconBuildingCommunity + &quot;Company&quot; outline pill; job-URL rows keep IconBuilding, no pill; sentinel never renders</td>
+<td>✓ VERIFIED</td>
+<td><code>job-lead-card.tsx:23</code> — <code>const isCompanyScope = lead.linkedinJobUrl === null</code>; line 31-34 ternary swaps icons; line 39 — <code>{!isCompanyScope &amp;&amp; lead.roleTitle &amp;&amp; (...)}</code> suppresses subtitle; line 46-48 — <code>{isCompanyScope &amp;&amp; &lt;Badge variant=&#39;outline&#39;&gt;Company&lt;/Badge&gt;}</code> as first child of right-side cluster</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Null companyName company-scope lead renders &quot;Company scrape&quot; as CardTitle text — never &quot;Unknown Role&quot;</td>
+<td>✓ VERIFIED</td>
+<td><code>scrape-results.tsx:24</code> — <code>{lead.companyName || &#39;Company scrape&#39;}</code> in the isCompanyScope branch; &quot;Unknown Role&quot; only appears in the <code>isCompanyScope === false</code> branch (line 31)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Company name and employee count displayed prominently on detail page (ROADMAP SC #3)</td>
+<td>✗ PARTIAL</td>
+<td>Company name: shipped (see truth #1). Employee count: intentionally absent per <code>09-CONTEXT.md &lt;deferred&gt;</code>. No <code>employeeCount</code> line in <code>scrape-results.tsx</code>; detail RSC does not join <code>companies</code> table. No later phase in ROADMAP.md closes this gap.</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 4/5 truths verified (truth #5 is partial — the name-density half shipped, the employee-count half is an open product backlog item).</p>
+<hr>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/job-leads/components/scrape-results.tsx</code></td>
+<td>Detail header conditional branch keyed off <code>linkedinJobUrl === null</code>; Badge import; &quot;Company scrape&quot; copy</td>
+<td>✓ VERIFIED</td>
+<td>Contains <code>isCompanyScope</code>, <code>import { Badge }</code>, <code>Company scrape</code> badge copy. 63 lines, substantive. Wired via RSC prop chain <code>[id]/page.tsx → JobLeadDetail → ScrapeResults</code>.</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/scrape-results.test.tsx</code></td>
+<td>SSR-structural rendered tests for detail view with company-scope + job-URL + null-name fixtures</td>
+<td>✓ VERIFIED</td>
+<td>145 lines; 3 describe blocks; 9 assertions; uses <code>renderToString</code> + <code>JSDOM</code>. Contains &quot;Company scrape&quot; text assertions.</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/job-lead-card.tsx</code></td>
+<td>List-row icon swap + &quot;Company&quot; pill + sentinel suppression; <code>IconBuildingCommunity</code> import</td>
+<td>✓ VERIFIED</td>
+<td><code>IconBuildingCommunity</code> appears at import (line 7) and usage (line 32) — 2 occurrences. <code>isCompanyScope</code> discriminator, sentinel suppression <code>!isCompanyScope &amp;&amp; lead.roleTitle</code>, pill present.</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/job-lead-card.test.tsx</code></td>
+<td>SSR-structural rendered tests with mixed company-scope + job-URL fixtures</td>
+<td>✓ VERIFIED</td>
+<td>117 lines; 6 assertions; <code>data-icon=&quot;building-community&quot;</code> assertions for icon verification; outline badge text assertions for pill verification.</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>scrape-results.tsx</code></td>
+<td><code>lead.linkedinJobUrl === null</code></td>
+<td><code>isCompanyScope</code> drives CardHeader branch</td>
+<td>✓ WIRED</td>
+<td>Line 9 declares discriminator; line 21 branches JSX on it</td>
+</tr>
+<tr>
+<td><code>job-lead-card.tsx</code></td>
+<td><code>lead.linkedinJobUrl === null</code></td>
+<td><code>isCompanyScope</code> drives icon swap, subtitle suppression, pill</td>
+<td>✓ WIRED</td>
+<td>Line 23 declares discriminator; lines 31, 39, 46 branch on it</td>
+</tr>
+<tr>
+<td><code>scrape-results.tsx</code></td>
+<td><code>lead.linkedinJobUrl</code> null-guard</td>
+<td><code>{lead.linkedinJobUrl &amp;&amp; (...)}</code> at line 46</td>
+<td>✓ WIRED</td>
+<td>Existing guard preserved; &quot;View Job Posting&quot; link hidden for company-scope leads</td>
+</tr>
+<tr>
+<td><code>job-lead-card.tsx</code></td>
+<td><code>!isCompanyScope &amp;&amp; lead.roleTitle</code></td>
+<td>Sentinel suppression guard</td>
+<td>✓ WIRED</td>
+<td>Line 39 — sentinel <code>&#39;Company-wide scrape&#39;</code> never renders as visible subtitle</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>Both components are leaf <code>&#39;use client&#39;</code> components that receive a <code>JobLead</code> prop from the RSC page → <code>JobLeadDetail</code> (for scrape-results) or <code>JobLeadsPage</code> → map (for job-lead-card). They render prop data only — no client-side fetch. The data-flow verification belongs to the upstream RSC pages (Phase 7 scope). For Phase 9 the relevant check is that the discriminator <code>linkedinJobUrl</code> on the prop drives the conditional branches — confirmed by Level 3 wiring verification above.</p>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>scrape-results.tsx</code></td>
+<td><code>lead.linkedinJobUrl</code></td>
+<td>RSC prop (Drizzle-typed <code>JobLead</code>)</td>
+<td>Yes — Drizzle <code>$inferSelect</code> on nullable column</td>
+<td>✓ FLOWING</td>
+</tr>
+<tr>
+<td><code>job-lead-card.tsx</code></td>
+<td><code>lead.linkedinJobUrl</code></td>
+<td>RSC prop (Drizzle-typed <code>JobLead</code>)</td>
+<td>Yes — same</td>
+<td>✓ FLOWING</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>scrape-results.test.tsx — all 9 assertions</td>
+<td><code>npx vitest run src/features/job-leads/components/scrape-results.test.tsx</code></td>
+<td>1 file, 9 tests passed</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>job-lead-card.test.tsx — all 6 assertions</td>
+<td><code>npx vitest run src/features/job-leads/components/job-lead-card.test.tsx</code></td>
+<td>1 file, 6 tests passed</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Both test files together</td>
+<td><code>npx vitest run scrape-results.test.tsx job-lead-card.test.tsx</code></td>
+<td>2 files, 16 tests passed in 907ms</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>TypeScript strict mode</td>
+<td><code>npx tsc --noEmit</code></td>
+<td>Exit 0, no errors</td>
+<td>✓ PASS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Probe Execution</h3>
+<p>Step 7c: SKIPPED — no <code>probe-*.sh</code> files declared in PLAN or present in <code>scripts/*/tests/</code>. Phase 9 is a UI rendering phase, not a migration or CLI tooling phase.</p>
+<hr>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JL-C8</td>
+<td>09-01-PLAN.md</td>
+<td>Detail page renders gracefully when <code>linkedinJobUrl</code> is null — link hidden, &quot;Company scrape&quot; badge shown, company name prominent</td>
+<td>✓ SATISFIED</td>
+<td><code>scrape-results.tsx</code> isCompanyScope branch ships company name in CardTitle + &quot;Company scrape&quot; Badge + null-guard on link. Pinned by <code>scrape-results.test.tsx</code> (9 tests). Employee count not yet satisfied (ROADMAP SC #3 partial).</td>
+</tr>
+<tr>
+<td>JL-C9</td>
+<td>09-01-PLAN.md</td>
+<td>List view visually distinguishes company-scope from job-URL leads</td>
+<td>✓ SATISFIED</td>
+<td><code>job-lead-card.tsx</code> ships IconBuildingCommunity + &quot;Company&quot; outline pill for isCompanyScope leads; sentinel suppressed. Pinned by <code>job-lead-card.test.tsx</code> (6 tests).</td>
+</tr>
+</tbody></table>
+<p><strong>REQUIREMENTS.md traceability:</strong> Both JL-C8 and JL-C9 are marked <code>[x]</code> (complete) in <code>.planning/REQUIREMENTS.md</code> lines 133-134 and recorded as Phase 9 / Complete in the traceability table (lines 209-210). No orphaned requirements found.</p>
+<p><strong>Partial gap note on JL-C8:</strong> REQUIREMENTS.md text for JL-C8 includes &quot;company name + employee count (once scraped) are shown prominently.&quot; The employee count clause is explicitly unmet and flagged in the gaps section below.</p>
+<hr>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>None</td>
+<td>—</td>
+<td>No TBD/FIXME/XXX/TODO/HACK/placeholder markers found in either modified component</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p>Scan ran on <code>scrape-results.tsx</code> and <code>job-lead-card.tsx</code>. Both files are clean. No stub <code>return null</code>, no hardcoded empty arrays, no <code>dangerouslySetInnerHTML</code>. React text children auto-escape (<code>VP Data &amp;amp; AI</code> confirmed by test assertions).</p>
+<hr>
+<h3>Human Verification Required</h3>
+<p>None. All must-have behaviors are mechanically testable via the rendered tests. The phase is a read-only rendering change of server-fetched props — no real-time behavior, no external service, no visual-only assertion.</p>
+<p>The one item that might warrant a visual check (that the &quot;Company scrape&quot; badge sits inline without overflowing the card at narrow widths) is not gating — the <code>flex items-center gap-2</code> wrapper is well-established in the codebase and the badge is not critical-path information per the UI spec.</p>
+<hr>
+<h3>Gaps Summary</h3>
+<p><strong>1 gap — ROADMAP SC #3 employee count (pre-planned product backlog item)</strong></p>
+<p>ROADMAP Phase 9 success criterion #3 requires: &quot;Company name and employee count (once scraped) are displayed prominently on the detail page for company-scope leads.&quot;</p>
+<ul>
+<li>The company-name half shipped (CardTitle slot, truth #1 verified).</li>
+<li>The employee-count half is absent. This was explicitly documented as out-of-scope before planning began (<code>09-CONTEXT.md &lt;deferred&gt;</code> section) because no upstream pipeline currently writes employee count for company-scope leads — <code>companies.employeeCount</code> exists in the schema but is not populated by the Phase 8 skill, and the detail RSC does not join <code>companies</code>.</li>
+</ul>
+<p>This is a known product gap deliberately parked, not an execution failure. The CONTEXT.md records it clearly: &quot;This is the one partial gap against ROADMAP Phase 9 success criterion #3 — name density ships, numeric count does not.&quot; However, since Phase 9 is the final phase in the ROADMAP and no subsequent phase absorbs this item, it cannot be deferred per Step 9b and must remain as a reported gap.</p>
+<p><strong>Root cause:</strong> The Phase 8 skill does not capture <code>employeeCount</code> during the LinkedIn <code>/company/&lt;slug&gt;/people/</code> scrape, so no data to display exists yet. The fix requires two coordinated steps: (1) skill-side: write employee count to <code>companies.employeeCount</code> or <code>scrapedData</code> during scrape; (2) UI-side: join <code>companies</code> in the detail RSC and render a count line in <code>scrape-results.tsx</code> under the company-name CardTitle.</p>
+<hr>
+<p><em>Verified: 2026-05-20T23:07:30Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
