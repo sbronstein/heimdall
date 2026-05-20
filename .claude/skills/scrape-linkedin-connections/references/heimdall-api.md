@@ -86,10 +86,9 @@ Status codes:
   "data": [
     {
       "id": "uuid",
-      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/..." | null,
-      "roleTitle": "VP Data" | "Company-wide scrape" | null,
+      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/...",
+      "roleTitle": "VP Data",
       "companyName": "Example Co",
-      "companyLinkedinUrl": "https://www.linkedin.com/company/example" | null,
       "status": "queued",
       "lastError": null,
       "updatedAt": "2026-05-14T08:00:00.000Z"
@@ -98,16 +97,6 @@ Status codes:
   "meta": { "cursor": "2026-05-14T08:00:00.000Z", "hasMore": false }
 }
 ```
-
-**Note (Phase 8 D-13):** `companyLinkedinUrl` is left-joined from `companies.linkedinUrl`.
-It is `null` when the lead has no `companyId`, OR when the linked company row has no
-`linkedinUrl` set. The drain skill uses this field to navigate directly to
-`<companyLinkedinUrl>/people/` for company-scope leads (`linkedinJobUrl === null`),
-skipping the job → company link-clicking dance.
-
-**Note (Phase 7 D-12 + Phase 8 D-12):** The discriminator for "is this a company-scope
-lead?" is `linkedinJobUrl === null`, not `roleTitle === 'Company-wide scrape'`. The
-sentinel role title is informational only.
 
 **Curl:**
 
@@ -251,94 +240,101 @@ The skill itself never POSTs to `/search`; it interacts with `/status` and
 
 ---
 
-### 5. `POST /api/job-leads` (Phase 7 + 8)
+### 7. `PATCH /api/contacts/[id]/enrichment`
 
-**Used by:** company-URL input, bare-name input pick. NOT used by drain mode (drain only PATCHes status on existing leads — the leads are already in the queue).
+**Used by:** profile-enrichment mode (single connection) and batch-sweep mode.
 
-**Body — discriminated union (Phase 7 D-01):** two shapes; first-match-wins via Zod `z.union`.
-
-Shape A — job-URL (existing job-URL flow; UI uses this; skill uses this when Branch 4 of the argument parser fires):
-
-```json
-{ "linkedinJobUrl": "https://www.linkedin.com/jobs/view/..." }
-```
-
-Shape B — company-scope (NEW in Phase 7, used by Phase 8 skill from the company-URL and bare-name flows):
+**Body:**
 
 ```json
 {
-  "companyName": "OpenAI",
-  "linkedinCompanyUrl": "https://www.linkedin.com/company/openai/"
+  "companyAtConnection": "OpenAI",
+  "roleAtConnection": "Member of Technical Staff"
 }
 ```
 
-(`linkedinCompanyUrl` is optional.)
+Both fields are optional and nullable. Max 300 chars each (server-side Zod
+`.max(300)`). Sending `null` for a field clears that field. Sending a missing key
+leaves the existing value unchanged (null-safe `??` merge on the server).
 
 **Side effects** (handled by the route — do NOT replicate in the skill):
 
-1. Looks up `companies` by case-insensitive name match.
-2. On match: backfills `companies.linkedinUrl` if it was null AND the request supplied one. Never overwrites a non-null `linkedinUrl` (protects user-curated data).
-3. On no match: auto-creates a stub `companies` row with `name` + optional `linkedinUrl`, plus schema defaults for everything else.
-4. Idempotent dedup: if an in-flight company-scope lead already exists for this company (status in `queued`/`searching`/`failed`, `archived_at IS NULL`), returns HTTP **200** with the existing row. Otherwise inserts a new lead and returns HTTP **201**.
-5. Emits a `job_lead_created` timeline event with `metadata.scope: 'company'`.
+1. Merges `companyAtConnection` and `roleAtConnection` with existing values
+   via `??` (incoming field ?? existing value) so callers can update one field
+   without clearing the other.
+2. Sets `enrichmentStatus = 'enriched'` (terminal — contact exits the sweep queue).
+3. Sets `enrichedAt` to the current timestamp.
+4. Sets `updatedAt` to the current timestamp.
+5. Emits a `contact_enriched` timeline event with `contactId` (and `companyId`
+   if the contact has one linked).
 
-**Response (both branches):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "linkedinJobUrl": null,
-    "roleTitle": "Company-wide scrape",
-    "companyName": "OpenAI",
-    "companyId": "uuid",
-    "status": "queued",
-    "...": "..."
-  }
-}
-```
-
-The skill handles 200 and 201 identically — use the returned lead, claim it via PATCH /status.
-
-**Curl (company-scope):**
-
-```bash
-TOKEN=$(cat ~/.heimdall/api-token)
-curl -s -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{"companyName":"OpenAI","linkedinCompanyUrl":"https://www.linkedin.com/company/openai/"}' \
-  http://localhost:4000/api/job-leads
-```
-
----
-
-### 6. `PUT /api/companies/[id]` (Phase 8 D-14 backfill)
-
-**Used by:** drain-mode fallback when a company-scope lead has `companyLinkedinUrl === null`. After running the bare-name disambiguation flow (per `references/linkedin-navigation.md` § Bare-name path), the skill backfills the URL so subsequent drains don't re-prompt.
-
-**Note on verb:** The actual route handler is **PUT**, not PATCH. CONTEXT.md refers to it as PATCH but the route exports `PUT` (verified in `src/app/api/companies/[id]/route.ts:55`). Use `-X PUT` in curl.
-
-**Body (the only field the skill writes):**
-
-```json
-{ "linkedinUrl": "https://www.linkedin.com/company/openai/" }
-```
-
-The route's `updateCompanySchema` (line 18 in the same file) declares `linkedinUrl` as `z.string().url().optional().nullable()` — accepts any valid URL or `null`.
-
-**Response:** `{ success: true, data: <updated company row> }`.
+**Response:** `{ success: true, data: <updated contact row> }`.
 
 **Curl:**
 
 ```bash
 TOKEN=$(cat ~/.heimdall/api-token)
-curl -s -X PUT \
+curl -s -X PATCH \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"linkedinUrl":"https://www.linkedin.com/company/openai/"}' \
-  "http://localhost:4000/api/companies/$COMPANY_ID"
+  -d '{"companyAtConnection":"OpenAI","roleAtConnection":"Member of Technical Staff"}' \
+  "http://localhost:4000/api/contacts/$CONTACT_ID/enrichment"
+```
+
+**Notes:**
+- Abort on `401` — token / env misconfig; surface and exit.
+- A `400` with a Zod message means a field exceeded 300 chars or had an invalid type;
+  truncate the value and retry, or surface and exit.
+- Do NOT write to the contacts table directly — CLI parity requires all writes go through REST.
+
+---
+
+### 8. `GET /api/contacts/enrichment-queue`
+
+**Used by:** batch-sweep mode (fetches the ordered list of contacts still missing
+at-connection fields).
+
+**Query params:**
+
+- `limit` — number of contacts to return (default 25, max 50). Pass this as your
+  per-session cap. Example: `?limit=30`.
+
+**Response shape:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "queue": [
+      {
+        "id": "uuid",
+        "linkedinUrl": "https://www.linkedin.com/in/alice",
+        "firstName": "Alice",
+        "lastName": "Smith"
+      }
+    ],
+    "count": 12
+  }
+}
+```
+
+`count` is the total queue depth (how many contacts still need enrichment across all
+pages, not just this batch). Only `id`, `linkedinUrl`, `firstName`, `lastName` are
+returned — PII minimization. The queue is ordered oldest-`linkedinConnectionDate`
+first for steady, deterministic progress through the backlog.
+
+**Exclusion logic** (server-side — the skill does not need to replicate):
+- Active contacts only (`archived_at IS NULL`).
+- Missing at least one at-connection field (`companyAtConnection IS NULL` OR
+  `roleAtConnection IS NULL`).
+- Not yet terminal (`enrichmentStatus != 'enriched'`).
+
+**Curl:**
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  'http://localhost:4000/api/contacts/enrichment-queue?limit=30'
 ```
 
 ---

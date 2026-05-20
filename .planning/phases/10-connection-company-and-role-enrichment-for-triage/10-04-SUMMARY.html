@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-04-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a3662972290131508/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-04-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: &quot;04&quot;
+subsystem: skill-docs
+tags: [skill, linkedin, enrichment, batch-sweep, pacing, documentation]
+dependency_graph:
+  requires: [10-02-enrichment-rest-surface]
+  provides: [scrape-linkedin-connections-enrichment-mode, paced-batch-sweep-mode, profile-page-nav-docs, pacing-docs]
+  affects:
+    - .claude/skills/scrape-linkedin-connections/SKILL.md
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md
+    - .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md
+    - .claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+tech_stack:
+  added: []
+  patterns: [argument-parsing-first-match-wins, per-profile-error-isolation, bearer-auth-curl, pacing-randomized-delay]
+key_files:
+  created: []
+  modified:
+    - .claude/skills/scrape-linkedin-connections/SKILL.md
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md
+    - .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md
+    - .claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+decisions:</p>
+<ul>
+<li>&quot;enrich keyword prefix routes to profile/sweep mode without colliding with existing bare-UUID job-lead branch&quot;</li>
+<li>&quot;pacing section embedded directly in SKILL.md batch-sweep loop as inline comments, cross-referenced to troubleshooting.md&quot;</li>
+<li>&quot;Profile-page path in linkedin-navigation.md is a sibling section (not inside Shared steps) because it is an independent flow that does not converge into the 2nd-degree filter path&quot;</li>
+<li>&quot;Failure write-back for batch-sweep is logged inline (not PATCH job-lead status) because enrichment failures are contact-level, not lead-level&quot;
+metrics:
+  duration: &quot;~5 min&quot;
+  completed: &quot;2026-05-20&quot;
+  tasks_completed: 2
+  files_modified: 4</li>
+</ul>
+<hr>
+<h1>Phase 10 Plan 04: Skill Enrichment Mode Extension Summary</h1>
+<p>Extended the existing <code>scrape-linkedin-connections</code> skill with a per-profile enrichment mode (navigate a connection&#39;s LinkedIn profile, extract company + role, write back via <code>PATCH /api/contacts/&lt;id&gt;/enrichment</code>) and a paced batch-sweep mode (fetch the enrichment queue, loop per-profile with randomized 20–90s delays and per-session cap, anti-bot back-off on checkpoint signals). Documented the pacing strategy in both SKILL.md and the troubleshooting reference.</p>
+<h2>What Was Built</h2>
+<p>Two new modes added to the existing skill (not a new skill) and four reference docs updated:</p>
+<ol>
+<li><p><strong>SKILL.md — Argument-parsing branches (enrich keyword):</strong> Added branches 2–4 to the first-match-wins ladder. Bare <code>enrich</code> → batch-sweep mode. <code>enrich &lt;uuid&gt;</code> → per-profile mode by contact ID. <code>enrich &lt;linkedin-profile-url&gt;</code> (path starts with <code>/in/</code>) → per-profile mode by URL. Bare UUID (no prefix) still routes to the existing single-lead job-lead flow — no collision.</p>
+</li>
+<li><p><strong>SKILL.md — <code>## Profile-enrichment mode (single connection)</code>:</strong> Mirrors the Single-lead mode shape: resolve contact → launch agent-browser → navigate to <code>/in/&lt;slug&gt;/</code> → extract <code>companyAtConnection</code> + <code>roleAtConnection</code> from the current/most-recent Experience block (best-effort, not historical) → write back via <code>PATCH /api/contacts/&lt;id&gt;/enrichment</code> using the bearer-auth curl pattern → confirm <code>{ success: true }</code>. Restates the no-direct-DB and no-token-logging constraints.</p>
+</li>
+<li><p><strong>SKILL.md — <code>## Batch-sweep mode (drain the enrichment backlog)</code>:</strong> Modeled on Drain mode. Fetches <code>GET /api/contacts/enrichment-queue?limit=&lt;cap&gt;</code>, renders a markdown table, asks the user to confirm, loops per-profile running the profile-enrichment flow. Per-profile error isolation (failure → log inline, continue — do NOT abort sweep). PACING STRATEGY documented inline in the loop: 20–90s randomized delay (<code>RANDOM % 70 + 20</code>), per-session cap of 25–40 (the <code>limit</code> param), anti-bot back-off (first checkpoint → 120–300s delay; second consecutive checkpoint → end session early). Cross-references troubleshooting.md.</p>
+</li>
+<li><p><strong><code>references/heimdall-api.md</code> — Endpoints 7 and 8:</strong> <code>### 7. PATCH /api/contacts/[id]/enrichment</code> documents body (both fields max 300 chars, optional/nullable), side effects (<code>enrichmentStatus=&#39;enriched&#39;</code>, <code>enrichedAt</code>, <code>updatedAt</code>, <code>contact_enriched</code> timeline event), response envelope, and bearer-auth curl block. <code>### 8. GET /api/contacts/enrichment-queue</code> documents the <code>limit</code> param (default 25, max 50), response shape (<code>{ queue: [{ id, linkedinUrl, firstName, lastName }], count }</code>), exclusion logic summary, and bearer-auth curl block.</p>
+</li>
+<li><p><strong><code>references/linkedin-navigation.md</code> — <code>## Profile-page path</code>:</strong> New sibling section covering slug derivation from <code>linkedinUrl</code>, navigation to <code>/in/&lt;slug&gt;/</code>, Experience section extraction with selector hints and fallback behaviors, best-effort caveat (not historical as-of-date reconstruction per CONTEXT.md §deferred), max 300 char truncation reminder, and pointer to heimdall-api.md §7 for write-back.</p>
+</li>
+<li><p><strong><code>references/troubleshooting.md</code> — Pacing / anti-bot back-off subsection:</strong> Added under <code>## LinkedIn navigation failed</code> (no sixth category). Documents the randomized inter-request delay range (20–90s, uniform random), per-session profile cap (25–40), first-checkpoint back-off (120–300s extended delay), two-consecutive-checkpoint early-exit protocol with user-facing message, sign-in drop handling, and session spacing recommendation (10–30 min after any checkpoint).</p>
+</li>
+</ol>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Task</th>
+<th>Commit</th>
+<th>Key Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Add per-profile enrichment mode + paced batch-sweep to SKILL.md</td>
+<td>182cf15</td>
+<td>.claude/skills/scrape-linkedin-connections/SKILL.md</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Document enrichment endpoints, profile-page nav, pacing/back-off in references</td>
+<td>53af998</td>
+<td>references/heimdall-api.md, references/linkedin-navigation.md, references/troubleshooting.md</td>
+</tr>
+</tbody></table>
+<h2>Verification</h2>
+<ul>
+<li><code>grep -c &quot;enrichment-queue&quot; SKILL.md</code> → 1 (confirmed)</li>
+<li><code>grep -c &quot;enrichment-queue&quot; references/heimdall-api.md</code> → 2 (confirmed)</li>
+<li><code>grep &quot;## Profile-enrichment mode&quot; SKILL.md</code> → found</li>
+<li><code>grep &quot;## Batch-sweep mode&quot; SKILL.md</code> → found</li>
+<li><code>grep -i pacing SKILL.md</code> → 3 matches including documented delay range</li>
+<li>Delay range <code>RANDOM % 70 + 20</code> (20–90s) present in SKILL.md batch-sweep loop</li>
+<li><code>grep &quot;## Profile-page path&quot; references/linkedin-navigation.md</code> → found; contains <code>/in/</code> references</li>
+<li><code>grep -i &#39;pacing|back-off|delay&#39; references/troubleshooting.md</code> → 9 matches</li>
+<li>Exactly five `## `` categories in troubleshooting.md (no sixth added)</li>
+<li>SKILL.md frontmatter description mentions profile-enrichment mode</li>
+<li>Write-back via REST PATCH only; SKILL.md restates no-direct-DB and no-token-logging constraints</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Threat Surface Scan</h2>
+<p>This plan modifies documentation files only (<code>.md</code> skill files). No new network endpoints, auth paths, database schema changes, or file access patterns introduced beyond what the plan&#39;s <code>&lt;threat_model&gt;</code> documents. T-10-10 (pacing documentation), T-10-11 (token logging constraint restated), T-10-12 (no-direct-DB constraint restated), and T-10-13 (bearer-auth curl pattern used) are all addressed.</p>
+<h2>Known Stubs</h2>
+<p>None. This plan is documentation-only; no code with placeholder values.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li>SKILL.md exists and contains <code>## Profile-enrichment mode (single connection)</code> — FOUND</li>
+<li>SKILL.md exists and contains <code>## Batch-sweep mode (drain the enrichment backlog)</code> — FOUND</li>
+<li>SKILL.md contains <code>enrichment-queue</code> — FOUND (1 occurrence)</li>
+<li>SKILL.md contains pacing documentation with 20–90s delay range — FOUND</li>
+<li>references/heimdall-api.md contains <code>### 7. PATCH /api/contacts/[id]/enrichment</code> — FOUND</li>
+<li>references/heimdall-api.md contains <code>### 8. GET /api/contacts/enrichment-queue</code> — FOUND</li>
+<li>references/linkedin-navigation.md contains <code>## Profile-page path</code> referencing <code>/in/</code> — FOUND</li>
+<li>references/troubleshooting.md contains pacing/back-off/delay documentation — FOUND (9 matches)</li>
+<li>references/troubleshooting.md still has exactly 5 categories (no sixth added) — FOUND</li>
+<li>Commits 182cf15 and 53af998 exist — FOUND</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a3662972290131508/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-04-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
