@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: 02
+type: execute
+wave: 2
+depends_on: [10-01]
+files_modified:</p>
+<ul>
+<li>src/app/api/contacts/[id]/enrichment/route.ts</li>
+<li>src/app/api/contacts/enrichment-queue/route.ts</li>
+<li>src/app/api/contacts/import/route.ts
+autonomous: true
+requirements: [ENR-02, ENR-03, ENR-04]
+must_haves:
+  truths:<ul>
+<li>&quot;A REST endpoint accepts scraped company/role for a contact, validates it, writes it back, sets enrichment status, and logs a timeline event&quot;</li>
+<li>&quot;A REST endpoint returns the batch-sweep queue: active contacts missing at-connection fields and not yet enriched, oldest connection first, capped&quot;</li>
+<li>&quot;CSV import seeds the new at-connection fields from the CSV Company/Position baseline without disturbing the ON CONFLICT dedup path&quot;</li>
+<li>&quot;Scraped strings written back are length-capped and validated (untrusted input)&quot;
+artifacts:</li>
+<li>path: &quot;src/app/api/contacts/[id]/enrichment/route.ts&quot;
+provides: &quot;PATCH write-back endpoint with Zod + envelope + logTimeline&quot;
+exports: [&quot;PATCH&quot;]</li>
+<li>path: &quot;src/app/api/contacts/enrichment-queue/route.ts&quot;
+provides: &quot;GET batch-sweep queue endpoint (active, missing fields, not enriched, capped)&quot;
+exports: [&quot;GET&quot;]</li>
+<li>path: &quot;src/app/api/contacts/import/route.ts&quot;
+provides: &quot;CSV seeding of companyAtConnection/roleAtConnection into the insert values&quot;
+contains: &quot;companyAtConnection&quot;
+key_links:</li>
+<li>from: &quot;src/app/api/contacts/[id]/enrichment/route.ts&quot;
+to: &quot;contacts table&quot;
+via: &quot;db.update().set({...}).where(eq(contacts.id, id))&quot;
+pattern: &quot;enrichmentStatus&quot;</li>
+<li>from: &quot;src/app/api/contacts/[id]/enrichment/route.ts&quot;
+to: &quot;timeline_events&quot;
+via: &quot;logTimeline after the committed write&quot;
+pattern: &quot;logTimeline&quot;</li>
+<li>from: &quot;src/app/api/contacts/enrichment-queue/route.ts&quot;
+to: &quot;contacts table&quot;
+via: &quot;db.select() with and(isNull(archivedAt), or(isNull(companyAtConnection), ...), ne(enrichmentStatus, &#39;enriched&#39;))&quot;
+pattern: &quot;enrichment_status|enrichmentStatus&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Build the REST surface the scrape skill writes through and reads from, and seed the new
+at-connection fields from the CSV import. No direct DB writes ever happen in the skill —
+the skill calls these endpoints (CLI parity invariant).<p>Purpose: Success criterion #2 (CSV seeding), #3 (write-back endpoint), and #4 (the queue the
+paced batch sweep iterates). The enrichment PATCH validates untrusted scraped strings (length
+caps), stamps <code>enrichmentStatus</code>/<code>enrichedAt</code>, and emits a timeline event per the write-side
+invariants in CLAUDE.md.</p>
+<p>Output: <code>PATCH /api/contacts/[id]/enrichment</code>, <code>GET /api/contacts/enrichment-queue</code>, and
+CSV-import seeding of <code>companyAtConnection</code>/<code>roleAtConnection</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-01-SUMMARY.md<interfaces>
+<!-- Response envelope + error factories. From src/lib/api/types.ts and src/lib/api/errors.ts -->
+  success(data)                       // 200 { success: true, data }
+  notFound(entity)                    // 404
+  validationError(message)            // 400
+  serverError(err)                    // 500 (logs 'API Error:')<!-- Timeline side-effect. From src/lib/db/timeline.ts -->
+<p>  logTimeline({ eventType, title, contactId?, companyId?, metadata? }): Promise</p>
+<!-- PATCH analog imports + catch pattern. From src/app/api/job-leads/[id]/status/route.ts -->
+<p>  import { db } from &#39;@/lib/db&#39;;
+  import { contacts } from &#39;../../../../../../drizzle/schema&#39;;   // 6 levels deep for [id]/enrichment
+  import { eq } from &#39;drizzle-orm&#39;;
+  import { success } from &#39;@/lib/api/types&#39;;
+  import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+  import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+  import { z } from &#39;zod&#39;;
+  // catch: if (err instanceof z.ZodError) return validationError(err.issues[0].message); return serverError(err);</p>
+<!-- New const array from Plan 01. From src/lib/domain/types.ts -->
+<p>  export const contactEnrichmentStatusValues = [&#39;unenriched&#39;,&#39;pending&#39;,&#39;enriched&#39;,&#39;failed&#39;] as const;</p>
+<!-- Active-rows + narrowed-select sweep combinators. From contacts/connections + import routes -->
+<p>  import { and, isNull, or, ne, asc } from &#39;drizzle-orm&#39;;
+  // active filter: isNull(contacts.archivedAt)</p>
+<!-- CSV import edit points. From src/app/api/contacts/import/route.ts -->
+<p>  // Candidate type lines 56-65 (already extracts <code>company</code> and <code>position</code> locals lines 81-82)
+  // candidates.push({...}) lines 91-100
+  // .values(toInsert.map(...)) lines 142-156
+  // .onConflictDoNothing({ target, where }) lines 171-174 — MUST stay byte-for-byte intact
+</interfaces>
+</context></p>
+<tasks><task type="auto" tdd="false">
+  <name>Task 1: Create the enrichment write-back PATCH endpoint</name>
+  <files>src/app/api/contacts/[id]/enrichment/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/status/route.ts (primary analog: PATCH handler, Zod, logTimeline, envelope, catch — lines 58-118)
+    - src/app/api/contacts/[id]/route.ts (secondary analog: contact PUT params shape, updatedAt: new Date(), notFound('Contact'), contact timeline event — lines 56-94)
+    - src/lib/db/timeline.ts (logTimeline signature)
+    - src/lib/api/errors.ts and src/lib/api/types.ts (envelope factories)
+    - src/lib/domain/types.ts (contactEnrichmentStatusValues from Plan 01)
+  </read_first>
+  <action>
+    Create `src/app/api/contacts/[id]/enrichment/route.ts` exporting an async `PATCH(request, { params }: { params: Promise<{ id: string }> })`. Import `contacts` via the 6-level relative path `'../../../../../../drizzle/schema'`.<pre><code>Define `enrichmentSchema = z.object({ companyAtConnection: z.string().max(300).optional().nullable(), roleAtConnection: z.string().max(300).optional().nullable() })`. The `.max(300)` caps are the sanitization boundary for untrusted scraped strings (threat T-10-03).
+
+Body: `await params` for `id`; `enrichmentSchema.parse(await request.json())`; select the contact by `eq(contacts.id, id)` limit 1; `if (!contact) return notFound(&#39;Contact&#39;)`. Then `db.update(contacts).set({ companyAtConnection: validated.companyAtConnection ?? contact.companyAtConnection, roleAtConnection: validated.roleAtConnection ?? contact.roleAtConnection, enrichmentStatus: &#39;enriched&#39;, enrichedAt: new Date(), updatedAt: new Date() }).where(eq(contacts.id, id)).returning()`. After the write, `logTimeline({ eventType: &#39;contact_enriched&#39;, title: \`Enriched ${updated.firstName} ${updated.lastName} (at-connection company/role)\`, contactId: updated.id, companyId: updated.companyId || undefined })`. Return `success(updated)`. Catch with the universal `z.ZodError → validationError(err.issues[0].message)` then `serverError(err)` pattern.
+
+Do NOT scope the update on `archivedAt` in the WHERE here — JIT/sweep callers only pass active ids, and the route returns the updated row regardless; soft-delete scoping lives in the queue selection (Task 2).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/app/api/contacts/[id]/enrichment/route.ts` exists and exports `PATCH`
+    - Zod schema caps both fields at `.max(300)` and they are `.optional().nullable()`
+    - The update sets `enrichmentStatus: 'enriched'`, `enrichedAt: new Date()`, and `updatedAt: new Date()`
+    - `logTimeline` is called after the write with `eventType: 'contact_enriched'` and `contactId`
+    - The catch block returns `validationError(err.issues[0].message)` for ZodError, else `serverError(err)`
+    - `npx tsc --noEmit` exits 0
+    - With dev server on :4000 and a valid bearer token, `curl -X PATCH -H "Authorization: Bearer $(cat ~/.heimdall/api-token)" -H 'Content-Type: application/json' -d '{"companyAtConnection":"OpenAI","roleAtConnection":"MTS"}' http://localhost:4000/api/contacts/<real-id>/enrichment` returns 200 + `{ success: true }`
+  </acceptance_criteria>
+  <done>The PATCH endpoint validates, writes back the two fields, stamps status/timestamps, logs a timeline event, and returns the envelope.</done>
+</task><task type="auto">
+  <name>Task 2: Create the batch-sweep queue GET endpoint</name>
+  <files>src/app/api/contacts/enrichment-queue/route.ts</files>
+  <read_first>
+    - src/app/api/contacts/connections/route.ts (analog: conditions[] + isNull(archivedAt) active filter — lines 37-44)
+    - src/app/api/contacts/import/route.ts (analog: narrowed select with selected columns + active filter — lines 113-123)
+    - src/lib/api/filters.ts (parseLimit pattern, if present — otherwise inline a capped Number parse)
+    - src/lib/api/types.ts (success envelope)
+  </read_first>
+  <action>
+    Create `src/app/api/contacts/enrichment-queue/route.ts` exporting async `GET(request)`. Parse a `limit` query param (default 25, hard-cap 50 — the per-session ceiling is enforced in the skill, but the endpoint must never return an unbounded set). Import combinators `and, isNull, or, ne, asc` from `drizzle-orm` and `contacts` via the 5-level relative path `'../../../../../drizzle/schema'`.<pre><code>Select only the columns the skill needs: `{ id: contacts.id, linkedinUrl: contacts.linkedinUrl, firstName: contacts.firstName, lastName: contacts.lastName }`. WHERE `and(isNull(contacts.archivedAt), or(isNull(contacts.companyAtConnection), isNull(contacts.roleAtConnection)), ne(contacts.enrichmentStatus, &#39;enriched&#39;))`. Order `asc(contacts.linkedinConnectionDate)` for steady oldest-first progress. `.limit(limit)`.
+
+Return `success({ queue: rows, count: rows.length })`. Catch with `serverError(err)`.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/app/api/contacts/enrichment-queue/route.ts` exists and exports `GET`
+    - WHERE uses `isNull(contacts.archivedAt)`, `or(isNull(companyAtConnection), isNull(roleAtConnection))`, and `ne(contacts.enrichmentStatus, 'enriched')`
+    - `orderBy(asc(contacts.linkedinConnectionDate))` is present
+    - Result is capped (default 25, max 50) — no unbounded select
+    - `npx tsc --noEmit` exits 0
+    - `curl -H "Authorization: Bearer $(cat ~/.heimdall/api-token)" 'http://localhost:4000/api/contacts/enrichment-queue?limit=5'` returns 200 + `{ success: true, data: { queue: [...], count } }`
+  </acceptance_criteria>
+  <done>The endpoint returns the capped, oldest-first queue of active contacts still missing at-connection fields and not yet enriched.</done>
+</task><task type="auto">
+  <name>Task 3: Seed at-connection fields from CSV import without disturbing the ON CONFLICT path</name>
+  <files>src/app/api/contacts/import/route.ts</files>
+  <read_first>
+    - src/app/api/contacts/import/route.ts (the file being modified — Candidate type 56-65, locals `company`/`position` 81-82, candidates.push 91-100, .values map 142-156, .onConflictDoNothing 171-174)
+    - .planning/phases/.../10-PATTERNS.md (§ import/route.ts — the two edit points + the untouched ON CONFLICT note)
+  </read_first>
+  <action>
+    Add `companyAtConnection: string | null` and `roleAtConnection: string | null` to the `Candidate` type. In the `candidates.push({...})` object, set `companyAtConnection: company` and `roleAtConnection: position` — reusing the already-parsed `company`/`position` locals (no new CSV parsing).<pre><code>In the bulk `.values(toInsert.map((c) =&gt; ({ ... })))`, add `companyAtConnection: c.companyAtConnection` and `roleAtConnection: c.roleAtConnection`. Add `enrichmentStatus` set to `&#39;enriched&#39;` when BOTH `c.companyAtConnection` and `c.roleAtConnection` are non-null (CSV provided the baseline, so the sweep skips the row); otherwise leave it to the schema default `&#39;unenriched&#39;` by omitting the key for those rows OR setting `&#39;unenriched&#39;` explicitly.
+
+Do NOT modify the `.onConflictDoNothing({ target, where })` call — it must remain byte-for-byte intact. The seed fields are added to the `.values()` rows only, never to the conflict target or predicate.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `Candidate` type and the `candidates.push` object both include `companyAtConnection` and `roleAtConnection` sourced from the existing `company`/`position` locals
+    - The `.values()` insert map includes `companyAtConnection`, `roleAtConnection`, and sets `enrichmentStatus: 'enriched'` when both CSV fields are present
+    - The `.onConflictDoNothing({ target: contacts.linkedinUrl, where: ... })` block is unchanged (same target + predicate)
+    - `npx tsc --noEmit` exits 0
+  </acceptance_criteria>
+  <done>CSV import seeds the at-connection baseline and marks CSV-complete rows as enriched, while the dedup ON CONFLICT path is untouched.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>scrape skill (CLI) → PATCH /enrichment</td>
+<td>bearer-authed; carries untrusted scraped strings from LinkedIn</td>
+</tr>
+<tr>
+<td>CSV file upload → import route</td>
+<td>untrusted user-supplied CSV content</td>
+</tr>
+<tr>
+<td>skill → GET /enrichment-queue</td>
+<td>bearer-authed read of contact ids/urls</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-10-03</td>
+<td>Tampering</td>
+<td>scraped strings written via PATCH /enrichment</td>
+<td>mitigate</td>
+<td>Zod <code>z.string().max(300)</code> length caps on both fields at the route entry; <code>.optional().nullable()</code> rejects non-string types; Drizzle query builder parameter-binds (no injection)</td>
+</tr>
+<tr>
+<td>T-10-04</td>
+<td>Spoofing</td>
+<td>PATCH /enrichment auth</td>
+<td>mitigate</td>
+<td>Bearer-token gate enforced by <code>src/proxy.ts</code> middleware (SHA-256 hash + SINGLE_USER_EMAIL); route inherits the global guard — no per-route bypass added</td>
+</tr>
+<tr>
+<td>T-10-05</td>
+<td>Information Disclosure</td>
+<td>enrichment-queue returns contact PII</td>
+<td>mitigate</td>
+<td>Endpoint returns only id/url/first/last (no email/phone/notes); behind the same bearer/Clerk middleware as all <code>/api</code> routes</td>
+</tr>
+<tr>
+<td>T-10-06</td>
+<td>Denial of Service</td>
+<td>unbounded queue select on 1500+ contacts</td>
+<td>mitigate</td>
+<td><code>limit</code> hard-capped at 50 server-side; <code>contacts_enrichment_status_idx</code> (Plan 01) backs the predicate</td>
+</tr>
+<tr>
+<td>T-10-SC</td>
+<td>Tampering</td>
+<td>npm installs</td>
+<td>accept</td>
+<td>Zero new packages added in this plan; all imports already in package-lock — RESEARCH Package Legitimacy gate N/A</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` exits 0 across all three files.
+- PATCH /enrichment returns 200 + `{ success: true }` for a real contact id; returns 404 for a bogus id; returns 400 for an over-length string.
+- GET /enrichment-queue returns a capped, oldest-first list of active unenriched contacts.
+- The import route's ON CONFLICT block is byte-for-byte unchanged (git diff shows no change to lines 171-174 logic).
+</verification><success_criteria>
+The skill can read its work queue and write enriched company/role back through REST (never
+direct DB); scraped input is length-capped; CSV import seeds the at-connection baseline and
+marks CSV-complete rows enriched without touching the dedup path.
+</success_criteria><output>
+Create `.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

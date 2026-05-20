@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>drizzle/schema/enums.ts</li>
+<li>drizzle/schema/contacts.ts</li>
+<li>src/lib/domain/types.ts</li>
+<li>drizzle/migrations/
+autonomous: true
+requirements: [ENR-01]
+must_haves:
+  truths:<ul>
+<li>&quot;The contacts table has dedicated at-connection company + role columns distinct from title/currentCompany&quot;</li>
+<li>&quot;An enrichment-status enum column drives the sweep/JIT skip logic and is queryable&quot;</li>
+<li>&quot;The live database has the new columns applied (not just the schema file), so routes can read/write them&quot;
+artifacts:</li>
+<li>path: &quot;drizzle/schema/contacts.ts&quot;
+provides: &quot;companyAtConnection, roleAtConnection, enrichmentStatus, enrichedAt columns + sweep index&quot;
+contains: &quot;company_at_connection&quot;</li>
+<li>path: &quot;drizzle/schema/enums.ts&quot;
+provides: &quot;contactEnrichmentStatusEnum pgEnum&quot;
+contains: &quot;contact_enrichment_status&quot;</li>
+<li>path: &quot;src/lib/domain/types.ts&quot;
+provides: &quot;contactEnrichmentStatusValues const array for Zod reuse&quot;
+contains: &quot;contactEnrichmentStatusValues&quot;</li>
+<li>path: &quot;drizzle/migrations/&quot;
+provides: &quot;Generated migration adding the four columns + enum + index&quot;
+contains: &quot;company_at_connection&quot;
+key_links:</li>
+<li>from: &quot;drizzle/schema/contacts.ts&quot;
+to: &quot;drizzle/schema/enums.ts&quot;
+via: &quot;contactEnrichmentStatusEnum import + column reference&quot;
+pattern: &quot;contactEnrichmentStatusEnum&quot;</li>
+<li>from: &quot;live database&quot;
+to: &quot;drizzle/schema/contacts.ts&quot;
+via: &quot;npm run db:generate + npm run db:push&quot;
+pattern: &quot;company_at_connection&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Add the dedicated at-connection company/role columns and enrichment-status tracking to the
+`contacts` table, generate the Drizzle migration, and push it to the live database. This is
+the foundation every other Phase 10 plan reads/writes against.<p>Purpose: Success criterion #2 requires a schema field that captures company + role at
+connection, distinct from the existing <code>title</code>/<code>currentCompany</code>. The enrichment-status
+column drives the batch-sweep selection (criterion #4) and the JIT skip logic (criterion #5).</p>
+<p>Output: New columns <code>companyAtConnection</code>, <code>roleAtConnection</code>, <code>enrichedAt</code>, and an
+<code>enrichmentStatus</code> enum column on <code>contacts</code>; a sweep-supporting index; a generated migration;
+the migration applied to the live DB so downstream API routes type-check AND run.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md<interfaces>
+<!-- Existing column + index block the new columns mirror. From drizzle/schema/contacts.ts -->
+Existing import-tracking columns (the group to append into):
+  linkedinConnectionDate: timestamp('linkedin_connection_date'),
+  importSource: text('import_source'),
+  importedAt: timestamp('imported_at'),<p>Existing enum-column reference pattern (drizzle/schema/contacts.ts):
+  outreachStatus: outreachStatusEnum(&#39;outreach_status&#39;).default(&#39;not_reached_out&#39;),</p>
+<p>Existing enum definition pattern (drizzle/schema/enums.ts — jobLeadStatusEnum):
+  export const jobLeadStatusEnum = pgEnum(&#39;job_lead_status&#39;, [&#39;pending&#39;, &#39;scraping&#39;, ...]);</p>
+<p>Existing index array entries (drizzle/schema/contacts.ts):
+  index(&#39;contacts_archived_at_idx&#39;).on(table.archivedAt),
+  index(&#39;contacts_linkedin_connection_date_idx&#39;).on(table.linkedinConnectionDate)</p>
+<p>Existing enum value-array pattern (src/lib/domain/types.ts):
+  export const outreachStatusValues = [&#39;not_reached_out&#39;, ...] as const;
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Add enrichment-status enum + at-connection columns + sweep index to the schema</name>
+  <read_first>
+    - drizzle/schema/enums.ts (analog: jobLeadStatusEnum lines 160-171, outreachStatusEnum lines 144-150)
+    - drizzle/schema/contacts.ts (the file being modified — column group lines 34-37, enum column lines 27-30, index array lines 58-69)
+    - src/lib/domain/types.ts (analog: outreachStatusValues lines 197-203 — the const-array convention reused by Zod)
+  </read_first>
+  <action>
+    In `drizzle/schema/enums.ts`, add `export const contactEnrichmentStatusEnum = pgEnum('contact_enrichment_status', ['unenriched', 'pending', 'enriched', 'failed'])` following the existing pgEnum shape.<pre><code>In `drizzle/schema/contacts.ts`: import `contactEnrichmentStatusEnum` from `./enums` alongside the existing enum imports. In the `// Import tracking` group, add `companyAtConnection: text(&#39;company_at_connection&#39;)` and `roleAtConnection: text(&#39;role_at_connection&#39;)`. Add `enrichmentStatus: contactEnrichmentStatusEnum(&#39;enrichment_status&#39;).default(&#39;unenriched&#39;)` and `enrichedAt: timestamp(&#39;enriched_at&#39;)`. In the index array, add `index(&#39;contacts_enrichment_status_idx&#39;).on(table.enrichmentStatus)` to support the batch-sweep predicate (active rows not yet enriched).
+
+In `src/lib/domain/types.ts`, add `export const contactEnrichmentStatusValues = [&#39;unenriched&#39;, &#39;pending&#39;, &#39;enriched&#39;, &#39;failed&#39;] as const;` so the enrichment PATCH route (Plan 02) reuses it in Zod, matching how outreachStatusValues is reused.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `drizzle/schema/enums.ts` contains `pgEnum('contact_enrichment_status'` with values `unenriched`, `pending`, `enriched`, `failed`
+    - `drizzle/schema/contacts.ts` contains `company_at_connection`, `role_at_connection`, `enrichment_status`, `enriched_at`, and `contacts_enrichment_status_idx`
+    - `src/lib/domain/types.ts` contains `contactEnrichmentStatusValues`
+    - `npx tsc --noEmit` exits 0
+  </acceptance_criteria>
+  <done>The four new columns, the enum, the sweep index, and the const value array all exist and type-check.</done>
+</task><task type="checkpoint:human-verify" gate="blocking">
+  <name>Task 2: [BLOCKING] Generate + push the Drizzle migration to the live database</name>
+  <what-built>
+    Schema changes from Task 1 are written to the schema files but the live Neon database
+    does not yet have the columns. Build/type checks pass WITHOUT the push (types come from the
+    schema file, not the live DB) — a false-positive verification state. This task generates and
+    applies the migration so downstream routes both type-check AND execute against real columns.
+  </what-built>
+  <read_first>
+    - drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql (analog: enum-value + column ADD)
+    - drizzle/migrations/0008_phase6_indexes.sql (analog: CREATE INDEX + partial unique index syntax)
+    - CLAUDE.md (commands: db:generate, db:push)
+  </read_first>
+  <action>
+    Run `npm run db:generate` to emit a new `drizzle/migrations/00XX_*.sql` from the schema diff.
+    Inspect the generated SQL: it must `CREATE TYPE "public"."contact_enrichment_status"`, add the four `ALTER TABLE "contacts" ADD COLUMN` statements (`company_at_connection`, `role_at_connection`, `enrichment_status`, `enriched_at`), and `CREATE INDEX "contacts_enrichment_status_idx"`. Verify statements are separated by `--> statement-breakpoint` (compare against the analog migrations). Then run `npm run db:push` to apply it to the live Neon DB.<pre><code>If the generator emits anything that would drop or rename an existing column (it must not — these are pure additions), STOP and report rather than pushing.
+</code></pre>
+  </action>
+  <how-to-verify>
+    1. `npm run db:generate` produced a new file under `drizzle/migrations/` whose SQL contains `company_at_connection`, `contact_enrichment_status`, and `contacts_enrichment_status_idx`.
+    2. `npm run db:push` completed without error and reported the new columns/enum/index applied (no destructive prompts accepted).
+    3. The generated SQL contains only ADD/CREATE statements for these objects — no DROP/ALTER...DROP of existing columns.
+  </how-to-verify>
+  <resume-signal>Type "approved" once the migration is generated and the push succeeded against the live DB, or describe the issue.</resume-signal>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>migration tooling → live DB</td>
+<td><code>npm run db:push</code> mutates the production Neon schema</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-10-01</td>
+<td>Tampering</td>
+<td><code>npm run db:push</code> against live Neon</td>
+<td>mitigate</td>
+<td>Task 2 inspects generated SQL for DROP/rename before pushing; only additive ADD COLUMN / CREATE statements are accepted; blocking human checkpoint gates the push</td>
+</tr>
+<tr>
+<td>T-10-02</td>
+<td>Denial of Service</td>
+<td>new partial/sweep index build on <code>contacts</code> (1500+ rows)</td>
+<td>accept</td>
+<td><code>contacts_enrichment_status_idx</code> is a small btree on an indexed-cardinality enum; build is sub-second at current row count; no online-rebuild concern</td>
+</tr>
+<tr>
+<td>T-10-SC</td>
+<td>Tampering</td>
+<td>npm install during db tooling</td>
+<td>accept</td>
+<td>No new packages installed in this plan (drizzle-kit already present per package-lock); RESEARCH Package Legitimacy gate N/A — zero new deps</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` exits 0 after schema + types changes.
+- Generated migration SQL contains the four columns, the enum, and the index.
+- `npm run db:push` applied cleanly to the live DB.
+- No existing column dropped or renamed.
+</verification><success_criteria>
+The `contacts` table (schema file AND live DB) has `companyAtConnection`, `roleAtConnection`,
+`enrichmentStatus` (enum, default `unenriched`), and `enrichedAt`, plus a sweep-supporting index,
+and `contactEnrichmentStatusValues` is exported for downstream Zod reuse.
+</success_criteria><output>
+Create `.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

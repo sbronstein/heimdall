@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: 03
+type: execute
+wave: 3
+depends_on: [10-01, 10-02]
+files_modified:</p>
+<ul>
+<li>src/features/job-leads/components/recommendation-card.tsx</li>
+<li>src/features/job-leads/components/recommendation-list.tsx</li>
+<li>src/app/api/job-leads/[id]/recommendations/route.ts
+autonomous: true
+requirements: [ENR-05, ENR-06]
+must_haves:
+  truths:<ul>
+<li>&quot;The triage recommendation view renders each connection&#39;s company + role-at-connection alongside the existing fields&quot;</li>
+<li>&quot;When triaging a company&#39;s shared connections, mutual connections still missing company/role are flagged/enriched just-in-time without requiring the full backlog processed first&quot;</li>
+<li>&quot;The recommendations route stays a pure READ — it surfaces enrichment need and triggers it through the REST PATCH endpoint, never writing the contacts table inline&quot;
+artifacts:</li>
+<li>path: &quot;src/features/job-leads/components/recommendation-card.tsx&quot;
+provides: &quot;Render of companyAtConnection + roleAtConnection per card&quot;
+contains: &quot;companyAtConnection&quot;</li>
+<li>path: &quot;src/features/job-leads/components/recommendation-list.tsx&quot;
+provides: &quot;Passes the new fields from rec.contact into the card props&quot;
+contains: &quot;companyAtConnection&quot;</li>
+<li>path: &quot;src/app/api/job-leads/[id]/recommendations/route.ts&quot;
+provides: &quot;JIT detection of contacts missing at-connection fields; meta.pendingEnrichment&quot;
+contains: &quot;pendingEnrichment&quot;
+key_links:</li>
+<li>from: &quot;src/features/job-leads/components/recommendation-list.tsx&quot;
+to: &quot;src/features/job-leads/components/recommendation-card.tsx&quot;
+via: &quot;companyAtConnection / roleAtConnection props from rec.contact&quot;
+pattern: &quot;companyAtConnection&quot;</li>
+<li>from: &quot;src/app/api/job-leads/[id]/recommendations/route.ts&quot;
+to: &quot;PATCH /api/contacts/[id]/enrichment&quot;
+via: &quot;JIT trigger routes the WRITE through the REST endpoint, not inline db.update&quot;
+pattern: &quot;pendingEnrichment|enrichment&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Render the at-connection company + role in the triage recommendation view, and add the
+just-in-time enrichment path: when triaging a company's shared connections, any mutual
+connection still missing company/role is surfaced (and triggered) for enrichment at that
+moment — without requiring the full backlog processed first.<p>Purpose: Success criterion #1 (triage view renders company + role-at-connection) and #5 (JIT
+enrichment on the company-triage path). The recommendations route must remain a pure READ for
+the recommendation computation; the JIT WRITE goes through <code>PATCH /api/contacts/[id]/enrichment</code>
+(Plan 02) — the no-inline-DB-write invariant flagged in CONTEXT.md.</p>
+<p>Output: Card + list render the new fields; the recommendations route reports
+<code>meta.pendingEnrichment</code> and triggers JIT enrichment via the REST endpoint.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-01-SUMMARY.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md<interfaces>
+<!-- PrioritizedRecommendation.contact is the full Contact Drizzle type (gains the new columns
+     once Plan 01 lands — NO prioritization.ts change). From src/features/job-leads/lib/prioritization.ts -->
+  export type PrioritizedRecommendation = {
+    contact: Contact;                 // Contact now includes companyAtConnection, roleAtConnection, enrichmentStatus
+    score: number;
+    prospects: Array<{ prospect: Prospect; bridgeScore: number }>;
+  };<!-- Card prop-passing point. From src/features/job-leads/components/recommendation-list.tsx lines 75-87 -->
+<p>  &lt;RecommendationCard
+    contactName={<code>${rec.contact.firstName} ${rec.contact.lastName}</code>}
+    closeness={rec.contact.closeness}
+    lastContactDate={rec.contact.lastContactDate}
+    score={rec.score}
+    prospects={...}
+    onRequestIntro={...}
+  /&gt;</p>
+<!-- Card render points. From src/features/job-leads/components/recommendation-card.tsx -->
+<p>  // RecommendationCardProps interface lines 23-35 (add two optional <code>string | null</code> props)
+  // &quot;Last contact&quot; muted subline lines 60-64 — model the new line on this
+  // &lt;Badge variant=&#39;outline&#39; ...&gt; in-component badge convention lines 51-58 / 93-98</p>
+<!-- Recommendations route read+meta shape to preserve. From src/app/api/job-leads/[id]/recommendations/route.ts -->
+<p>  const rows = await db.select({ prospect, bridge, contact }).from(prospectBridges)
+    .innerJoin(prospects, ...).innerJoin(contacts, ...).where(eq(prospects.jobLeadId, id));   // line 31-40
+  const recommendations = buildRecommendations(rows);                                          // line 42
+  return success({ recommendations, meta: { totalProspects, totalBridges, totalContacts } });  // line 44-52</p>
+<!-- The JIT write endpoint (Plan 02). PATCH /api/contacts/[id]/enrichment { companyAtConnection, roleAtConnection } -->
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Render at-connection company + role on the recommendation card and list</name>
+  <files>src/features/job-leads/components/recommendation-card.tsx, src/features/job-leads/components/recommendation-list.tsx</files>
+  <read_first>
+    - src/features/job-leads/components/recommendation-card.tsx (the file being modified — props interface 23-35, last-contact subline 60-64, Badge convention 51-58)
+    - src/features/job-leads/components/recommendation-list.tsx (the file being modified — card prop-passing 75-87)
+    - src/features/job-leads/lib/prioritization.ts (PrioritizedRecommendation.contact is full Contact — confirms the new fields are available, no change here)
+  </read_first>
+  <action>
+    In `recommendation-card.tsx`: add `companyAtConnection?: string | null` and `roleAtConnection?: string | null` to `RecommendationCardProps`. Destructure them in the component signature. Below the existing "Last contact" muted subline (the `lastContactDate &&` block), add a sibling muted line that renders the company + role-at-connection when present — e.g. `{(companyAtConnection || roleAtConnection) && (<p className='text-muted-foreground mt-0.5 text-xs'>{[roleAtConnection, companyAtConnection].filter(Boolean).join(' @ ')}</p>)}`. Use the same `text-muted-foreground mt-0.5 text-xs` styling as the last-contact line for visual consistency.<pre><code>In `recommendation-list.tsx`: in the `&lt;RecommendationCard&gt;` mapping, pass `companyAtConnection={rec.contact.companyAtConnection}` and `roleAtConnection={rec.contact.roleAtConnection}` from the full Contact object.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit && npm run build</automated>
+  </verify>
+  <acceptance_criteria>
+    - `recommendation-card.tsx` `RecommendationCardProps` contains `companyAtConnection` and `roleAtConnection` as optional `string | null`
+    - The card renders a muted subline showing role/company-at-connection when either field is present
+    - `recommendation-list.tsx` passes `companyAtConnection={rec.contact.companyAtConnection}` and `roleAtConnection={rec.contact.roleAtConnection}`
+    - `npx tsc --noEmit` exits 0 and `npm run build` succeeds
+  </acceptance_criteria>
+  <done>The triage recommendation view shows each connection's company + role-at-connection alongside the existing fields.</done>
+</task><task type="auto">
+  <name>Task 2: Add just-in-time enrichment detection + REST-triggered enrichment to the recommendations route</name>
+  <files>src/app/api/job-leads/[id]/recommendations/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/recommendations/route.ts (the file being modified — join 31-40, buildRecommendations 42, success+meta 44-52, "pure read" comment 28-30)
+    - src/app/api/contacts/[id]/enrichment/route.ts (Plan 02 — the PATCH endpoint the JIT path MUST call instead of writing inline)
+    - .planning/phases/.../10-PATTERNS.md (§ recommendations/route.ts — the hook point + the no-direct-DB-write invariant)
+    - .planning/phases/.../10-CONTEXT.md (§ specifics — JIT path detail)
+  </read_first>
+  <action>
+    After the join produces `rows` (line 40) and before `buildRecommendations` (line 42), compute the set of contacts whose `companyAtConnection` AND `roleAtConnection` are both null and whose `enrichmentStatus !== 'enriched'`. These are the JIT-eligible mutual connections.<pre><code>Do NOT write the contacts table inline (architectural invariant — recommendations stays a pure read for the recommendation computation). Instead, surface the need in `meta`: extend the existing `meta` object with `pendingEnrichment: &lt;count&gt;` and `pendingEnrichmentContactIds: &lt;string[]&gt;` (additive — do NOT rename the existing keys `totalProspects`/`totalBridges`/`totalContacts`, which `recommendation-list.tsx:25` reads via `data.recommendations`).
+
+For the JIT trigger itself: the WRITE must go through `PATCH /api/contacts/[id]/enrichment`. Since the scrape requires the agent-browser skill (not available in a serverless request), the route&#39;s JIT responsibility is to (a) flip eligible contacts&#39; `enrichmentStatus` toward `&#39;pending&#39;` via the existing PATCH endpoint by issuing an internal authenticated fetch to `/api/contacts/&lt;id&gt;/enrichment` per pending contact (using the bearer token from the request&#39;s own Authorization header, forwarded), and (b) report them in `meta.pendingEnrichment`. The actual company/role backfill happens when the skill drains the queue (Plan 04) — JIT here means the contacts are marked pending the instant they surface during company triage, not after the full backlog. Keep the recommendation computation itself unchanged.
+
+If forwarding the bearer header is not viable in this context, fall back to ONLY reporting `pendingEnrichment`/`pendingEnrichmentContactIds` in meta (no status flip) and document that the UI/skill consumes the ids — never add an inline `db.update(contacts)` to this route.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit && npm run build</automated>
+  </verify>
+  <acceptance_criteria>
+    - The route detects contacts with both at-connection fields null and `enrichmentStatus !== 'enriched'`
+    - `meta` gains `pendingEnrichment` (count) and `pendingEnrichmentContactIds` (string[]); existing `totalProspects`/`totalBridges`/`totalContacts` keys are unchanged
+    - There is NO `db.update(contacts)` or any direct contacts-table write in this route file (grep: route file contains no `db.update(contacts)` and no `db.insert(contacts)`)
+    - The recommendation computation (`buildRecommendations(rows)`) is unchanged
+    - `npx tsc --noEmit` exits 0 and `npm run build` succeeds
+    - `curl -H "Authorization: Bearer $(cat ~/.heimdall/api-token)" http://localhost:4000/api/job-leads/<id>/recommendations` returns 200 with `meta.pendingEnrichment` present
+  </acceptance_criteria>
+  <done>Triaging a company's shared connections surfaces (and marks pending) mutual connections still missing company/role, just-in-time, with the write routed through the REST enrichment endpoint and no inline DB write.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>browser (triage UI) → recommendations route</td>
+<td>authed read; renders contact PII into the DOM</td>
+</tr>
+<tr>
+<td>recommendations route → PATCH /enrichment</td>
+<td>server-to-server authenticated fetch forwarding the bearer header</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-10-07</td>
+<td>Elevation of Privilege</td>
+<td>JIT path writing to contacts</td>
+<td>mitigate</td>
+<td>The recommendations route never calls <code>db.update(contacts)</code>; all writes route through the audited PATCH /enrichment endpoint (Zod + logTimeline + envelope). Acceptance criteria assert no inline write</td>
+</tr>
+<tr>
+<td>T-10-08</td>
+<td>Information Disclosure</td>
+<td>bearer token forwarded server-to-server for JIT</td>
+<td>mitigate</td>
+<td>Token is read from the incoming request&#39;s Authorization header and forwarded only to the same-origin localhost endpoint; never logged (no console.log of the header); falls back to meta-only reporting if forwarding is not viable</td>
+</tr>
+<tr>
+<td>T-10-09</td>
+<td>Tampering</td>
+<td>rendering scraped company/role into the DOM</td>
+<td>accept</td>
+<td>React escapes interpolated strings by default; values were already length-capped at write time (T-10-03); no <code>dangerouslySetInnerHTML</code></td>
+</tr>
+<tr>
+<td>T-10-SC</td>
+<td>Tampering</td>
+<td>npm installs</td>
+<td>accept</td>
+<td>Zero new packages added in this plan — RESEARCH Package Legitimacy gate N/A</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` exits 0 and `npm run build` succeeds.
+- The recommendation card visibly renders role/company-at-connection.
+- The recommendations route reports `meta.pendingEnrichment` and contains no inline `db.update(contacts)`/`db.insert(contacts)`.
+- Existing meta keys (`totalProspects`/`totalBridges`/`totalContacts`) and `data.recommendations` shape are unchanged.
+</verification><success_criteria>
+The triage view renders each connection's company + role-at-connection (criterion #1), and the
+company-triage path surfaces + marks-pending mutual connections still missing the fields
+just-in-time (criterion #5) — with every write routed through the REST enrichment endpoint and
+no inline DB write in the recommendations route.
+</success_criteria><output>
+Create `.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-03-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

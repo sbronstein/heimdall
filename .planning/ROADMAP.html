@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/ROADMAP.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>.planning/ROADMAP.md</code> · Rendered from markdown · May lag behind</div>
 
 <h1>Roadmap: Heimdall</h1>
 <h2>Overview</h2>
@@ -69,6 +69,7 @@ img { max-width: 100%; height: auto; }
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 7: Schema + API for Company-Scope Leads</strong> - Nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 8: Skill Input Parsing, Navigation Branching + Drain</strong> - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches (completed 2026-05-19)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 9: UI for Company-Scope Leads</strong> - Detail page and list view render company-scope leads cleanly without broken job-URL affordances (completed 2026-05-20)</li>
+<li><input disabled="" type="checkbox"> <strong>Phase 10: Connection Company + Role Enrichment for Triage</strong> - Surface each connection&#39;s company and role <em>at time of connection</em> in the triage flow; backfill the gap (absent from LinkedIn&#39;s CSV export) with an agent-browser skill that scrapes profiles with human-like anti-bot pacing, plus just-in-time enrichment of mutual connections during company shared-connection triage</li>
 </ul>
 <h2>Phase Details</h2>
 <h3>Phase 1: Critical Bug Fix</h3>
@@ -276,7 +277,7 @@ Plans:</li>
 </ul>
 <h2>Progress</h2>
 <p><strong>Execution Order:</strong>
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9</p>
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10</p>
 <table>
 <thead>
 <tr>
@@ -340,12 +341,53 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 <td>Complete</td>
 <td>2026-05-20</td>
 </tr>
+<tr>
+<td>10. Connection Company + Role Enrichment for Triage</td>
+<td>0/?</td>
+<td>Not planned</td>
+<td>—</td>
+</tr>
 </tbody></table>
+<h3>Phase 10: Connection Company + Role Enrichment for Triage</h3>
+<p><strong>Goal:</strong> The triage flow shows each connection&#39;s company and role <em>as it was at the time of connection</em>, so the owner can judge an introduction&#39;s value at a glance. Because LinkedIn&#39;s connections CSV export does not reliably include this field, a runnable agent-browser skill backfills it by scraping individual profiles — paced to avoid looking like bot activity across a 1000+ profile backlog — and the data is also pulled just-in-time for the mutual connections surfaced when triaging a specific company.</p>
+<p><strong>Depends on:</strong> Phase 9
+<strong>Requirements</strong>: ENR-01, ENR-02, ENR-03, ENR-04, ENR-05, ENR-06</p>
+<p><strong>Requirement → Criteria → Plan map (derived during planning):</strong></p>
+<ul>
+<li><strong>ENR-01</strong> — At-connection schema fields (<code>companyAtConnection</code>, <code>roleAtConnection</code>, <code>enrichmentStatus</code>, <code>enrichedAt</code>) + sweep index → criterion #2 (schema) → Plan 10-01</li>
+<li><strong>ENR-02</strong> — CSV import seeds the at-connection baseline without disturbing the dedup path → criterion #2 (population) → Plan 10-02</li>
+<li><strong>ENR-03</strong> — REST write-back endpoint + skill per-profile scrape mode → criterion #3 → Plans 10-02, 10-04</li>
+<li><strong>ENR-04</strong> — Paced batch-sweep + documented anti-bot pacing strategy → criterion #4 → Plans 10-02 (queue), 10-04 (sweep + docs)</li>
+<li><strong>ENR-05</strong> — Just-in-time enrichment on the company-triage path (no inline DB write) → criterion #5 → Plan 10-03</li>
+<li><strong>ENR-06</strong> — Triage view renders company + role-at-connection → criterion #1 → Plan 10-03</li>
+</ul>
+<p><strong>Success Criteria</strong> (what must be TRUE — to be sharpened during /gsd-plan-phase):</p>
+<ol>
+<li>The triage view renders each connection&#39;s company and role-at-time-of-connection alongside the existing connection fields</li>
+<li>A schema field captures company + role-at-connection per connection, populated from the CSV import where available</li>
+<li>A runnable agent-browser skill scrapes company + role from a connection&#39;s LinkedIn profile when the CSV lacks it, and writes it back to the connection record</li>
+<li>The scraping skill paces requests to mimic human behavior (randomized delays, throttling/session caps) so a 1000+ profile sweep does not present as obvious bot activity — pacing strategy documented</li>
+<li>When building a company&#39;s shared-connection triage list, any mutual connections still missing company/role are enriched on demand at that moment (just-in-time), without requiring the full backlog to be processed first</li>
+</ol>
+<p><strong>Open questions for planning:</strong></p>
+<ul>
+<li>Confirm whether LinkedIn&#39;s <code>Connections.csv</code> export actually omits company/role-at-connection (likely yes for &quot;at time of connection&quot;) vs. only providing <em>current</em> company/title</li>
+<li>Reuse the existing Phase 5/8 agent-browser scrape skill harness vs. a new dedicated skill</li>
+<li>Backlog processing model: batch sweep vs. purely on-demand vs. both; where scrape state/queue lives</li>
+</ul>
+<p><strong>Plans:</strong> 4 plans</p>
+<p>Plans:</p>
+<ul>
+<li><input disabled="" type="checkbox"> 10-01-PLAN.md — Schema: at-connection columns + enrichment-status enum + migration + [BLOCKING] db:push (Wave 1)</li>
+<li><input disabled="" type="checkbox"> 10-02-PLAN.md — REST: enrichment write-back PATCH + batch-sweep queue GET + CSV import seeding (Wave 2)</li>
+<li><input disabled="" type="checkbox"> 10-03-PLAN.md — Triage UI render of company/role-at-connection + just-in-time enrichment hook (Wave 3)</li>
+<li><input disabled="" type="checkbox"> 10-04-PLAN.md — Skill: per-profile scrape mode + paced batch-sweep + pacing/back-off docs (Wave 3)</li>
+</ul>
 
 
 
 <footer>
-Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/ROADMAP.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>.planning/ROADMAP.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>

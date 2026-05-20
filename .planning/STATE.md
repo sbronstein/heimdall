@@ -79,6 +79,10 @@ None yet.
 - LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)
 - Phase 7 must verify whether `linkedinJobUrl` and `roleTitle` are already nullable in the current schema (Phase 5 may have added nullable `linkedinJobUrl`) — planner should check `drizzle/schema/job-leads.ts` before writing the migration plan
 
+### Roadmap Evolution
+
+- Phase 10 added (2026-05-20): Connection Company + Role Enrichment for Triage — surface company/role-at-time-of-connection in triage, agent-browser skill to backfill the CSV gap with anti-bot pacing across 1000+ profiles, plus just-in-time enrichment of mutual connections during company shared-connection triage.
+
 ## Deferred Items
 
 Items acknowledged and carried forward from v1.0:

@@ -23,6 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)
 - [x] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches (completed 2026-05-19)
 - [x] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances (completed 2026-05-20)
+- [ ] **Phase 10: Connection Company + Role Enrichment for Triage** - Surface each connection's company and role *at time of connection* in the triage flow; backfill the gap (absent from LinkedIn's CSV export) with an agent-browser skill that scrapes profiles with human-like anti-bot pacing, plus just-in-time enrichment of mutual connections during company shared-connection triage
 
 ## Phase Details
 
@@ -198,7 +199,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -211,3 +212,39 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
 | 8. Skill Input Parsing, Navigation Branching + Drain | 3/3 | Complete   | 2026-05-19 |
 | 9. UI for Company-Scope Leads | 1/1 | Complete   | 2026-05-20 |
+| 10. Connection Company + Role Enrichment for Triage | 0/? | Not planned | — |
+
+### Phase 10: Connection Company + Role Enrichment for Triage
+
+**Goal:** The triage flow shows each connection's company and role *as it was at the time of connection*, so the owner can judge an introduction's value at a glance. Because LinkedIn's connections CSV export does not reliably include this field, a runnable agent-browser skill backfills it by scraping individual profiles — paced to avoid looking like bot activity across a 1000+ profile backlog — and the data is also pulled just-in-time for the mutual connections surfaced when triaging a specific company.
+
+**Depends on:** Phase 9
+**Requirements**: ENR-01, ENR-02, ENR-03, ENR-04, ENR-05, ENR-06
+
+**Requirement → Criteria → Plan map (derived during planning):**
+  - **ENR-01** — At-connection schema fields (`companyAtConnection`, `roleAtConnection`, `enrichmentStatus`, `enrichedAt`) + sweep index → criterion #2 (schema) → Plan 10-01
+  - **ENR-02** — CSV import seeds the at-connection baseline without disturbing the dedup path → criterion #2 (population) → Plan 10-02
+  - **ENR-03** — REST write-back endpoint + skill per-profile scrape mode → criterion #3 → Plans 10-02, 10-04
+  - **ENR-04** — Paced batch-sweep + documented anti-bot pacing strategy → criterion #4 → Plans 10-02 (queue), 10-04 (sweep + docs)
+  - **ENR-05** — Just-in-time enrichment on the company-triage path (no inline DB write) → criterion #5 → Plan 10-03
+  - **ENR-06** — Triage view renders company + role-at-connection → criterion #1 → Plan 10-03
+
+**Success Criteria** (what must be TRUE — to be sharpened during /gsd-plan-phase):
+  1. The triage view renders each connection's company and role-at-time-of-connection alongside the existing connection fields
+  2. A schema field captures company + role-at-connection per connection, populated from the CSV import where available
+  3. A runnable agent-browser skill scrapes company + role from a connection's LinkedIn profile when the CSV lacks it, and writes it back to the connection record
+  4. The scraping skill paces requests to mimic human behavior (randomized delays, throttling/session caps) so a 1000+ profile sweep does not present as obvious bot activity — pacing strategy documented
+  5. When building a company's shared-connection triage list, any mutual connections still missing company/role are enriched on demand at that moment (just-in-time), without requiring the full backlog to be processed first
+
+**Open questions for planning:**
+  - Confirm whether LinkedIn's `Connections.csv` export actually omits company/role-at-connection (likely yes for "at time of connection") vs. only providing *current* company/title
+  - Reuse the existing Phase 5/8 agent-browser scrape skill harness vs. a new dedicated skill
+  - Backlog processing model: batch sweep vs. purely on-demand vs. both; where scrape state/queue lives
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Schema: at-connection columns + enrichment-status enum + migration + [BLOCKING] db:push (Wave 1)
+- [ ] 10-02-PLAN.md — REST: enrichment write-back PATCH + batch-sweep queue GET + CSV import seeding (Wave 2)
+- [ ] 10-03-PLAN.md — Triage UI render of company/role-at-connection + just-in-time enrichment hook (Wave 3)
+- [ ] 10-04-PLAN.md — Skill: per-profile scrape mode + paced batch-sweep + pacing/back-off docs (Wave 3)

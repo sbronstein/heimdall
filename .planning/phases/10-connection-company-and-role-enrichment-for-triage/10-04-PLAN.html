@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-04-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-04-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: 04
+type: execute
+wave: 3
+depends_on: [10-01, 10-02]
+files_modified:</p>
+<ul>
+<li>.claude/skills/scrape-linkedin-connections/SKILL.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+autonomous: true
+requirements: [ENR-03, ENR-04]
+must_haves:
+  truths:<ul>
+<li>&quot;The existing skill has a runnable per-profile scrape mode that extracts company + role from a connection&#39;s profile and writes it back via REST&quot;</li>
+<li>&quot;The skill has a runnable paced batch-sweep mode that drains the enrichment queue chipping away at the 1000+ backlog&quot;</li>
+<li>&quot;The pacing strategy (randomized delays, per-session cap, anti-bot back-off) is documented in the skill references&quot;</li>
+<li>&quot;The write-back goes through PATCH /api/contacts/[id]/enrichment with bearer auth — never direct DB&quot;
+artifacts:</li>
+<li>path: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md&quot;
+provides: &quot;Per-profile mode + batch-sweep mode + pacing in the loop + argument-parsing branch&quot;
+contains: &quot;enrichment-queue&quot;</li>
+<li>path: &quot;.claude/skills/scrape-linkedin-connections/references/heimdall-api.md&quot;
+provides: &quot;PATCH /api/contacts/[id]/enrichment + GET /api/contacts/enrichment-queue endpoint sections&quot;
+contains: &quot;enrichment-queue&quot;</li>
+<li>path: &quot;.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md&quot;
+provides: &quot;Profile-page path: navigate /in/<slug>/ + extract company/role&quot;
+contains: &quot;/in/&quot;</li>
+<li>path: &quot;.claude/skills/scrape-linkedin-connections/references/troubleshooting.md&quot;
+provides: &quot;Pacing / anti-bot back-off documented under the navigation category&quot;
+contains: &quot;pacing&quot;
+key_links:</li>
+<li>from: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md&quot;
+to: &quot;PATCH /api/contacts/[id]/enrichment&quot;
+via: &quot;bearer-auth curl write-back in the per-profile mode&quot;
+pattern: &quot;enrichment&quot;</li>
+<li>from: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md&quot;
+to: &quot;GET /api/contacts/enrichment-queue&quot;
+via: &quot;batch-sweep mode fetches the queue&quot;
+pattern: &quot;enrichment-queue&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Extend the existing `scrape-linkedin-connections` skill with an individual-profile scrape mode
+(company + role from a connection's LinkedIn profile) and a paced batch-sweep mode that drains
+the enrichment queue. Document the pacing strategy in the references. Do NOT create a new skill.<p>Purpose: Success criterion #3 (runnable per-profile scrape that writes back) and #4 (paced
+sweep across 1000+ profiles with documented strategy). Reuses the existing agent-browser
+harness, bearer-auth REST write-back, per-lead error isolation, and ~5-min budget.</p>
+<p>Output: SKILL.md gains a per-profile mode + batch-sweep mode + an argument-parsing branch +
+pacing; the three reference docs gain the new endpoints, the profile-page navigation, and the
+pacing/back-off documentation.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md
+@.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md<interfaces>
+<!-- The REST endpoints this mode calls (built in Plan 02): -->
+<!-- PATCH /api/contacts/[id]/enrichment  body { companyAtConnection, roleAtConnection } -> 200 { success, data } -->
+<!-- GET /api/contacts/enrichment-queue?limit=N -> 200 { success, data: { queue: [{ id, linkedinUrl, firstName, lastName }], count } } --><!-- Existing skill structure to mirror (from SKILL.md): -->
+<!-- Argument parsing 5-branch ladder (first-match-wins) lines 47-65 -->
+<!-- Setup prerequisites lines 36-43 (reuse verbatim) -->
+<!-- Drain mode (per-session loop, per-lead error isolation, summary) lines 67-114 -->
+<!-- Single-lead mode (claim -> navigate -> extract -> paginate -> write-back) lines 116-141 -->
+<!-- Error handling: five categories + failure-PATCH curl lines 142-163 -->
+<!-- Constraints (~5-min budget, no direct DB, never log token) lines 165-172 --><!-- Bearer-auth write-back curl shape (reuse). From SKILL.md failure PATCH lines 156-163: -->
+<!-- TOKEN=$(cat ~/.heimdall/api-token) ; curl -s -X PATCH -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{...}' "http://localhost:4000/api/contacts/$CONTACT_ID/enrichment" --><!-- Reference doc section anchors: -->
+<!-- heimdall-api.md numbered endpoints; last is "### 6. PUT /api/companies/[id]" — add ### 7 and ### 8 -->
+<!-- linkedin-navigation.md has "## Job-URL path", "## Company-URL path", "## Bare-name path", "## Shared" — add a "## Profile-page path" section -->
+<!-- troubleshooting.md five categories: ## Timeout, ## LinkedIn navigation failed (line 42), ## No prospects found, ## Browser unavailable, ## Unknown error — extend the navigation category, do NOT add a sixth -->
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Add the per-profile scrape mode + paced batch-sweep mode to SKILL.md</name>
+  <files>.claude/skills/scrape-linkedin-connections/SKILL.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/SKILL.md (the file being modified — argument parsing 47-65, Drain mode 67-114, Single-lead mode 116-141, error handling 142-163, constraints 165-172)
+    - .planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md (the SKILL.md structure-to-mirror checklist)
+    - .planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md (pacing strategy section + deferred: best-effort current/most-recent, NOT historical reconstruction)
+    - .planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md (the exact enrichment + queue endpoint shapes built in Plan 02)
+  </read_first>
+  <action>
+    Update the frontmatter `description` to mention the new profile-enrichment mode (per-connection company/role backfill). The `allowed-tools` (Read/Bash) and `argument-hint` already cover it.<pre><code>Add an argument-parsing branch to the existing first-match-wins ladder: route to profile-enrichment mode when an explicit `enrich` keyword precedes the argument (`enrich &lt;contact-uuid&gt;` or `enrich &lt;linkedin-profile-url&gt;`), and route a `/in/&lt;slug&gt;` profile URL to profile-enrichment. Use an explicit `enrich` keyword so a bare UUID still routes to the existing single-lead job-lead flow (no collision with the existing UUID branch). Bare `enrich` with no id routes to batch-sweep mode.
+
+Add a section `## Profile-enrichment mode (single connection)` mirroring Single-lead mode&#39;s claim-navigate-extract-write-back shape: reuse Setup prerequisites verbatim; launch agent-browser against `~/.heimdall/linkedin-profile/`; navigate to the connection&#39;s `/in/&lt;slug&gt;/` profile per the new linkedin-navigation Profile-page path; extract TWO fields, `companyAtConnection` and `roleAtConnection`, from the current/most-recent experience block (best-effort current/most-recent, NOT historical as-of-date reconstruction per CONTEXT deferred); write back with PATCH `/api/contacts/&lt;id&gt;/enrichment` body `{ &quot;companyAtConnection&quot;: &quot;...&quot;, &quot;roleAtConnection&quot;: &quot;...&quot; }` using the bearer-auth curl shape; confirm `{ success: true }`.
+
+Add a section `## Batch-sweep mode (drain the enrichment backlog)` modeled on Drain mode: fetch the queue via `GET /api/contacts/enrichment-queue?limit=&lt;perSessionCap&gt;`; render `data.queue` as a markdown table (name, linkedinUrl); ask the user (process all / first-then-ask / skip); loop per-profile running the profile-enrichment extract and write-back, with per-profile error isolation — on failure write the categorized note and CONTINUE, do NOT abort the sweep; end with the `N processed, M succeeded, K failed (categories: ...)` summary.
+
+Document the PACING strategy inside the batch-sweep loop (success criterion #4 must be documented): a randomized inter-request delay in a stated range between profiles (e.g. 20-90s), a per-session profile cap (the `limit` passed to the queue endpoint, e.g. 25-40), and back-off on anti-bot signals — on a `LinkedIn navigation failed` hit resembling a checkpoint/captcha, increase the delay and/or end the session early. Cross-reference references/troubleshooting.md for the back-off detail. Carry forward the existing ~5-min per-profile budget and the constraints (no direct DB, never log the token, do not mock the write).
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -c "enrichment-queue" .claude/skills/scrape-linkedin-connections/SKILL.md</automated>
+  </verify>
+  <acceptance_criteria>
+    - SKILL.md frontmatter `description` mentions the profile-enrichment mode
+    - SKILL.md contains a `## Profile-enrichment mode` section that extracts `companyAtConnection` + `roleAtConnection` and PATCHes `/api/contacts/<id>/enrichment`
+    - SKILL.md contains a `## Batch-sweep mode` section that fetches `/api/contacts/enrichment-queue` and loops per-profile with per-profile error isolation
+    - The pacing strategy (randomized delay range, per-session cap, anti-bot back-off) is documented in the batch-sweep section — `grep -i pacing SKILL.md` returns a match and a delay range is stated
+    - An argument-parsing branch routes `enrich`-prefixed input to profile/sweep mode without colliding with the existing bare-UUID job-lead branch
+    - The write-back uses the bearer-auth curl shape and the section states "do NOT touch the DB directly"
+  </acceptance_criteria>
+  <done>The skill has runnable per-profile and paced batch-sweep modes, both writing back via the REST enrichment endpoint, with the pacing strategy documented.</done>
+</task><task type="auto">
+  <name>Task 2: Document the new endpoints, profile-page navigation, and pacing/back-off in the references</name>
+  <files>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md, .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md, .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md (analogs: "### 2. PATCH /api/job-leads/[id]/status" and "### 6. PUT /api/companies/[id]"; Auth section lines 10-35; envelope/status tables lines 37-65)
+    - .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md (analogs: the entry-point path sections + "## Shared" Steps 4-5; historically-stable selectors section ~line 423)
+    - .claude/skills/scrape-linkedin-connections/references/troubleshooting.md (analogs: five-category structure; "## LinkedIn navigation failed" line 42; per-action budget guidance; the line that explicitly raises the bar for a sixth category)
+    - .planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md (the enrichment PATCH + queue GET shapes)
+    - .planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md (pacing requirement: must be documented in references)
+  </read_first>
+  <action>
+    In `heimdall-api.md`, add two numbered endpoint sections after `### 6. PUT /api/companies/[id]`: `### 7. PATCH /api/contacts/[id]/enrichment` and `### 8. GET /api/contacts/enrichment-queue`. For #7 document Used-by (profile-enrichment + batch-sweep modes), Body (`{ companyAtConnection?: string|null, roleAtConnection?: string|null }`, both max 300 chars), Side effects (sets `enrichmentStatus='enriched'` + `enrichedAt`, emits a `contact_enriched` timeline event), Response envelope, and a bearer-auth Curl block mirroring the existing curl blocks. For #8 document Used-by (batch-sweep), the `limit` query param (default 25, max 50), the response shape `{ queue: [{ id, linkedinUrl, firstName, lastName }], count }`, and a bearer-auth Curl block. Reuse the Auth and envelope/status-code sections unchanged.<pre><code>In `linkedin-navigation.md`, add a `## Profile-page path` section (sibling to the existing path sections): navigate to `https://www.linkedin.com/in/&lt;slug&gt;/`, locate the current/most-recent experience block in the profile, extract company + role, with selector hints in the same style as the existing nav doc and the historically-stable-selectors section. Note the best-effort current/most-recent caveat (not historical as-of-date) per CONTEXT deferred.
+
+In `troubleshooting.md`, extend the `## LinkedIn navigation failed` (anti-bot) category — do NOT add a sixth category — to document the PACING / back-off strategy: the randomized inter-request delay range used between profiles in batch-sweep, the per-session profile cap, and the back-off behavior on a checkpoint/captcha signal (increase delay, end session early). Reuse the existing per-action budget guidance.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -c "enrichment-queue" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md</automated>
+  </verify>
+  <acceptance_criteria>
+    - `heimdall-api.md` contains `### 7. PATCH /api/contacts/[id]/enrichment` documenting body (both fields max 300), side effects (`enrichmentStatus`/`enrichedAt` + `contact_enriched` timeline event), and a bearer-auth curl block
+    - `heimdall-api.md` contains `### 8. GET /api/contacts/enrichment-queue` documenting the `limit` param (default 25, max 50) and the `{ queue, count }` response shape
+    - `linkedin-navigation.md` contains a `## Profile-page path` section navigating `/in/<slug>/` and extracting company + role with the best-effort caveat
+    - `troubleshooting.md` documents the pacing/back-off strategy under the existing navigation category (no sixth category added) — `grep -i 'pacing\|back-off\|delay' troubleshooting.md` returns a match
+  </acceptance_criteria>
+  <done>All three reference docs describe the new endpoints, the profile-page navigation path, and the documented pacing/back-off strategy.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>skill (agent-browser) → LinkedIn</td>
+<td>automated profile navigation; ToS / anti-bot exposure</td>
+</tr>
+<tr>
+<td>skill → PATCH /enrichment &amp; GET /enrichment-queue</td>
+<td>bearer-authed REST calls carrying the local API token</td>
+</tr>
+<tr>
+<td>scraped profile DOM → REST body</td>
+<td>untrusted scraped strings leave the browser toward the API</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-10-10</td>
+<td>Repudiation / Detection</td>
+<td>LinkedIn anti-bot on a 1000+ profile sweep</td>
+<td>mitigate</td>
+<td>Documented pacing: randomized inter-request delays, per-session profile cap, back-off / early-exit on checkpoint signals (Task 1 loop + Task 2 troubleshooting.md). Per-profile ~5-min budget carried forward</td>
+</tr>
+<tr>
+<td>T-10-11</td>
+<td>Information Disclosure</td>
+<td>bearer token leaking into logs / shell history</td>
+<td>mitigate</td>
+<td>Reuse the existing <code>$(cat ~/.heimdall/api-token)</code> inline-in-curl pattern; SKILL.md restates &quot;do NOT log the bearer token&quot;; no token echoed in the batch summary</td>
+</tr>
+<tr>
+<td>T-10-12</td>
+<td>Tampering</td>
+<td>scraped strings sent to PATCH /enrichment</td>
+<td>mitigate</td>
+<td>Server-side Zod <code>.max(300)</code> (Plan 02 T-10-03) is the authority; the skill must not bypass the REST endpoint or write the DB directly (constraint restated)</td>
+</tr>
+<tr>
+<td>T-10-13</td>
+<td>Spoofing</td>
+<td>unauthenticated calls to the new endpoints</td>
+<td>mitigate</td>
+<td>Both endpoints sit behind the <code>src/proxy.ts</code> bearer/Clerk middleware; the skill always sends <code>Authorization: Bearer</code> and aborts on 401 (existing constraint)</td>
+</tr>
+<tr>
+<td>T-10-SC</td>
+<td>Tampering</td>
+<td>npm / agent-browser installs</td>
+<td>accept</td>
+<td>No new packages installed by this plan; agent-browser is a pre-existing user-side prerequisite, not added here — RESEARCH Package Legitimacy gate N/A</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `grep -c "enrichment-queue"` returns >0 in SKILL.md and heimdall-api.md.
+- SKILL.md has a Profile-enrichment mode and a Batch-sweep mode section; pacing strategy is documented with a delay range.
+- linkedin-navigation.md has a `## Profile-page path` section referencing `/in/`.
+- troubleshooting.md documents pacing/back-off under the navigation category (no sixth category).
+- The write-back is via REST PATCH only; SKILL.md restates the no-direct-DB and no-token-logging constraints.
+</verification><success_criteria>
+The existing skill (not a new one) has a runnable per-profile scrape mode and a paced batch-sweep
+mode that backfill company + role via the REST enrichment endpoint, with the human-mimicking
+pacing strategy documented in the references (criteria #3 and #4).
+</success_criteria><output>
+Create `.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-04-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-04-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
