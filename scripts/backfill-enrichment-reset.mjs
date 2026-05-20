@@ -69,10 +69,12 @@ const PREDICATE = `
 `;
 
 // Mirrors the GET /api/contacts/enrichment-queue WHERE clause:
-//   active AND (company_at_connection IS NULL OR role_at_connection IS NULL)
+//   active AND not-yet-triaged
+//   AND (company_at_connection IS NULL OR role_at_connection IS NULL)
 //   AND enrichment_status <> 'enriched'
 const IN_QUEUE = `
   archived_at IS NULL
+  AND triaged_at IS NULL
   AND (company_at_connection IS NULL OR role_at_connection IS NULL)
   AND enrichment_status <> 'enriched'
 `;

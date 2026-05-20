@@ -27,6 +27,9 @@ export async function GET(request: Request) {
       .where(
         and(
           isNull(contacts.archivedAt),
+          // Skip contacts already triaged — enrichment exists to inform triage,
+          // so there's no value scraping someone whose disposition is set.
+          isNull(contacts.triagedAt),
           or(
             isNull(contacts.companyAtConnection),
             isNull(contacts.roleAtConnection)
