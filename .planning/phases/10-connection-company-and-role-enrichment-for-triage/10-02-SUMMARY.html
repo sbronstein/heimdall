@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aef64fd8a50d45acb/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
 
 <hr>
 <p>phase: 10-connection-company-and-role-enrichment-for-triage
@@ -91,6 +91,14 @@ metrics:
 <li><p><strong>CSV import seeding</strong> — The existing import route now seeds <code>companyAtConnection</code> and <code>roleAtConnection</code> from the CSV <code>Company</code>/<code>Position</code> columns. Rows where both fields are present are marked <code>enrichmentStatus=&#39;enriched&#39;</code>, skipping the sweep queue. Rows with partial or missing CSV data stay <code>unenriched</code>. The <code>ON CONFLICT DO NOTHING</code> block is byte-for-byte unchanged.</p>
 </li>
 </ol>
+<blockquote>
+<p><strong>Corrected post-phase (quick task 260520-n3s, 2026-05-20):</strong> Items 2–3 above were revised after a requirements clarification (triage must show <em>current</em> role/company <strong>and</strong> role/company <em>at time of connection</em>):</p>
+<ul>
+<li><strong>CSV import (item 3 superseded):</strong> LinkedIn&#39;s export <code>Company</code>/<code>Position</code> is the contact&#39;s <em>current</em> role, not their role at connection. The import now seeds <code>title</code>/<code>currentCompany</code> only, sets <code>companyAtConnection</code>/<code>roleAtConnection</code> to NULL, and marks every row <code>enrichmentStatus=&#39;unenriched&#39;</code>. The original &quot;mark enriched from CSV&quot; behavior left the queue permanently empty.</li>
+<li><strong>Queue contract (item 2 extended):</strong> the queue now also excludes already-triaged contacts (<code>triagedAt IS NULL</code>) — enrichment informs triage, so contacts whose disposition is set are never scraped.
+See <code>.planning/quick/260520-n3s-current-vs-at-connection-fields/</code>.</li>
+</ul>
+</blockquote>
 <h2>Tasks Completed</h2>
 <table>
 <thead>
@@ -148,7 +156,7 @@ metrics:
 
 
 <footer>
-Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aef64fd8a50d45acb/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>

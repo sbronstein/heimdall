@@ -42,6 +42,11 @@ Three REST endpoints/edits form the complete server-side enrichment surface:
 
 3. **CSV import seeding** — The existing import route now seeds `companyAtConnection` and `roleAtConnection` from the CSV `Company`/`Position` columns. Rows where both fields are present are marked `enrichmentStatus='enriched'`, skipping the sweep queue. Rows with partial or missing CSV data stay `unenriched`. The `ON CONFLICT DO NOTHING` block is byte-for-byte unchanged.
 
+> **Corrected post-phase (quick task 260520-n3s, 2026-05-20):** Items 2–3 above were revised after a requirements clarification (triage must show *current* role/company **and** role/company *at time of connection*):
+> - **CSV import (item 3 superseded):** LinkedIn's export `Company`/`Position` is the contact's *current* role, not their role at connection. The import now seeds `title`/`currentCompany` only, sets `companyAtConnection`/`roleAtConnection` to NULL, and marks every row `enrichmentStatus='unenriched'`. The original "mark enriched from CSV" behavior left the queue permanently empty.
+> - **Queue contract (item 2 extended):** the queue now also excludes already-triaged contacts (`triagedAt IS NULL`) — enrichment informs triage, so contacts whose disposition is set are never scraped.
+> See `.planning/quick/260520-n3s-current-vs-at-connection-fields/`.
+
 ## Tasks Completed
 
 | # | Task | Commit | Key Files |

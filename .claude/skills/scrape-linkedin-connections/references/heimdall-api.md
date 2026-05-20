@@ -294,6 +294,11 @@ curl -s -X PATCH \
 **Used by:** batch-sweep mode (fetches the ordered list of contacts still missing
 at-connection fields).
 
+**Queue contract:** active (not archived), **not yet triaged** (`triagedAt IS NULL`),
+missing at least one at-connection field, and `enrichmentStatus <> 'enriched'`. Already-triaged
+contacts are intentionally excluded — enrichment exists to inform triage, so a contact whose
+disposition is already set is never scraped.
+
 **Query params:**
 
 - `limit` — number of contacts to return (default 25, max 50). Pass this as your
