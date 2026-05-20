@@ -6,7 +6,7 @@ import { logTimeline } from '@/lib/db/timeline';
 import { isNull, sql, and } from 'drizzle-orm';
 import Papa from 'papaparse';
 import { z } from 'zod';
-import { contactClosenessValues, outreachStatusValues } from '@/lib/domain/types';
+import { contactClosenessValues, contactEnrichmentStatusValues, outreachStatusValues } from '@/lib/domain/types';
 
 const defaultClosenessSchema = z.enum(contactClosenessValues).optional();
 
@@ -61,6 +61,8 @@ export async function POST(request: Request) {
       currentCompany: string | null;
       title: string | null;
       linkedinConnectionDate: Date | null;
+      companyAtConnection: string | null;
+      roleAtConnection: string | null;
       key: string;  // for name+company dedup
     };
 
@@ -96,6 +98,8 @@ export async function POST(request: Request) {
         currentCompany: company,
         title: position,
         linkedinConnectionDate,
+        companyAtConnection: company,
+        roleAtConnection: position,
         key: `${firstName.toLowerCase()}|${lastName.toLowerCase()}|${(company ?? '').toLowerCase()}`
       });
     }
@@ -152,6 +156,11 @@ export async function POST(request: Request) {
               importSource: 'linkedin_csv',
               importedAt: new Date(),
               linkedinConnectionDate: c.linkedinConnectionDate,
+              companyAtConnection: c.companyAtConnection,
+              roleAtConnection: c.roleAtConnection,
+              // CSV provided the at-connection baseline — mark as enriched so the sweep skips these rows.
+              // Rows missing either field remain 'unenriched' (schema default) and enter the sweep queue.
+              enrichmentStatus: (c.companyAtConnection && c.roleAtConnection ? 'enriched' : 'unenriched') as (typeof contactEnrichmentStatusValues)[number],
               tags: ['linkedin-import']
             }))
           )
