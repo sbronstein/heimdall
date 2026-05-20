@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 09-ui-for-company-scope-leads
+reviewed: 2026-05-19T00:00:00Z
+depth: standard
+files_reviewed: 4
+files_reviewed_list:</p>
+<ul>
+<li>src/features/job-leads/components/scrape-results.tsx</li>
+<li>src/features/job-leads/components/scrape-results.test.tsx</li>
+<li>src/features/job-leads/components/job-lead-card.tsx</li>
+<li>src/features/job-leads/components/job-lead-card.test.tsx
+findings:
+  critical: 0
+  warning: 3
+  info: 3
+  total: 6
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 9: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-05-19T00:00:00Z
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 4
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 9 adds <code>linkedinJobUrl === null</code> branching to <code>ScrapeResults</code> and <code>JobLeadCard</code>, plus a pair of SSR structural test files (<code>renderToString</code> + manual jsdom). The component logic itself is correct and safe: all user-controlled fields are rendered as React children (no <code>dangerouslySetInnerHTML</code>), and the external link anchor carries <code>rel=&quot;noopener noreferrer&quot;</code>. No security vulnerabilities were found.</p>
+<p>Three warnings and three info items were identified. The most important finding is that the test suite&#39;s <code>JSDOM</code> DOM-query assertions silently pass even when <code>document</code> is an empty default jsdom document, because the vitest environment is <code>node</code> — not <code>jsdom</code> — and the tests instantiate jsdom manually without injecting the rendered HTML into the global <code>document</code>. In that configuration every <code>document.querySelector(&#39;a&#39;)</code> call resolves against a blank DOM that has no <code>&lt;a&gt;</code> tags, making <code>toBeNull()</code> checks vacuously true rather than genuinely exercised.</p>
+<hr>
+<h2>Warnings</h2>
+<h3>WR-01: Test DOM assertions silently vacuous — jsdom documents never populated from rendered HTML</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/components/scrape-results.test.tsx:79</code>, <code>src/features/job-leads/components/job-lead-card.test.tsx:79</code></p>
+<p><strong>Issue:</strong> Both test files create a <code>JSDOM</code> instance around the rendered HTML string but then call <code>dom.window.document</code> — which <em>is</em> the correct path. However, <code>new JSDOM(html, { url: &#39;...&#39; })</code> parses the raw HTML fragment produced by <code>renderToString</code>. <code>renderToString</code> emits a bare HTML fragment, not a full <code>&lt;html&gt;&lt;body&gt;…&lt;/body&gt;&lt;/html&gt;</code> document. JSDOM wraps the fragment into a document, so this part does work. The deeper problem is the <code>environment: &#39;node&#39;</code> setting in <code>vitest.config.ts</code>: because vitest is running in the Node environment (not its own <code>jsdom</code> environment), calls to <code>document</code> in test scope resolve to the <em>global</em> <code>document</code> — but these tests use <code>dom.window.document</code> from the local <code>JSDOM</code> instance, so the global <code>document</code> leakage is avoided. That isolation is correct.</p>
+<p>The real correctness risk is that the <code>document.querySelector(&#39;a&#39;)</code> assertion in the &quot;does not render View Job Posting link&quot; tests can yield a false-negative pass. <code>renderToString</code> serialises the React tree to an HTML string; JSDOM then parses that string. If any upstream mock (e.g., the <code>next/link</code> mock in <code>job-lead-card.test.tsx</code>) emits an <code>&lt;a&gt;</code> tag, it appears in the DOM. The <code>next/link</code> mock <em>does</em> emit <code>&lt;a href={href}&gt;</code>, meaning the company-scope card test that expects <code>.querySelector(&#39;a&#39;)</code> to be <code>null</code> will <strong>fail</strong> — but only because <code>JobLeadCard</code> wraps the entire card in a <code>&lt;Link&gt;</code> (rendered as <code>&lt;a&gt;</code>), not because of the job posting link. The Link wrapper <code>&lt;a&gt;</code> is always present regardless of <code>isCompanyScope</code>, so the test at line 95–99 in <code>scrape-results.test.tsx</code> passes correctly (no <code>&lt;Link&gt;</code> in <code>ScrapeResults</code>), but the analogous pattern could silently mislead if applied to <code>JobLeadCard</code>. Confirm both test files produce the expected failure before the &quot;Company&quot; pill before shipping. The <code>job-lead-card.test.tsx</code> does not test for absence of an <code>&lt;a&gt;</code> tag, so this is not currently broken — but it is a fragile setup worth documenting.</p>
+<p><strong>Fix:</strong> Add a <code>@vitest-environment jsdom</code> docblock comment at the top of each test file (vitest per-file environment override), or set <code>environment: &#39;jsdom&#39;</code> in vitest.config.ts for the <code>*.test.tsx</code> glob. Additionally, use <code>data-testid</code> attributes or structure-aware queries rather than bare <code>document.querySelector(&#39;a&#39;)</code> to distinguish the &quot;View Job Posting&quot; anchor from the wrapping <code>&lt;Link&gt;</code> anchor:</p>
+<pre><code class="language-ts">// In job-lead-card.test.tsx, add per-file environment override:
+// @vitest-environment jsdom
+
+// Or scope anchor query more tightly:
+const viewPostingLink = document.querySelector(&#39;a[href*=&quot;linkedin.com/jobs&quot;]&#39;);
+expect(viewPostingLink).toBeNull();
+</code></pre>
+<hr>
+<h3>WR-02: <code>scrapedData</code> cast is unsound — runtime content is never validated</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/components/scrape-results.tsx:11-16</code></p>
+<p><strong>Issue:</strong> <code>lead.scrapedData</code> is typed as <code>unknown</code> (Drizzle infers <code>jsonb</code> columns as <code>unknown</code>). The cast to an inline object type is a TypeScript-only assertion — it tells the compiler the shape is known but performs no runtime check. If the database row contains a <code>scrapedData</code> value that does not match the asserted shape (e.g., <code>scrapedData</code> is a JSON array, a string, or has a <code>location</code> key whose value is a number), TypeScript will not catch it and the expression <code>scraped?.location</code> will silently produce the wrong type. Because <code>scraped?.location</code> is only used inside a React child expression and React coerces non-string values to strings, this is unlikely to crash — but rendering a non-string <code>location</code> (e.g., a number or object) as a React child will produce <code>[object Object]</code> in the UI.</p>
+<p><strong>Fix:</strong> Use a Zod parse or an <code>isPrimitive</code> guard before rendering:</p>
+<pre><code class="language-ts">import { z } from &#39;zod&#39;;
+
+const scrapedSchema = z.object({
+  companyName: z.string().optional(),
+  roleTitle: z.string().optional(),
+  location: z.string().optional(),
+  companyLinkedinUrl: z.string().optional()
+}).nullable();
+
+const scraped = scrapedSchema.safeParse(lead.scrapedData).success
+  ? scrapedSchema.parse(lead.scrapedData)
+  : null;
+</code></pre>
+<p>If a full Zod parse is too heavy for a display component, at minimum guard the string type before rendering:</p>
+<pre><code class="language-ts">const location = typeof scraped?.location === &#39;string&#39; ? scraped.location : null;
+</code></pre>
+<hr>
+<h3>WR-03: <code>lead.status</code> lookup can silently produce an unstyled badge for valid DB enum values</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/components/job-lead-card.tsx:55-58</code></p>
+<p><strong>Issue:</strong> <code>statusColors</code> is keyed on string literals for 10 values. The <code>jobLeadStatusEnum</code> in the database also has 10 values, and they match the keys in <code>statusColors</code>. However, <code>statusColors</code> is typed as <code>Record&lt;string, string&gt;</code>, not <code>Record&lt;(typeof jobLeadStatusValues)[number], string&gt;</code>. There is no compile-time exhaustiveness guarantee: if a new status is added to the enum in the future, <code>statusColors[lead.status]</code> will return <code>undefined</code>, the <code>|| &#39;&#39;</code> fallback will suppress the style silently, and the badge will render completely unstyled. This is a maintenance trap, not a current runtime bug — but worth hardening now.</p>
+<p><strong>Fix:</strong> Type the map against the domain enum array so TypeScript catches missing entries at compile time:</p>
+<pre><code class="language-ts">import { jobLeadStatusValues } from &#39;@/lib/domain/types&#39;;
+
+const statusColors: Record&lt;(typeof jobLeadStatusValues)[number], string&gt; = {
+  pending:   &#39;bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200&#39;,
+  scraping:  &#39;bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200&#39;,
+  // ... all 10 values required by the type
+};
+</code></pre>
+<hr>
+<h2>Info</h2>
+<h3>IN-01: <code>companyLinkedinUrl</code> declared in <code>scrapedData</code> type cast but never used</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/components/scrape-results.tsx:15</code></p>
+<p><strong>Issue:</strong> The inline type cast for <code>scraped</code> includes <code>companyLinkedinUrl?: string</code>, but that property is never referenced in the component&#39;s JSX. This is dead declaration weight — it implies a future rendering intent that isn&#39;t wired up, which may mislead future readers.</p>
+<p><strong>Fix:</strong> Remove <code>companyLinkedinUrl</code> from the cast until the property is actually rendered, or add a comment noting it is reserved for a future feature:</p>
+<pre><code class="language-ts">const scraped = lead.scrapedData as {
+  companyName?: string;
+  roleTitle?: string;
+  location?: string;
+  // companyLinkedinUrl: reserved for Phase X company-profile link
+} | null;
+</code></pre>
+<hr>
+<h3>IN-02: <code>nullNameLead</code> test fixture: &quot;renders <code>Company scrape</code> as the CardTitle text&quot; assertion is ambiguous</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/components/scrape-results.test.tsx:109-110</code></p>
+<p><strong>Issue:</strong> The test at line 109-110 asserts <code>expect(html).toContain(&#39;Company scrape&#39;)</code> when <code>companyName</code> is <code>null</code>. The component renders two nodes containing that string in the company-scope branch: the CardTitle fallback (<code>lead.companyName || &#39;Company scrape&#39;</code>) and the adjacent <code>&lt;Badge&gt;Company scrape&lt;/Badge&gt;</code>. The assertion passes whether the CardTitle fallback is working or the Badge alone is present. If the CardTitle branch accidentally stopped rendering the fallback text (regressed to empty), this test would still pass because the Badge text satisfies the <code>toContain</code> check.</p>
+<p><strong>Fix:</strong> Use JSDOM to assert specifically that the <code>&lt;h3&gt;</code> (the mocked <code>CardTitle</code>) contains the fallback text, not just that the full HTML string contains it anywhere:</p>
+<pre><code class="language-ts">it(&#39;renders &quot;Company scrape&quot; as the CardTitle text&#39;, () =&gt; {
+  const { document } = dom.window;
+  const title = document.querySelector(&#39;h3&#39;);
+  expect(title?.textContent?.trim()).toBe(&#39;Company scrape&#39;);
+});
+</code></pre>
+<hr>
+<h3>IN-03: <code>scrape-results.test.tsx</code> imports <code>JSDOM</code> and creates DOM instances but <code>dom</code> variable is unused in two of three <code>describe</code> blocks</h3>
+<p><strong>File:</strong> <code>src/features/job-leads/components/scrape-results.test.tsx:75-97, 103-120</code></p>
+<p><strong>Issue:</strong> In the &quot;company-scope lead&quot; and &quot;null companyName&quot; <code>describe</code> blocks, <code>dom</code> is assigned in <code>beforeAll</code> and <code>dom.window.document</code> is used only once per block (in the &quot;does not render View Job Posting link&quot; test). The <code>dom</code> binding is declared at <code>describe</code>-block scope but is only meaningful for a single test case. This is a minor layout concern but also causes the <code>beforeAll</code> callback to do JSDOM parsing even for tests that only check <code>html.toContain(...)</code> — wasted work.</p>
+<p><strong>Fix:</strong> Move JSDOM construction inline to only the test that needs it:</p>
+<pre><code class="language-ts">it(&#39;does not render &quot;View Job Posting&quot; link&#39;, () =&gt; {
+  const { document } = new JSDOM(html, { url: &#39;http://localhost/&#39; }).window;
+  expect(document.querySelector(&#39;a&#39;)).toBeNull();
+});
+</code></pre>
+<hr>
+<p><em>Reviewed: 2026-05-19T00:00:00Z</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
