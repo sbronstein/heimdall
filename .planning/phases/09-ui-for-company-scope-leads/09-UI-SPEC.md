@@ -1,7 +1,7 @@
 ---
 phase: 9
 slug: ui-for-company-scope-leads
-status: draft
+status: approved
 shadcn_initialized: true
 preset: new-york / zinc base color / css variables
 created: 2026-05-19
@@ -42,7 +42,7 @@ These are the project-wide Tailwind 8-point scale values in use. Phase 9 adds no
 | lg    | `pb-3`         | 12px  | CardHeader bottom padding (already set in `scrape-results.tsx` line 17) |
 | xl    | `p-4`          | 16px  | CardContent padding in list card (already set in `job-lead-card.tsx` line 27) |
 
-Exceptions: none. Badge intrinsic padding (`px-2 py-0.5`) is provided by the shadcn `badgeVariants` base styles — do not override.
+Exceptions: `12px` (`gap-3`, `pb-3`) is a multiple of 4 but sits outside the canonical set {4, 8, 16, 24, 32, 48, 64} — it is an existing project convention that pre-dates this phase, not a new token. Badge intrinsic padding (`px-2 py-0.5`) is provided by the shadcn `badgeVariants` base styles — do not override.
 
 ---
 
@@ -179,7 +179,7 @@ Maximum 4 sizes, 2 weights (regular 400, semibold 600). The badge `font-medium` 
 
 ## Color
 
-Phase 9 introduces no new colors. All new elements use existing shadcn CSS variable tokens.
+Phase 9 introduces no new colors. All new elements use existing shadcn CSS variable tokens. Color budget: ~60% background / ~30% card chrome / ~10% accent (badge fills + borders).
 
 | Role | CSS variable | Semantic usage in this phase |
 |------|-------------|------------------------------|
@@ -318,11 +318,11 @@ Expected renders:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS (60/30/10 note added)
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS (12px exception note added)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved (2026-05-19, gsd-ui-checker — 6/6 dimensions)

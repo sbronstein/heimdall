@@ -51,7 +51,7 @@ img { max-width: 100%; height: auto; }
 <hr>
 <h2>phase: 9
 slug: ui-for-company-scope-leads
-status: draft
+status: approved
 shadcn_initialized: true
 preset: new-york / zinc base color / css variables
 created: 2026-05-19</h2>
@@ -139,7 +139,7 @@ All decisions sourced from 09-CONTEXT.md (D-01 through D-03, CD-01 through CD-04
 <td>CardContent padding in list card (already set in <code>job-lead-card.tsx</code> line 27)</td>
 </tr>
 </tbody></table>
-<p>Exceptions: none. Badge intrinsic padding (<code>px-2 py-0.5</code>) is provided by the shadcn <code>badgeVariants</code> base styles — do not override.</p>
+<p>Exceptions: <code>12px</code> (<code>gap-3</code>, <code>pb-3</code>) is a multiple of 4 but sits outside the canonical set {4, 8, 16, 24, 32, 48, 64} — it is an existing project convention that pre-dates this phase, not a new token. Badge intrinsic padding (<code>px-2 py-0.5</code>) is provided by the shadcn <code>badgeVariants</code> base styles — do not override.</p>
 <hr>
 <h2>Component Variants</h2>
 <h3>Discriminator (both components)</h3>
@@ -295,7 +295,7 @@ All decisions sourced from 09-CONTEXT.md (D-01 through D-03, CD-01 through CD-04
 <p>Maximum 4 sizes, 2 weights (regular 400, semibold 600). The badge <code>font-medium</code> (500) is a shadcn primitive — do not override it.</p>
 <hr>
 <h2>Color</h2>
-<p>Phase 9 introduces no new colors. All new elements use existing shadcn CSS variable tokens.</p>
+<p>Phase 9 introduces no new colors. All new elements use existing shadcn CSS variable tokens. Color budget: ~60% background / ~30% card chrome / ~10% accent (badge fills + borders).</p>
 <table>
 <thead>
 <tr>
@@ -522,14 +522,14 @@ All decisions sourced from 09-CONTEXT.md (D-01 through D-03, CD-01 through CD-04
 <hr>
 <h2>Checker Sign-Off</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Dimension 1 Copywriting: PASS</li>
-<li><input disabled="" type="checkbox"> Dimension 2 Visuals: PASS</li>
-<li><input disabled="" type="checkbox"> Dimension 3 Color: PASS</li>
-<li><input disabled="" type="checkbox"> Dimension 4 Typography: PASS</li>
-<li><input disabled="" type="checkbox"> Dimension 5 Spacing: PASS</li>
-<li><input disabled="" type="checkbox"> Dimension 6 Registry Safety: PASS</li>
+<li><input checked="" disabled="" type="checkbox"> Dimension 1 Copywriting: PASS</li>
+<li><input checked="" disabled="" type="checkbox"> Dimension 2 Visuals: PASS</li>
+<li><input checked="" disabled="" type="checkbox"> Dimension 3 Color: PASS (60/30/10 note added)</li>
+<li><input checked="" disabled="" type="checkbox"> Dimension 4 Typography: PASS</li>
+<li><input checked="" disabled="" type="checkbox"> Dimension 5 Spacing: PASS (12px exception note added)</li>
+<li><input checked="" disabled="" type="checkbox"> Dimension 6 Registry Safety: PASS</li>
 </ul>
-<p><strong>Approval:</strong> pending</p>
+<p><strong>Approval:</strong> approved (2026-05-19, gsd-ui-checker — 6/6 dimensions)</p>
 
 
 
