@@ -181,3 +181,10 @@ export const seniorityLevelEnum = pgEnum('seniority_level', [
   'entry_level',
   'unknown'
 ]);
+
+export const contactEnrichmentStatusEnum = pgEnum('contact_enrichment_status', [
+  'unenriched',
+  'pending',
+  'enriched',
+  'failed'
+]);
