@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 Phase: 10 — COMPLETE
 Plan: 1 of 4
 Status: Phase 10 complete
-Last activity: 2026-05-20 -- Phase 10 marked complete
+Last activity: 2026-05-20 -- Completed quick task 260520-n3s: current-vs-at-connection contact model
 
 **v1.1 Progress Rail:** Phase 7 · Phase 8 · Phase 9
 
@@ -78,6 +78,13 @@ None yet.
 
 - LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)
 - Phase 7 must verify whether `linkedinJobUrl` and `roleTitle` are already nullable in the current schema (Phase 5 may have added nullable `linkedinJobUrl`) — planner should check `drizzle/schema/job-leads.ts` before writing the migration plan
+- **Pending user action (quick task 260520-n3s):** run `node scripts/backfill-enrichment-reset.mjs` (dry-run) then `--apply` to reset the ~1500 legacy contacts whose at-connection fields equal current — repopulates the enrichment queue. Live Neon prod write; not yet run.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260520-n3s | Correct current-vs-at-connection contact model (import seeds current-only; triage shows both; backfill script) | 2026-05-20 | 4cafde2 | [260520-n3s-current-vs-at-connection-fields](./quick/260520-n3s-current-vs-at-connection-fields/) |
 
 ### Roadmap Evolution
 
