@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aef64fd8a50d45acb/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: &quot;02&quot;
+subsystem: api-routes
+tags: [rest-api, enrichment, contacts, csv-import, zod, timeline]
+dependency_graph:
+  requires: [contacts-enrichment-columns, contact-enrichment-status-enum, migration-0010]
+  provides: [enrichment-patch-endpoint, enrichment-queue-endpoint, csv-enrichment-seeding]
+  affects: [contacts-table, timeline-events, csv-import-route]
+tech_stack:
+  added: []
+  patterns: [drizzle-update-returning, partial-column-select, conditional-enrichment-status]
+key_files:
+  created:
+    - src/app/api/contacts/[id]/enrichment/route.ts
+    - src/app/api/contacts/enrichment-queue/route.ts
+  modified:
+    - src/app/api/contacts/import/route.ts
+decisions:</p>
+<ul>
+<li>&quot;enrichment PATCH merges incoming fields with existing contact values (null-safe ?? pattern) so callers can update one field without clearing the other&quot;</li>
+<li>&quot;enrichment-queue returns only id/linkedinUrl/firstName/lastName (PII minimisation, T-10-05) — the skill needs nothing else to drive scraping&quot;</li>
+<li>&quot;import route sets enrichmentStatus=&#39;enriched&#39; only when BOTH companyAtConnection and roleAtConnection are non-null from CSV; partial CSV data stays &#39;unenriched&#39; and enters the sweep queue&quot;</li>
+<li>&quot;parseLimit used from src/lib/api/filters.ts (reuse) with QUEUE_MAX=50 hard-cap constant&quot;
+metrics:
+  duration: &quot;~5 min&quot;
+  completed: &quot;2026-05-20&quot;
+  tasks_completed: 3
+  files_modified: 3</li>
+</ul>
+<hr>
+<h1>Phase 10 Plan 02: Enrichment REST Surface Summary</h1>
+<p>PATCH write-back endpoint, batch-sweep queue GET endpoint, and CSV import seeding for at-connection company/role fields — the full REST surface the enrichment scrape skill reads from and writes through.</p>
+<h2>What Was Built</h2>
+<p>Three REST endpoints/edits form the complete server-side enrichment surface:</p>
+<ol>
+<li><p><strong>PATCH /api/contacts/[id]/enrichment</strong> — Accepts scraped company/role strings, validates with Zod <code>.max(300)</code> caps (T-10-03), merges with existing values, stamps <code>enrichmentStatus=&#39;enriched&#39;</code>/<code>enrichedAt</code>/<code>updatedAt</code>, and logs a <code>contact_enriched</code> timeline event. The skill never writes to the DB directly — all writes go through this endpoint (CLI parity invariant).</p>
+</li>
+<li><p><strong>GET /api/contacts/enrichment-queue</strong> — Returns the capped (default 25, max 50), oldest-connection-first list of active contacts still missing at-connection fields and not yet enriched. Returns only <code>id/linkedinUrl/firstName/lastName</code> (T-10-05). Backed by <code>contacts_enrichment_status_idx</code> from Plan 01 (T-10-06).</p>
+</li>
+<li><p><strong>CSV import seeding</strong> — The existing import route now seeds <code>companyAtConnection</code> and <code>roleAtConnection</code> from the CSV <code>Company</code>/<code>Position</code> columns. Rows where both fields are present are marked <code>enrichmentStatus=&#39;enriched&#39;</code>, skipping the sweep queue. Rows with partial or missing CSV data stay <code>unenriched</code>. The <code>ON CONFLICT DO NOTHING</code> block is byte-for-byte unchanged.</p>
+</li>
+</ol>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Task</th>
+<th>Commit</th>
+<th>Key Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Create PATCH /api/contacts/[id]/enrichment</td>
+<td>53da20c</td>
+<td>src/app/api/contacts/[id]/enrichment/route.ts</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Create GET /api/contacts/enrichment-queue</td>
+<td>734d49a</td>
+<td>src/app/api/contacts/enrichment-queue/route.ts</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Seed at-connection fields from CSV import</td>
+<td>7483930</td>
+<td>src/app/api/contacts/import/route.ts</td>
+</tr>
+</tbody></table>
+<h2>Verification</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> exits 0 across all three files after each task and at final check</li>
+<li>PATCH endpoint: Zod schema with <code>.max(300).optional().nullable()</code> on both fields; <code>enrichmentStatus: &#39;enriched&#39;</code>, <code>enrichedAt</code>, <code>updatedAt</code> set on write; <code>logTimeline</code> called with <code>contact_enriched</code> + <code>contactId</code>; <code>z.ZodError → validationError / serverError</code> catch pattern</li>
+<li>Queue endpoint: <code>isNull(archivedAt)</code> active filter; <code>or(isNull(companyAtConnection), isNull(roleAtConnection))</code> missing-fields filter; <code>ne(enrichmentStatus, &#39;enriched&#39;)</code>; <code>orderBy(asc(linkedinConnectionDate))</code>; limit hard-capped at 50</li>
+<li>Import route: <code>Candidate</code> type has <code>companyAtConnection</code>/<code>roleAtConnection</code>; <code>candidates.push</code> sets both from existing <code>company</code>/<code>position</code> locals; <code>.values()</code> map includes both plus conditional <code>enrichmentStatus</code>; <code>.onConflictDoNothing({ target: contacts.linkedinUrl, where: ... })</code> unchanged</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints beyond what the plan&#39;s <code>&lt;threat_model&gt;</code> documents. The three endpoints added (PATCH /enrichment, GET /enrichment-queue) and the CSV import modification are all within the documented trust boundaries. All T-10-03 through T-10-06 mitigations implemented as specified.</p>
+<h2>Known Stubs</h2>
+<p>None.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/app/api/contacts/[id]/enrichment/route.ts</code> exists and exports <code>PATCH</code> — FOUND</li>
+<li><code>src/app/api/contacts/enrichment-queue/route.ts</code> exists and exports <code>GET</code> — FOUND</li>
+<li>enrichment route: <code>enrichmentStatus: &#39;enriched&#39;</code>, <code>enrichedAt: new Date()</code>, <code>logTimeline contact_enriched</code> — FOUND</li>
+<li>queue route: <code>isNull(contacts.archivedAt)</code>, <code>ne(contacts.enrichmentStatus, &#39;enriched&#39;)</code>, <code>asc(contacts.linkedinConnectionDate)</code> — FOUND</li>
+<li>import route: <code>companyAtConnection</code> in Candidate type, candidates.push, and .values() map — FOUND</li>
+<li>import route: <code>enrichmentStatus: (c.companyAtConnection &amp;&amp; c.roleAtConnection ? &#39;enriched&#39; : &#39;unenriched&#39;)</code> — FOUND</li>
+<li>import route ON CONFLICT block: unchanged <code>target: contacts.linkedinUrl, where: sql... IS NOT NULL AND ... IS NULL</code> — FOUND</li>
+<li>Commits 53da20c, 734d49a, 7483930 exist — FOUND</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aef64fd8a50d45acb/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
