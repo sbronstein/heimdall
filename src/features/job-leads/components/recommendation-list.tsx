@@ -77,6 +77,8 @@ export function RecommendationList({ jobLeadId }: RecommendationListProps) {
           contactName={`${rec.contact.firstName} ${rec.contact.lastName}`}
           closeness={rec.contact.closeness}
           lastContactDate={rec.contact.lastContactDate}
+          companyAtConnection={rec.contact.companyAtConnection}
+          roleAtConnection={rec.contact.roleAtConnection}
           score={rec.score}
           prospects={rec.prospects.map((p) => ({
             name: p.prospect.name,

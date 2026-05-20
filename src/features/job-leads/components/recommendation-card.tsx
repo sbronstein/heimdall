@@ -24,6 +24,8 @@ interface RecommendationCardProps {
   contactName: string;
   closeness: string | null;
   lastContactDate: Date | null;
+  companyAtConnection?: string | null;
+  roleAtConnection?: string | null;
   score: number;
   prospects: Array<{
     name: string;
@@ -38,6 +40,8 @@ export function RecommendationCard({
   contactName,
   closeness,
   lastContactDate,
+  companyAtConnection,
+  roleAtConnection,
   score,
   prospects,
   onRequestIntro
@@ -60,6 +64,11 @@ export function RecommendationCard({
           {lastContactDate && (
             <p className='text-muted-foreground mt-0.5 text-xs'>
               Last contact: {new Date(lastContactDate).toLocaleDateString()}
+            </p>
+          )}
+          {(companyAtConnection || roleAtConnection) && (
+            <p className='text-muted-foreground mt-0.5 text-xs'>
+              {[roleAtConnection, companyAtConnection].filter(Boolean).join(' @ ')}
             </p>
           )}
         </div>
