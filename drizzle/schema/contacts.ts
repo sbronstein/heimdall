@@ -4,7 +4,8 @@ import {
   contactRelationshipEnum,
   contactWarmthEnum,
   contactClosenessEnum,
-  outreachStatusEnum
+  outreachStatusEnum,
+  contactEnrichmentStatusEnum
 } from './enums';
 import { companies } from './companies';
 
@@ -35,6 +36,12 @@ export const contacts = pgTable(
     linkedinConnectionDate: timestamp('linkedin_connection_date'),
     importSource: text('import_source'),
     importedAt: timestamp('imported_at'),
+    companyAtConnection: text('company_at_connection'),
+    roleAtConnection: text('role_at_connection'),
+
+    // Enrichment tracking
+    enrichmentStatus: contactEnrichmentStatusEnum('enrichment_status').default('unenriched'),
+    enrichedAt: timestamp('enriched_at'),
 
     // Context
     notes: text('notes'),
@@ -66,6 +73,8 @@ export const contacts = pgTable(
     // D-13 #3: JOIN key from companies and /api/companies/[id]/contacts filter
     index('contacts_company_id_idx').on(table.companyId),
     // D-13 #4: triage-page ordering
-    index('contacts_linkedin_connection_date_idx').on(table.linkedinConnectionDate)
+    index('contacts_linkedin_connection_date_idx').on(table.linkedinConnectionDate),
+    // Phase 10: batch-sweep predicate — select unenriched active rows
+    index('contacts_enrichment_status_idx').on(table.enrichmentStatus)
   ]
 );

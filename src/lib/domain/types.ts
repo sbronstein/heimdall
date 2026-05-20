@@ -235,3 +235,12 @@ export const seniorityLevelValues = [
 ] as const;
 
 export type SeniorityLevel = (typeof seniorityLevelValues)[number];
+
+export const contactEnrichmentStatusValues = [
+  'unenriched',
+  'pending',
+  'enriched',
+  'failed'
+] as const;
+
+export type ContactEnrichmentStatus = (typeof contactEnrichmentStatusValues)[number];
