@@ -98,8 +98,8 @@ export async function POST(request: Request) {
         currentCompany: company,
         title: position,
         linkedinConnectionDate,
-        companyAtConnection: company,
-        roleAtConnection: position,
+        companyAtConnection: null,
+        roleAtConnection: null,
         key: `${firstName.toLowerCase()}|${lastName.toLowerCase()}|${(company ?? '').toLowerCase()}`
       });
     }
@@ -156,11 +156,11 @@ export async function POST(request: Request) {
               importSource: 'linkedin_csv',
               importedAt: new Date(),
               linkedinConnectionDate: c.linkedinConnectionDate,
-              companyAtConnection: c.companyAtConnection,
-              roleAtConnection: c.roleAtConnection,
-              // CSV provided the at-connection baseline — mark as enriched so the sweep skips these rows.
-              // Rows missing either field remain 'unenriched' (schema default) and enter the sweep queue.
-              enrichmentStatus: (c.companyAtConnection && c.roleAtConnection ? 'enriched' : 'unenriched') as (typeof contactEnrichmentStatusValues)[number],
+              companyAtConnection: null,
+              roleAtConnection: null,
+              // CSV columns (Company/Position) are the contact's CURRENT role as of export date,
+              // not their role at time of connection. At-connection fields require enrichment.
+              enrichmentStatus: 'unenriched' as (typeof contactEnrichmentStatusValues)[number],
               tags: ['linkedin-import']
             }))
           )

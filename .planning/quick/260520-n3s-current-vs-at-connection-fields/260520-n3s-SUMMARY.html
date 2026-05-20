@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260520-n3s-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260520-n3s-current-vs-at-connection-fields/260520-n3s-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260520-n3s
+plan: 01
+subsystem: contacts-import, job-leads-triage, backfill
+tags: [data-model, enrichment, import, recommendation-card, backfill]
+dependency_graph:
+  requires: []
+  provides: [correct-import-seeding, two-line-triage-card, enrichment-queue-restored]
+  affects: [contacts-import, recommendation-card, recommendation-list, backfill-script]
+tech_stack:
+  added: []
+  patterns: [dry-run-by-default backfill script, IS NOT DISTINCT FROM predicate]
+key_files:
+  created:
+    - scripts/backfill-enrichment-reset.mjs
+  modified:
+    - src/app/api/contacts/import/route.ts
+    - src/features/job-leads/components/recommendation-card.tsx
+    - src/features/job-leads/components/recommendation-list.tsx
+decisions:</p>
+<ul>
+<li>CSV Company/Position columns are current role as of export — at-connection fields must come from enrichment, not CSV seed</li>
+<li>Backfill resets rows where at-connection == current using IS NOT DISTINCT FROM (NULL-safe comparison)</li>
+<li>Dry-run is the default mode; --apply requires explicit user invocation against live DB
+metrics:
+  duration: ~8 minutes
+  completed: &quot;2026-05-20&quot;
+  tasks_completed: 4
+  files_modified: 4</li>
+</ul>
+<hr>
+<h1>Quick Task 260520-n3s: Current vs At-Connection Fields — Summary</h1>
+<p><strong>One-liner:</strong> Fixed CSV import to seed at-connection null + unenriched, added two-line Now/At-connection triage card, and wrote guarded dry-run backfill to reset ~1500 mislabeled rows.</p>
+<h2>What Was Built</h2>
+<h3>Task 1 — Fix import route (d1ffce6)</h3>
+<p><code>src/app/api/contacts/import/route.ts</code></p>
+<p>The import route previously seeded <code>companyAtConnection</code> and <code>roleAtConnection</code> from the CSV <code>Company</code>/<code>Position</code> columns — which are the contact&#39;s <strong>current</strong> role as of export, not their role at time of connection. It also marked rows <code>enrichmentStatus=&#39;enriched&#39;</code> when those fields were populated, permanently emptying the enrichment queue.</p>
+<p>Changes:</p>
+<ul>
+<li><code>candidates.push(...)</code>: <code>companyAtConnection: null</code>, <code>roleAtConnection: null</code> (was: <code>company</code>, <code>position</code>)</li>
+<li>Bulk insert <code>.values(...)</code>: <code>companyAtConnection: null</code>, <code>roleAtConnection: null</code>, <code>enrichmentStatus: &#39;unenriched&#39;</code> unconditionally (was: conditional enriched/unenriched based on whether fields were truthy)</li>
+<li>Removed stale comment claiming CSV provided the at-connection baseline</li>
+<li>All other logic unchanged: dedup, ON CONFLICT, timeline event, <code>linkedinConnectionDate</code> seeding</li>
+</ul>
+<h3>Task 2 — Recommendation card two-line display (e0ad1ac)</h3>
+<p><code>src/features/job-leads/components/recommendation-card.tsx</code></p>
+<p>Extended <code>RecommendationCardProps</code> with <code>currentRole?: string | null</code> and <code>currentCompany?: string | null</code>. Replaced the single combined at-connection <code>&lt;p&gt;</code> with two separately conditional <code>&lt;p&gt;</code> elements:</p>
+<ul>
+<li><strong>Now:</strong> renders when <code>currentRole || currentCompany</code> is truthy — shows current role/company</li>
+<li><strong>At connection:</strong> renders when <code>roleAtConnection || companyAtConnection</code> is truthy — shows at-connection role/company</li>
+</ul>
+<p>Each line renders only when its data is present; both use <code>text-muted-foreground mt-0.5 text-xs</code> styling.</p>
+<h3>Task 3 — Wire current fields through recommendation list (885ab01)</h3>
+<p><code>src/features/job-leads/components/recommendation-list.tsx</code></p>
+<p>Added <code>currentRole={rec.contact.title}</code> and <code>currentCompany={rec.contact.currentCompany}</code> to the <code>&lt;RecommendationCard&gt;</code> JSX. The <code>Contact</code> type already carries both fields via Drizzle <code>$inferSelect</code> — no route or prioritization changes needed.</p>
+<h3>Task 4 — Guarded idempotent backfill script (1ed7209)</h3>
+<p><code>scripts/backfill-enrichment-reset.mjs</code></p>
+<p>One-time Node ESM script to reset legacy rows where at-connection data == current data (the wrong baseline seeded by the old import route).</p>
+<p><strong>Predicate:</strong></p>
+<pre><code class="language-sql">archived_at IS NULL
+AND company_at_connection IS NOT DISTINCT FROM current_company
+AND role_at_connection IS NOT DISTINCT FROM title
+</code></pre>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li><strong>Dry-run (default):</strong> <code>SELECT count(*)</code> against predicate, prints affected count, exits 0. No writes.</li>
+<li><strong>Apply mode (<code>--apply</code>):</strong> <code>UPDATE contacts SET company_at_connection = NULL, role_at_connection = NULL, enrichment_status = &#39;unenriched&#39;, updated_at = now()</code> against same predicate. Prints rows updated.</li>
+<li><strong>Idempotent:</strong> After apply, reset rows have <code>company_at_connection = NULL</code> which no longer matches non-null <code>current_company</code>, so re-running matches zero rows.</li>
+<li><strong>Never hard-deletes.</strong> Scoped to <code>archived_at IS NULL</code> only.</li>
+</ul>
+<h2>Backfill Run Commands</h2>
+<p><strong>Step 1 — Review dry-run count (safe, no writes):</strong></p>
+<pre><code class="language-bash">node scripts/backfill-enrichment-reset.mjs
+</code></pre>
+<p><strong>Step 2 — Apply after reviewing count (USER runs this, NOT the executor):</strong></p>
+<pre><code class="language-bash">node scripts/backfill-enrichment-reset.mjs --apply
+</code></pre>
+<blockquote>
+<p>IMPORTANT: The executor (Claude Code) must NOT run <code>--apply</code> against the live database. The user reviews the dry-run count first and then decides whether to proceed.</p>
+</blockquote>
+<p>Both commands require <code>DATABASE_URL</code> to be set (either in environment or readable from <code>.env.local</code> in the repo root).</p>
+<h2>Verification</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> passes cleanly (TypeScript strict mode, 0 errors)</li>
+<li><code>npm run build</code> compiled successfully (&quot;Compiled successfully in 7.5s&quot;); the subsequent data-collection failure is a pre-existing env issue in the worktree (no <code>DATABASE_URL</code> set) — not caused by these changes</li>
+<li>Per-task grep gates all passed (see task verification steps in PLAN.md)</li>
+<li><code>node --check scripts/backfill-enrichment-reset.mjs</code> passed (syntax valid)</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Known Stubs</h2>
+<p>None. The two-line card renders from live <code>rec.contact.title</code>/<code>rec.contact.currentCompany</code> data already in the <code>Contact</code> type. At-connection lines will be empty until enrichment populates those fields (by design — that is the post-backfill state for new imports).</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints, auth paths, file access patterns, or schema changes introduced. The backfill script is a local-only CLI tool with no network exposure beyond the existing <code>DATABASE_URL</code> connection.</p>
+<h2>Self-Check: PASSED</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/contacts/import/route.ts</code></td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/recommendation-card.tsx</code></td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/recommendation-list.tsx</code></td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td><code>scripts/backfill-enrichment-reset.mjs</code></td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td><code>.planning/quick/260520-n3s-.../260520-n3s-SUMMARY.md</code></td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit d1ffce6 (import fix)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit e0ad1ac (card two-line)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit 885ab01 (list wiring)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit 1ed7209 (backfill script)</td>
+<td>FOUND</td>
+</tr>
+</tbody></table>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260520-n3s-current-vs-at-connection-fields/260520-n3s-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
