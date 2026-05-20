@@ -130,8 +130,8 @@ These are the requirements GSD will track to completion. The roadmap will group 
 - [ ] **JL-C7**: Drain mode (no-arg invocation) processes company-scope leads via the same `GET /api/job-leads?status=queued` endpoint as job-URL leads and runs the `linkedinJobUrl=null` nav branch automatically — no separate queue, no separate status enum value, no separate route. Verifiable via a manual drain run mixing both lead types + the skill prompt body using a single loop.
 
 ### UI for Company-Scope Leads
-- [ ] **JL-C8**: The job-lead detail page renders gracefully when `linkedinJobUrl` is null — the "View job posting" link/affordance is hidden (not broken), a "Company scrape" label/badge replaces the role-title display area, and the company name + employee count (once scraped) are shown prominently. Verifiable via a rendered component snapshot or DOM-shape test with a `linkedinJobUrl: null` fixture.
-- [ ] **JL-C9**: The job-lead list view visually distinguishes company-scope leads from job-URL leads (different icon, label, or row badge) so the user can scan the queue without opening every lead. Verifiable via the rendered list with a mixed-lead fixture.
+- [x] **JL-C8**: The job-lead detail page renders gracefully when `linkedinJobUrl` is null — the "View job posting" link/affordance is hidden (not broken), a "Company scrape" label/badge replaces the role-title display area, and the company name + employee count (once scraped) are shown prominently. Verifiable via a rendered component snapshot or DOM-shape test with a `linkedinJobUrl: null` fixture.
+- [x] **JL-C9**: The job-lead list view visually distinguishes company-scope leads from job-URL leads (different icon, label, or row badge) so the user can scan the queue without opening every lead. Verifiable via the rendered list with a mixed-lead fixture.
 
 ## v2 (deferred)
 
@@ -206,8 +206,8 @@ These are the requirements GSD will track to completion. The roadmap will group 
 | JL-C5 | Phase 8 | Pending |
 | JL-C6 | Phase 8 | Pending |
 | JL-C7 | Phase 8 | Pending |
-| JL-C8 | Phase 9 | Pending |
-| JL-C9 | Phase 9 | Pending |
+| JL-C8 | Phase 9 | Complete |
+| JL-C9 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 Active requirements: 22 total (5 superseded; net 22 active, with JL-A1..A5 replaced by JL-B1..B5)

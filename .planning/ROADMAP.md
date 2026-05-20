@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Performance** - Eliminate N+1 patterns and add hot-path indexes (completed 2026-05-14)
 - [x] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)
 - [x] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches (completed 2026-05-19)
-- [ ] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances
+- [x] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances (completed 2026-05-20)
 
 ## Phase Details
 
@@ -192,7 +192,7 @@ Plans:
   3. Company name and employee count (once scraped) are displayed prominently on the detail page for company-scope leads, giving the same informational density as a job-URL lead's role + company block
 **Plans**: 1 plan
 Plans:
-- [ ] 09-01-PLAN.md — Conditional company-scope branches in scrape-results.tsx (detail, JL-C8) and job-lead-card.tsx (list, JL-C9) + SSR-structural rendered tests
+- [x] 09-01-PLAN.md — Conditional company-scope branches in scrape-results.tsx (detail, JL-C8) and job-lead-card.tsx (list, JL-C9) + SSR-structural rendered tests
 **UI hint**: yes
 
 ## Progress
@@ -210,4 +210,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Performance | 5/5 | Complete | 2026-05-14 |
 | 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
 | 8. Skill Input Parsing, Navigation Branching + Drain | 3/3 | Complete   | 2026-05-19 |
-| 9. UI for Company-Scope Leads | 0/TBD | Not started | - |
+| 9. UI for Company-Scope Leads | 1/1 | Complete   | 2026-05-20 |

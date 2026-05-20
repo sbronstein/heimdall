@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/09-ui-for-company-scope-leads/09-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 09-ui-for-company-scope-leads
+plan: 01
+subsystem: job-leads-ui
+tags: [ui, job-leads, company-scope, tdd, jl-c8, jl-c9]
+dependency_graph:
+  requires: [Phase 7 schema (linkedinJobUrl nullable), Phase 8 skill (company-scope lead creation)]
+  provides: [company-scope lead detail view (JL-C8), company-scope list row (JL-C9)]
+  affects: [job-leads detail page, job-leads list page]
+tech_stack:
+  added: []
+  patterns: [SSR-structural test with renderToString + JSDOM, isCompanyScope discriminator pattern]
+key_files:
+  created:
+    - src/features/job-leads/components/scrape-results.test.tsx
+    - src/features/job-leads/components/job-lead-card.test.tsx
+  modified:
+    - src/features/job-leads/components/scrape-results.tsx
+    - src/features/job-leads/components/job-lead-card.tsx
+decisions:</p>
+<ul>
+<li>&quot;Discriminator locked to lead.linkedinJobUrl === null — never roleTitle sentinel string (per Phase 7/8 D-12)&quot;</li>
+<li>&quot;Test fixtures include applicationId: null — field added in Phase 7, missing from UI-SPEC fixtures&quot;</li>
+<li>&quot;SSR-structural test pattern (renderToString + JSDOM) sufficient for badge/icon/link assertions — no @testing-library/react needed&quot;
+metrics:
+  duration: &quot;~11 minutes&quot;
+  completed: &quot;2026-05-20&quot;
+  tasks_completed: 2
+  files_changed: 4</li>
+</ul>
+<hr>
+<h1>Phase 09 Plan 01: UI for Company-Scope Leads Summary</h1>
+<p><strong>One-liner:</strong> Conditional branches in two job-lead client components render company-scope leads (<code>linkedinJobUrl === null</code>) with company name + &quot;Company scrape&quot; badge (detail) and <code>IconBuildingCommunity</code> + &quot;Company&quot; pill (list row), pinned by SSR-structural rendered tests.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1 (RED)</td>
+<td>Failing test for scrape-results (JL-C8)</td>
+<td>8f4971b</td>
+<td>scrape-results.test.tsx</td>
+</tr>
+<tr>
+<td>1 (GREEN)</td>
+<td>ScrapeResults company-scope header branch</td>
+<td>bb2302d</td>
+<td>scrape-results.tsx, scrape-results.test.tsx</td>
+</tr>
+<tr>
+<td>2 (RED)</td>
+<td>Failing test for job-lead-card (JL-C9)</td>
+<td>c41a933</td>
+<td>job-lead-card.test.tsx</td>
+</tr>
+<tr>
+<td>2 (GREEN)</td>
+<td>JobLeadCard icon swap + pill + sentinel suppression</td>
+<td>2df91d2</td>
+<td>job-lead-card.tsx, job-lead-card.test.tsx</td>
+</tr>
+</tbody></table>
+<h2>Behavior Delivered</h2>
+<p><strong>JL-C8 (scrape-results.tsx):</strong></p>
+<ul>
+<li>Company-scope leads (<code>linkedinJobUrl === null</code>): company name in <code>CardTitle</code>, <code>Badge variant=&#39;secondary&#39;</code> with &quot;Company scrape&quot; copy, no role-title line, no &quot;View Job Posting&quot; link (existing null-guard preserved)</li>
+<li>Job-URL leads: unchanged — role title in <code>CardTitle</code>, company name as subtitle, &quot;View Job Posting&quot; link conditionally shown</li>
+<li>Null <code>companyName</code> fallback: renders &quot;Company scrape&quot; as the title text, never &quot;Unknown Role&quot;</li>
+</ul>
+<p><strong>JL-C9 (job-lead-card.tsx):</strong></p>
+<ul>
+<li>Company-scope leads: <code>IconBuildingCommunity</code> leading icon, role subtitle suppressed (sentinel <code>&#39;Company-wide scrape&#39;</code> never renders), <code>Badge variant=&#39;outline&#39;</code> &quot;Company&quot; pill as first item in right-side cluster</li>
+<li>Job-URL leads: unchanged — <code>IconBuilding</code> icon, role subtitle renders normally, no &quot;Company&quot; pill</li>
+</ul>
+<h2>Test Results</h2>
+<ul>
+<li><code>scrape-results.test.tsx</code>: 10/10 passing (3 describe blocks: company-scope, null-name fallback, job-URL)</li>
+<li><code>job-lead-card.test.tsx</code>: 6/6 passing (icon assertions, pill assertions, sentinel suppression, role subtitle)</li>
+<li>Full <code>npm test</code> suite: all passing (no regressions)</li>
+<li><code>npx tsc --noEmit</code>: clean</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p><strong>1. [Rule 2 - Missing Field] Test fixtures augmented with <code>applicationId: null</code></strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 — <code>npx tsc --noEmit</code> reported <code>applicationId</code> missing from fixtures</li>
+<li><strong>Issue:</strong> <code>JobLead</code> type gained <code>applicationId: string | null</code> in Phase 7 schema; the UI-SPEC test fixtures predated this and omitted the field</li>
+<li><strong>Fix:</strong> Added <code>applicationId: null</code> to all three test fixtures in <code>scrape-results.test.tsx</code> and both fixtures in <code>job-lead-card.test.tsx</code></li>
+<li><strong>Files modified:</strong> <code>scrape-results.test.tsx</code>, <code>job-lead-card.test.tsx</code></li>
+<li><strong>Commit:</strong> bb2302d (bundled with GREEN implementation for Task 1)</li>
+</ul>
+<h2>TDD Gate Compliance</h2>
+<p>All tasks followed RED → GREEN discipline:</p>
+<ul>
+<li>Task 1 RED: commit 8f4971b (<code>test(09-01): add failing test for ScrapeResults...</code>)</li>
+<li>Task 1 GREEN: commit bb2302d (<code>feat(09-01): implement ScrapeResults...</code>)</li>
+<li>Task 2 RED: commit c41a933 (<code>test(09-01): add failing test for JobLeadCard...</code>)</li>
+<li>Task 2 GREEN: commit 2df91d2 (<code>feat(09-01): implement JobLeadCard...</code>)</li>
+</ul>
+<h2>Known Stubs</h2>
+<p>None. Both components wire live <code>JobLead</code> data from RSC page props — no hardcoded empty values or placeholders.</p>
+<h2>Threat Flags</h2>
+<p>None. This phase is a read-only rendering change. React auto-escapes all text children (<code>lead.companyName</code>, <code>lead.roleTitle</code>). The tests assert HTML-escaped output (<code>VP Data &amp;amp; AI</code>) pinning XSS protection. No new endpoints, auth surface, or data mutations introduced.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/job-leads/components/scrape-results.tsx</code> — exists, modified</li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/job-leads/components/scrape-results.test.tsx</code> — exists, created</li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/job-leads/components/job-lead-card.tsx</code> — exists, modified</li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/job-leads/components/job-lead-card.test.tsx</code> — exists, created</li>
+<li><input checked="" disabled="" type="checkbox"> Commits 8f4971b, bb2302d, c41a933, 2df91d2 — all present in git log</li>
+<li><input checked="" disabled="" type="checkbox"> <code>npx vitest run scrape-results.test.tsx job-lead-card.test.tsx</code> — 16/16 passing</li>
+<li><input checked="" disabled="" type="checkbox"> <code>npx tsc --noEmit</code> — clean</li>
+<li><input checked="" disabled="" type="checkbox"> Full <code>npm test</code> suite — passing (no regressions)</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/09-ui-for-company-scope-leads/09-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
