@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 10: Connection Company + Role Enrichment for Triage - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-20
+<strong>Status:</strong> Ready for planning
+<strong>Source:</strong> Inline discussion during /gsd-plan-phase (3 plan-shaping decisions locked)</p>
+<domain>
+## Phase Boundary<p>The triage flow must show each connection&#39;s <strong>company and role at the time of connection</strong>
+so the owner can judge an introduction&#39;s value at a glance. Two data sources feed this:</p>
+<ol>
+<li><strong>LinkedIn <code>Connections.csv</code> import</strong> — already captures <code>Company</code> → <code>currentCompany</code>
+and <code>Position</code> → <code>title</code> at import time (<code>src/app/api/contacts/import/route.ts</code>). These
+are the best-available baseline for many connections.</li>
+<li><strong>Per-profile agent-browser scrape</strong> — backfills company + role for connections the CSV
+left blank, and refreshes the dedicated at-connection fields. Paced to survive a 1000+
+profile sweep without presenting as bot activity.</li>
+</ol>
+<p>The data is consumed in two places: the standalone triage/recommendation view, and the
+just-in-time enrichment of mutual connections surfaced when triaging a specific company.</p>
+<p><strong>In scope:</strong> schema fields, CSV import seeding, an extended agent-browser per-profile scrape
+mode, a paced batch-sweep runner, just-in-time enrichment on the company-triage path, and the
+triage UI rendering the new fields.</p>
+<p><strong>Out of scope:</strong> changing the bridge-score formula to weight company/role; multi-tenant
+concerns; true historical &quot;as-of-date&quot; role reconstruction beyond best-effort (see Deferred).
+</domain></p>
+<decisions>
+## Implementation Decisions<h3>Scraper harness — EXTEND the existing skill (locked)</h3>
+<p>Add an <strong>individual-profile scrape mode</strong> to the existing <code>scrape-linkedin-connections</code>
+skill and its harness rather than creating a new dedicated skill. Reuse the existing
+agent-browser plumbing (CDP/WS/local browser modes), the <code>~/.heimdall/api-token</code> bearer-auth
+pattern, and the REST write-back convention. One harness to maintain.</p>
+<ul>
+<li>The existing skill scrapes a <em>company&#39;s employee list</em> into <code>prospects</code>. The new mode
+scrapes a <em>single connection&#39;s profile</em> for company + role and writes back to that
+<code>contacts</code> record.</li>
+</ul>
+<h3>Backlog model — BOTH batch sweep AND just-in-time (locked)</h3>
+<ul>
+<li>A <strong>runnable paced batch sweep</strong> chips away at the 1000+ connection backlog (success
+criterion #4).</li>
+<li><strong>Just-in-time enrichment</strong> runs when triaging a specific company: any mutual connections
+still missing company/role are enriched on demand at that moment, without requiring the
+full backlog to be processed first (success criterion #5).</li>
+<li>Scrape/queue state lives on the <code>contacts</code> record (enrichment status/timestamp columns) —
+no separate queue table unless the planner finds a strong reason.</li>
+</ul>
+<h3>Schema shape — ADD dedicated at-connection fields (locked)</h3>
+<p>Add new columns distinct from the existing <code>title</code> / <code>currentCompany</code>, e.g.
+<code>companyAtConnection</code> / <code>roleAtConnection</code> (final names at planner discretion), plus an
+enrichment-status marker (e.g. <code>enrichmentStatus</code> / <code>enrichedAt</code>) to drive the sweep and JIT
+paths and avoid re-scraping. Requires a Drizzle migration + <code>npm run db:push</code>.</p>
+<ul>
+<li><strong>CSV seeding:</strong> at import, seed the new at-connection fields from the CSV <code>Company</code>/<code>Position</code>
+as the best-available baseline. The scraper backfills only where these are blank.</li>
+</ul>
+<h3>Pacing strategy (success criterion #4 — must be documented)</h3>
+<p>The per-profile sweep must mimic human behavior: randomized inter-request delays, a per-session
+profile cap, and throttling so a 1000+ profile sweep does not present as obvious bot activity.
+The chosen pacing strategy (delay ranges, session caps, back-off on anti-bot signals) must be
+documented in the skill&#39;s references. Reuse the existing per-lead ~5-min budget and the
+troubleshooting error categories where applicable.</p>
+<h3>Architectural invariants (from CLAUDE.md — non-negotiable)</h3>
+<ul>
+<li>All DB writes go through REST API routes (<code>/app/api/</code>). The scrape skill writes back via
+REST only — never touches the DB directly. CLI parity depends on this.</li>
+<li>All API routes use Zod validation and return the <code>{ success, data, error, meta }</code> envelope.</li>
+<li>Every write operation creates a <code>timeline_events</code> record via <code>logTimeline()</code>.</li>
+<li>Soft deletes only (<code>archivedAt</code>); never hard delete.</li>
+<li>Drizzle query builder only — no raw SQL except pgvector.</decisions></li>
+</ul>
+<canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Schema + import</h3>
+<ul>
+<li><code>drizzle/schema/contacts.ts</code> — the <code>contacts</code> table; today has <code>title</code>, <code>currentCompany</code>,
+<code>linkedinConnectionDate</code>, <code>linkedinUrl</code> (partial unique idx), <code>triagedAt</code>. No at-connection
+fields yet. New columns + indexes go here.</li>
+<li><code>src/app/api/contacts/import/route.ts</code> — LinkedIn CSV parse + field mapping
+(<code>Company</code>→<code>currentCompany</code>, <code>Position</code>→<code>title</code>, <code>Connected On</code>→<code>linkedinConnectionDate</code>).
+CSV-seeding of the new fields happens here.</li>
+</ul>
+<h3>Scrape skill / harness (to be extended)</h3>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — the skill to extend with a
+per-profile mode.</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> — navigation
+paths; add a profile-page navigation/extraction section.</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> — REST endpoints +
+bearer auth + envelope; add the new write-back endpoint.</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code> — anti-bot error
+categories; document pacing/back-off here.</li>
+<li><code>src/features/job-leads/lib/linkedin-browser.ts</code> — browser launch/attach plumbing to reuse.</li>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code> — existing scrape flow reference.</li>
+</ul>
+<h3>Triage / recommendation UI + data</h3>
+<ul>
+<li><code>src/features/job-leads/components/recommendation-list.tsx</code> — renders mutual connections by
+bridge score; add company + role-at-connection display.</li>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> — recommendation query; JIT enrichment
+hook point for mutual connections missing company/role.</li>
+<li><code>src/features/job-leads/lib/prioritization.ts</code> — bridge-score formula (NOT changing it).</li>
+<li><code>src/app/api/contacts/connections/route.ts</code> — direct-contacts-at-company query.</li>
+</ul>
+<h3>Conventions</h3>
+<ul>
+<li><code>src/lib/api/types.ts</code>, <code>src/lib/api/errors.ts</code> — response envelope + error factories.</li>
+<li><code>src/lib/db/timeline.ts</code> — <code>logTimeline()</code> side-effect on every write.</canonical_refs></li>
+</ul>
+<specifics>
+## Specific Ideas<ul>
+<li>New write-back endpoint shape: a PATCH on a contact (or a dedicated enrichment endpoint)
+that accepts <code>{ companyAtConnection, roleAtConnection }</code>, sets <code>enrichmentStatus</code>/<code>enrichedAt</code>,
+validates with Zod, returns the envelope, and logs a timeline event.</li>
+<li>Batch sweep selects active contacts where the at-connection fields are blank and
+<code>enrichmentStatus</code> is not yet terminal, ordered for steady progress; respects the per-session
+cap and randomized delays.</li>
+<li>JIT path: in the recommendations route (or a thin enrichment call it triggers), detect mutual
+connections missing company/role and enrich them inline at triage time.</li>
+<li>CSV import already de-dupes on <code>linkedin_url</code> (partial unique idx) — seeding must not disturb
+that ON CONFLICT path.</specifics></li>
+</ul>
+<deferred>
+## Deferred Ideas<ul>
+<li><strong>True as-of-connection-date role reconstruction.</strong> Inferring which role a connection held on
+the exact <code>linkedinConnectionDate</code> from their profile experience history is best-effort only.
+The practical target is the company+role we can attribute to the connection (CSV value first,
+then scraped current/most-recent), not a guaranteed historical snapshot. Documented as a
+limitation; a stricter reconstruction is out of scope for this phase.</li>
+<li><strong>Bridge-score weighting by company/role.</strong> Feeding the new fields into <code>prioritization.ts</code>
+is explicitly out of scope here.</deferred></li>
+</ul>
+<hr>
+<p><em>Phase: 10-connection-company-and-role-enrichment-for-triage</em>
+<em>Context gathered: 2026-05-20 via inline discussion during /gsd-plan-phase</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
