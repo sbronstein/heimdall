@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { JobLead } from '@/lib/domain/types';
-import { IconBuilding, IconUsers } from '@tabler/icons-react';
+import { IconBuilding, IconBuildingCommunity, IconUsers } from '@tabler/icons-react';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
@@ -20,24 +20,32 @@ const statusColors: Record<string, string> = {
 };
 
 export function JobLeadCard({ lead }: { lead: JobLead }) {
+  const isCompanyScope = lead.linkedinJobUrl === null;
+
   return (
     <Link href={`/dashboard/job-leads/${lead.id}`}>
       <Card className='hover:bg-accent/50 transition-colors'>
         <CardContent className='flex items-center justify-between p-4'>
           <div className='min-w-0 flex-1'>
             <div className='flex items-center gap-2'>
-              <IconBuilding className='text-muted-foreground h-4 w-4 shrink-0' />
+              {isCompanyScope
+                ? <IconBuildingCommunity className='text-muted-foreground h-4 w-4 shrink-0' />
+                : <IconBuilding className='text-muted-foreground h-4 w-4 shrink-0' />
+              }
               <span className='truncate font-medium'>
                 {lead.companyName || 'Unknown Company'}
               </span>
             </div>
-            {lead.roleTitle && (
+            {!isCompanyScope && lead.roleTitle && (
               <p className='text-muted-foreground mt-1 truncate text-sm'>
                 {lead.roleTitle}
               </p>
             )}
           </div>
           <div className='flex items-center gap-3'>
+            {isCompanyScope && (
+              <Badge variant='outline'>Company</Badge>
+            )}
             {lead.prospectCount > 0 && (
               <div className='text-muted-foreground flex items-center gap-1 text-sm'>
                 <IconUsers className='h-3.5 w-3.5' />
