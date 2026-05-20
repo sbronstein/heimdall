@@ -99,6 +99,104 @@ search-filtered people endpoint.
 
 ---
 
+## Profile-page path (per-connection enrichment)
+
+Used by the profile-enrichment mode and batch-sweep mode when scraping a **single
+connection's profile** for their company + role at connection time. This is a different
+goal from the employee-list scrape — you are visiting a person's profile, not a company's
+people-search results.
+
+### Profile-page Step 1: Derive the profile URL
+
+The contact's `linkedinUrl` is the canonical starting point (stored in the contacts table,
+populated via CSV import or manual entry). It should already be an `/in/<slug>/` URL.
+
+```
+slug = new URL(contact.linkedinUrl).pathname.split('/').filter(Boolean)[1]
+// e.g. 'alice-smith-12345' from 'https://www.linkedin.com/in/alice-smith-12345/'
+profileUrl = `https://www.linkedin.com/in/${slug}/`
+```
+
+Normalize trailing slashes. Reject if `slug` is undefined or empty — surface
+`"Contact has malformed LinkedIn URL: <url>"` and skip.
+
+---
+
+### Profile-page Step 2: Navigate to the profile
+
+**Goal:** Render the connection's full profile page and confirm LinkedIn is signed in.
+
+**Action:** Navigate agent-browser to `https://www.linkedin.com/in/<slug>/`. Wait for
+the snapshot to settle.
+
+**Expected outcome:**
+- Page title visible (typically the person's name).
+- Profile header rendered (name, current headline/role).
+- An "Experience" section visible or reachable by scrolling.
+
+**Failure modes:**
+- LinkedIn redirects to `/login` or shows a sign-in modal → `LinkedIn navigation failed`.
+- A captcha/checkpoint challenge appears → `LinkedIn navigation failed`; abort this profile.
+  Apply the pacing back-off strategy (see `troubleshooting.md` § LinkedIn navigation failed).
+- The page takes > 30s to render → `Timeout`.
+- Profile is private or deleted → `LinkedIn navigation failed: profile not accessible`.
+
+---
+
+### Profile-page Step 3: Extract company and role from the Experience section
+
+**Goal:** Capture the company name and job title the person held at (or most recently
+before) the time of their LinkedIn connection. This is **best-effort current/most-recent
+extraction** — true as-of-connection-date historical reconstruction is out of scope
+(see CONTEXT.md §deferred).
+
+**Action:** Locate the "Experience" section in the snapshot. In the a11y tree, look for:
+1. A section or landmark element whose accessible name / heading contains "Experience".
+2. Within it, the **first** experience item (most recent role).
+3. From that item, extract:
+   - **Company name** (`companyAtConnection`): the sub-heading or secondary text showing
+     the employer (e.g., "OpenAI", "Google LLC"). Strip any suffixes like "Full-time",
+     "Contract", "· 2 yrs 3 mos" — keep only the company name.
+   - **Role / job title** (`roleAtConnection`): the primary bold/heading text of the item
+     (e.g., "Member of Technical Staff", "VP of Engineering").
+
+**Selector hints** (hints only — use a11y text/role matching first):
+
+| Target | Hint |
+|--------|------|
+| Experience section | section or div whose heading text is "Experience" |
+| First experience item | first `<li>` or group role element within the Experience section |
+| Role title | heading-level element (h3 / bold) at the top of the item |
+| Company name | secondary text element immediately beneath the role title |
+
+**Fallback behavior:**
+- If the Experience section is absent (profile has none): set both fields to `null`
+  and log `"No Experience section found on profile"`.
+- If the company name is extractable but the role is not (or vice versa): write
+  whatever is available. The merge logic server-side is `null`-safe — a partial write
+  is better than no write.
+- If the entire Experience section is behind a "Show more" expand: attempt to click
+  the expand button once; if it does not work, fall back to extracting from the
+  profile header headline (`<h2>` or equivalent near the profile photo).
+
+**Max field lengths:** 300 chars each (server-side Zod `.max(300)`). If an extracted
+string exceeds 300 chars, truncate before writing.
+
+---
+
+### Profile-page Step 4: Write back via PATCH /enrichment
+
+See `heimdall-api.md` § 7 for the full curl shape, body schema, and side effects.
+
+This step is the same for both single-profile mode and each iteration of the batch-sweep loop.
+
+---
+
+→ Does NOT converge into Shared (the profile enrichment path is independent of the
+company/employee-scrape path — there is no 2nd-degree filter or pagination step here).
+
+---
+
 ## Step 4: Apply the 2nd-degree connections filter
 
 **Goal:** Narrow the people-search results to 2nd-degree connections only.

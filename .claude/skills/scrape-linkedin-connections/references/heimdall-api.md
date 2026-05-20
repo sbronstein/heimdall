@@ -240,6 +240,105 @@ The skill itself never POSTs to `/search`; it interacts with `/status` and
 
 ---
 
+### 7. `PATCH /api/contacts/[id]/enrichment`
+
+**Used by:** profile-enrichment mode (single connection) and batch-sweep mode.
+
+**Body:**
+
+```json
+{
+  "companyAtConnection": "OpenAI",
+  "roleAtConnection": "Member of Technical Staff"
+}
+```
+
+Both fields are optional and nullable. Max 300 chars each (server-side Zod
+`.max(300)`). Sending `null` for a field clears that field. Sending a missing key
+leaves the existing value unchanged (null-safe `??` merge on the server).
+
+**Side effects** (handled by the route — do NOT replicate in the skill):
+
+1. Merges `companyAtConnection` and `roleAtConnection` with existing values
+   via `??` (incoming field ?? existing value) so callers can update one field
+   without clearing the other.
+2. Sets `enrichmentStatus = 'enriched'` (terminal — contact exits the sweep queue).
+3. Sets `enrichedAt` to the current timestamp.
+4. Sets `updatedAt` to the current timestamp.
+5. Emits a `contact_enriched` timeline event with `contactId` (and `companyId`
+   if the contact has one linked).
+
+**Response:** `{ success: true, data: <updated contact row> }`.
+
+**Curl:**
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X PATCH \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"companyAtConnection":"OpenAI","roleAtConnection":"Member of Technical Staff"}' \
+  "http://localhost:4000/api/contacts/$CONTACT_ID/enrichment"
+```
+
+**Notes:**
+- Abort on `401` — token / env misconfig; surface and exit.
+- A `400` with a Zod message means a field exceeded 300 chars or had an invalid type;
+  truncate the value and retry, or surface and exit.
+- Do NOT write to the contacts table directly — CLI parity requires all writes go through REST.
+
+---
+
+### 8. `GET /api/contacts/enrichment-queue`
+
+**Used by:** batch-sweep mode (fetches the ordered list of contacts still missing
+at-connection fields).
+
+**Query params:**
+
+- `limit` — number of contacts to return (default 25, max 50). Pass this as your
+  per-session cap. Example: `?limit=30`.
+
+**Response shape:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "queue": [
+      {
+        "id": "uuid",
+        "linkedinUrl": "https://www.linkedin.com/in/alice",
+        "firstName": "Alice",
+        "lastName": "Smith"
+      }
+    ],
+    "count": 12
+  }
+}
+```
+
+`count` is the total queue depth (how many contacts still need enrichment across all
+pages, not just this batch). Only `id`, `linkedinUrl`, `firstName`, `lastName` are
+returned — PII minimization. The queue is ordered oldest-`linkedinConnectionDate`
+first for steady, deterministic progress through the backlog.
+
+**Exclusion logic** (server-side — the skill does not need to replicate):
+- Active contacts only (`archived_at IS NULL`).
+- Missing at least one at-connection field (`companyAtConnection IS NULL` OR
+  `roleAtConnection IS NULL`).
+- Not yet terminal (`enrichmentStatus != 'enriched'`).
+
+**Curl:**
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  'http://localhost:4000/api/contacts/enrichment-queue?limit=30'
+```
+
+---
+
 ## Error envelopes the skill must handle
 
 | Status | Envelope                                                                | Skill action                                  |

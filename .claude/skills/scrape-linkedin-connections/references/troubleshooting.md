@@ -65,6 +65,61 @@ skill needed to be, or LinkedIn pushed an interactive challenge.
   if all of them miss, write the error. The fix is a doc update to
   `linkedin-navigation.md`, not a skill change.
 
+### Pacing and anti-bot back-off strategy (batch-sweep mode)
+
+When running the **batch-sweep mode** across 1000+ profiles, LinkedIn's automated-activity
+detection is the primary risk. The skill mitigates this by mimicking human browsing behavior:
+
+**Randomized inter-request delay (required):**
+- After each profile (success or failure), wait a **random delay of 20–90 seconds** before
+  navigating to the next profile.
+- Compute as: `DELAY=$(( RANDOM % 70 + 20 ))` (bash) — uniform distribution over 20–90s.
+- This range mimics human reading/browsing pace. Do NOT use a fixed delay — uniform timing
+  is a detectable bot signal.
+
+**Per-session profile cap (required):**
+- Hard limit each session to **25–40 profiles** (the `limit` param passed to
+  `GET /api/contacts/enrichment-queue`, recommended 25–40, max 50).
+- Run multiple sessions across different times of day / days rather than exhausting the
+  full backlog in one run.
+- The per-action budget (30s navigation, 5min per profile total) from the `Timeout`
+  category applies to each profile independently.
+
+**Anti-bot back-off on checkpoint / captcha signals:**
+
+A `LinkedIn navigation failed` error during batch-sweep whose detail contains any of these
+strings indicates a potential anti-bot checkpoint:
+- `captcha`
+- `checkpoint`
+- `unusual activity`
+- `verify you're a human`
+- `/checkpoint/`
+- `security verification`
+
+When a checkpoint signal is detected:
+
+1. **First occurrence** in the session: log `"Anti-bot signal detected — applying extended
+   back-off"`, increase the delay before the NEXT profile to **120–300 seconds** (random in
+   that range), then continue the sweep.
+   Compute as: `DELAY=$(( RANDOM % 181 + 120 ))`.
+
+2. **Second consecutive occurrence** (two back-to-back checkpoint signals with no successful
+   profile in between): end the session immediately. Surface:
+   > `Anti-bot checkpoint detected twice in a row. Session ended early after N profiles
+   > (M succeeded, K failed). Wait 10–30 minutes and re-invoke to continue. If checkpoints
+   > persist across sessions, sign into LinkedIn manually in the Chrome window and re-check
+   > your session state.`
+   Do NOT continue scraping after two consecutive checkpoints.
+
+**Sign-in drops during sweep:** If a navigation fails because LinkedIn redirected to `/login`
+(session expired), end the session. The user re-signs in manually and re-invokes the sweep
+— same as for single-lead mode. The enrichment queue will return the unenriched contacts again
+on the next fetch.
+
+**Session spacing:** After a session that triggered even one checkpoint signal, wait at least
+10–30 minutes before starting a new session. This is a soft recommendation — the skill cannot
+enforce calendar time, but the summary should remind the user.
+
 ---
 
 ## `No prospects found`
