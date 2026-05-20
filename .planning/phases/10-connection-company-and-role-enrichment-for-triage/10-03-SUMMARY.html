@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a5db4e5a20e774d59/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+plan: &quot;03&quot;
+subsystem: triage-ui
+tags: [react, components, api-route, enrichment, recommendation, jit]
+dependency_graph:
+  requires: [contacts-enrichment-columns, enrichment-patch-endpoint]
+  provides: [recommendation-card-enrichment-render, jit-enrichment-detection]
+  affects: [recommendation-card, recommendation-list, recommendations-route]
+tech_stack:
+  added: []
+  patterns: [optional-props-render, meta-extension, contact-deduplication]
+key_files:
+  created: []
+  modified:
+    - src/features/job-leads/components/recommendation-card.tsx
+    - src/features/job-leads/components/recommendation-list.tsx
+    - src/app/api/job-leads/[id]/recommendations/route.ts
+decisions:</p>
+<ul>
+<li>&quot;JIT trigger uses meta-only fallback (pendingEnrichment + pendingEnrichmentContactIds) because the PATCH /enrichment endpoint stamps enrichmentStatus=&#39;enriched&#39; immediately — there is no intermediate pending-flip path without scraped data; the UI/skill consumes the ids for actual triggering&quot;</li>
+<li>&quot;Contact deduplication before JIT detection: a contact can bridge multiple prospects in the same recommendations join, so filter by first occurrence of each id before applying the null-field predicate&quot;
+metrics:
+  duration: &quot;~3 min&quot;
+  completed: &quot;2026-05-20&quot;
+  tasks_completed: 2
+  files_modified: 3</li>
+</ul>
+<hr>
+<h1>Phase 10 Plan 03: Triage UI Enrichment Render + JIT Detection Summary</h1>
+<p>Recommendation cards now show each connection&#39;s company and role-at-connection alongside the existing fields, and the recommendations route detects just-in-time which mutual connections are still missing those fields and surfaces them in <code>meta.pendingEnrichment</code> for downstream consumption.</p>
+<h2>What Was Built</h2>
+<p><strong>Recommendation card render (Task 1):</strong> <code>RecommendationCardProps</code> gained two optional <code>string | null</code> fields (<code>companyAtConnection</code>, <code>roleAtConnection</code>). Below the existing &quot;Last contact&quot; muted subline the card renders <code>role @ company</code> as a sibling <code>text-muted-foreground mt-0.5 text-xs</code> line when either field is present. <code>recommendation-list.tsx</code> passes the values directly from <code>rec.contact</code> (the full <code>Contact</code> Drizzle type already includes the new columns from Plan 01).</p>
+<p><strong>JIT enrichment detection (Task 2):</strong> After the <code>prospectBridges → prospects → contacts</code> join and before <code>buildRecommendations</code>, the route now deduplicates contacts across bridge rows and identifies those with both <code>companyAtConnection === null</code> AND <code>roleAtConnection === null</code> AND <code>enrichmentStatus !== &#39;enriched&#39;</code>. These ids are surfaced in <code>meta.pendingEnrichment</code> (count) and <code>meta.pendingEnrichmentContactIds</code> (string[]). The existing <code>totalProspects</code>/<code>totalBridges</code>/<code>totalContacts</code> keys are unchanged. No <code>db.update(contacts)</code> or <code>db.insert(contacts)</code> in this route (T-10-07 invariant).</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Task</th>
+<th>Commit</th>
+<th>Key Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Render at-connection company + role on recommendation card and list</td>
+<td>00087ca</td>
+<td>src/features/job-leads/components/recommendation-card.tsx, src/features/job-leads/components/recommendation-list.tsx</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Add JIT enrichment detection + meta extension to recommendations route</td>
+<td>bfb011d</td>
+<td>src/app/api/job-leads/[id]/recommendations/route.ts</td>
+</tr>
+</tbody></table>
+<h2>Verification</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> exits 0 across both tasks and at final check</li>
+<li><code>recommendation-card.tsx</code> <code>RecommendationCardProps</code> contains <code>companyAtConnection</code> and <code>roleAtConnection</code> as <code>string | null | undefined</code></li>
+<li>Card renders <code>role @ company</code> muted subline using same class as last-contact line</li>
+<li><code>recommendation-list.tsx</code> passes <code>companyAtConnection={rec.contact.companyAtConnection}</code> and <code>roleAtConnection={rec.contact.roleAtConnection}</code></li>
+<li>Route detects contacts with both at-connection fields null and <code>enrichmentStatus !== &#39;enriched&#39;</code></li>
+<li>Route <code>meta</code> gains <code>pendingEnrichment</code> and <code>pendingEnrichmentContactIds</code>; existing keys unchanged</li>
+<li>Grep confirms no <code>db.update(contacts)</code> or <code>db.insert(contacts)</code> in recommendations route</li>
+<li>Build fails with DATABASE_URL missing (same environment-level failure as Plans 01 and 02 — not caused by these changes)</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p>None.</p>
+<h3>Architectural Note: JIT trigger uses meta-only fallback</h3>
+<p><strong>Found during:</strong> Task 2 implementation analysis
+<strong>Issue:</strong> The plan described flipping contacts to <code>enrichmentStatus=&#39;pending&#39;</code> via <code>PATCH /api/contacts/[id]/enrichment</code>, but the PATCH endpoint (Plan 02) only accepts company/role values and stamps <code>enrichmentStatus=&#39;enriched&#39;</code> immediately. Calling it without real scraped data would incorrectly mark contacts as enriched with null/null data.
+<strong>Decision:</strong> Applied the plan&#39;s stated fallback: &quot;fall back to ONLY reporting <code>pendingEnrichment</code>/<code>pendingEnrichmentContactIds</code> in meta (no status flip) and document that the UI/skill consumes the ids — never add an inline <code>db.update(contacts)</code> to this route.&quot;
+<strong>Impact:</strong> The <code>pendingEnrichmentContactIds</code> in <code>meta</code> is the signal for the scrape skill (Plan 04) to pick up and process. This is architecturally correct — the skill drives the status lifecycle, not the recommendations read path.
+<strong>Files modified:</strong> No extra file needed — the meta-only approach is already the correct Plan 03 pattern.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints, auth paths, file access patterns, or schema changes at trust boundaries beyond what is documented in the plan&#39;s <code>&lt;threat_model&gt;</code>. T-10-07 (no inline DB write in recommendations route) confirmed by grep. T-10-08 (bearer token not forwarded) is N/A — the meta-only fallback was used. T-10-09 (React escapes interpolated strings) inherently satisfied by JSX string interpolation.</p>
+<h2>Known Stubs</h2>
+<p>None. The <code>pendingEnrichmentContactIds</code> field surfaces real data (the Drizzle query columns are present post-migration). The render is conditional on field presence — cards missing data display nothing for that line, which is correct behavior for the unenriched state.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/features/job-leads/components/recommendation-card.tsx</code> contains <code>companyAtConnection</code> — FOUND</li>
+<li><code>src/features/job-leads/components/recommendation-list.tsx</code> contains <code>companyAtConnection={rec.contact.companyAtConnection}</code> — FOUND</li>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> contains <code>pendingEnrichment</code> — FOUND</li>
+<li>Commit 00087ca exists — FOUND</li>
+<li>Commit bfb011d exists — FOUND</li>
+<li>No <code>db.update(contacts)</code> or <code>db.insert(contacts)</code> in recommendations route — CONFIRMED</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a5db4e5a20e774d59/.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
