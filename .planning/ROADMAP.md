@@ -212,7 +212,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
 | 8. Skill Input Parsing, Navigation Branching + Drain | 3/3 | Complete   | 2026-05-19 |
 | 9. UI for Company-Scope Leads | 1/1 | Complete   | 2026-05-20 |
-| 10. Connection Company + Role Enrichment for Triage | 0/? | Not planned | — |
+| 10. Connection Company + Role Enrichment for Triage | 1/4 | In Progress|  |
 
 ### Phase 10: Connection Company + Role Enrichment for Triage
 
@@ -241,10 +241,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   - Reuse the existing Phase 5/8 agent-browser scrape skill harness vs. a new dedicated skill
   - Backlog processing model: batch sweep vs. purely on-demand vs. both; where scrape state/queue lives
 
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
-- [ ] 10-01-PLAN.md — Schema: at-connection columns + enrichment-status enum + migration + [BLOCKING] db:push (Wave 1)
+- [x] 10-01-PLAN.md — Schema: at-connection columns + enrichment-status enum + migration + [BLOCKING] db:push (Wave 1)
 - [ ] 10-02-PLAN.md — REST: enrichment write-back PATCH + batch-sweep queue GET + CSV import seeding (Wave 2)
 - [ ] 10-03-PLAN.md — Triage UI render of company/role-at-connection + just-in-time enrichment hook (Wave 3)
 - [ ] 10-04-PLAN.md — Skill: per-profile scrape mode + paced batch-sweep + pacing/back-off docs (Wave 3)
