@@ -15,7 +15,10 @@
  *            AND role_at_connection IS NOT DISTINCT FROM title
  *
  * Usage:
- *   Dry-run (count only, NO writes):
+ *   Stats (read-only breakdown — total / in-queue / enriched / would-reset):
+ *     node scripts/backfill-enrichment-reset.mjs --stats
+ *
+ *   Dry-run (count would-reset only, NO writes):
  *     node scripts/backfill-enrichment-reset.mjs
  *
  *   Apply (writes to the live DB — USER runs this after reviewing dry-run count):
@@ -57,6 +60,7 @@ databaseUrl = databaseUrl.replace(/^["']|["']$/g, '').replace(/&amp;/g, '&');
 
 const sql = neon(databaseUrl);
 const applyMode = process.argv.includes('--apply');
+const statsMode = process.argv.includes('--stats');
 
 const PREDICATE = `
   archived_at IS NULL
@@ -64,7 +68,39 @@ const PREDICATE = `
   AND role_at_connection IS NOT DISTINCT FROM title
 `;
 
+// Mirrors the GET /api/contacts/enrichment-queue WHERE clause:
+//   active AND (company_at_connection IS NULL OR role_at_connection IS NULL)
+//   AND enrichment_status <> 'enriched'
+const IN_QUEUE = `
+  archived_at IS NULL
+  AND (company_at_connection IS NULL OR role_at_connection IS NULL)
+  AND enrichment_status <> 'enriched'
+`;
+
 async function main() {
+  if (statsMode) {
+    // STATS: read-only breakdown, no writes.
+    const rows = await sql`
+      SELECT
+        count(*) FILTER (WHERE archived_at IS NULL) AS total_active,
+        count(*) FILTER (WHERE archived_at IS NULL AND enrichment_status = 'enriched') AS enriched,
+        count(*) FILTER (WHERE archived_at IS NULL AND enrichment_status = 'pending') AS pending,
+        count(*) FILTER (WHERE archived_at IS NULL AND enrichment_status = 'failed') AS failed,
+        count(*) FILTER (WHERE ${sql.unsafe(IN_QUEUE)}) AS in_queue,
+        count(*) FILTER (WHERE ${sql.unsafe(PREDICATE)}) AS would_reset
+      FROM contacts
+    `;
+    const s = rows[0];
+    console.log('Enrichment stats (active contacts only):');
+    console.log(`  total active        : ${Number(s.total_active)}`);
+    console.log(`  in enrichment queue : ${Number(s.in_queue)}  (missing at-connection, not enriched)`);
+    console.log(`  enriched            : ${Number(s.enriched)}`);
+    console.log(`  pending             : ${Number(s.pending)}`);
+    console.log(`  failed              : ${Number(s.failed)}`);
+    console.log(`  would reset (--apply): ${Number(s.would_reset)}  (at-connection == current)`);
+    return;
+  }
+
   if (!applyMode) {
     // DRY-RUN: count affected rows, no writes.
     const rows = await sql`
