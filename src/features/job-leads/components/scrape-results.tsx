@@ -1,10 +1,13 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { IconMapPin, IconExternalLink } from '@tabler/icons-react';
 import type { JobLead } from '@/lib/domain/types';
 
 export function ScrapeResults({ lead }: { lead: JobLead }) {
+  const isCompanyScope = lead.linkedinJobUrl === null;
+
   const scraped = lead.scrapedData as {
     companyName?: string;
     roleTitle?: string;
@@ -15,12 +18,23 @@ export function ScrapeResults({ lead }: { lead: JobLead }) {
   return (
     <Card>
       <CardHeader className='pb-3'>
-        <CardTitle className='text-base'>
-          {lead.roleTitle || 'Unknown Role'}
-        </CardTitle>
-        <p className='text-muted-foreground text-sm'>
-          {lead.companyName || 'Unknown Company'}
-        </p>
+        {isCompanyScope ? (
+          <div className='flex items-center gap-2'>
+            <CardTitle className='text-base'>
+              {lead.companyName || 'Company scrape'}
+            </CardTitle>
+            <Badge variant='secondary'>Company scrape</Badge>
+          </div>
+        ) : (
+          <>
+            <CardTitle className='text-base'>
+              {lead.roleTitle || 'Unknown Role'}
+            </CardTitle>
+            <p className='text-muted-foreground text-sm'>
+              {lead.companyName || 'Unknown Company'}
+            </p>
+          </>
+        )}
       </CardHeader>
       <CardContent className='space-y-2'>
         {scraped?.location && (
