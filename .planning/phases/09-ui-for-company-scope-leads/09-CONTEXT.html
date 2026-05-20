@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 9: UI for Company-Scope Leads - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-19
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>Make the <strong>job-lead detail page</strong> and the <strong>job-lead list/card view</strong> render company-scope leads (<code>linkedinJobUrl === null</code>) cleanly. A company-scope lead is a synthetic job lead created by the Phase 7/8 company-URL or bare-name flow — it has no source job URL and no real role title (the <code>roleTitle</code> is the <code>&#39;Company-wide scrape&#39;</code> sentinel, or null).</p>
+<p>This is the final UI phase of milestone v1.1 (LinkedIn Scraping by Company). It owns <strong>JL-C8</strong> (detail page renders gracefully for null <code>linkedinJobUrl</code>) and <strong>JL-C9</strong> (list view visually distinguishes company-scope leads).</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li><strong>Detail page (JL-C8):</strong> Promote the <strong>company name to the prominent title slot</strong> for company-scope leads and show a <strong>&quot;Company scrape&quot; badge</strong> next to it (replacing the <code>&#39;Company-wide scrape&#39;</code> sentinel / &quot;Unknown Role&quot; text that a job-URL lead would show as its role title). Keep the existing null-guard on the &quot;View Job Posting&quot; link (already implemented at <code>scrape-results.tsx:32</code> — verify, do not re-add).</li>
+<li><strong>List/card view (JL-C9):</strong> For company-scope leads, <strong>swap the leading icon</strong> (distinct from <code>IconBuilding</code>, e.g. <code>IconBuildingCommunity</code> / <code>IconUsersGroup</code>) <strong>and add a small &quot;Company&quot; pill</strong> near the status badge, so a user scanning a mixed queue can tell at a glance which leads are company-scope vs job-URL.</li>
+<li>A rendered component test for the detail view with a <code>linkedinJobUrl: null</code> fixture (JL-C8 verification).</li>
+<li>A rendered list test with a mixed-lead fixture — one company-scope, one job-URL (JL-C9 verification).</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li><strong>Employee-count display (criterion #3) is DEFERRED</strong> — see <code>&lt;deferred&gt;</code>. No pipeline currently populates employee count for a scraped company-scope lead (<code>companies.employeeCount</code> exists in schema but is not joined into the detail RSC and the skill does not write it). Phase 9 ships the company-name density (name promoted to title) now; the numeric employee count is a future enhancement. The detail layout must not break or show &quot;undefined / NaN employees&quot; — simply omit the count line.</li>
+<li>Any schema or API changes — Phase 7 (nullable columns) and Phase 8 (<code>companyLinkedinUrl</code> in <code>GET /api/job-leads</code>) already shipped everything the UI needs.</li>
+<li>Changes to the scraping skill — Phase 8 owns the skill; Phase 9 is read-only consumer of the data shape.</li>
+<li>Recommendation/triage UI changes — those flows are status-driven and lead-shape agnostic; unchanged.</li>
+<li>New status enum values or state-machine changes (none — same <code>queued → searching → found / failed</code> flow for both lead types).</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Detail Page Treatment (JL-C8)</h3>
+<ul>
+<li><p><strong>D-01:</strong> <strong>Company name as title + &quot;Company scrape&quot; badge.</strong> For a company-scope lead, the prominent <code>CardTitle</code> slot in <code>scrape-results.tsx</code> shows the <strong>company name</strong> (currently the subtitle), with a small <strong>&quot;Company scrape&quot; badge</strong> rendered next to it. The role-title line — which for a company-scope lead would otherwise render the <code>&#39;Company-wide scrape&#39;</code> sentinel or &quot;Unknown Role&quot; — is <strong>replaced entirely</strong> by this treatment. For a job-URL lead, the existing layout (role title as <code>CardTitle</code>, company name as subtitle) is unchanged. The branch keys off <code>lead.linkedinJobUrl === null</code> (locked discriminator, Phase 7 D-12 / Phase 8 D-12) — never off the <code>roleTitle</code> sentinel.</p>
+</li>
+<li><p><strong>D-02:</strong> <strong>&quot;View Job Posting&quot; link stays null-guarded — verify, don&#39;t re-add.</strong> <code>scrape-results.tsx:32</code> already wraps the &quot;View Job Posting&quot; <code>&lt;a&gt;</code> in <code>{lead.linkedinJobUrl &amp;&amp; (...)}</code>, so it is already hidden for company-scope leads. Phase 9 keeps this and the rendered test pins it (asserts the link is absent for a null-URL fixture). No new conditional logic is needed for the link itself — JL-C8&#39;s &quot;link hidden, not broken&quot; clause is already satisfied by existing code.</p>
+</li>
+</ul>
+<h3>List / Card View Treatment (JL-C9)</h3>
+<ul>
+<li><strong>D-03:</strong> <strong>Distinct icon + &quot;Company&quot; pill.</strong> In <code>job-lead-card.tsx</code>, company-scope leads (<code>linkedinJobUrl === null</code>) render a <strong>distinct leading icon</strong> (instead of the shared <code>IconBuilding</code>) <strong>and</strong> a small <strong>&quot;Company&quot; pill</strong> near the existing status <code>Badge</code>. Job-URL leads keep <code>IconBuilding</code> and show no pill. This is the strongest at-a-glance signal for a mixed queue (JL-C9). The icon swap alone or a pill alone were the lighter-weight alternatives; the user chose both for maximum scannability.</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><p><strong>CD-01:</strong> <strong>Exact icon choice for company-scope leads.</strong> Recommended: a <code>@tabler/icons-react</code> icon that reads as &quot;group of people / org-wide&quot; rather than &quot;single building&quot; — e.g. <code>IconBuildingCommunity</code> or <code>IconUsersGroup</code>. Planner picks the one that visually contrasts best with <code>IconBuilding</code> at 16px (<code>h-4 w-4</code>). Confirm the chosen icon is exported by the installed <code>@tabler/icons-react</code> version before using it.</p>
+</li>
+<li><p><strong>CD-02:</strong> <strong>Badge/pill variant, copy, and exact placement.</strong> Recommended: reuse the shadcn <code>Badge</code> component already imported in both files. Detail-page badge copy = &quot;Company scrape&quot;; list pill copy = &quot;Company&quot; (shorter, to fit the row). Variant <code>secondary</code> or <code>outline</code> to sit calmly next to the colored status badge. Planner decides exact placement (e.g., badge after <code>CardTitle</code> text vs. on its own line) based on layout/wrapping at narrow widths.</p>
+</li>
+<li><p><strong>CD-03:</strong> <strong>Test harness and fixture location.</strong> The phase needs rendered component tests (detail + list). Planner picks the rendering approach consistent with the Phase 2 Vitest harness — check whether the existing suite already renders React components (jsdom) or only does SSR-structural / DOM-shape assertions (the BUG-01 regression tests in Phase 2 used both SSR structural + jsdom mount). Match the established pattern rather than introducing a new render library. Fixtures: one company-scope lead (<code>linkedinJobUrl: null</code>, <code>roleTitle: &#39;Company-wide scrape&#39;</code> or null, a <code>companyName</code>) and one job-URL lead.</p>
+</li>
+<li><p><strong>CD-04:</strong> <strong>How the detail title renders the company name when <code>companyName</code> is also null.</strong> Edge case: a company-scope lead whose <code>companyName</code> somehow didn&#39;t resolve. Recommended fallback chain: <code>companyName</code> → &quot;Company scrape&quot; label alone (the badge carries the meaning). Never render &quot;Unknown Role&quot; for a company-scope lead. Planner picks the exact fallback string.</p>
+</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.1 milestone trail</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> — JL-C8 (line 133) and JL-C9 (line 134) are the two requirements this phase owns; full verifiable acceptance text lives there</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 9: UI for Company-Scope Leads&quot; — goal + 3 success criteria (note: criterion #3 employee-count is deferred — see <code>&lt;deferred&gt;</code>)</li>
+<li><code>.planning/PROJECT.md</code> §&quot;Current Milestone: v1.1 LinkedIn Scraping by Company&quot; — locked target features</li>
+</ul>
+<h3>Phase lineage (the data shape this UI consumes)</h3>
+<ul>
+<li><code>.planning/phases/08-skill-input-parsing-navigation-branching-drain/08-CONTEXT.md</code> §&quot;D-12&quot; — the <code>lead.linkedinJobUrl === null</code> discriminator is shared between the skill&#39;s drain branch and this phase&#39;s UI; <code>&#39;Company-wide scrape&#39;</code> sentinel is informational only</li>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md</code> §&quot;D-10/D-11/D-12&quot; — <code>COMPANY_SCOPE_ROLE_TITLE</code> sentinel definition, nullable <code>linkedinJobUrl</code>/<code>roleTitle</code>, the Phase 9 UI discriminator decision</li>
+</ul>
+<h3>Source files (read before planning)</h3>
+<ul>
+<li><code>src/features/job-leads/components/scrape-results.tsx</code> — <strong>the detail-page component that changes for JL-C8.</strong> Currently renders <code>roleTitle</code> as <code>CardTitle</code>, <code>companyName</code> as subtitle, and a null-guarded &quot;View Job Posting&quot; link. D-01 changes the title slot + adds badge for null-URL leads.</li>
+<li><code>src/features/job-leads/components/job-lead-card.tsx</code> — <strong>the list-row component that changes for JL-C9.</strong> Currently always renders <code>IconBuilding</code>. D-03 adds the icon swap + &quot;Company&quot; pill for null-URL leads.</li>
+<li><code>src/features/job-leads/components/job-lead-detail.tsx</code> — parent of <code>ScrapeResults</code>; renders status-driven blocks (queued/searching/failed/found). No change expected, but read to understand the detail composition.</li>
+<li><code>src/app/dashboard/job-leads/[id]/page.tsx</code> — detail RSC; selects the lead by id (no <code>companies</code> join today). If a future phase wants employee count, this is where the join would be added — out of scope here.</li>
+<li><code>src/app/dashboard/job-leads/page.tsx</code> — list RSC; selects all non-archived leads. Passes <code>JobLead[]</code> to <code>JobLeadsPage</code> → <code>JobLeadCard</code>.</li>
+<li><code>src/features/job-leads/components/job-leads-page.tsx</code> — list container that maps leads to <code>JobLeadCard</code>.</li>
+</ul>
+<h3>Type / domain anchors</h3>
+<ul>
+<li><code>src/lib/domain/types.ts</code> — <code>JobLead = typeof jobLeads.$inferSelect</code>; <code>COMPANY_SCOPE_ROLE_TITLE</code> constant (~line 219). The UI keys off <code>linkedinJobUrl === null</code>, not this sentinel.</li>
+<li><code>drizzle/schema/job-leads.ts</code> — <code>linkedinJobUrl</code> and <code>roleTitle</code> are nullable (Phase 7); <code>scrapedData</code> is <code>jsonb</code>; <code>prospectCount</code> is a non-null integer. No <code>employeeCount</code> on <code>job_leads</code>.</li>
+<li><code>drizzle/schema/companies.ts</code> — <code>employeeCount</code> lives here (not joined into the detail page) — relevant only to the deferred employee-count idea.</li>
+</ul>
+<h3>Test harness</h3>
+<ul>
+<li><code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code> — Phase 2 harness. For Phase 9&#39;s rendered component tests, planner verifies whether the existing suite renders React (jsdom) and follows that pattern (CD-03).</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> — TS strict, named exports, <code>&#39;use client&#39;</code> only when needed, kebab-case files</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — component naming, props interface convention (<code>[Component]Props</code>), Tailwind class sorting</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns&quot; — patterns to avoid</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>scrape-results.tsx</code></strong> — already imports <code>Card</code>/<code>CardHeader</code>/<code>CardTitle</code>/<code>CardContent</code> and <code>@tabler/icons-react</code> icons; the &quot;View Job Posting&quot; link is already null-guarded. D-01 modifies the header rendering; the existing structure is the base.</li>
+<li><strong><code>job-lead-card.tsx</code></strong> — already imports <code>Badge</code>, <code>IconBuilding</code>, <code>IconUsers</code> and uses a <code>statusColors</code> map. D-03 adds one icon swap + one conditional pill; the row layout (flex, status badge, date) stays.</li>
+<li><strong>shadcn <code>Badge</code></strong> — already used in both target files; the &quot;Company scrape&quot; badge (detail) and &quot;Company&quot; pill (list) reuse it. No new primitive.</li>
+<li><strong><code>@tabler/icons-react</code></strong> — already a dependency; the distinct company-scope icon comes from here (CD-01).</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>Discriminator is <code>linkedinJobUrl === null</code></strong> (Phase 7 D-12 / Phase 8 D-12) — both UI branches key off this single nullness check, never off the <code>roleTitle</code> sentinel string.</li>
+<li><strong><code>&#39;use client&#39;</code> components receiving server-fetched <code>JobLead</code> props</strong> — both target components are already client components fed by RSC pages. No data-fetching changes.</li>
+<li><strong>Null-tolerant rendering</strong> — existing components already guard <code>lead.roleTitle</code>, <code>lead.companyName</code>, <code>lead.linkedinJobUrl</code>, <code>lead.prospectCount</code> with <code>||</code>/<code>&amp;&amp;</code>. The new branches follow the same defensive style.</li>
+<li><strong>Phase 2 test harness</strong> — Vitest; BUG-01 regression used both SSR-structural and jsdom mount. The new rendered tests follow whichever the suite already supports (CD-03).</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>RSC → client component</strong> — <code>[id]/page.tsx</code> → <code>JobLeadDetail</code> → <code>ScrapeResults</code>; <code>page.tsx</code> → <code>JobLeadsPage</code> → <code>JobLeadCard</code>. Phase 9 touches only the two leaf client components (<code>scrape-results.tsx</code>, <code>job-lead-card.tsx</code>) plus their tests. No RSC query changes (employee-count join is deferred).</li>
+<li><strong>Shared <code>JobLead</code> type</strong> — both components consume <code>JobLead</code> from <code>src/lib/domain/types.ts</code>; no type change needed (<code>linkedinJobUrl</code> is already <code>string | null</code>).</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Whether to add an <code>isCompanyScope</code> field/flag (no — derive from <code>linkedinJobUrl === null</code> inline)</li>
+<li>Whether to change the API or RSC queries (no — data shape is sufficient; employee count is deferred)</li>
+<li>Whether to add a status enum value for company-scope (no — same statuses)</li>
+<li>Whether the &quot;View Job Posting&quot; link needs new hiding logic (no — already null-guarded at <code>scrape-results.tsx:32</code>)</li>
+</ul>
+<h3>What the Planner DOES Need to Verify / Decide</h3>
+<ul>
+<li><strong>The exact <code>@tabler/icons-react</code> icon</strong> for company-scope leads exists in the installed version and contrasts with <code>IconBuilding</code> (CD-01).</li>
+<li><strong>The rendered-test approach</strong> the Phase 2 suite supports (jsdom React render vs SSR-structural) and where to place fixtures (CD-03).</li>
+<li><strong>Badge placement at narrow card/title widths</strong> — ensure the detail badge and list pill don&#39;t break the existing <code>truncate</code> / flex layout (CD-02).</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><p><strong>Detail header for a company-scope lead (D-01):</strong> company name in the big <code>CardTitle</code> slot, &quot;Company scrape&quot; badge immediately after it. No role-title line, no employee-count line (deferred). For a job-URL lead the header is unchanged (role title big, company name subtitle).</p>
+<pre><code>┌──────────────────────────────────┐
+│ OpenAI            [Company scrape] │   ← company-scope lead
+└──────────────────────────────────┘
+┌──────────────────────────────────┐
+│ VP Data &amp; AI                       │   ← job-URL lead (unchanged)
+│ Acme Corp                          │
+└──────────────────────────────────┘
+</code></pre>
+</li>
+<li><p><strong>List row for a company-scope lead (D-03):</strong> distinct leading icon + &quot;Company&quot; pill next to the status badge.</p>
+<pre><code>[icon: community] OpenAI          [Company] [queued]   2026-05-19
+[icon: building]  Acme — VP Data            [queued]   2026-05-18
+</code></pre>
+</li>
+<li><p><strong>Branch shape (both components):</strong></p>
+<pre><code class="language-tsx">const isCompanyScope = lead.linkedinJobUrl === null;
+</code></pre>
+<p>One inline derivation per component; drives both the icon choice and the badge/pill render.</p>
+</li>
+<li><p><strong>Tests to ship (narrow surface):</strong></p>
+<ul>
+<li>Detail: render <code>ScrapeResults</code> (or <code>JobLeadDetail</code>) with a <code>linkedinJobUrl: null</code> fixture → assert &quot;View Job Posting&quot; link is absent, &quot;Company scrape&quot; badge present, company name in the title slot.</li>
+<li>List: render the card list with a mixed fixture (one null-URL lead, one job-URL lead) → assert the company-scope row carries the distinct icon + &quot;Company&quot; pill and the job-URL row does not.</li>
+</ul>
+</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><p><strong>Employee-count display on the detail page (ROADMAP criterion #3).</strong> No pipeline populates a company-scope lead&#39;s employee count today — <code>companies.employeeCount</code> exists in schema but is not joined into the detail RSC, and the Phase 8 skill does not write employee count into <code>scrapedData</code>. Shipping a count line now would render empty/<code>undefined</code>. Deferred until either (a) the skill captures employee count during the <code>/people/</code> scrape and writes it to <code>companies.employeeCount</code> or <code>scrapedData</code>, and (b) the detail RSC joins <code>companies</code> (or reads <code>scrapedData.employeeCount</code>). When revisited, the layout slot already chosen (under/next to the company-name title) is where it lands. This is the one partial gap against ROADMAP Phase 9 success criterion #3 — name density ships, numeric count does not.</p>
+</li>
+<li><p><strong>Icon-swap-only or pill-only treatments</strong> for the list view — declined in D-03 in favor of icon + pill for stronger scannability. Revisit only if the row feels cluttered at narrow widths.</p>
+</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos in <code>.planning/STATE.md</code> matched Phase 9&#39;s scope.</p>
+</deferred><hr>
+<p><em>Phase: 09-UI for Company-Scope Leads</em>
+<em>Context gathered: 2026-05-19</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
