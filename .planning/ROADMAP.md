@@ -190,7 +190,9 @@ Plans:
   1. The job-lead detail page hides the "View job posting" link when `linkedinJobUrl` is null and instead shows a "Company scrape" badge in the role-title display area — verified by a rendered component test with a null `linkedinJobUrl` fixture
   2. The job-lead list view displays a distinct icon or badge for company-scope leads so a user scanning a mixed queue can tell at a glance which leads came from job URLs and which from company searches — verified by a rendered list test with a mixed-lead fixture
   3. Company name and employee count (once scraped) are displayed prominently on the detail page for company-scope leads, giving the same informational density as a job-URL lead's role + company block
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 09-01-PLAN.md — Conditional company-scope branches in scrape-results.tsx (detail, JL-C8) and job-lead-card.tsx (list, JL-C9) + SSR-structural rendered tests
 **UI hint**: yes
 
 ## Progress

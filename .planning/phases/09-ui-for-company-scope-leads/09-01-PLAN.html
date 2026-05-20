@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 09-ui-for-company-scope-leads
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/features/job-leads/components/scrape-results.tsx</li>
+<li>src/features/job-leads/components/scrape-results.test.tsx</li>
+<li>src/features/job-leads/components/job-lead-card.tsx</li>
+<li>src/features/job-leads/components/job-lead-card.test.tsx
+autonomous: true
+requirements: [JL-C8, JL-C9]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;D-01: A user opening a company-scope lead detail page (linkedinJobUrl null) sees the company name in the prominent title slot with a &#39;Company scrape&#39; badge, no &#39;Unknown Role&#39; text, and no &#39;View Job Posting&#39; link&quot;
+    - &quot;D-02: A user opening a job-URL lead detail page sees the role title as the title and the company name as subtitle, with the &#39;View Job Posting&#39; link present — unchanged (existing null-guard verified, not re-added)&quot;
+    - &quot;D-03: A user scanning the job-lead list can tell a company-scope row from a job-URL row at a glance: company-scope rows show the IconBuildingCommunity icon plus a &#39;Company&#39; pill; job-URL rows show IconBuilding with no pill&quot;
+    - &quot;The &#39;Company-wide scrape&#39; sentinel string never appears as visible text in either the detail view or the list row&quot;
+    - &quot;A company-scope lead whose companyName is null renders the title text &#39;Company scrape&#39; (never &#39;Unknown Role&#39;)&quot;
+  artifacts:
+    - path: &quot;src/features/job-leads/components/scrape-results.tsx&quot;
+      provides: &quot;Detail header conditional branch keyed off linkedinJobUrl === null (JL-C8)&quot;
+      contains: &quot;isCompanyScope&quot;
+    - path: &quot;src/features/job-leads/components/scrape-results.test.tsx&quot;
+      provides: &quot;SSR-structural rendered test for detail view, company-scope + job-URL + null-name fixtures&quot;
+      contains: &quot;Company scrape&quot;
+    - path: &quot;src/features/job-leads/components/job-lead-card.tsx&quot;
+      provides: &quot;List-row icon swap + &#39;Company&#39; pill + sentinel suppression branch (JL-C9)&quot;
+      contains: &quot;IconBuildingCommunity&quot;
+    - path: &quot;src/features/job-leads/components/job-lead-card.test.tsx&quot;
+      provides: &quot;SSR-structural rendered test for list rows, mixed company-scope + job-URL fixtures&quot;
+      contains: &quot;building-community&quot;
+  key_links:
+    - from: &quot;src/features/job-leads/components/scrape-results.tsx&quot;
+      to: &quot;lead.linkedinJobUrl === null&quot;
+      via: &quot;isCompanyScope discriminator drives CardHeader branch&quot;
+      pattern: &quot;linkedinJobUrl === null&quot;
+    - from: &quot;src/features/job-leads/components/job-lead-card.tsx&quot;
+      to: &quot;lead.linkedinJobUrl === null&quot;
+      via: &quot;isCompanyScope discriminator drives icon swap, subtitle suppression, and pill&quot;
+  pattern: &quot;linkedinJobUrl === null&quot;
+</p>
+<hr>
+<objective>
+Make the two leaf job-lead client components render company-scope leads (`linkedinJobUrl === null`) cleanly, and pin the behavior with SSR-structural rendered tests.<ul>
+<li>JL-C8 (detail, <code>scrape-results.tsx</code>): for a company-scope lead, promote the company name into the prominent <code>CardTitle</code> slot with a &quot;Company scrape&quot; badge; suppress the role-title line; keep the already-present &quot;View Job Posting&quot; null-guard. Job-URL leads unchanged.</li>
+<li>JL-C9 (list, <code>job-lead-card.tsx</code>): for a company-scope lead, swap the leading icon to <code>IconBuildingCommunity</code>, suppress the role subtitle (so the <code>&#39;Company-wide scrape&#39;</code> sentinel never shows), and add a &quot;Company&quot; pill in the right-side badge cluster. Job-URL leads unchanged.</li>
+</ul>
+<p>Purpose: A user scanning a mixed lead queue or opening a company-scope lead detail page gets a coherent UI instead of &quot;Unknown Role&quot; / a broken job-posting link / a leaked sentinel string.</p>
+<p>Output: 2 modified components + 2 new test files. No schema, API, or RSC-query changes.</p>
+<p>Scope locks (do not deviate): every visual/structural/copy decision is fixed by <code>09-UI-SPEC.md</code> and <code>09-CONTEXT.md</code> (D-01..D-03, CD-01..CD-04). Implement those decisions verbatim — do not re-derive icon choice, badge copy, variants, or placement. Employee-count display is DEFERRED — do NOT add it.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md<p>@.planning/phases/09-ui-for-company-scope-leads/09-CONTEXT.md
+@.planning/phases/09-ui-for-company-scope-leads/09-UI-SPEC.md
+@.planning/phases/09-ui-for-company-scope-leads/09-PATTERNS.md</p>
+<p>@src/features/job-leads/components/scrape-results.tsx
+@src/features/job-leads/components/job-lead-card.tsx
+@src/components/layout/app-sidebar.ssr.test.tsx</p>
+<interfaces>
+<!-- Contracts the executor needs. Use directly — no codebase exploration required. --><p>From src/lib/domain/types.ts:</p>
+<ul>
+<li><code>JobLead = typeof jobLeads.$inferSelect</code> — fields used here: <code>id</code>, <code>companyId</code>, <code>companyName: string | null</code>, <code>linkedinJobUrl: string | null</code>, <code>roleTitle: string | null</code>, <code>status: string</code>, <code>prospectCount: number</code>, <code>scrapedData</code>, <code>createdAt: Date</code>, <code>updatedAt: Date</code>, <code>archivedAt: Date | null</code>, <code>lastError</code>, <code>lastErrorAt</code>.</li>
+<li>Discriminator (locked, Phase 7 D-12 / Phase 8 D-12): <code>lead.linkedinJobUrl === null</code>. NEVER key off the <code>roleTitle</code> sentinel <code>&#39;Company-wide scrape&#39;</code>.</li>
+</ul>
+<p>Component signatures (both already exist, both <code>&#39;use client&#39;</code>):</p>
+<ul>
+<li><code>export function ScrapeResults({ lead }: { lead: JobLead })</code></li>
+<li><code>export function JobLeadCard({ lead }: { lead: JobLead })</code></li>
+</ul>
+<p>shadcn <code>Badge</code>: <code>import { Badge } from &#39;@/components/ui/badge&#39;</code> — already imported in <code>job-lead-card.tsx</code>; must be added to <code>scrape-results.tsx</code>. Props used: <code>variant</code> (<code>&#39;secondary&#39;</code> | <code>&#39;outline&#39;</code>), <code>className</code>, <code>children</code>.</p>
+<p>Tabler icon (confirmed exported by installed <code>@tabler/icons-react</code> v3.38.0): <code>IconBuildingCommunity</code>.</p>
+<p>Test harness facts (verified, from 09-PATTERNS.md):</p>
+<ul>
+<li>Vitest global <code>environment: &#39;node&#39;</code>; test glob <code>src/**/*.test.{ts,tsx}</code>. No <code>// @vitest-environment jsdom</code> docblock needed — <code>renderToString</code> runs natively in node.</li>
+<li><code>@testing-library/react</code> is NOT installed. Use <code>renderToString</code> from <code>react-dom/server</code> + <code>JSDOM</code> from the <code>jsdom</code> package for DOM queries. Do NOT introduce a new render library.</li>
+<li>Closest analog: <code>src/components/layout/app-sidebar.ssr.test.tsx</code> (file-level <code>vi.mock</code> passthrough of shadcn primitives, <code>data-icon</code> stubs for tabler icons, <code>next/link</code> mocked to a plain <code>&lt;a&gt;</code>).</interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Detail page company-scope header + rendered test (JL-C8)</name>
+  <files>src/features/job-leads/components/scrape-results.tsx, src/features/job-leads/components/scrape-results.test.tsx</files>
+  <read_first>
+    - src/features/job-leads/components/scrape-results.tsx (the file being modified — full current source)
+    - src/components/layout/app-sidebar.ssr.test.tsx (test-harness analog: renderToString + JSDOM, vi.mock passthrough pattern)
+    - .planning/phases/09-ui-for-company-scope-leads/09-UI-SPEC.md (sections "JL-C8: Detail Page", "Copywriting Contract", "Test Fixtures" — locked structure/copy/fixtures)
+    - .planning/phases/09-ui-for-company-scope-leads/09-PATTERNS.md (section for scrape-results.tsx + scrape-results.test.tsx — exact mock + body patterns)
+  </read_first>
+  <behavior>
+    Test file `scrape-results.test.tsx` (write tests first; they fail until the component branch lands):
+    - With the `companyLead` fixture (companyName 'OpenAI', linkedinJobUrl null, roleTitle 'Company-wide scrape'): rendered HTML contains 'OpenAI'; contains 'Company scrape'; contains NO `<a>` element (JSDOM `document.querySelector('a')` is null); does NOT contain 'Unknown Role'.
+    - With the `nullNameLead` fixture (companyName null, roleTitle null, linkedinJobUrl null): CardTitle text renders 'Company scrape'; HTML does NOT contain 'Unknown Role'; no `<a>` element.
+    - With the `jobLead` fixture (companyName 'Acme Corp', roleTitle 'VP Data & AI', linkedinJobUrl a real URL): contains 'VP Data &amp; AI' (HTML-escaped); contains 'Acme Corp'; contains a 'View Job Posting' `<a>` element (JSDOM `document.querySelector('a')` not null).
+  </behavior>
+  <action>
+    Modify `scrape-results.tsx`: add `import { Badge } from '@/components/ui/badge'` (copy the import line from `job-lead-card.tsx`). As the first line of the `ScrapeResults` function body, before any JSX, derive `const isCompanyScope = lead.linkedinJobUrl === null;`. Branch the `<CardHeader className='pb-3'>` content on `isCompanyScope`.<pre><code>When `isCompanyScope` is true: render a `&lt;div className=&#39;flex items-center gap-2&#39;&gt;` containing a `&lt;CardTitle className=&#39;text-base&#39;&gt;` whose text is `lead.companyName || &#39;Company scrape&#39;`, immediately followed by `&lt;Badge variant=&#39;secondary&#39;&gt;Company scrape&lt;/Badge&gt;`. Do NOT render the role-title `CardTitle` line or the company-name `&lt;p&gt;` subtitle in this branch. Do NOT render any employee-count line (deferred — out of scope).
+
+When `isCompanyScope` is false: keep the existing header exactly — `&lt;CardTitle className=&#39;text-base&#39;&gt;{lead.roleTitle || &#39;Unknown Role&#39;}&lt;/CardTitle&gt;` then `&lt;p className=&#39;text-muted-foreground text-sm&#39;&gt;{lead.companyName || &#39;Unknown Company&#39;}&lt;/p&gt;`.
+
+Leave the `&lt;CardContent&gt;` block untouched. The existing `{lead.linkedinJobUrl &amp;&amp; (...)}` guard at line 32 already hides the &quot;View Job Posting&quot; link for company-scope leads — verify it is present, do NOT re-add or alter it. Badge copy is exactly &quot;Company scrape&quot; (two words, sentence case, no hyphen). Variant is exactly `secondary`. No inline font-weight overrides.
+
+Create `scrape-results.test.tsx` following the `app-sidebar.ssr.test.tsx` analog: imports `React`, `renderToString` from `react-dom/server`, `JSDOM` from `jsdom`, and `{ describe, it, beforeAll, vi, expect }` from `vitest`. `vi.mock(&#39;@/components/ui/card&#39;, ...)` passthrough (Card/CardContent → div, CardHeader → div with className, CardTitle → h3 with className). `vi.mock(&#39;@/components/ui/badge&#39;, ...)` → span with `data-variant`. `vi.mock(&#39;@tabler/icons-react&#39;, ...)` stubbing `IconMapPin` and `IconExternalLink` as `() =&gt; &lt;span /&gt;`. Declare the three fixtures (`companyLead`, `jobLead`, `nullNameLead`) at module scope verbatim from 09-UI-SPEC.md &quot;Test Fixtures&quot; (typed `JobLead`). Implement the assertions in the behavior block above using `renderToString(React.createElement(ScrapeResults, { lead: &lt;fixture&gt; }))` and `new JSDOM(html, { url: &#39;http://localhost/&#39; })` for element queries.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/features/job-leads/components/scrape-results.test.tsx</automated>
+  </verify>
+  <acceptance_criteria>
+    - `scrape-results.tsx` contains `const isCompanyScope = lead.linkedinJobUrl === null;` and `import { Badge } from '@/components/ui/badge'`.
+    - `grep -v '^#' src/features/job-leads/components/scrape-results.tsx | grep -c "Company scrape"` >= 1 (badge copy present).
+    - The `{lead.linkedinJobUrl && (` guard wrapping the "View Job Posting" `<a>` is still present (unchanged).
+    - `npx vitest run src/features/job-leads/components/scrape-results.test.tsx` exits 0 with all assertions in the behavior block passing.
+    - `npx tsc --noEmit` reports no new type errors in either file.
+  </acceptance_criteria>
+  <done>
+    Company-scope leads show company name + "Company scrape" badge with no role line and no job-posting link; job-URL leads render unchanged with the link present; null-companyName company-scope leads show "Company scrape" as the title, never "Unknown Role". Rendered test passes.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: List-row icon swap + "Company" pill + rendered test (JL-C9)</name>
+  <files>src/features/job-leads/components/job-lead-card.tsx, src/features/job-leads/components/job-lead-card.test.tsx</files>
+  <read_first>
+    - src/features/job-leads/components/job-lead-card.tsx (the file being modified — full current source)
+    - src/components/layout/app-sidebar.ssr.test.tsx (test-harness analog, including the next/link mock pattern)
+    - .planning/phases/09-ui-for-company-scope-leads/09-UI-SPEC.md (section "JL-C9: List/Card Row", "Copywriting Contract", "Test Fixtures")
+    - .planning/phases/09-ui-for-company-scope-leads/09-PATTERNS.md (section for job-lead-card.tsx + job-lead-card.test.tsx — exact mock, icon-assertion, and body patterns)
+  </read_first>
+  <behavior>
+    Test file `job-lead-card.test.tsx` (write tests first; they fail until the component branch lands):
+    - With `companyLead` (linkedinJobUrl null, companyName 'OpenAI', roleTitle 'Company-wide scrape'): rendered HTML has an element matching `[data-icon="building-community"]` and NO `[data-icon="building"]`; an `outline`-variant badge whose trimmed text is 'Company' is present; HTML does NOT contain 'Company-wide scrape' (sentinel suppressed).
+    - With `jobLead` (linkedinJobUrl a real URL, roleTitle 'VP Data & AI'): rendered HTML has `[data-icon="building"]` and NO `[data-icon="building-community"]`; no `outline` badge whose trimmed text is exactly 'Company'; HTML contains 'VP Data &amp; AI' (role subtitle rendered, HTML-escaped).
+  </behavior>
+  <action>
+    Modify `job-lead-card.tsx`: add `IconBuildingCommunity` to the existing `@tabler/icons-react` import (alongside `IconBuilding, IconUsers`). As the first line of the `JobLeadCard` function body, before the `return`, derive `const isCompanyScope = lead.linkedinJobUrl === null;`.<pre><code>Change 1 (icon swap): replace the hardcoded `&lt;IconBuilding className=&#39;text-muted-foreground h-4 w-4 shrink-0&#39; /&gt;` (line 29) with a ternary on `isCompanyScope` — true renders `&lt;IconBuildingCommunity className=&#39;text-muted-foreground h-4 w-4 shrink-0&#39; /&gt;`, false renders `&lt;IconBuilding className=&#39;text-muted-foreground h-4 w-4 shrink-0&#39; /&gt;`. Identical class string in both branches; no size change.
+
+Change 2 (subtitle suppression): change the role-subtitle guard from `{lead.roleTitle &amp;&amp; (...)}` to `{!isCompanyScope &amp;&amp; lead.roleTitle &amp;&amp; (...)}` — the `&lt;p className=&#39;text-muted-foreground mt-1 truncate text-sm&#39;&gt;` content and classes stay the same. This ensures the `&#39;Company-wide scrape&#39;` sentinel never renders as a visible subtitle.
+
+Change 3 (&quot;Company&quot; pill): inside the right-side `&lt;div className=&#39;flex items-center gap-3&#39;&gt;` (line 40), add as the FIRST child `{isCompanyScope &amp;&amp; (&lt;Badge variant=&#39;outline&#39;&gt;Company&lt;/Badge&gt;)}`, before the prospect-count block and before the status badge. Pill copy is exactly &quot;Company&quot; (one word, sentence case). Variant exactly `outline`. The `gap-3` already exists — no gap change. Leave the prospect-count block, status badge, and date span unchanged.
+
+Create `job-lead-card.test.tsx` following the analog: imports `React`, `renderToString`, `JSDOM`, and `{ describe, it, beforeAll, vi, expect }`. Mocks: `vi.mock(&#39;next/link&#39;, ...)` returning a plain `&lt;a href&gt;` element (per analog line 31-34); `vi.mock(&#39;@/components/ui/card&#39;, ...)` passthrough; `vi.mock(&#39;@/components/ui/badge&#39;, ...)` → span with `data-variant`; `vi.mock(&#39;@tabler/icons-react&#39;, ...)` stubbing `IconBuilding` as `() =&gt; &lt;span data-icon=&#39;building&#39; /&gt;`, `IconBuildingCommunity` as `() =&gt; &lt;span data-icon=&#39;building-community&#39; /&gt;`, and `IconUsers` as `() =&gt; &lt;span /&gt;`. Declare the `companyLead` and `jobLead` fixtures at module scope verbatim from 09-UI-SPEC.md. In `beforeAll`, run `renderToString` for each fixture and build a `JSDOM` per result. Implement the behavior-block assertions, querying `[data-icon=...]` for icon checks and `[data-variant=&quot;outline&quot;]` badges (mapping `textContent?.trim()`) for the pill check.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/features/job-leads/components/job-lead-card.test.tsx</automated>
+  </verify>
+  <acceptance_criteria>
+    - `job-lead-card.tsx` imports `IconBuildingCommunity` from `@tabler/icons-react` and contains `const isCompanyScope = lead.linkedinJobUrl === null;`.
+    - `grep -c "IconBuildingCommunity" src/features/job-leads/components/job-lead-card.tsx` >= 2 (import + usage).
+    - The role-subtitle guard reads `!isCompanyScope && lead.roleTitle` (sentinel suppression).
+    - A `<Badge variant='outline'>Company</Badge>` is the first child of the right-side `flex items-center gap-3` cluster.
+    - `npx vitest run src/features/job-leads/components/job-lead-card.test.tsx` exits 0 with all behavior-block assertions passing.
+    - `npx tsc --noEmit` reports no new type errors in either file.
+  </acceptance_criteria>
+  <done>
+    Company-scope rows show IconBuildingCommunity + a "Company" outline pill and never render the sentinel subtitle; job-URL rows keep IconBuilding, no pill, and render their role subtitle. Rendered test passes.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RSC server prop → client component</td>
+<td>Already-fetched <code>JobLead</code> data (server-side, Drizzle-typed) is passed as a prop into the two <code>&#39;use client&#39;</code> components. No new boundary is introduced by this phase.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<p>This phase is a read-only rendering change of already-fetched <code>JobLead</code> data. It adds NO new inputs, endpoints, auth surface, env vars, package installs, or data mutations. The honest posture is &quot;no new attack surface.&quot;</p>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-09-01</td>
+<td>Information Disclosure / Tampering (XSS)</td>
+<td><code>scrape-results.tsx</code>, <code>job-lead-card.tsx</code> rendering of <code>companyName</code> / <code>roleTitle</code></td>
+<td>mitigate</td>
+<td>These scraper-/user-influenced fields are rendered as React text children (<code>{lead.companyName}</code>, <code>{lead.roleTitle}</code>), which React auto-escapes. No <code>dangerouslySetInnerHTML</code> is introduced. The tests assert role text renders HTML-escaped (<code>&#39;VP Data &amp;amp; AI&#39;</code>), pinning the escaping behavior. No new XSS surface.</td>
+</tr>
+<tr>
+<td>T-09-02</td>
+<td>Tampering (supply chain)</td>
+<td>npm installs</td>
+<td>accept</td>
+<td>No package installs in this phase — all primitives (<code>Badge</code>, <code>IconBuildingCommunity</code>) are already in <code>package.json</code> (<code>@tabler/icons-react</code> v3.38.0, shadcn Badge). Package Legitimacy Gate is N/A (zero installs).</td>
+</tr>
+<tr>
+<td>T-09-03</td>
+<td>Elevation / Spoofing</td>
+<td>auth / route surface</td>
+<td>accept</td>
+<td>No routes, middleware, or auth logic touched. Existing Clerk single-user lock and <code>/api/*</code> 401 guard (Phase 3) are unaffected.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx vitest run src/features/job-leads/components/scrape-results.test.tsx src/features/job-leads/components/job-lead-card.test.tsx` exits 0 (both new test files green).
+- `npm test` (full Vitest suite) exits 0 — no regressions in existing tests.
+- `npx tsc --noEmit` clean (TS strict mode, no new errors).
+- Manual sanity (optional, not gating): `npm run dev` → open a company-scope lead detail page and the list — company name in title + "Company scrape" badge on detail; IconBuildingCommunity + "Company" pill on the list row.
+</verification><success_criteria>
+- JL-C8 satisfied: detail page renders company name in the title slot + "Company scrape" badge for null-`linkedinJobUrl` leads; "View Job Posting" link hidden (not broken); never shows "Unknown Role"; pinned by a rendered DOM-shape test with a `linkedinJobUrl: null` fixture.
+- JL-C9 satisfied: list view distinguishes company-scope leads (IconBuildingCommunity + "Company" pill) from job-URL leads (IconBuilding, no pill); the `'Company-wide scrape'` sentinel never renders; pinned by a rendered test with a mixed-lead fixture.
+- Job-URL leads render unchanged in both views.
+- No schema, API, or RSC-query changes. Employee-count display NOT added (deferred).
+- Both new test files green; full suite and `tsc --noEmit` clean.
+</success_criteria><output>
+Create `.planning/phases/09-ui-for-company-scope-leads/09-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

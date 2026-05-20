@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 9: UI for Company-Scope Leads — Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-05-19
+<strong>Files analyzed:</strong> 4 (2 modified components + 2 new test files)
+<strong>Analogs found:</strong> 4 / 4</p>
+<hr>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/job-leads/components/scrape-results.tsx</code></td>
+<td>component (modify)</td>
+<td>request-response (RSC-fed)</td>
+<td><code>src/features/job-leads/components/job-lead-card.tsx</code></td>
+<td>exact — same feature, same <code>JobLead</code> prop, same <code>&#39;use client&#39;</code> RSC-fed pattern</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/job-lead-card.tsx</code></td>
+<td>component (modify)</td>
+<td>request-response (RSC-fed)</td>
+<td><code>src/features/job-leads/components/scrape-results.tsx</code></td>
+<td>exact — same feature, same <code>JobLead</code> prop, same <code>&#39;use client&#39;</code> RSC-fed pattern</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/scrape-results.test.tsx</code></td>
+<td>test</td>
+<td>SSR-structural + jsdom</td>
+<td><code>src/components/layout/app-sidebar.ssr.test.tsx</code></td>
+<td>role-match — same pattern: <code>renderToString</code> + JSDOM structural assertions, no <code>@testing-library/react</code></td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/job-lead-card.test.tsx</code></td>
+<td>test</td>
+<td>SSR-structural + jsdom</td>
+<td><code>src/components/layout/app-sidebar.ssr.test.tsx</code></td>
+<td>role-match — same pattern as above</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>src/features/job-leads/components/scrape-results.tsx</code> (component, modify)</h3>
+<p><strong>Analog:</strong> self (current file) + <code>src/features/job-leads/components/job-lead-card.tsx</code></p>
+<p><strong>Current file — full source</strong> (<code>src/features/job-leads/components/scrape-results.tsx</code>, lines 1–48):</p>
+<pre><code class="language-tsx">&#39;use client&#39;;
+
+import { Card, CardContent, CardHeader, CardTitle } from &#39;@/components/ui/card&#39;;
+import { IconMapPin, IconExternalLink } from &#39;@tabler/icons-react&#39;;
+import type { JobLead } from &#39;@/lib/domain/types&#39;;
+
+export function ScrapeResults({ lead }: { lead: JobLead }) {
+  const scraped = lead.scrapedData as {
+    companyName?: string;
+    roleTitle?: string;
+    location?: string;
+    companyLinkedinUrl?: string;
+  } | null;
+
+  return (
+    &lt;Card&gt;
+      &lt;CardHeader className=&#39;pb-3&#39;&gt;
+        &lt;CardTitle className=&#39;text-base&#39;&gt;
+          {lead.roleTitle || &#39;Unknown Role&#39;}
+        &lt;/CardTitle&gt;
+        &lt;p className=&#39;text-muted-foreground text-sm&#39;&gt;
+          {lead.companyName || &#39;Unknown Company&#39;}
+        &lt;/p&gt;
+      &lt;/CardHeader&gt;
+      &lt;CardContent className=&#39;space-y-2&#39;&gt;
+        {scraped?.location &amp;&amp; (
+          &lt;div className=&#39;text-muted-foreground flex items-center gap-2 text-sm&#39;&gt;
+            &lt;IconMapPin className=&#39;h-4 w-4&#39; /&gt;
+            {scraped.location}
+          &lt;/div&gt;
+        )}
+        {lead.linkedinJobUrl &amp;&amp; (
+          &lt;div className=&#39;flex gap-2&#39;&gt;
+            &lt;a
+              href={lead.linkedinJobUrl}
+              target=&#39;_blank&#39;
+              rel=&#39;noopener noreferrer&#39;
+              className=&#39;text-primary flex items-center gap-1 text-sm hover:underline&#39;
+            &gt;
+              &lt;IconExternalLink className=&#39;h-3.5 w-3.5&#39; /&gt;
+              View Job Posting
+            &lt;/a&gt;
+          &lt;/div&gt;
+        )}
+      &lt;/CardContent&gt;
+    &lt;/Card&gt;
+  );
+}
+</code></pre>
+<p><strong>What changes for D-01:</strong></p>
+<ul>
+<li>Add <code>Badge</code> to the Card imports and add <code>import { Badge } from &#39;@/components/ui/badge&#39;</code></li>
+<li>Derive <code>const isCompanyScope = lead.linkedinJobUrl === null;</code> as the first line of the function body</li>
+<li>Branch the <code>&lt;CardHeader&gt;</code> content: when <code>isCompanyScope</code> is true, render the company-name-as-title + badge structure (replacing both the <code>CardTitle</code> line and the <code>&lt;p&gt;</code> subtitle); when false, keep the existing render unchanged</li>
+<li>The <code>{lead.linkedinJobUrl &amp;&amp; (...)}</code> guard at line 32 already handles JL-C8&#39;s link-hidden clause — do not re-add it</li>
+<li><code>Badge</code> already used in <code>job-lead-card.tsx</code> at line 6/47–50; copy that import line</li>
+</ul>
+<p><strong>Discriminator pattern from UI-SPEC.md:</strong></p>
+<pre><code class="language-tsx">const isCompanyScope = lead.linkedinJobUrl === null;
+</code></pre>
+<p><strong>New company-scope CardHeader structure from UI-SPEC.md (lines 73–81):</strong></p>
+<pre><code class="language-tsx">&lt;CardHeader className=&#39;pb-3&#39;&gt;
+  &lt;div className=&#39;flex items-center gap-2&#39;&gt;
+    &lt;CardTitle className=&#39;text-base&#39;&gt;
+      {lead.companyName || &#39;Company scrape&#39;}
+    &lt;/CardTitle&gt;
+    &lt;Badge variant=&#39;secondary&#39;&gt;Company scrape&lt;/Badge&gt;
+  &lt;/div&gt;
+  {/* role-title line is intentionally absent for company-scope leads */}
+&lt;/CardHeader&gt;
+</code></pre>
+<p><strong>Badge import to add</strong> (copy from <code>job-lead-card.tsx</code> line 6):</p>
+<pre><code class="language-tsx">import { Badge } from &#39;@/components/ui/badge&#39;;
+</code></pre>
+<hr>
+<h3><code>src/features/job-leads/components/job-lead-card.tsx</code> (component, modify)</h3>
+<p><strong>Analog:</strong> self (current file)</p>
+<p><strong>Current file — full source</strong> (<code>src/features/job-leads/components/job-lead-card.tsx</code>, lines 1–61):</p>
+<pre><code class="language-tsx">&#39;use client&#39;;
+
+import Link from &#39;next/link&#39;;
+import { Card, CardContent } from &#39;@/components/ui/card&#39;;
+import { Badge } from &#39;@/components/ui/badge&#39;;
+import type { JobLead } from &#39;@/lib/domain/types&#39;;
+import { IconBuilding, IconUsers } from &#39;@tabler/icons-react&#39;;
+
+const statusColors: Record&lt;string, string&gt; = {
+  pending: &#39;bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200&#39;,
+  scraping: &#39;bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200&#39;,
+  scraped: &#39;bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200&#39;,
+  queued: &#39;bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200&#39;,
+  searching: &#39;bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200&#39;,
+  found: &#39;bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200&#39;,
+  ready: &#39;bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200&#39;,
+  actioned: &#39;bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200&#39;,
+  archived: &#39;bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200&#39;,
+  failed: &#39;bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200&#39;
+};
+
+export function JobLeadCard({ lead }: { lead: JobLead }) {
+  return (
+    &lt;Link href={`/dashboard/job-leads/${lead.id}`}&gt;
+      &lt;Card className=&#39;hover:bg-accent/50 transition-colors&#39;&gt;
+        &lt;CardContent className=&#39;flex items-center justify-between p-4&#39;&gt;
+          &lt;div className=&#39;min-w-0 flex-1&#39;&gt;
+            &lt;div className=&#39;flex items-center gap-2&#39;&gt;
+              &lt;IconBuilding className=&#39;text-muted-foreground h-4 w-4 shrink-0&#39; /&gt;
+              &lt;span className=&#39;truncate font-medium&#39;&gt;
+                {lead.companyName || &#39;Unknown Company&#39;}
+              &lt;/span&gt;
+            &lt;/div&gt;
+            {lead.roleTitle &amp;&amp; (
+              &lt;p className=&#39;text-muted-foreground mt-1 truncate text-sm&#39;&gt;
+                {lead.roleTitle}
+              &lt;/p&gt;
+            )}
+          &lt;/div&gt;
+          &lt;div className=&#39;flex items-center gap-3&#39;&gt;
+            {lead.prospectCount &gt; 0 &amp;&amp; (
+              &lt;div className=&#39;text-muted-foreground flex items-center gap-1 text-sm&#39;&gt;
+                &lt;IconUsers className=&#39;h-3.5 w-3.5&#39; /&gt;
+                {lead.prospectCount}
+              &lt;/div&gt;
+            )}
+            &lt;Badge
+              variant=&#39;outline&#39;
+              className={statusColors[lead.status] || &#39;&#39;}
+            &gt;
+              {lead.status.replace(/_/g, &#39; &#39;)}
+            &lt;/Badge&gt;
+            &lt;span className=&#39;text-muted-foreground text-xs&#39;&gt;
+              {new Date(lead.createdAt).toLocaleDateString()}
+            &lt;/span&gt;
+          &lt;/div&gt;
+        &lt;/CardContent&gt;
+      &lt;/Card&gt;
+    &lt;/Link&gt;
+  );
+}
+</code></pre>
+<p><strong>What changes for D-03:</strong></p>
+<ul>
+<li>Add <code>IconBuildingCommunity</code> to the tabler import at line 7 (icon is confirmed exported by installed <code>@tabler/icons-react</code> v3.38.0 — verified in <code>tabler-icons-react.d.ts</code>)</li>
+<li>Derive <code>const isCompanyScope = lead.linkedinJobUrl === null;</code> as the first line of the function body (before JSX)</li>
+<li>Replace the hardcoded <code>&lt;IconBuilding ...&gt;</code> at line 29 with the conditional icon swap (UI-SPEC lines 112–115)</li>
+<li>Replace the <code>{lead.roleTitle &amp;&amp; (...)}</code> subtitle at lines 34–38 with the suppressed version (UI-SPEC line 122–124) — adds <code>!isCompanyScope &amp;&amp;</code> guard so the <code>&#39;Company-wide scrape&#39;</code> sentinel never renders as visible text</li>
+<li>Add <code>{isCompanyScope &amp;&amp; (&lt;Badge variant=&#39;outline&#39;&gt;Company&lt;/Badge&gt;)}</code> as the first item in the right-side <code>flex items-center gap-3</code> div (UI-SPEC lines 130–134)</li>
+</ul>
+<p><strong>Icon swap pattern from UI-SPEC.md (lines 112–115):</strong></p>
+<pre><code class="language-tsx">{isCompanyScope
+  ? &lt;IconBuildingCommunity className=&#39;text-muted-foreground h-4 w-4 shrink-0&#39; /&gt;
+  : &lt;IconBuilding className=&#39;text-muted-foreground h-4 w-4 shrink-0&#39; /&gt;
+}
+</code></pre>
+<p><strong>Subtitle suppression pattern from UI-SPEC.md (lines 122–124):</strong></p>
+<pre><code class="language-tsx">{!isCompanyScope &amp;&amp; lead.roleTitle &amp;&amp; (
+  &lt;p className=&#39;text-muted-foreground mt-1 truncate text-sm&#39;&gt;{lead.roleTitle}&lt;/p&gt;
+)}
+</code></pre>
+<p><strong>Right-side badge group with &quot;Company&quot; pill from UI-SPEC.md (lines 130–149):</strong></p>
+<pre><code class="language-tsx">&lt;div className=&#39;flex items-center gap-3&#39;&gt;
+  {isCompanyScope &amp;&amp; (
+    &lt;Badge variant=&#39;outline&#39;&gt;Company&lt;/Badge&gt;
+  )}
+  {lead.prospectCount &gt; 0 &amp;&amp; (
+    &lt;div className=&#39;text-muted-foreground flex items-center gap-1 text-sm&#39;&gt;
+      &lt;IconUsers className=&#39;h-3.5 w-3.5&#39; /&gt;
+      {lead.prospectCount}
+    &lt;/div&gt;
+  )}
+  &lt;Badge
+    variant=&#39;outline&#39;
+    className={statusColors[lead.status] || &#39;&#39;}
+  &gt;
+    {lead.status.replace(/_/g, &#39; &#39;)}
+  &lt;/Badge&gt;
+  &lt;span className=&#39;text-muted-foreground text-xs&#39;&gt;
+    {new Date(lead.createdAt).toLocaleDateString()}
+  &lt;/span&gt;
+&lt;/div&gt;
+</code></pre>
+<hr>
+<h3><code>src/features/job-leads/components/scrape-results.test.tsx</code> (test, new)</h3>
+<p><strong>Analog:</strong> <code>src/components/layout/app-sidebar.ssr.test.tsx</code></p>
+<p><strong>Test harness facts (verified):</strong></p>
+<ul>
+<li>Vitest config (<code>vitest.config.ts</code> line 14): global <code>environment: &#39;node&#39;</code> — per-file jsdom override requires the <code>// @vitest-environment jsdom</code> docblock comment</li>
+<li><code>@testing-library/react</code> is <strong>NOT installed</strong> — devDependencies contains only <code>jsdom</code> v29 and <code>@types/jsdom</code> v28</li>
+<li>Render approach: <code>renderToString</code> from <code>react-dom/server</code> + <code>JSDOM</code> from the <code>jsdom</code> package for structural DOM queries</li>
+<li>Hydration mount approach (when needed): <code>// @vitest-environment jsdom</code> docblock + <code>hydrateRoot</code> from <code>react-dom/client</code> + React <code>act</code></li>
+<li>For Phase 9 component tests, the SSR-structural pattern (<code>renderToString</code> + JSDOM queries) is sufficient — these are pure rendering assertions (badge present, link absent, text content), not interaction tests</li>
+</ul>
+<p><strong>File-header pattern</strong> (from <code>app-sidebar.ssr.test.tsx</code> lines 1–4):</p>
+<pre><code class="language-tsx">import React from &#39;react&#39;;
+import { renderToString } from &#39;react-dom/server&#39;;
+import { JSDOM } from &#39;jsdom&#39;;
+import { describe, it, beforeAll, vi, expect } from &#39;vitest&#39;;
+</code></pre>
+<p><strong>Mock pattern for shadcn/ui Card components</strong> (adapt from <code>app-sidebar.ssr.test.tsx</code> lines 37–68 passThrough pattern):</p>
+<pre><code class="language-tsx">vi.mock(&#39;@/components/ui/card&#39;, () =&gt; ({
+  Card: ({ children }: { children?: React.ReactNode }) =&gt; &lt;div&gt;{children}&lt;/div&gt;,
+  CardHeader: ({ children, className }: { children?: React.ReactNode; className?: string }) =&gt; &lt;div className={className}&gt;{children}&lt;/div&gt;,
+  CardTitle: ({ children, className }: { children?: React.ReactNode; className?: string }) =&gt; &lt;h3 className={className}&gt;{children}&lt;/h3&gt;,
+  CardContent: ({ children }: { children?: React.ReactNode }) =&gt; &lt;div&gt;{children}&lt;/div&gt;
+}));
+
+vi.mock(&#39;@/components/ui/badge&#39;, () =&gt; ({
+  Badge: ({ children, variant }: { children?: React.ReactNode; variant?: string }) =&gt; (
+    &lt;span data-variant={variant}&gt;{children}&lt;/span&gt;
+  )
+}));
+
+vi.mock(&#39;@tabler/icons-react&#39;, () =&gt; ({
+  IconMapPin: () =&gt; &lt;span /&gt;,
+  IconExternalLink: () =&gt; &lt;span /&gt;,
+  IconBuilding: () =&gt; &lt;span data-icon=&#39;building&#39; /&gt;,
+  IconBuildingCommunity: () =&gt; &lt;span data-icon=&#39;building-community&#39; /&gt;,
+  IconUsers: () =&gt; &lt;span /&gt;
+}));
+</code></pre>
+<p><strong>SSR-structural test body pattern</strong> (from <code>app-sidebar.ssr.test.tsx</code> lines 103–137):</p>
+<pre><code class="language-tsx">describe(&#39;ScrapeResults — company-scope lead (JL-C8)&#39;, () =&gt; {
+  let html: string;
+  let dom: JSDOM;
+
+  beforeAll(() =&gt; {
+    html = renderToString(React.createElement(ScrapeResults, { lead: companyLead }));
+    dom = new JSDOM(html, { url: &#39;http://localhost/&#39; });
+  });
+
+  it(&#39;renders company name in the title slot&#39;, () =&gt; {
+    expect(html).toContain(&#39;OpenAI&#39;);
+  });
+
+  it(&#39;renders &quot;Company scrape&quot; badge&#39;, () =&gt; {
+    expect(html).toContain(&#39;Company scrape&#39;);
+  });
+
+  it(&#39;does not render &quot;View Job Posting&quot; link&#39;, () =&gt; {
+    const { document } = dom.window;
+    expect(document.querySelector(&#39;a&#39;)).toBeNull();
+  });
+
+  it(&#39;does not render &quot;Unknown Role&quot;&#39;, () =&gt; {
+    expect(html).not.toContain(&#39;Unknown Role&#39;);
+  });
+});
+</code></pre>
+<p><strong>Fixtures</strong> (directly from UI-SPEC.md lines 261–307 — use verbatim):</p>
+<pre><code class="language-tsx">import type { JobLead } from &#39;@/lib/domain/types&#39;;
+
+const companyLead: JobLead = {
+  id: &#39;aaaaaaaa-0000-0000-0000-000000000001&#39;,
+  companyId: &#39;cccccccc-0000-0000-0000-000000000001&#39;,
+  companyName: &#39;OpenAI&#39;,
+  linkedinJobUrl: null,
+  roleTitle: &#39;Company-wide scrape&#39;,
+  status: &#39;queued&#39;,
+  prospectCount: 0,
+  scrapedData: null,
+  lastError: null,
+  lastErrorAt: null,
+  createdAt: new Date(&#39;2026-05-19T00:00:00Z&#39;),
+  updatedAt: new Date(&#39;2026-05-19T00:00:00Z&#39;),
+  archivedAt: null,
+}
+
+const jobLead: JobLead = {
+  id: &#39;bbbbbbbb-0000-0000-0000-000000000002&#39;,
+  companyId: &#39;cccccccc-0000-0000-0000-000000000002&#39;,
+  companyName: &#39;Acme Corp&#39;,
+  linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/123456&#39;,
+  roleTitle: &#39;VP Data &amp; AI&#39;,
+  status: &#39;queued&#39;,
+  prospectCount: 0,
+  scrapedData: null,
+  lastError: null,
+  lastErrorAt: null,
+  createdAt: new Date(&#39;2026-05-18T00:00:00Z&#39;),
+  updatedAt: new Date(&#39;2026-05-18T00:00:00Z&#39;),
+  archivedAt: null,
+}
+
+const nullNameLead: JobLead = {
+  ...companyLead,
+  id: &#39;aaaaaaaa-0000-0000-0000-000000000003&#39;,
+  companyName: null,
+  roleTitle: null,
+}
+</code></pre>
+<hr>
+<h3><code>src/features/job-leads/components/job-lead-card.test.tsx</code> (test, new)</h3>
+<p><strong>Analog:</strong> <code>src/components/layout/app-sidebar.ssr.test.tsx</code> (same SSR-structural pattern)</p>
+<p><strong>Additional mock needed</strong> — <code>next/link</code> (same pattern as <code>app-sidebar.ssr.test.tsx</code> line 31–34):</p>
+<pre><code class="language-tsx">vi.mock(&#39;next/link&#39;, () =&gt; ({
+  default: ({ href, children }: { href: string; children?: React.ReactNode }) =&gt;
+    React.createElement(&#39;a&#39;, { href }, children)
+}));
+</code></pre>
+<p><strong>Mixed-lead list render pattern</strong> — render each card separately (no list container needed since <code>JobLeadCard</code> takes a single <code>lead</code> prop); run two <code>renderToString</code> calls in the same <code>beforeAll</code> and store both HTML strings for cross-assertions:</p>
+<pre><code class="language-tsx">describe(&#39;JobLeadCard — company-scope vs job-URL (JL-C9)&#39;, () =&gt; {
+  let companyHtml: string;
+  let jobHtml: string;
+  let companyDom: JSDOM;
+  let jobDom: JSDOM;
+
+  beforeAll(() =&gt; {
+    companyHtml = renderToString(React.createElement(JobLeadCard, { lead: companyLead }));
+    jobHtml = renderToString(React.createElement(JobLeadCard, { lead: jobLead }));
+    companyDom = new JSDOM(companyHtml, { url: &#39;http://localhost/&#39; });
+    jobDom = new JSDOM(jobHtml, { url: &#39;http://localhost/&#39; });
+  });
+
+  it(&#39;company-scope lead renders &quot;Company&quot; pill&#39;, () =&gt; {
+    expect(companyHtml).toContain(&#39;Company&#39;);
+  });
+
+  it(&#39;job-URL lead does not render &quot;Company&quot; pill&#39;, () =&gt; {
+    // status badge text is &quot;queued&quot;, not &quot;Company&quot; — verify pill absent
+    const { document } = jobDom.window;
+    const badges = document.querySelectorAll(&#39;[data-variant=&quot;outline&quot;]&#39;);
+    const texts = Array.from(badges).map((b) =&gt; b.textContent?.trim());
+    expect(texts).not.toContain(&#39;Company&#39;);
+  });
+
+  it(&#39;company-scope lead does not render the sentinel role subtitle&#39;, () =&gt; {
+    expect(companyHtml).not.toContain(&#39;Company-wide scrape&#39;);
+  });
+
+  it(&#39;job-URL lead renders role subtitle&#39;, () =&gt; {
+    expect(jobHtml).toContain(&#39;VP Data &amp;amp; AI&#39;);
+  });
+});
+</code></pre>
+<p><strong>Icon assertion approach</strong> — the <code>@tabler/icons-react</code> mock uses <code>data-icon</code> attributes; query them:</p>
+<pre><code class="language-tsx">it(&#39;company-scope lead renders IconBuildingCommunity icon&#39;, () =&gt; {
+  const { document } = companyDom.window;
+  expect(document.querySelector(&#39;[data-icon=&quot;building-community&quot;]&#39;)).not.toBeNull();
+  expect(document.querySelector(&#39;[data-icon=&quot;building&quot;]&#39;)).toBeNull();
+});
+
+it(&#39;job-URL lead renders IconBuilding icon&#39;, () =&gt; {
+  const { document } = jobDom.window;
+  expect(document.querySelector(&#39;[data-icon=&quot;building&quot;]&#39;)).not.toBeNull();
+  expect(document.querySelector(&#39;[data-icon=&quot;building-community&quot;]&#39;)).toBeNull();
+});
+</code></pre>
+<hr>
+<h2>Shared Patterns</h2>
+<h3><code>&#39;use client&#39;</code> component structure</h3>
+<p><strong>Source:</strong> Both target files (lines 1, 22–23 of <code>scrape-results.tsx</code>; lines 1, 22 of <code>job-lead-card.tsx</code>)
+<strong>Apply to:</strong> Both modified components (unchanged — they are already <code>&#39;use client&#39;</code>)</p>
+<pre><code class="language-tsx">&#39;use client&#39;;
+// imports
+export function ComponentName({ lead }: { lead: JobLead }) {
+  // derivations first
+  const isCompanyScope = lead.linkedinJobUrl === null;
+  // JSX
+}
+</code></pre>
+<h3>Discriminator derivation</h3>
+<p><strong>Source:</strong> UI-SPEC.md lines 53–57 / CONTEXT.md D-01/D-03
+<strong>Apply to:</strong> Both <code>scrape-results.tsx</code> and <code>job-lead-card.tsx</code> — identical line in both</p>
+<pre><code class="language-tsx">const isCompanyScope = lead.linkedinJobUrl === null;
+</code></pre>
+<p>Rule: declared as the first line of the function body, before any JSX. Never key off <code>lead.roleTitle</code> sentinel string.</p>
+<h3>SSR-structural test file-level mock pattern</h3>
+<p><strong>Source:</strong> <code>src/components/layout/app-sidebar.ssr.test.tsx</code> lines 1–100
+<strong>Apply to:</strong> Both new test files</p>
+<p>Key points:</p>
+<ul>
+<li>No <code>// @vitest-environment jsdom</code> docblock — default <code>node</code> environment supports <code>renderToString</code> natively; <code>JSDOM</code> is imported directly from <code>jsdom</code> package for DOM queries</li>
+<li>All shadcn UI primitives (<code>Card</code>, <code>Badge</code>, etc.) are mocked as simple passThrough divs/spans</li>
+<li><code>@tabler/icons-react</code> icons are mocked as <code>() =&gt; &lt;span /&gt;</code> stubs (add <code>data-icon</code> attributes to distinguish them for icon-swap assertions)</li>
+<li><code>next/link</code> is mocked as a plain <code>&lt;a&gt;</code> element</li>
+<li>Clerk and navigation hooks are mocked if the component tree imports them (not needed for the two target components)</li>
+<li>Fixtures are declared at module scope, before <code>describe</code> blocks</li>
+</ul>
+<h3>Error / null defensive rendering</h3>
+<p><strong>Source:</strong> <code>scrape-results.tsx</code> lines 19, 22, 26, 32; <code>job-lead-card.tsx</code> lines 31, 34
+<strong>Apply to:</strong> All new branches in both components</p>
+<pre><code class="language-tsx">// Existing pattern — extend it, don&#39;t replace it:
+lead.companyName || &#39;Unknown Company&#39;   // null-coalesce for display
+lead.roleTitle &amp;&amp; (&lt;p&gt;...&lt;/p&gt;)          // existence-guard for optional lines
+lead.linkedinJobUrl &amp;&amp; (&lt;a&gt;...&lt;/a&gt;)     // existence-guard for optional links
+</code></pre>
+<p>For company-scope title fallback (CD-04): <code>lead.companyName || &#39;Company scrape&#39;</code></p>
+<hr>
+<h2>No Analog Found</h2>
+<p>None. All four files have clear analogs in the existing codebase.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong> <code>src/features/job-leads/components/</code>, <code>src/components/layout/</code>
+<strong>Files scanned:</strong> 6 source files + 2 test files
+<strong>Pattern extraction date:</strong> 2026-05-19</p>
+<p><strong>Critical test harness finding:</strong> <code>@testing-library/react</code> is NOT installed. The only React component render pattern in the codebase is <code>renderToString</code> (SSR-structural, using raw <code>jsdom</code> for DOM queries) and <code>hydrateRoot</code> (jsdom mount, requires <code>// @vitest-environment jsdom</code> docblock). For Phase 9&#39;s assertions (badge present, link absent, icon type, text content), the <code>renderToString</code> + <code>JSDOM</code> SSR-structural pattern is sufficient and matches the existing Phase 2 BUG-01 tests exactly. Do not introduce <code>@testing-library/react</code>.</p>
+<p><strong><code>IconBuildingCommunity</code> confirmed:</strong> Present in <code>node_modules/@tabler/icons-react/dist/tabler-icons-react.d.ts</code> (installed version 3.38.0, declared <code>^3.31.0</code> in <code>package.json</code>).</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/09-ui-for-company-scope-leads/09-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
