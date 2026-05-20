@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 10: Connection Company + Role Enrichment for Triage - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-05-20
+<strong>Files analyzed:</strong> 9 new/modified targets
+<strong>Analogs found:</strong> 9 / 9 (all in-repo, exact or strong role+data-flow matches)</p>
+<p>This phase has unusually high analog coverage: every new/modified file maps to an
+existing file in the same feature area following the same conventions. The planner
+should copy patterns directly — there is little need to fall back to RESEARCH.md.</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/contacts.ts</code> (add 4 columns + indexes)</td>
+<td>model/schema</td>
+<td>n/a (DDL)</td>
+<td>self (existing column + index block) + <code>drizzle/schema/enums.ts</code> for the status enum</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/00XX_*.sql</code> (new migration)</td>
+<td>migration</td>
+<td>DDL</td>
+<td><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> + <code>0008_phase6_indexes.sql</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.ts</code> (seed at-connection fields)</td>
+<td>route</td>
+<td>batch/transform</td>
+<td>self (existing field-mapping + ON CONFLICT block)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/[id]/enrichment/route.ts</code> (NEW write-back PATCH)</td>
+<td>route</td>
+<td>request-response (CRUD update)</td>
+<td><code>src/app/api/job-leads/[id]/status/route.ts</code> (PATCH) + <code>src/app/api/contacts/[id]/route.ts</code> (PUT)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td>Batch-sweep selection query (in a route or lib helper)</td>
+<td>query/utility</td>
+<td>CRUD read</td>
+<td><code>src/app/api/contacts/import/route.ts</code> STEP 2 narrowed select + <code>src/app/api/contacts/connections/route.ts</code> conditions[]</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> (JIT enrich hook)</td>
+<td>route</td>
+<td>request-response</td>
+<td>self (existing join + buildRecommendations)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/recommendation-list.tsx</code> (render new fields) + <code>recommendation-card.tsx</code></td>
+<td>component</td>
+<td>request-response (fetch+render)</td>
+<td>self + <code>recommendation-card.tsx</code> per-card field block</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> (per-profile mode)</td>
+<td>skill/doc</td>
+<td>n/a</td>
+<td>self (Single-lead mode / Drain mode structure)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>.claude/skills/.../references/{heimdall-api,linkedin-navigation,troubleshooting}.md</code></td>
+<td>skill/doc</td>
+<td>n/a</td>
+<td>self (endpoint sections, nav paths, error categories)</td>
+<td>exact</td>
+</tr>
+</tbody></table>
+<h2>Pattern Assignments</h2>
+<h3><code>drizzle/schema/contacts.ts</code> — add at-connection columns + indexes (model, DDL)</h3>
+<p><strong>Analog:</strong> the file itself — <code>contacts.ts:11-71</code>. Append new <code>text()</code> columns in the
+<code>// Import tracking</code> group, an <code>enrichmentStatus</code> enum column, an <code>enrichedAt</code> timestamp,
+and new partial indexes in the index array.</p>
+<p><strong>Column pattern</strong> (<code>drizzle/schema/contacts.ts:34-37</code>):</p>
+<pre><code class="language-typescript">// Import tracking
+linkedinConnectionDate: timestamp(&#39;linkedin_connection_date&#39;),
+importSource: text(&#39;import_source&#39;),
+importedAt: timestamp(&#39;imported_at&#39;),
+</code></pre>
+<p>New columns follow the same shape: <code>companyAtConnection: text(&#39;company_at_connection&#39;)</code>,
+<code>roleAtConnection: text(&#39;role_at_connection&#39;)</code>, <code>enrichedAt: timestamp(&#39;enriched_at&#39;)</code>.</p>
+<p><strong>Enum-status pattern</strong> — define a <code>pgEnum</code> in <code>drizzle/schema/enums.ts</code> following the
+existing <code>jobLeadStatusEnum</code> (<code>enums.ts:160-171</code>) and <code>outreachStatusEnum</code> (<code>enums.ts:144-150</code>),
+then reference it in the schema exactly as the existing enum columns do
+(<code>contacts.ts:27-30</code>, e.g. <code>outreachStatus: outreachStatusEnum(&#39;outreach_status&#39;).default(&#39;not_reached_out&#39;)</code>).
+Suggested values mirror the job-lead lifecycle vocabulary already in the codebase:
+<code>[&#39;unenriched&#39;, &#39;pending&#39;, &#39;enriched&#39;, &#39;failed&#39;]</code> (final names at planner discretion).</p>
+<p><strong>Index pattern</strong> (<code>contacts.ts:58-69</code>) — partial index for the sweep selection:</p>
+<pre><code class="language-typescript">index(&#39;contacts_archived_at_idx&#39;).on(table.archivedAt),
+uniqueIndex(&#39;contacts_linkedin_url_unique_idx&#39;)
+  .on(table.linkedinUrl)
+  .where(sql`${table.linkedinUrl} IS NOT NULL AND ${table.archivedAt} IS NULL`),
+</code></pre>
+<p>Add an index supporting the batch-sweep predicate (active rows missing at-connection
+fields) — e.g. <code>index(&#39;contacts_enrichment_status_idx&#39;).on(table.enrichmentStatus)</code>,
+optionally partial on <code>WHERE archived_at IS NULL</code>.</p>
+<hr>
+<h3>New Drizzle migration <code>00XX_*.sql</code> (migration, DDL)</h3>
+<p><strong>Analog:</strong> <code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql:1-4</code>
+(adds an enum value + columns) and <code>0008_phase6_indexes.sql:1-5</code> (creates indexes).</p>
+<p><strong>Column + enum add pattern</strong> (<code>0007_...sql:1-4</code>):</p>
+<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;queued&#39; BEFORE &#39;searching&#39;;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error&quot; text;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error_at&quot; timestamp with time zone;
+</code></pre>
+<p><strong>Index create pattern</strong> (<code>0008_phase6_indexes.sql:2-3</code>):</p>
+<pre><code class="language-sql">CREATE INDEX &quot;contacts_archived_at_idx&quot; ON &quot;contacts&quot; USING btree (&quot;archived_at&quot;);--&gt; statement-breakpoint
+CREATE UNIQUE INDEX &quot;contacts_linkedin_url_unique_idx&quot; ON &quot;contacts&quot; USING btree (&quot;linkedin_url&quot;) WHERE &quot;contacts&quot;.&quot;linkedin_url&quot; IS NOT NULL AND &quot;contacts&quot;.&quot;archived_at&quot; IS NULL;
+</code></pre>
+<p><strong>Generation note:</strong> migration is produced by <code>npm run db:generate</code> from the schema diff,
+then applied with <code>npm run db:push</code> (per CONTEXT.md). Do not hand-author the file unless the
+generator misses the partial-index predicate (the existing migrations show the exact emitted
+syntax to verify against). Statements are separated by <code>--&gt; statement-breakpoint</code>.</p>
+<hr>
+<h3><code>src/app/api/contacts/import/route.ts</code> — seed at-connection fields (route, batch/transform)</h3>
+<p><strong>Analog:</strong> the file itself. Two edit points; <strong>do not disturb</strong> the ON CONFLICT path
+(CONTEXT.md §specifics).</p>
+<p><strong>Candidate-mapping point</strong> (<code>import/route.ts:79-101</code>) — the CSV row already extracts
+<code>company</code> (<code>Company</code>) and <code>position</code> (<code>Position</code>). Add them to the <code>Candidate</code> type
+(<code>route.ts:56-65</code>) and the <code>candidates.push({...})</code> object as <code>companyAtConnection: company</code>
+and <code>roleAtConnection: position</code> — reusing the already-parsed locals, no new CSV parsing:</p>
+<pre><code class="language-typescript">const company = row[&#39;Company&#39;]?.trim() || null;
+const position = row[&#39;Position&#39;]?.trim() || null;
+// ...
+candidates.push({
+  firstName, lastName, email, linkedinUrl,
+  currentCompany: company,
+  title: position,
+  linkedinConnectionDate,
+  key: `...`
+});
+</code></pre>
+<p><strong>Insert-values point</strong> (<code>import/route.ts:142-156</code>) — add the seed fields to the bulk
+<code>.values(...)</code> map. Set <code>enrichmentStatus</code> to a terminal/seeded value when the CSV provided
+both fields (so the sweep skips them), else the unenriched default:</p>
+<pre><code class="language-typescript">.values(
+  toInsert.map((c) =&gt; ({
+    firstName: c.firstName,
+    // ... existing fields ...
+    currentCompany: c.currentCompany,
+    title: c.title,
+    // NEW: at-connection seed from CSV baseline
+    companyAtConnection: c.companyAtConnection,
+    roleAtConnection: c.roleAtConnection,
+    tags: [&#39;linkedin-import&#39;]
+  }))
+)
+</code></pre>
+<p><strong>Untouched</strong> (<code>import/route.ts:171-174</code>) — the <code>.onConflictDoNothing({ target, where })</code>
+partial-index conflict path must remain byte-for-byte intact; the seed fields are added to
+the <code>.values()</code> rows only, never to the conflict target/predicate.</p>
+<hr>
+<h3><code>src/app/api/contacts/[id]/enrichment/route.ts</code> — NEW write-back PATCH (route, request-response)</h3>
+<p><strong>Primary analog:</strong> <code>src/app/api/job-leads/[id]/status/route.ts:58-119</code> (PATCH handler with
+Zod, conditional field stamping, <code>logTimeline</code>, envelope).
+<strong>Secondary analog:</strong> <code>src/app/api/contacts/[id]/route.ts:56-94</code> (contact PUT — params shape,
+<code>updatedAt: new Date()</code>, <code>notFound(&#39;Contact&#39;)</code>, contact timeline event).</p>
+<p><strong>Imports</strong> (<code>job-leads/[id]/status/route.ts:1-9</code>):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { contacts } from &#39;../../../../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+</code></pre>
+<p>(Relative-depth note: a route at <code>api/contacts/[id]/enrichment/route.ts</code> is 6 levels deep, so
+the schema import is <code>&#39;../../../../../../drizzle/schema&#39;</code> — matches the status route&#39;s depth.)</p>
+<p><strong>Zod schema</strong> (model on <code>statusChangeSchema</code>, <code>status/route.ts:38-41</code>; nullable optional
+strings per <code>contacts/[id]/route.ts:21-22</code>):</p>
+<pre><code class="language-typescript">const enrichmentSchema = z.object({
+  companyAtConnection: z.string().max(300).optional().nullable(),
+  roleAtConnection: z.string().max(300).optional().nullable()
+});
+</code></pre>
+<p><strong>Handler body</strong> (copy structure from <code>status/route.ts:58-118</code>):</p>
+<pre><code class="language-typescript">export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = enrichmentSchema.parse(body);
+
+    const [contact] = await db.select().from(contacts).where(eq(contacts.id, id)).limit(1);
+    if (!contact) return notFound(&#39;Contact&#39;);
+
+    const [updated] = await db
+      .update(contacts)
+      .set({
+        companyAtConnection: validated.companyAtConnection ?? contact.companyAtConnection,
+        roleAtConnection: validated.roleAtConnection ?? contact.roleAtConnection,
+        enrichmentStatus: &#39;enriched&#39;,        // terminal status drives sweep/JIT skip
+        enrichedAt: new Date(),
+        updatedAt: new Date()                // CLAUDE.md: Drizzle never auto-updates updatedAt
+      })
+      .where(eq(contacts.id, id))
+      .returning();
+
+    await logTimeline({
+      eventType: &#39;contact_enriched&#39;,
+      title: `Enriched ${updated.firstName} ${updated.lastName} (at-connection company/role)`,
+      contactId: updated.id,
+      companyId: updated.companyId || undefined
+    });
+
+    return success(updated);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<p>The <code>logTimeline</code> call shape and the <code>contactId</code>/<code>companyId || undefined</code> arguments come
+directly from <code>contacts/[id]/route.ts:82-87</code>. The <code>validationError(err.issues[0].message)</code>
+catch is the universal route pattern (CONVENTIONS).</p>
+<hr>
+<h3>Batch-sweep selection query (query/utility, CRUD read)</h3>
+<p><strong>Analog A — narrowed conditions[] + active filter:</strong> <code>src/app/api/contacts/connections/route.ts:37-44</code>:</p>
+<pre><code class="language-typescript">const conditions = [isNull(contacts.archivedAt)];
+if (companyId) conditions.push(eq(contacts.companyId, companyId));
+</code></pre>
+<p><strong>Analog B — active-only narrowed select with selected columns:</strong> <code>import/route.ts:113-123</code>
+(<code>db.select({...}).from(contacts).where(and(isNull(contacts.archivedAt), ...))</code>).</p>
+<p><strong>Pattern to build</strong> — select active contacts missing at-connection fields and not in a
+terminal enrichment state, ordered for steady progress (oldest connection first), capped:</p>
+<pre><code class="language-typescript">import { and, isNull, or, ne, asc } from &#39;drizzle-orm&#39;;
+
+const queue = await db
+  .select({ id: contacts.id, linkedinUrl: contacts.linkedinUrl, firstName: contacts.firstName, lastName: contacts.lastName })
+  .from(contacts)
+  .where(and(
+    isNull(contacts.archivedAt),
+    or(isNull(contacts.companyAtConnection), isNull(contacts.roleAtConnection)),
+    ne(contacts.enrichmentStatus, &#39;enriched&#39;)   // skip already-enriched / terminal
+  ))
+  .orderBy(asc(contacts.linkedinConnectionDate))
+  .limit(perSessionCap);
+</code></pre>
+<p>Use the Drizzle query builder with helper combinators (<code>and</code>/<code>or</code>/<code>isNull</code>/<code>ne</code>) — the
+codebase prefers these over the <code>sql.join</code> accumulator except where a composed key forces it
+(see the <code>import/route.ts:122</code> composed-key note). The per-session cap + randomized delays
+are enforced in the <strong>skill harness</strong>, not the query (CONTEXT.md §pacing).</p>
+<hr>
+<h3><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> — JIT enrichment hook (route, request-response)</h3>
+<p><strong>Analog:</strong> the file itself — <code>recommendations/route.ts:13-55</code>. The route currently joins
+<code>prospectBridges → prospects → contacts</code> (<code>route.ts:31-40</code>) and passes rows to
+<code>buildRecommendations</code> (<code>route.ts:42</code>).</p>
+<p><strong>Hook point</strong> — after the join (<code>route.ts:40</code>) and before <code>buildRecommendations</code>
+(<code>route.ts:42</code>), detect contacts in <code>rows</code> whose <code>companyAtConnection</code>/<code>roleAtConnection</code> are
+null and trigger inline enrichment. Per CONTEXT.md the enrichment WRITE must go through the
+REST PATCH endpoint above (architectural invariant — no direct DB write here); this route may
+flag/return which contacts need enrichment, or call a thin enrichment trigger. Keep the route
+a &quot;pure read&quot; for the recommendation computation as documented at <code>route.ts:28-30</code>.</p>
+<p><strong>Existing read+meta shape to preserve</strong> (<code>route.ts:42-52</code>):</p>
+<pre><code class="language-typescript">const recommendations = buildRecommendations(rows);
+return success({
+  recommendations,
+  meta: { totalProspects: lead.prospectCount, totalBridges: rows.length, totalContacts: recommendations.length }
+});
+</code></pre>
+<p>If the JIT path surfaces enrichment state, extend <code>meta</code> (e.g. <code>pendingEnrichment: n</code>) rather
+than changing the existing keys — downstream <code>recommendation-list.tsx:25</code> reads
+<code>data.recommendations</code>.</p>
+<hr>
+<h3><code>recommendation-list.tsx</code> + <code>recommendation-card.tsx</code> — render at-connection fields (component)</h3>
+<p><strong>Analog:</strong> the two files themselves. <code>recommendation-list.tsx:74-89</code> maps recommendations to
+<code>&lt;RecommendationCard&gt;</code> props; <code>recommendation-card.tsx:23-101</code> renders the per-card fields.</p>
+<p><strong>Prop-passing point</strong> (<code>recommendation-list.tsx:75-87</code>) — the card is fed flattened props
+from <code>rec.contact</code>. Add the new fields here:</p>
+<pre><code class="language-tsx">&lt;RecommendationCard
+  key={rec.contact.id}
+  contactName={`${rec.contact.firstName} ${rec.contact.lastName}`}
+  closeness={rec.contact.closeness}
+  lastContactDate={rec.contact.lastContactDate}
+  companyAtConnection={rec.contact.companyAtConnection}   // NEW
+  roleAtConnection={rec.contact.roleAtConnection}         // NEW
+  score={rec.score}
+  prospects={/* ... */}
+  onRequestIntro={() =&gt; handleRequestIntro(rec.contact.id)}
+/&gt;
+</code></pre>
+<p>(<code>PrioritizedRecommendation.contact</code> is the full <code>Contact</code> Drizzle type per
+<code>prioritization.ts:25-26</code>, so the new columns are available once the schema/migration land —
+no <code>prioritization.ts</code> change needed; CONTEXT.md confirms the bridge formula is unchanged.)</p>
+<p><strong>Render point</strong> (<code>recommendation-card.tsx:60-64</code>) — model the new line on the existing
+&quot;Last contact&quot; muted subline:</p>
+<pre><code class="language-tsx">{lastContactDate &amp;&amp; (
+  &lt;p className=&#39;text-muted-foreground mt-0.5 text-xs&#39;&gt;
+    Last contact: {new Date(lastContactDate).toLocaleDateString()}
+  &lt;/p&gt;
+)}
+</code></pre>
+<p>Add a sibling muted line rendering company + role-at-connection (and the <code>RecommendationCardProps</code>
+interface at <code>recommendation-card.tsx:23-35</code> gains the two optional <code>string | null</code> props).
+For a labeled pill instead of plain text, the <code>&lt;Badge variant=&#39;outline&#39;&gt;</code> pattern at
+<code>recommendation-card.tsx:51-58</code> / <code>93-98</code> is the in-component badge convention.</p>
+<hr>
+<h3><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — add per-profile mode (skill/doc)</h3>
+<p><strong>Analog:</strong> the existing <code>## Single-lead mode</code> (<code>SKILL.md:116-141</code>) and <code>## Drain mode</code>
+(<code>SKILL.md:67-114</code>) sections. The new individual-profile mode is a sibling mode with the same
+shape: claim/setup → navigate → extract → write-back → error-handling.</p>
+<p><strong>Structure to mirror:</strong></p>
+<ul>
+<li><strong>Argument parsing</strong> branch (<code>SKILL.md:47-65</code>) — add a branch that recognizes a contact UUID
+or a <code>/in/&lt;slug&gt;</code> LinkedIn profile URL routing to the new profile mode (first-match-wins
+ordering, same as the existing 5-branch ladder).</li>
+<li><strong>Setup prerequisites</strong> (<code>SKILL.md:36-43</code>) — reuse verbatim (token, env, dev server,
+agent-browser, signed-in Chrome).</li>
+<li><strong>Extract step</strong> (<code>SKILL.md:131-137</code>) — replace the 5-field <code>ScrapedProspect</code> extraction
+with a 2-field profile extraction: <code>companyAtConnection</code>, <code>roleAtConnection</code> (from the
+profile&#39;s current/most-recent experience — best-effort, NOT historical reconstruction per
+CONTEXT.md §deferred).</li>
+<li><strong>Write-back step</strong> (<code>SKILL.md:138-141</code>) — instead of POST <code>/prospects</code>, PATCH the new
+<code>/api/contacts/&lt;id&gt;/enrichment</code> endpoint. Reuse the bearer-auth curl pattern verbatim from
+the failure-PATCH block (<code>SKILL.md:156-163</code>).</li>
+<li><strong>Batch-sweep mode</strong> — model the per-session loop on <code>## Drain mode</code> (<code>SKILL.md:67-114</code>):
+fetch the enrichment queue (the batch-sweep selection above, exposed via a GET endpoint or a
+query the harness drives), render a table, ask the user, loop per-profile with per-lead error
+isolation (<code>SKILL.md:112</code> &quot;write the categorized error and CONTINUE — do NOT abort the batch&quot;).</li>
+<li><strong>Pacing (success criterion #4)</strong> — document in the loop: randomized inter-request delays, a
+per-session profile cap, back-off on anti-bot signals. The existing ~5-min per-lead budget
+(<code>SKILL.md:169</code>) and constraints (<code>SKILL.md:165-172</code>) carry forward.</li>
+</ul>
+<p><strong>Frontmatter</strong> (<code>SKILL.md:1-8</code>) — <code>allowed-tools</code> and <code>argument-hint</code> already cover the new
+mode (Read/Bash; UUID-or-URL arg). Update the <code>description</code> to mention the profile-enrichment
+mode.</p>
+<h3><code>references/heimdall-api.md</code> — document the enrichment endpoint (skill/doc)</h3>
+<p><strong>Analog:</strong> the numbered endpoint sections, e.g. <code>### 2. PATCH /api/job-leads/[id]/status</code>
+(<code>heimdall-api.md:122-176</code>) and <code>### 6. PUT /api/companies/[id]</code> (<code>heimdall-api.md:317-342</code>).
+Add a new numbered section for <code>PATCH /api/contacts/[id]/enrichment</code> with: Used-by, Body
+(the Zod shape), Side effects (sets <code>enrichmentStatus</code>/<code>enrichedAt</code>, emits timeline event),
+Response envelope, and a bearer-auth Curl block mirroring <code>heimdall-api.md:336-341</code>. Reuse the
+Auth section (<code>heimdall-api.md:10-35</code>) and Response-envelope/status-code tables
+(<code>heimdall-api.md:37-65</code>, <code>346-356</code>) unchanged.</p>
+<h3><code>references/linkedin-navigation.md</code> — add profile-page extraction section (skill/doc)</h3>
+<p><strong>Analog:</strong> the existing entry-point path sections (Job-URL / Company-URL / Bare-name) plus
+<code>## Shared</code> Steps 4–5 referenced throughout <code>SKILL.md</code>. Add a &quot;Profile-page path&quot; section:
+navigate to <code>/in/&lt;slug&gt;/</code>, locate the current-experience block, extract company + role, with
+selector hints in the same style as the existing nav doc.</p>
+<h3><code>references/troubleshooting.md</code> — document pacing / anti-bot back-off (skill/doc)</h3>
+<p><strong>Analog:</strong> the five-category structure (<code>troubleshooting.md:1-15</code> preamble; per-category
+sections like <code>## Timeout</code> at <code>:18-39</code> and <code>## LinkedIn navigation failed</code> at <code>:42-60</code>).
+Pacing belongs under the navigation/anti-bot categories: document the randomized delay ranges,
+per-session cap, and back-off-on-signal strategy here (CONTEXT.md §pacing requires it
+documented in references). Reuse the per-action budget guidance (<code>troubleshooting.md:33-38</code>)
+and map any new anti-bot observation into the existing five categories rather than adding a
+sixth (<code>troubleshooting.md:10-15</code> explicitly raises the bar for a new category).</p>
+<h2>Shared Patterns</h2>
+<h3>Response envelope + error factories</h3>
+<p><strong>Source:</strong> <code>src/lib/api/types.ts</code> (<code>success</code>, <code>created</code>, <code>paginated</code>), <code>src/lib/api/errors.ts</code>
+(<code>notFound</code>, <code>serverError</code>, <code>validationError</code>).
+<strong>Apply to:</strong> the new enrichment PATCH route and any new sweep/JIT endpoint.
+Every route ends with <code>return success(data)</code> and catches with:</p>
+<pre><code class="language-typescript">} catch (err) {
+  if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+  return serverError(err);
+}
+</code></pre>
+<p>(verbatim from <code>contacts/[id]/route.ts:90-93</code>, <code>job-leads/[id]/status/route.ts:113-118</code>).</p>
+<h3>Timeline side-effect on every write</h3>
+<p><strong>Source:</strong> <code>src/lib/db/timeline.ts</code> — <code>logTimeline({ eventType, title, contactId?, companyId?, metadata? })</code>.
+<strong>Apply to:</strong> the enrichment PATCH and any sweep write.
+Called AFTER the committed write, with the entity ids:</p>
+<pre><code class="language-typescript">await logTimeline({
+  eventType: &#39;contact_enriched&#39;,
+  title: `Enriched ${updated.firstName} ${updated.lastName}`,
+  contactId: updated.id,
+  companyId: updated.companyId || undefined
+});
+</code></pre>
+<p>(shape from <code>contacts/[id]/route.ts:82-87</code>; post-commit ordering rationale at
+<code>job-leads/[id]/prospects/route.ts:125-136</code>).</p>
+<h3>Manual <code>updatedAt</code> on every update</h3>
+<p><strong>Source:</strong> CLAUDE.md / CONVENTIONS — Drizzle does not auto-update.
+<strong>Apply to:</strong> every <code>db.update(contacts).set({...})</code>. Always include <code>updatedAt: new Date()</code>
+(see <code>contacts/[id]/route.ts:65</code>, <code>job-leads/[id]/status/route.ts:84</code>).</p>
+<h3>Bearer-auth REST write-back from the skill (never direct DB)</h3>
+<p><strong>Source:</strong> <code>references/heimdall-api.md:10-35</code> (auth) + <code>SKILL.md:156-163</code> (failure PATCH curl).
+<strong>Apply to:</strong> the profile-enrichment write-back and the batch-sweep loop.</p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X PATCH -H &quot;Authorization: Bearer $TOKEN&quot; -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;companyAtConnection&quot;:&quot;OpenAI&quot;,&quot;roleAtConnection&quot;:&quot;Member of Technical Staff&quot;}&#39; \
+  &quot;http://localhost:4000/api/contacts/$CONTACT_ID/enrichment&quot;
+</code></pre>
+<p>Architectural invariant (CONTEXT.md §decisions, CLAUDE.md): the skill writes via REST only,
+never touches the DB; CLI parity depends on it.</p>
+<h3>Active-rows / soft-delete filter</h3>
+<p><strong>Source:</strong> <code>isNull(contacts.archivedAt)</code> — ubiquitous (<code>contacts_archived_at_idx</code> exists for it).
+<strong>Apply to:</strong> the batch-sweep selection and any JIT contact lookup. Never hard-delete; the
+sweep must scope to <code>archived_at IS NULL</code> (<code>connections/route.ts:37</code>, <code>import/route.ts:120</code>).</p>
+<h2>No Analog Found</h2>
+<p>None. All nine targets have strong in-repo analogs.</p>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong> <code>drizzle/schema/</code>, <code>drizzle/migrations/</code>, <code>src/app/api/contacts/**</code>,
+<code>src/app/api/job-leads/**</code>, <code>src/features/job-leads/{components,lib}/</code>,
+<code>.claude/skills/scrape-linkedin-connections/**</code>, <code>src/lib/api/</code>, <code>src/lib/db/timeline.ts</code>.
+<strong>Files scanned:</strong> ~16 read in full or in targeted ranges.
+<strong>Pattern extraction date:</strong> 2026-05-20</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/10-connection-company-and-role-enrichment-for-triage/10-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
