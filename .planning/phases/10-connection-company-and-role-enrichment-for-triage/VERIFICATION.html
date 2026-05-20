@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/10-connection-company-and-role-enrichment-for-triage/VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 10-connection-company-and-role-enrichment-for-triage
+verified: 2026-05-20T18:00:00Z
+status: human_needed
+score: 5/5
+overrides_applied: 0
+human_verification:</p>
+<ul>
+<li>test: &quot;Run npm run db:push (or npm run db:migrate) against the live Neon DB and confirm it completes without error&quot;
+expected: &quot;0010_acoustic_sprite migration applied: contact_enrichment_status enum created, four columns added to contacts, sweep index created — no destructive operations&quot;
+why_human: &quot;DATABASE_URL is in .env.local (gitignored) and cannot be accessed in the automated verification context. The SUMMARY explicitly documents this as a required manual step. The migration file and journal entry exist and are correct; only live-DB application requires human confirmation.&quot;</li>
+</ul>
+<hr>
+<h1>Phase 10: Connection Company + Role Enrichment for Triage — Verification Report</h1>
+<p><strong>Phase Goal:</strong> The triage flow shows each connection&#39;s company and role <em>as it was at the time of connection</em>, so the owner can judge an introduction&#39;s value at a glance. Because LinkedIn&#39;s connections CSV export does not reliably include this field, a runnable agent-browser skill backfills it by scraping individual profiles — paced to avoid looking like bot activity across a 1000+ profile backlog — and the data is also pulled just-in-time for the mutual connections surfaced when triaging a specific company.</p>
+<p><strong>Verified:</strong> 2026-05-20T18:00:00Z
+<strong>Status:</strong> human_needed — all 5 automated truths verified; one human gate remains (live DB migration confirmation)
+<strong>Re-verification:</strong> No — initial verification</p>
+<hr>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>The triage view renders each connection&#39;s company and role-at-time-of-connection alongside the existing connection fields</td>
+<td>VERIFIED</td>
+<td><code>recommendation-card.tsx</code> lines 27-28: <code>companyAtConnection?: string | null</code>, <code>roleAtConnection?: string | null</code> in props. Lines 69-73: renders <code>role @ company</code> muted subline when either field present. <code>recommendation-list.tsx</code> lines 80-81 pass both fields from <code>rec.contact</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A schema field captures company + role-at-connection per connection, populated from the CSV import where available</td>
+<td>VERIFIED</td>
+<td><code>drizzle/schema/contacts.ts</code> lines 39-40: <code>companyAtConnection</code>, <code>roleAtConnection</code> columns. Migration <code>0010_acoustic_sprite.sql</code> adds them as pure ADDs. <code>import/route.ts</code> lines 101-102 seeds from existing <code>company</code>/<code>position</code> locals; lines 159-163 set <code>enrichmentStatus: &#39;enriched&#39;</code> when both present.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>A runnable agent-browser skill scrapes company + role from a connection&#39;s LinkedIn profile and writes it back to the connection record</td>
+<td>VERIFIED</td>
+<td><code>SKILL.md</code> line 153: <code>## Profile-enrichment mode (single connection)</code> section. Lines 56-60: argument branches 2-4 route <code>enrich &lt;uuid&gt;</code>, <code>enrich &lt;url&gt;</code>, and bare <code>enrich</code> to enrichment/sweep modes. Write-back via <code>PATCH /api/contacts/&lt;id&gt;/enrichment</code> bearer-auth curl. <code>heimdall-api.md</code> line 243: <code>### 7. PATCH /api/contacts/[id]/enrichment</code> documented.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>The scraping skill paces requests to mimic human behavior (randomized delays, throttling/session caps) — pacing strategy documented</td>
+<td>VERIFIED</td>
+<td><code>SKILL.md</code> line 291: <code>DELAY=$(( RANDOM % 70 + 20 ))</code> (20-90s uniform random). Lines 246: per-session cap 25-40. Lines 296-299: anti-bot back-off on checkpoint signal (120-300s, early-exit on two consecutive). <code>troubleshooting.md</code> line 68: <code>### Pacing and anti-bot back-off strategy</code> subsection under existing <code>## LinkedIn navigation failed</code> category (no sixth category added).</td>
+</tr>
+<tr>
+<td>5</td>
+<td>When building a company&#39;s shared-connection triage list, mutual connections still missing company/role are flagged just-in-time without requiring the full backlog processed first</td>
+<td>VERIFIED</td>
+<td><code>recommendations/route.ts</code> lines 50-61: deduplicates contacts across bridge rows, filters <code>companyAtConnection === null &amp;&amp; roleAtConnection === null &amp;&amp; enrichmentStatus !== &#39;enriched&#39;</code>. Lines 71-72: surfaces <code>pendingEnrichment</code> count and <code>pendingEnrichmentContactIds</code> in meta. No <code>db.update(contacts)</code> or <code>db.insert(contacts)</code> in this route (grep confirms).</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 5/5 truths verified</p>
+<hr>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/contacts.ts</code></td>
+<td>companyAtConnection, roleAtConnection, enrichmentStatus, enrichedAt columns + sweep index</td>
+<td>VERIFIED</td>
+<td>Lines 39-44, 78: all four columns present; <code>contacts_enrichment_status_idx</code> btree index. Imports <code>contactEnrichmentStatusEnum</code> from enums.ts line 8.</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/enums.ts</code></td>
+<td>contactEnrichmentStatusEnum pgEnum</td>
+<td>VERIFIED</td>
+<td>Lines 185-190: <code>pgEnum(&#39;contact_enrichment_status&#39;, [&#39;unenriched&#39;,&#39;pending&#39;,&#39;enriched&#39;,&#39;failed&#39;])</code></td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code></td>
+<td>contactEnrichmentStatusValues const array</td>
+<td>VERIFIED</td>
+<td>Line 239: <code>export const contactEnrichmentStatusValues = [...]</code> confirmed by grep</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/0010_acoustic_sprite.sql</code></td>
+<td>CREATE TYPE, 4x ALTER TABLE ADD COLUMN, CREATE INDEX — all additive</td>
+<td>VERIFIED</td>
+<td>File contains all 6 statements with <code>statement-breakpoint</code> separators, no DROP/RENAME</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/meta/_journal.json</code></td>
+<td>Entry for 0010_acoustic_sprite</td>
+<td>VERIFIED</td>
+<td>Line 79 in journal: <code>&quot;tag&quot;: &quot;0010_acoustic_sprite&quot;</code></td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/[id]/enrichment/route.ts</code></td>
+<td>PATCH endpoint, Zod max(300), logTimeline contact_enriched, success envelope</td>
+<td>VERIFIED</td>
+<td>Complete implementation. Lines 11-14: Zod schema with <code>.max(300).optional().nullable()</code>. Lines 40-41: <code>enrichmentStatus: &#39;enriched&#39;</code>, <code>enrichedAt: new Date()</code>. Lines 47-52: <code>logTimeline({ eventType: &#39;contact_enriched&#39;, contactId: updated.id })</code>.</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/enrichment-queue/route.ts</code></td>
+<td>GET endpoint, active filter, missing-fields filter, enrichment filter, oldest-first, capped</td>
+<td>VERIFIED</td>
+<td>Lines 27-38: <code>and(isNull(archivedAt), or(isNull(companyAtConnection), isNull(roleAtConnection)), ne(enrichmentStatus, &#39;enriched&#39;))</code>. <code>.orderBy(asc(linkedinConnectionDate))</code>. <code>.limit(limit)</code> with <code>QUEUE_MAX = 50</code>.</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.ts</code></td>
+<td>CSV seeding of companyAtConnection/roleAtConnection, enrichmentStatus conditional</td>
+<td>VERIFIED</td>
+<td>Lines 64-65: Candidate type has fields. Lines 101-102: seeds from existing <code>company</code>/<code>position</code> locals. Lines 159-163: <code>.values()</code> map includes both fields, conditional <code>enrichmentStatus</code>. <code>.onConflictDoNothing</code> block intact at lines 180-183.</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/recommendation-card.tsx</code></td>
+<td>Renders role @ company muted subline</td>
+<td>VERIFIED</td>
+<td>Lines 27-28: props. Lines 69-73: JSX renders <code>{[roleAtConnection, companyAtConnection].filter(Boolean).join(&#39; @ &#39;)}</code> with <code>text-muted-foreground mt-0.5 text-xs</code> styling.</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/recommendation-list.tsx</code></td>
+<td>Passes companyAtConnection + roleAtConnection from rec.contact</td>
+<td>VERIFIED</td>
+<td>Lines 80-81: both props passed.</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.ts</code></td>
+<td>JIT detection, meta.pendingEnrichment, meta.pendingEnrichmentContactIds, NO db.update(contacts)</td>
+<td>VERIFIED</td>
+<td>Lines 50-61: detection logic. Lines 71-72: meta keys. Grep confirms zero <code>db.update(contacts)</code> / <code>db.insert(contacts)</code> in file.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td>enrich argument branches, Profile-enrichment mode, Batch-sweep mode, pacing</td>
+<td>VERIFIED</td>
+<td>Lines 56-60: branches 2-4. Line 153: <code>## Profile-enrichment mode (single connection)</code>. Line 236: <code>## Batch-sweep mode (drain the enrichment backlog)</code>. Line 291: delay range. Frontmatter description mentions enrichment mode.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code></td>
+<td>### 7 PATCH /enrichment, ### 8 GET /enrichment-queue</td>
+<td>VERIFIED</td>
+<td>Lines 243, 292: both endpoint sections present with body, side-effects, curl blocks.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code></td>
+<td>## Profile-page path with /in/<slug>/ navigation and extraction</td>
+<td>VERIFIED</td>
+<td>Line 102: <code>## Profile-page path (per-connection enrichment)</code>. Contains <code>/in/</code> path references, selector hints, best-effort caveat.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code></td>
+<td>Pacing/back-off under existing navigation category, no sixth category</td>
+<td>VERIFIED</td>
+<td>Line 68: subsection <code>### Pacing and anti-bot back-off strategy</code>. Grep confirms 9 matches for pacing/back-off/delay. Exactly 5 <code>## </code> categories (Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error).</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/contacts.ts</code></td>
+<td><code>drizzle/schema/enums.ts</code></td>
+<td><code>contactEnrichmentStatusEnum</code> import + column reference</td>
+<td>VERIFIED</td>
+<td>Line 8 imports <code>contactEnrichmentStatusEnum</code>; line 43 uses it as enum column</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/[id]/enrichment/route.ts</code></td>
+<td>contacts table</td>
+<td><code>db.update().set({enrichmentStatus:&#39;enriched&#39;,...})</code></td>
+<td>VERIFIED</td>
+<td>Lines 35-45</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/[id]/enrichment/route.ts</code></td>
+<td>timeline_events</td>
+<td><code>logTimeline</code> after write</td>
+<td>VERIFIED</td>
+<td>Lines 47-52: <code>logTimeline({ eventType: &#39;contact_enriched&#39;, contactId })</code></td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/enrichment-queue/route.ts</code></td>
+<td>contacts table</td>
+<td><code>and(isNull(archivedAt), or(isNull(companyAtConnection)...), ne(enrichmentStatus,&#39;enriched&#39;))</code></td>
+<td>VERIFIED</td>
+<td>Lines 27-38</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/recommendation-list.tsx</code></td>
+<td><code>src/features/job-leads/components/recommendation-card.tsx</code></td>
+<td><code>companyAtConnection / roleAtConnection</code> props from <code>rec.contact</code></td>
+<td>VERIFIED</td>
+<td>Lines 80-81 pass both fields</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.ts</code></td>
+<td>No db.update/insert contacts</td>
+<td>Architectural invariant T-10-07</td>
+<td>VERIFIED</td>
+<td>Grep returns zero hits for <code>db.update(contacts)</code> or <code>db.insert(contacts)</code> in this file</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td><code>PATCH /api/contacts/[id]/enrichment</code></td>
+<td>Bearer-auth curl write-back in per-profile mode</td>
+<td>VERIFIED</td>
+<td>Line 153+ section documents the curl pattern; cross-references heimdall-api.md §7</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td><code>GET /api/contacts/enrichment-queue</code></td>
+<td>Batch-sweep mode fetches queue</td>
+<td>VERIFIED</td>
+<td>Line 252: fetch to <code>enrichment-queue?limit=$PER_SESSION_CAP</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>recommendation-card.tsx</code></td>
+<td><code>companyAtConnection</code>, <code>roleAtConnection</code></td>
+<td><code>rec.contact</code> (Drizzle <code>$inferSelect</code> of contacts table — the join in recommendations route selects the full <code>contacts</code> object)</td>
+<td>Yes — Drizzle query at <code>recommendations/route.ts</code> lines 31-40 JOINs contacts; columns defined in schema with real DB columns post-migration</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>enrichment-queue/route.ts</code></td>
+<td><code>rows</code> (queue)</td>
+<td><code>db.select({...}).from(contacts).where(...)</code> — real DB query</td>
+<td>Yes — real Drizzle query with proper WHERE predicates</td>
+<td>FLOWING</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Behavioral Spot-Checks</h3>
+<p>Step 7b: SKIPPED for enrichment/queue endpoints (no dev server running in verification context; requires DATABASE_URL and live DB with migration applied). Structural code review confirms correct implementation.</p>
+<hr>
+<h3>Probe Execution</h3>
+<p>No <code>probe-*.sh</code> files declared for Phase 10. Step 7c: N/A.</p>
+<hr>
+<h3>Requirements Coverage</h3>
+<p>Phase 10 requirements (ENR-01 through ENR-06) are defined in ROADMAP.md but not yet entered in REQUIREMENTS.md traceability table (the table runs through JL-C9 and has no ENR entries). This is an ORPHANED requirement registration gap in REQUIREMENTS.md — not a code gap. All 6 ENR requirements are satisfied by the implementation:</p>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ENR-01</td>
+<td>At-connection schema fields + enrichment-status enum + sweep index</td>
+<td>SATISFIED</td>
+<td>schema/contacts.ts, schema/enums.ts, migration 0010</td>
+</tr>
+<tr>
+<td>ENR-02</td>
+<td>CSV import seeds at-connection baseline without disturbing dedup path</td>
+<td>SATISFIED</td>
+<td>import/route.ts: seeds companyAtConnection/roleAtConnection, onConflictDoNothing unchanged</td>
+</tr>
+<tr>
+<td>ENR-03</td>
+<td>REST write-back endpoint + skill per-profile scrape mode</td>
+<td>SATISFIED</td>
+<td>enrichment/route.ts PATCH + SKILL.md Profile-enrichment mode</td>
+</tr>
+<tr>
+<td>ENR-04</td>
+<td>Paced batch-sweep + documented anti-bot pacing strategy</td>
+<td>SATISFIED</td>
+<td>SKILL.md Batch-sweep mode + troubleshooting.md pacing subsection</td>
+</tr>
+<tr>
+<td>ENR-05</td>
+<td>JIT enrichment on company-triage path (no inline DB write)</td>
+<td>SATISFIED</td>
+<td>recommendations/route.ts: pendingEnrichment meta, T-10-07 invariant confirmed</td>
+</tr>
+<tr>
+<td>ENR-06</td>
+<td>Triage view renders company + role-at-connection</td>
+<td>SATISFIED</td>
+<td>recommendation-card.tsx, recommendation-list.tsx</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Anti-Patterns Found</h3>
+<p>No anti-patterns found in any Phase 10 modified files. No TODO/FIXME/XXX/TBD debt markers. No stub returns (<code>return null</code>, empty arrays, placeholder text). No hardcoded empty data flowing to rendering. All 9 commits referenced in SUMMARYs verified present in git history.</p>
+<hr>
+<h3>Human Verification Required</h3>
+<h4>1. Live Neon DB Migration Apply</h4>
+<p><strong>Test:</strong> From the project root (where <code>.env.local</code> is present), run <code>npm run db:push</code> or <code>npm run db:migrate</code>.
+<strong>Expected:</strong> Migration <code>0010_acoustic_sprite</code> applies cleanly. The four columns (<code>company_at_connection</code>, <code>role_at_connection</code>, <code>enrichment_status</code>, <code>enriched_at</code>) and the enum (<code>contact_enrichment_status</code>) and index (<code>contacts_enrichment_status_idx</code>) are created. No destructive operations execute. Subsequent <code>curl -H &quot;Authorization: Bearer $(cat ~/.heimdall/api-token)&quot; http://localhost:4000/api/contacts/enrichment-queue</code> returns <code>{ success: true, data: { queue: [...], count: N } }</code>.
+<strong>Why human:</strong> <code>DATABASE_URL</code> is in <code>.env.local</code> (gitignored) and is not available in the automated verification context. The SUMMARY explicitly documents this as a required manual step — the migration was generated and committed (file + journal entry verified) but could not be applied in the worktree context. This is the BLOCKING human checkpoint from Plan 10-01 Task 2. All code artifacts are correct; only live-DB application requires human confirmation.</p>
+<hr>
+<h3>Gaps Summary</h3>
+<p>No code gaps. All 5 observable truths verified. All required artifacts exist, are substantive, and are correctly wired. The architectural invariant (no inline DB writes in the recommendations route) is confirmed.</p>
+<p>The only pending item is the live Neon DB migration, which is a known manual step documented in SUMMARY 10-01. The migration file is correct and additive. Once <code>npm run db:push</code> is confirmed, this phase is fully complete.</p>
+<p><strong>REQUIREMENTS.md traceability note:</strong> ENR-01 through ENR-06 are not listed in the REQUIREMENTS.md phase traceability table (the table ends at JL-C9). This is a bookkeeping omission — the requirements are defined and satisfied in ROADMAP.md. Consider adding an ENR section to REQUIREMENTS.md.</p>
+<hr>
+<p><em>Verified: 2026-05-20T18:00:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/10-connection-company-and-role-enrichment-for-triage/VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
