@@ -77,6 +77,8 @@ export function RecommendationList({ jobLeadId }: RecommendationListProps) {
           contactName={`${rec.contact.firstName} ${rec.contact.lastName}`}
           closeness={rec.contact.closeness}
           lastContactDate={rec.contact.lastContactDate}
+          currentRole={rec.contact.title}
+          currentCompany={rec.contact.currentCompany}
           companyAtConnection={rec.contact.companyAtConnection}
           roleAtConnection={rec.contact.roleAtConnection}
           score={rec.score}
