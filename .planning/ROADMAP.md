@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Schema + API for Company-Scope Leads** - Nullable `linkedinJobUrl`/`roleTitle` schema + API route for creating synthetic job leads without a job URL (completed 2026-05-19)
 - [x] **Phase 8: Skill Input Parsing, Navigation Branching + Drain** - Extend the scrape skill to accept company URLs and bare names, navigate directly to the employees page when no job URL exists, and disambiguate multi-match searches (completed 2026-05-19)
 - [x] **Phase 9: UI for Company-Scope Leads** - Detail page and list view render company-scope leads cleanly without broken job-URL affordances (completed 2026-05-20)
-- [ ] **Phase 10: Connection Company + Role Enrichment for Triage** - Surface each connection's company and role *at time of connection* in the triage flow; backfill the gap (absent from LinkedIn's CSV export) with an agent-browser skill that scrapes profiles with human-like anti-bot pacing, plus just-in-time enrichment of mutual connections during company shared-connection triage
+- [x] **Phase 10: Connection Company + Role Enrichment for Triage** - Surface each connection's company and role *at time of connection* in the triage flow; backfill the gap (absent from LinkedIn's CSV export) with an agent-browser skill that scrapes profiles with human-like anti-bot pacing, plus just-in-time enrichment of mutual connections during company shared-connection triage (completed 2026-05-20)
 
 ## Phase Details
 
@@ -212,7 +212,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Schema + API for Company-Scope Leads | 3/3 | Complete   | 2026-05-19 |
 | 8. Skill Input Parsing, Navigation Branching + Drain | 3/3 | Complete   | 2026-05-19 |
 | 9. UI for Company-Scope Leads | 1/1 | Complete   | 2026-05-20 |
-| 10. Connection Company + Role Enrichment for Triage | 2/4 | In Progress|  |
+| 10. Connection Company + Role Enrichment for Triage | 4/4 | Complete   | 2026-05-20 |
 
 ### Phase 10: Connection Company + Role Enrichment for Triage
 
@@ -241,10 +241,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   - Reuse the existing Phase 5/8 agent-browser scrape skill harness vs. a new dedicated skill
   - Backlog processing model: batch sweep vs. purely on-demand vs. both; where scrape state/queue lives
 
-**Plans:** 2/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 10-01-PLAN.md — Schema: at-connection columns + enrichment-status enum + migration + [BLOCKING] db:push (Wave 1)
 - [x] 10-02-PLAN.md — REST: enrichment write-back PATCH + batch-sweep queue GET + CSV import seeding (Wave 2)
-- [ ] 10-03-PLAN.md — Triage UI render of company/role-at-connection + just-in-time enrichment hook (Wave 3)
-- [ ] 10-04-PLAN.md — Skill: per-profile scrape mode + paced batch-sweep + pacing/back-off docs (Wave 3)
+- [x] 10-03-PLAN.md — Triage UI render of company/role-at-connection + just-in-time enrichment hook (Wave 3)
+- [x] 10-04-PLAN.md — Skill: per-profile scrape mode + paced batch-sweep + pacing/back-off docs (Wave 3)
