@@ -6,7 +6,8 @@ const closenessWeights: Record<string, number> = {
   close_colleague: 90,
   friend: 75,
   colleague: 60,
-  career_contact: 45,
+  close_career: 50,
+  career: 40,
   acquaintance: 30,
   linkedin_only: 15,
   never_met: 5
