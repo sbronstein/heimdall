@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260521-bhf-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260521-bhf
+plan: 01
+subsystem: database
+tags: [drizzle, postgres-enum, migration, contacts, closeness, prioritization, pglite]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 10-connection-company-and-role-enrichment-for-triage
+provides: contact triage UI and closeness tier model
+provides:</li>
+<li>&quot;contact_closeness enum split: career_contact replaced by close_career (50) + career (40)&quot;</li>
+<li>&quot;Hand-authored enum-swap migration 0011 with row remap career_contact -&gt; career&quot;</li>
+<li>&quot;All UI/sort/rank/select surfaces updated to the two new tiers in high-&gt;low order&quot;
+affects: [contacts, networking, triage, job-leads-prioritization]</li>
+</ul>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;Postgres enum-value removal via swap: drop default -&gt; rename old -&gt; create new -&gt; ALTER TYPE USING CASE cast -&gt; set default -&gt; drop old&quot;</p>
+<p>key-files:
+  created:
+    - drizzle/migrations/0011_split_career_closeness.sql
+    - drizzle/migrations/meta/0011_snapshot.json
+  modified:
+    - drizzle/schema/enums.ts
+    - src/lib/domain/types.ts
+    - src/features/job-leads/lib/prioritization.ts
+    - src/features/contacts/lib/closeness-colors.ts
+    - src/features/contacts/components/contact-table/options.tsx
+    - src/features/contacts/components/triage/closeness-button-bar.tsx
+    - src/app/api/contacts/connections/route.ts
+    - src/features/networking/components/connection-finder.tsx
+    - src/features/networking/components/outreach-list.tsx
+    - src/features/networking/components/networking-dashboard.tsx
+    - src/features/contacts/components/linkedin-import/import-review-table.tsx
+    - src/app/api/contacts/import/categorize/route.test.ts
+    - drizzle/migrations/meta/_journal.json</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;All existing career_contact rows migrate to the lower <code>career</code> tier (conservative; close_career re-promotion is a manual post-migration triage action)&quot;</li>
+<li>&quot;career badge color: violet (close_career keeps the legacy indigo)&quot;</li>
+<li>&quot;Triage keyboard shortcuts widened from 1-8 to 1-9 to cover the new 9th option&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Enum-swap migration pattern for removing a Postgres enum value (drizzle-kit cannot do this in place)&quot;</li>
+</ul>
+<p>requirements-completed: [BHF-01]</p>
+<h2>duration: ~25min
+completed: 2026-05-21</h2>
+<h1>Quick Task 260521-bhf: Split career closeness into close-career + career Summary</h1>
+<p><strong>Replaced the single <code>career_contact</code> contact-closeness tier with two distinct tiers — <code>close_career</code> (bridge weight 50) and <code>career</code> (weight 40) — via a hand-authored Postgres enum-swap migration that remaps existing rows to <code>career</code>, plus matching updates across the schema, types, bridge weights, and every UI/sort/rank/select surface.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~25 min</li>
+<li><strong>Started:</strong> 2026-05-21T12:17Z (approx)</li>
+<li><strong>Completed:</strong> 2026-05-21T12:42Z</li>
+<li><strong>Tasks:</strong> 2</li>
+<li><strong>Files modified:</strong> 15 (13 modified, 2 created)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><code>contact_closeness</code> enum and <code>contactClosenessValues</code> array now carry <code>close_career</code>, <code>career</code> in high→low order; <code>career_contact</code> removed entirely</li>
+<li>Hand-authored migration <code>0011_split_career_closeness.sql</code> performs the sanctioned enum swap: drop default → rename old → create new → <code>ALTER ... TYPE ... USING</code> CASE cast (<code>career_contact</code> → <code>career</code>) → restore <code>acquaintance</code> default → drop old type</li>
+<li>Journal + <code>0011_snapshot.json</code> updated so <code>npm run db:migrate</code> and the PGlite test harness apply the migration</li>
+<li>Bridge-score weights: <code>close_career: 50</code>, <code>career: 40</code> (was <code>career_contact: 45</code>)</li>
+<li>All consuming surfaces updated: closeness color map (indigo/violet), <code>CLOSENESS_OPTIONS</code>, triage <code>shortLabels</code> + 1–9 keyboard shortcuts, connections sort order, both networking <code>closenessRank</code> maps (contiguous 0..8), networking-dashboard order, outreach + import-review Selects</li>
+<li>categorize route test seeds/asserts the migrated <code>career</code> tier (confirms PGlite applies migration 0011 cleanly and the enum accepts <code>career</code>)</li>
+</ul>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1: Author enum-swap migration + update schema, types, bridge weights</strong> — <code>1fb5e89</code> (feat)</li>
+<li><strong>Task 2: Update all UI/sort references and migrate tests</strong> — <code>10d430f</code> (feat)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>drizzle/migrations/0011_split_career_closeness.sql</code> — created; enum swap + row remap (the only surviving <code>career_contact</code> reference is the USING cast)</li>
+<li><code>drizzle/migrations/meta/0011_snapshot.json</code> — created from 0010 verbatim; fresh UUID, prevId = 0010 id, enum values updated</li>
+<li><code>drizzle/migrations/meta/_journal.json</code> — appended idx 11 entry for 0011</li>
+<li><code>drizzle/schema/enums.ts</code> — <code>contactClosenessEnum</code> value set</li>
+<li><code>src/lib/domain/types.ts</code> — <code>contactClosenessValues</code> array (Zod-derived)</li>
+<li><code>src/features/job-leads/lib/prioritization.ts</code> — <code>closenessWeights</code> (50 / 40)</li>
+<li><code>src/features/contacts/lib/closeness-colors.ts</code> — close_career=indigo, career=violet</li>
+<li><code>src/features/contacts/components/contact-table/options.tsx</code> — <code>CLOSENESS_OPTIONS</code></li>
+<li><code>src/features/contacts/components/triage/closeness-button-bar.tsx</code> — <code>shortLabels</code> + 1–9 shortcut guard</li>
+<li><code>src/app/api/contacts/connections/route.ts</code> — <code>closenessOrder</code></li>
+<li><code>src/features/networking/components/connection-finder.tsx</code> — <code>closenessRank</code> 0..8</li>
+<li><code>src/features/networking/components/outreach-list.tsx</code> — <code>closenessRank</code> 0..8 + Select</li>
+<li><code>src/features/networking/components/networking-dashboard.tsx</code> — <code>closenessOrder</code></li>
+<li><code>src/features/contacts/components/linkedin-import/import-review-table.tsx</code> — Select</li>
+<li><code>src/app/api/contacts/import/categorize/route.test.ts</code> — seed/assert <code>career</code></li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li>Existing <code>career_contact</code> rows map to <code>career</code> (conservative — see CONTEXT decision). Re-promoting specific people to <code>close_career</code> is a deliberate post-migration triage action.</li>
+<li><code>career</code> badge uses violet; <code>close_career</code> keeps the legacy indigo.</li>
+<li>Triage keyboard shortcuts widened from <code>1-8</code> to <code>1-9</code> for the new 9-button bar.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None - plan executed exactly as written.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><code>npm run test:run</code> reports 6 failures, <strong>all</strong> in <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> — all are 60s test timeouts in bulk-insert tests. That file has <strong>zero</strong> references to <code>closeness</code>/<code>career</code> (verified via grep), so the failures are pre-existing PGlite bulk-insert performance flakiness unrelated to this task. Per the executor scope boundary, these are out of scope and were not modified.</li>
+<li>The two test files this task touches/affects pass cleanly when run in isolation: <code>npx vitest run src/features/job-leads/lib/prioritization.test.ts src/app/api/contacts/import/categorize/route.test.ts</code> → <strong>12 passed (2 files)</strong>. The categorize test passing confirms migration 0011 applies cleanly under PGlite and the enum accepts <code>career</code>.</li>
+<li><code>npm run build</code> (Next.js production build / TypeScript strict typecheck) passes.</li>
+</ul>
+<h2>Migration Not Yet Applied to Production</h2>
+<p>Per the plan&#39;s constraint about live Neon prod writes, <code>npm run db:migrate</code> was <strong>not</strong> run against production from this execution. The migration SQL is validated by the PGlite harness (the categorize route test exercises it). <strong>User action required:</strong> run <code>npm run db:migrate</code> against Neon to apply the enum swap and remap existing <code>career_contact</code> rows to <code>career</code>. After applying, review whether any <code>career</code> contacts should be hand-promoted to <code>close_career</code> (deliberate post-migration triage, not part of this task).</p>
+<h2>Verification Results</h2>
+<ul>
+<li><code>grep -rn career_contact src/</code> → no matches</li>
+<li><code>grep -v &#39;^--&#39; drizzle/migrations/0011_split_career_closeness.sql | grep -c career_contact</code> → 1 (the USING cast)</li>
+<li>Journal last entry tag = <code>0011_split_career_closeness</code>; snapshot enum values updated, no <code>career_contact</code></li>
+<li><code>npm run build</code> → success</li>
+<li>Affected test files → 12 passed in isolation</li>
+</ul>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>Code, migration, journal, and snapshot are ready. The only outstanding item is applying the migration to the production Neon database (user action above).</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li>Created files verified present: <code>0011_split_career_closeness.sql</code>, <code>0011_snapshot.json</code>, SUMMARY.md</li>
+<li>Commits verified in history: <code>1fb5e89</code>, <code>10d430f</code></li>
+</ul>
+<hr>
+<p><em>Phase: quick-260521-bhf</em>
+<em>Completed: 2026-05-21</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
