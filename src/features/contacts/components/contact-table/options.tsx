@@ -10,7 +10,8 @@ export const CLOSENESS_OPTIONS = [
   { value: 'close_colleague', label: 'Close Colleague' },
   { value: 'friend', label: 'Friend' },
   { value: 'colleague', label: 'Colleague' },
-  { value: 'career_contact', label: 'Career Contact' },
+  { value: 'close_career', label: 'Close Career' },
+  { value: 'career', label: 'Career' },
   { value: 'acquaintance', label: 'Acquaintance' },
   { value: 'linkedin_only', label: 'LinkedIn Only' },
   { value: 'never_met', label: 'Never Met' }

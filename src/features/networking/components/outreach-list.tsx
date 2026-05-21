@@ -21,10 +21,11 @@ const closenessRank: Record<string, number> = {
   close_colleague: 1,
   friend: 2,
   colleague: 3,
-  career_contact: 4,
-  acquaintance: 5,
-  linkedin_only: 6,
-  never_met: 7
+  close_career: 4,
+  career: 5,
+  acquaintance: 6,
+  linkedin_only: 7,
+  never_met: 8
 };
 
 export function OutreachList({ contacts }: { contacts: Contact[] }) {
@@ -83,7 +84,8 @@ export function OutreachList({ contacts }: { contacts: Contact[] }) {
               <SelectItem value='close_colleague'>Close Colleague</SelectItem>
               <SelectItem value='friend'>Friend</SelectItem>
               <SelectItem value='colleague'>Colleague</SelectItem>
-              <SelectItem value='career_contact'>Career Contact</SelectItem>
+              <SelectItem value='close_career'>Close Career</SelectItem>
+              <SelectItem value='career'>Career</SelectItem>
               <SelectItem value='acquaintance'>Acquaintance</SelectItem>
               <SelectItem value='linkedin_only'>LinkedIn Only</SelectItem>
               <SelectItem value='never_met'>Never Met</SelectItem>

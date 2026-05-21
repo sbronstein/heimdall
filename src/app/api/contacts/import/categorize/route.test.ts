@@ -44,7 +44,7 @@ describe('PATCH /api/contacts/import/categorize (bulk UPDATE)', () => {
         updates: [
           { contactId: seeded[0].id, closeness: 'close_friend' },
           { contactId: seeded[1].id, closeness: 'colleague' },
-          { contactId: seeded[2].id, closeness: 'career_contact' }
+          { contactId: seeded[2].id, closeness: 'career' }
         ]
       }
     });
@@ -55,10 +55,10 @@ describe('PATCH /api/contacts/import/categorize (bulk UPDATE)', () => {
     // Verify each contact's closeness was updated
     const rows = await dbRef.current!.select().from(contacts);
     const sorted = rows.sort((a, b) => a.firstName.localeCompare(b.firstName));
-    // Alice → close_friend, Bob → colleague, Carol → career_contact
+    // Alice → close_friend, Bob → colleague, Carol → career
     expect(sorted[0].closeness).toBe('close_friend');
     expect(sorted[1].closeness).toBe('colleague');
-    expect(sorted[2].closeness).toBe('career_contact');
+    expect(sorted[2].closeness).toBe('career');
 
     // Each updated_at should be >= the seed time (UPDATE ran after insert).
     // Comparing against PGlite's own seed timestamps avoids wall-clock drift

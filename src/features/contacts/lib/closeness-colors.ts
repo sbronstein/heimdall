@@ -3,7 +3,8 @@ export const closenessColors: Record<string, string> = {
   friend: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
   close_colleague: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
   colleague: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-  career_contact: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  close_career: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  career: 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
   acquaintance: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200',
   linkedin_only: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
   never_met: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'

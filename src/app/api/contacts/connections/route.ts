@@ -9,7 +9,8 @@ const closenessOrder = [
   'close_colleague',
   'friend',
   'colleague',
-  'career_contact',
+  'close_career',
+  'career',
   'acquaintance',
   'linkedin_only',
   'never_met'

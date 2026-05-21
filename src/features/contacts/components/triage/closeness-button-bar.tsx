@@ -11,7 +11,8 @@ const shortLabels: Record<string, string> = {
   close_colleague: 'Cls Col',
   friend: 'Friend',
   colleague: 'Colleague',
-  career_contact: 'Career',
+  close_career: 'Cls Career',
+  career: 'Career',
   acquaintance: 'Acquaint',
   linkedin_only: 'LinkedIn',
   never_met: 'Never Met'
@@ -39,7 +40,7 @@ export const ClosenessButtonBar = forwardRef<ClosenessButtonBarHandle, Closeness
         if (disabled) return;
 
         const key = e.key;
-        if (key >= '1' && key <= '8') {
+        if (key >= '1' && key <= '9') {
           e.preventDefault();
           const option = CLOSENESS_OPTIONS[parseInt(key) - 1];
           if (option) onSelect(option.value);

@@ -73,7 +73,8 @@ export function ImportReviewTable({
                     <SelectItem value='close_colleague'>Close Colleague</SelectItem>
                     <SelectItem value='friend'>Friend</SelectItem>
                     <SelectItem value='colleague'>Colleague</SelectItem>
-                    <SelectItem value='career_contact'>Career Contact</SelectItem>
+                    <SelectItem value='close_career'>Close Career</SelectItem>
+                    <SelectItem value='career'>Career</SelectItem>
                     <SelectItem value='acquaintance'>Acquaintance</SelectItem>
                     <SelectItem value='linkedin_only'>LinkedIn Only</SelectItem>
                     <SelectItem value='never_met'>Never Met</SelectItem>

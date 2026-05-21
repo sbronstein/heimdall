@@ -15,10 +15,11 @@ const closenessRank: Record<string, number> = {
   close_colleague: 1,
   friend: 2,
   colleague: 3,
-  career_contact: 4,
-  acquaintance: 5,
-  linkedin_only: 6,
-  never_met: 7
+  close_career: 4,
+  career: 5,
+  acquaintance: 6,
+  linkedin_only: 7,
+  never_met: 8
 };
 
 export function ConnectionFinder({ contacts }: { contacts: Contact[] }) {
