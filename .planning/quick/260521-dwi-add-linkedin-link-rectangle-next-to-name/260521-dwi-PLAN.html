@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260521-dwi-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/260521-dwi-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260521-dwi
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/features/job-leads/components/recommendation-card.tsx</li>
+<li>src/features/job-leads/components/recommendation-list.tsx
+autonomous: true
+requirements: [DWI-01]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;On a job lead detail page, each recommended-intro contact with a LinkedIn URL shows a LinkedIn badge to the right of their name that opens their profile in a new tab&quot;
+    - &quot;On a job lead detail page, each prospect (2nd-degree connection) row with a LinkedIn URL shows a LinkedIn badge to the right of their name/title that opens their profile in a new tab&quot;
+    - &quot;Contacts/prospects without a LinkedIn URL render exactly as before (no empty badge)&quot;
+  artifacts:
+    - path: &quot;src/features/job-leads/components/recommendation-card.tsx&quot;
+      provides: &quot;LinkedIn badge rendering for contact and prospect rows&quot;
+      contains: &quot;IconBrandLinkedin&quot;
+    - path: &quot;src/features/job-leads/components/recommendation-list.tsx&quot;
+      provides: &quot;Passes contact.linkedinUrl and prospect.linkedinUrl into RecommendationCard&quot;
+      contains: &quot;linkedinUrl&quot;
+  key_links:
+    - from: &quot;recommendation-list.tsx&quot;
+      to: &quot;recommendation-card.tsx&quot;
+      via: &quot;contactLinkedinUrl prop + prospects[].linkedinUrl prop&quot;
+      pattern: &quot;linkedinUrl&quot;
+    - from: &quot;recommendation-card.tsx&quot;
+      to: &quot;contact/prospect LinkedIn profile&quot;
+      via: &quot;anchor href with target=_blank&quot;
+  pattern: &quot;IconBrandLinkedin&quot;
+</p>
+<hr>
+<objective>
+Add a LinkedIn badge/rectangle to the right of each person's name on the job lead detail page — for both the recommended-intro contacts and the prospects (2nd-degree connections) listed under each contact. Clicking the badge opens that person's LinkedIn profile in a new tab.<p>Purpose: Let the owner jump straight to a connection&#39;s or prospect&#39;s LinkedIn profile from the intro-path recommendations without copy-pasting URLs.
+Output: Updated <code>recommendation-card.tsx</code> (renders the badge) and <code>recommendation-list.tsx</code> (threads the existing <code>linkedinUrl</code> field through as props).
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/STATE.md
+@CLAUDE.md<interfaces>
+<!-- Data is ALREADY available end-to-end. No schema or API change needed. --><p>The recommendations API (<code>src/app/api/job-leads/[id]/recommendations/route.ts</code>) selects the full
+<code>contacts</code> and <code>prospects</code> rows. <code>buildRecommendations</code> (prioritization.ts) returns:</p>
+<pre><code class="language-typescript">type PrioritizedRecommendation = {
+  contact: Contact;                 // Contact has linkedinUrl: string | null
+  score: number;
+  prospects: Array&lt;{
+    prospect: Prospect;             // Prospect has linkedinUrl: string | null
+    bridgeScore: number;
+  }&gt;;
+};
+</code></pre>
+<p>Both <code>Contact</code> and <code>Prospect</code> (drizzle-inferred types) carry <code>linkedinUrl: string | null</code>:</p>
+<ul>
+<li><code>drizzle/schema/contacts.ts</code> → <code>linkedinUrl: text(&#39;linkedin_url&#39;)</code></li>
+<li><code>drizzle/schema/job-leads.ts</code> (prospects table) → <code>linkedinUrl: text(&#39;linkedin_url&#39;)</code></li>
+</ul>
+<p>EXISTING badge pattern to copy verbatim — from <code>src/features/contacts/components/triage/triage-card.tsx</code> lines 35-46:</p>
+<pre><code class="language-tsx">{contact.linkedinUrl &amp;&amp; (
+  &lt;a
+    href={contact.linkedinUrl}
+    target=&#39;_blank&#39;
+    rel=&#39;noopener noreferrer&#39;
+    tabIndex={-1}
+    className=&#39;text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-accent&#39;
+  &gt;
+    &lt;IconBrandLinkedin className=&#39;h-4 w-4&#39; /&gt;
+    &lt;span&gt;LinkedIn&lt;/span&gt;
+  &lt;/a&gt;
+)}
+</code></pre>
+<p>Icon import: <code>import { IconBrandLinkedin } from &#39;@tabler/icons-react&#39;;</code>
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Thread linkedinUrl through RecommendationList into RecommendationCard props</name>
+  <files>src/features/job-leads/components/recommendation-list.tsx</files>
+  <action>
+In `recommendation-list.tsx`, where each `<RecommendationCard>` is rendered (the `recommendations.map`), add a `contactLinkedinUrl={rec.contact.linkedinUrl}` prop. The data already exists on `rec.contact` (Contact type has `linkedinUrl: string | null`) — no fetch or API change.<p>In the same map, the <code>prospects</code> prop is built from <code>rec.prospects.map((p) =&gt; ({ ... }))</code>. Add <code>linkedinUrl: p.prospect.linkedinUrl</code> to each mapped prospect object so the card receives the prospect profile URL alongside name/title/seniorityLevel/bridgeScore.</p>
+<p>Do not change any fetch logic, the recommendations API, or the prioritization module — <code>linkedinUrl</code> is already present on the <code>Contact</code> and <code>Prospect</code> objects returned by the endpoint.
+  </action>
+  <verify>
+    <automated>cd /Users/sbronstein/Github/heimdall &amp;&amp; grep -q &quot;contactLinkedinUrl={rec.contact.linkedinUrl}&quot; src/features/job-leads/components/recommendation-list.tsx &amp;&amp; grep -q &quot;linkedinUrl: p.prospect.linkedinUrl&quot; src/features/job-leads/components/recommendation-list.tsx &amp;&amp; echo PASS</automated>
+  </verify>
+  <done>RecommendationList passes <code>contactLinkedinUrl</code> and each prospect&#39;s <code>linkedinUrl</code> into RecommendationCard. No API/fetch changes.</done>
+</task></p>
+<task type="auto">
+  <name>Task 2: Render LinkedIn badge for contact and prospect rows in RecommendationCard</name>
+  <files>src/features/job-leads/components/recommendation-card.tsx</files>
+  <action>
+In `recommendation-card.tsx`:<ol>
+<li><p>Import the icon: <code>import { IconBrandLinkedin } from &#39;@tabler/icons-react&#39;;</code></p>
+</li>
+<li><p>Extend <code>RecommendationCardProps</code>:</p>
+<ul>
+<li>Add <code>contactLinkedinUrl?: string | null;</code></li>
+<li>Add <code>linkedinUrl: string | null;</code> to the <code>prospects</code> array item type (alongside <code>name</code>, <code>title</code>, <code>seniorityLevel</code>, <code>bridgeScore</code>).
+Destructure <code>contactLinkedinUrl</code> in the component signature.</li>
+</ul>
+</li>
+<li><p>Contact name row: inside the existing <code>&lt;div className=&#39;flex items-center gap-2&#39;&gt;</code> that wraps <code>{contactName}</code> and the closeness <code>&lt;Badge&gt;</code>, append a conditional LinkedIn anchor AFTER the closeness badge. Use the exact existing badge pattern (anchor with <code>target=&#39;_blank&#39;</code>, <code>rel=&#39;noopener noreferrer&#39;</code>, <code>tabIndex={-1}</code>, className <code>text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-accent</code>, containing <code>&lt;IconBrandLinkedin className=&#39;h-4 w-4&#39; /&gt;</code> and <code>&lt;span&gt;LinkedIn&lt;/span&gt;</code>). Render only when <code>contactLinkedinUrl</code> is truthy.</p>
+</li>
+<li><p>Prospect rows: each prospect renders in a row with <code>&lt;div className=&#39;flex items-center gap-2&#39;&gt;{p.name} ...{p.title}&lt;/div&gt;</code> on the left and a seniority <code>&lt;Badge&gt;</code> on the right. Add a conditional LinkedIn anchor (same pattern as above, using <code>p.linkedinUrl</code>) immediately to the right of the prospect name/title text — place it inside the left <code>flex items-center gap-2</code> div, after the title span, so it sits next to the name/title rather than next to the seniority badge. Render only when <code>p.linkedinUrl</code> is truthy.</p>
+</li>
+</ol>
+<p>Match Tailwind class ordering conventions (prettier-plugin-tailwindcss). Do not add a badge when the URL is null/empty.
+  </action>
+  <verify>
+    <automated>cd /Users/sbronstein/Github/heimdall &amp;&amp; grep -q &quot;IconBrandLinkedin&quot; src/features/job-leads/components/recommendation-card.tsx &amp;&amp; grep -q &quot;contactLinkedinUrl&quot; src/features/job-leads/components/recommendation-card.tsx &amp;&amp; grep -c &quot;rel=&#39;noopener noreferrer&#39;&quot; src/features/job-leads/components/recommendation-card.tsx | grep -q 2 &amp;&amp; npx tsc --noEmit -p tsconfig.json &amp;&amp; echo PASS</automated>
+  </verify>
+  <done>RecommendationCard renders a LinkedIn badge to the right of each contact name (when contactLinkedinUrl present) and each prospect name/title (when prospect linkedinUrl present), opening the profile in a new tab. Type-checks clean.</done>
+</task></p>
+</tasks><verification>
+- `npx tsc --noEmit` passes (no type errors from new props).
+- Manual: open a job lead detail page in `ready`/`actioned` status. Contacts with a stored `linkedinUrl` show a "LinkedIn" rectangle next to their name; prospects with a stored `linkedinUrl` show one next to their name/title. Both open the correct profile in a new tab. People without a URL show no badge.
+</verification><success_criteria>
+- LinkedIn badge appears to the right of contact names and prospect names/titles on the job lead detail page when a LinkedIn URL exists.
+- Badge links to the person's LinkedIn profile and opens in a new tab (`target='_blank'`, `rel='noopener noreferrer'`).
+- No badge rendered when the URL is null.
+- No DB schema, migration, or API route changes (URL field already exists and is already returned by the recommendations endpoint).
+- Visual style matches the existing triage-card LinkedIn badge.
+</success_criteria><output>
+Create `.planning/quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/260521-dwi-SUMMARY.md` when done
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/260521-dwi-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
