@@ -106,7 +106,7 @@ connection's profile** for their company + role at connection time. This is a di
 goal from the employee-list scrape — you are visiting a person's profile, not a company's
 people-search results.
 
-### Profile-page Step 1: Derive the profile URL
+### Profile-page Step 1: Derive the experience history URL
 
 The contact's `linkedinUrl` is the canonical starting point (stored in the contacts table,
 populated via CSV import or manual entry). It should already be an `/in/<slug>/` URL.
@@ -114,7 +114,7 @@ populated via CSV import or manual entry). It should already be an `/in/<slug>/`
 ```
 slug = new URL(contact.linkedinUrl).pathname.split('/').filter(Boolean)[1]
 // e.g. 'alice-smith-12345' from 'https://www.linkedin.com/in/alice-smith-12345/'
-profileUrl = `https://www.linkedin.com/in/${slug}/`
+profileUrl = `https://www.linkedin.com/in/${slug}/details/experience/`
 ```
 
 Normalize trailing slashes. Reject if `slug` is undefined or empty — surface
@@ -122,17 +122,17 @@ Normalize trailing slashes. Reject if `slug` is undefined or empty — surface
 
 ---
 
-### Profile-page Step 2: Navigate to the profile
+### Profile-page Step 2: Navigate to the full experience history page
 
-**Goal:** Render the connection's full profile page and confirm LinkedIn is signed in.
+**Goal:** Render the connection's complete experience history and confirm LinkedIn is signed in.
 
-**Action:** Navigate agent-browser to `https://www.linkedin.com/in/<slug>/`. Wait for
-the snapshot to settle.
+**Action:** Navigate agent-browser to `https://www.linkedin.com/in/<slug>/details/experience/`.
+Wait for the snapshot to settle. This page shows all experience entries with their date ranges —
+the complete history needed for as-of-connection-date matching, not just the top card.
 
 **Expected outcome:**
 - Page title visible (typically the person's name).
-- Profile header rendered (name, current headline/role).
-- An "Experience" section visible or reachable by scrolling.
+- Full experience list rendered (each role entry with its date range, title, and company).
 
 **Failure modes:**
 - LinkedIn redirects to `/login` or shows a sign-in modal → `LinkedIn navigation failed`.
@@ -143,31 +143,56 @@ the snapshot to settle.
 
 ---
 
-### Profile-page Step 3: Extract company and role from the Experience section
+### Profile-page Step 2b: Read the contact's connection date
 
-**Goal:** Capture the company name and job title the person held at (or most recently
-before) the time of their LinkedIn connection. This is **best-effort current/most-recent
-extraction** — true as-of-connection-date historical reconstruction is out of scope
-(see CONTEXT.md §deferred).
+Fetch the contact record to obtain the target date for role matching (see `heimdall-api.md`
+§ Contacts for the full GET endpoint shape):
 
-**Action:** Locate the "Experience" section in the snapshot. In the a11y tree, look for:
-1. A section or landmark element whose accessible name / heading contains "Experience".
-2. Within it, the **first** experience item (most recent role).
-3. From that item, extract:
-   - **Company name** (`companyAtConnection`): the sub-heading or secondary text showing
-     the employer (e.g., "OpenAI", "Google LLC"). Strip any suffixes like "Full-time",
-     "Contract", "· 2 yrs 3 mos" — keep only the company name.
-   - **Role / job title** (`roleAtConnection`): the primary bold/heading text of the item
-     (e.g., "Member of Technical Staff", "VP of Engineering").
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:4000/api/contacts/<id>"
+```
+
+Read the `linkedinConnectionDate` field and hold it as `$CONNECTION_DATE` (ISO date string,
+e.g. `"2022-03-15"`). If `linkedinConnectionDate` is null, fall back to the most-recent role
+and note the limitation in the narration.
+
+---
+
+### Profile-page Step 3: Extract company and role as of the connection date
+
+**Goal:** Capture the company name and job title the person held on `$CONNECTION_DATE`,
+reconstructed from the full experience history.
+
+**Date-matching algorithm:**
+
+1. Parse every experience entry's date range (start–end; treat "Present" as ongoing / today).
+   LinkedIn groups multiple roles under one company header — handle grouped sub-roles: each
+   sub-role has its own title and date range nested under the parent company name.
+2. Find the entry whose span CONTAINS `$CONNECTION_DATE` (i.e., start ≤ connection date ≤ end).
+3. For a grouped company entry, use the matching sub-role's title + the parent company name.
+4. Set `companyAtConnection` and `roleAtConnection` from the selected entry.
+
+**Fallbacks (apply in order if no direct span match):**
+
+- **Connection date predates earliest listed role:** Set both fields to `null` and log
+  `"Profile history starts <year>, predates connection date <date>"`.
+- **Connection date lands in an employment gap:** Use the closest prior role (the one
+  whose end date is nearest to and before the connection date) and flag it:
+  log `"Connection date <date> falls in employment gap; using closest prior role"`.
+- **Multiple overlapping roles (concurrent employment):** Pick the primary or full-time
+  role and note the concurrency: log `"Concurrent roles found; selected primary role"`.
 
 **Selector hints** (hints only — use a11y text/role matching first):
 
 | Target | Hint |
 |--------|------|
-| Experience section | section or div whose heading text is "Experience" |
-| First experience item | first `<li>` or group role element within the Experience section |
-| Role title | heading-level element (h3 / bold) at the top of the item |
-| Company name | secondary text element immediately beneath the role title |
+| Experience list | section or landmark whose heading contains "Experience" on the `/details/experience/` page |
+| Role entry | each `<li>` or group role element in the experience list |
+| Role title | heading-level element (h3 / bold) at the top of each entry |
+| Company name | secondary text element beneath the role title (or parent group heading for sub-roles) |
+| Date range | text containing month/year patterns (e.g., "Jan 2021 – Mar 2023") or "Present" |
 
 **Fallback behavior:**
 - If the Experience section is absent (profile has none): set both fields to `null`
@@ -175,9 +200,9 @@ extraction** — true as-of-connection-date historical reconstruction is out of 
 - If the company name is extractable but the role is not (or vice versa): write
   whatever is available. The merge logic server-side is `null`-safe — a partial write
   is better than no write.
-- If the entire Experience section is behind a "Show more" expand: attempt to click
-  the expand button once; if it does not work, fall back to extracting from the
-  profile header headline (`<h2>` or equivalent near the profile photo).
+- If experience entries are behind a "Show more" expand: attempt to click the expand
+  button once; if it does not work, extract from whatever entries are visible and log
+  the limitation.
 
 **Max field lengths:** 300 chars each (server-side Zod `.max(300)`). If an extracted
 string exceeds 300 chars, truncate before writing.
