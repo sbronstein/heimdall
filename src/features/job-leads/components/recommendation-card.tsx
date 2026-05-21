@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { closenessColors } from '@/features/contacts/lib/closeness-colors';
+import { IconBrandLinkedin } from '@tabler/icons-react';
 import type { SeniorityLevel } from '@/lib/domain/types';
 
 const seniorityColors: Record<SeniorityLevel, string> = {
@@ -22,6 +23,7 @@ function formatSeniority(level: string): string {
 
 interface RecommendationCardProps {
   contactName: string;
+  contactLinkedinUrl?: string | null;
   closeness: string | null;
   lastContactDate: Date | null;
   currentRole?: string | null;
@@ -34,12 +36,14 @@ interface RecommendationCardProps {
     title: string | null;
     seniorityLevel: SeniorityLevel;
     bridgeScore: number;
+    linkedinUrl?: string | null;
   }>;
   onRequestIntro?: () => void;
 }
 
 export function RecommendationCard({
   contactName,
+  contactLinkedinUrl,
   closeness,
   lastContactDate,
   currentRole,
@@ -63,6 +67,18 @@ export function RecommendationCard({
               >
                 {closeness.replace(/_/g, ' ')}
               </Badge>
+            )}
+            {contactLinkedinUrl && (
+              <a
+                href={contactLinkedinUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                tabIndex={-1}
+                className='inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+              >
+                <IconBrandLinkedin className='h-4 w-4' />
+                <span>LinkedIn</span>
+              </a>
             )}
           </div>
           {lastContactDate && (
@@ -106,6 +122,18 @@ export function RecommendationCard({
               <span>{p.name}</span>
               {p.title && (
                 <span className='text-muted-foreground'>— {p.title}</span>
+              )}
+              {p.linkedinUrl && (
+                <a
+                  href={p.linkedinUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  tabIndex={-1}
+                  className='inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+                >
+                  <IconBrandLinkedin className='h-4 w-4' />
+                  <span>LinkedIn</span>
+                </a>
               )}
             </div>
             <Badge
