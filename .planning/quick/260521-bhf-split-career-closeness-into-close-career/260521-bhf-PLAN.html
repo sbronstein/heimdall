@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260521-bhf-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260521-bhf
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>drizzle/schema/enums.ts</li>
+<li>src/lib/domain/types.ts</li>
+<li>src/features/job-leads/lib/prioritization.ts</li>
+<li>src/features/contacts/lib/closeness-colors.ts</li>
+<li>src/features/contacts/components/contact-table/options.tsx</li>
+<li>src/features/contacts/components/triage/closeness-button-bar.tsx</li>
+<li>src/app/api/contacts/connections/route.ts</li>
+<li>src/features/networking/components/connection-finder.tsx</li>
+<li>src/features/networking/components/outreach-list.tsx</li>
+<li>src/features/networking/components/networking-dashboard.tsx</li>
+<li>src/features/contacts/components/linkedin-import/import-review-table.tsx</li>
+<li>src/features/job-leads/lib/prioritization.test.ts</li>
+<li>src/app/api/contacts/import/categorize/route.test.ts</li>
+<li>drizzle/migrations/0011_split_career_closeness.sql</li>
+<li>drizzle/migrations/meta/_journal.json</li>
+<li>drizzle/migrations/meta/0011_snapshot.json
+autonomous: true
+requirements: [BHF-01]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;The contact_closeness enum no longer contains career_contact; it contains close_career and career&quot;
+    - &quot;Every existing contact row whose closeness was career_contact now reads career&quot;
+    - &quot;Bridge-score weighting uses close_career=50 and career=40&quot;
+    - &quot;Triage button bar, contact-table filter, networking selects/ranks, and color map all show the two new tiers in high→low order with no career_contact entry&quot;
+    - &quot;npm run build (typecheck) and npm run test:run pass with no remaining career_contact reference outside the migration USING cast&quot;
+  artifacts:
+    - path: &quot;drizzle/migrations/0011_split_career_closeness.sql&quot;
+      provides: &quot;Hand-authored enum swap + row remap migration&quot;
+      contains: &quot;career_contact&quot;
+    - path: &quot;drizzle/schema/enums.ts&quot;
+      provides: &quot;contactClosenessEnum with new value set&quot;
+      contains: &quot;close_career&quot;
+    - path: &quot;src/lib/domain/types.ts&quot;
+      provides: &quot;contactClosenessValues array with new value set&quot;
+      contains: &quot;close_career&quot;
+  key_links:
+    - from: &quot;drizzle/schema/enums.ts&quot;
+      to: &quot;src/lib/domain/types.ts&quot;
+      via: &quot;enum value list must match contactClosenessValues array exactly&quot;
+      pattern: &quot;close_career&quot;
+    - from: &quot;drizzle/migrations/0011_split_career_closeness.sql&quot;
+      to: &quot;drizzle/migrations/meta/_journal.json&quot;
+      via: &quot;journal entry tag references the new migration file&quot;
+  pattern: &quot;0011_split_career_closeness&quot;
+</p>
+<hr>
+<objective>
+Split the single `career_contact` contact-closeness tier into two distinct tiers — `close_career` (weight 50) and `career` (weight 40) — across the Postgres enum, the TypeScript enum value array, the bridge-score weight table, the triage UI, the contact-table filter options, the networking dashboard selects/ranks, the LinkedIn import review select, and the closeness color map. Migrate all existing `career_contact` rows to the lower `career` tier and remove the `career_contact` enum value entirely.<p>Purpose: The owner wants finer triage granularity between an ordinary career contact and a close career contact, so introduction-path prioritization and triage reflect that distinction.</p>
+<p>Output: A hand-authored Drizzle enum-swap migration (journal + snapshot updated), updated schema/types/weights/UI, and updated tests — all green under <code>npm run build</code> and <code>npm run test:run</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/STATE.md
+@.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-CONTEXT.md
+@CLAUDE.md<interfaces>
+<!-- Canonical high→low closeness ordering. EVERY list/map/array below MUST follow this exact sequence. -->
+close_friend, close_colleague, friend, colleague, close_career, career, acquaintance, linkedin_only, never_met<p>Current contactClosenessEnum (drizzle/schema/enums.ts:133-142) and contactClosenessValues
+(src/lib/domain/types.ts:186-195) both list:
+  close_friend, close_colleague, friend, colleague, career_contact, acquaintance, linkedin_only, never_met
+Replace the single <code>career_contact</code> slot with <code>close_career</code>, <code>career</code> in BOTH.</p>
+<p>Bridge-score weights (src/features/job-leads/lib/prioritization.ts:4-13):
+  Replace <code>career_contact: 45,</code> with <code>close_career: 50,</code> then <code>career: 40,</code>.</p>
+<p>Display labels: close_career → &quot;Close Career&quot;, career → &quot;Career&quot;.
+Triage short labels: close_career → &quot;Cls Career&quot;, career → &quot;Career&quot;.</p>
+<p>contacts.closeness column (drizzle/schema/contacts.ts:30): default &#39;acquaintance&#39; — UNCHANGED.</p>
+<p>PGlite test harness (src/test-utils/pglite.ts) applies EVERY .sql file in drizzle/migrations/
+in filename order via pglite.exec(). The new 0011 migration MUST execute cleanly under PGlite,
+which supports CREATE TYPE / ALTER ... TYPE ... USING / DROP TYPE. Postgres (and PGlite) reject
+ALTER COLUMN TYPE while a column default references the old enum, so the default must be DROPPED
+before the swap and re-added after.</p>
+<p>Files with career_contact NOT listed in CONTEXT.md but found via grep (these MUST also be updated):
+  src/app/api/contacts/connections/route.ts:12 (closenessOrder array — sort order)
+  src/features/networking/components/connection-finder.tsx:18 (closenessRank map, numeric)
+  src/features/networking/components/outreach-list.tsx:24 (closenessRank map) + :86 (SelectItem)
+  src/features/networking/components/networking-dashboard.tsx:15 (closenessOrder array)
+  src/features/contacts/components/linkedin-import/import-review-table.tsx:76 (SelectItem)
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Author enum-swap migration + update schema, types, and bridge weights</name>
+  <files>drizzle/schema/enums.ts, src/lib/domain/types.ts, src/features/job-leads/lib/prioritization.ts, drizzle/migrations/0011_split_career_closeness.sql, drizzle/migrations/meta/_journal.json, drizzle/migrations/meta/0011_snapshot.json</files>
+  <action>
+Update the schema sources so the new value set is the source of truth (per CONTEXT decisions):
+- drizzle/schema/enums.ts — in contactClosenessEnum's list, replace the single 'career_contact' entry with 'close_career', 'career'. Full ordered list becomes: close_friend, close_colleague, friend, colleague, close_career, career, acquaintance, linkedin_only, never_met.
+- src/lib/domain/types.ts — apply the identical change to the contactClosenessValues `as const` array (lines 186-195). This array auto-derives the Zod `z.enum(contactClosenessValues)` used by API routes, so it MUST match the enum exactly.
+- src/features/job-leads/lib/prioritization.ts — in closenessWeights, replace `career_contact: 45,` with two lines `close_career: 50,` and `career: 40,` keeping the high→low ordering between colleague(60) and acquaintance(30).<p>Hand-author drizzle/migrations/0011_split_career_closeness.sql implementing the sanctioned raw-SQL enum swap (drizzle-kit cannot remove an enum value in place). Separate statements with <code>--&gt; statement-breakpoint</code>, matching existing migration file style. Statements in order:</p>
+<ol>
+<li>ALTER TABLE &quot;contacts&quot; ALTER COLUMN &quot;closeness&quot; DROP DEFAULT  (default references old enum; must drop first)</li>
+<li>ALTER TYPE &quot;public&quot;.&quot;contact_closeness&quot; RENAME TO &quot;contact_closeness_old&quot;</li>
+<li>CREATE TYPE &quot;public&quot;.&quot;contact_closeness&quot; AS ENUM(...) with the final ordered value set (close_friend, close_colleague, friend, colleague, close_career, career, acquaintance, linkedin_only, never_met)</li>
+<li>ALTER TABLE &quot;contacts&quot; ALTER COLUMN &quot;closeness&quot; TYPE &quot;public&quot;.&quot;contact_closeness&quot; USING a CASE expression on &quot;closeness&quot;::text that maps &#39;career_contact&#39; → &#39;career&#39; and passes every other value through unchanged, casting the CASE result back to the new enum type</li>
+<li>ALTER TABLE &quot;contacts&quot; ALTER COLUMN &quot;closeness&quot; SET DEFAULT &#39;acquaintance&#39;  (restore unchanged default)</li>
+<li>DROP TYPE &quot;public&quot;.&quot;contact_closeness_old&quot;
+The USING expression is the ONLY place &#39;career_contact&#39; may still appear after this plan.</li>
+</ol>
+<p>Update the migration journal so <code>npm run db:migrate</code> and the PGlite harness pick up the file: append to drizzle/migrations/meta/_journal.json <code>entries</code> a new object with idx 11, version &quot;7&quot;, a current epoch-ms <code>when</code>, tag &quot;0011_split_career_closeness&quot;, breakpoints true.</p>
+<p>Create drizzle/migrations/meta/0011_snapshot.json by copying 0010_snapshot.json verbatim, then: assign a fresh random UUID to <code>id</code>; set <code>prevId</code> to 0010&#39;s id (35d59b5b-13e3-4e80-a416-060ca29db68b); edit the <code>public.contact_closeness</code> enum <code>values</code> array (~line 2017) to the new ordered value set (replace &quot;career_contact&quot; with &quot;close_career&quot;, &quot;career&quot;). Leave every other table/enum unchanged.
+  </action>
+  <verify>
+    <automated>cd /Users/sbronstein/Github/heimdall &amp;&amp; node -e &quot;const fs=require(&#39;fs&#39;); const j=require(&#39;./drizzle/migrations/meta/_journal.json&#39;); if(j.entries.at(-1).tag!==&#39;0011_split_career_closeness&#39;) throw new Error(&#39;journal tag wrong&#39;); const snap=fs.readFileSync(&#39;./drizzle/migrations/meta/0011_snapshot.json&#39;,&#39;utf8&#39;); if(snap.includes(&#39;&quot;career_contact&quot;&#39;)) throw new Error(&#39;snapshot still has career_contact&#39;); if(!snap.includes(&#39;close_career&#39;)||!snap.includes(&#39;&quot;career&quot;&#39;)) throw new Error(&#39;snapshot missing new values&#39;); console.log(&#39;journal+snapshot OK&#39;)&quot; &amp;&amp; [ &quot;$(grep -c close_career drizzle/schema/enums.ts)&quot; = &quot;1&quot; ] &amp;&amp; [ &quot;$(grep -c close_career src/lib/domain/types.ts)&quot; = &quot;1&quot; ] &amp;&amp; grep -q &quot;close_career: 50&quot; src/features/job-leads/lib/prioritization.ts &amp;&amp; grep -q &quot;career: 40&quot; src/features/job-leads/lib/prioritization.ts &amp;&amp; [ &quot;$(grep -v &#39;^--&#39; drizzle/migrations/0011_split_career_closeness.sql | grep -c career_contact)&quot; = &quot;1&quot; ] &amp;&amp; echo ALL_OK</automated>
+  </verify>
+  <done>Enum, types array, and bridge weights carry close_career/career in high→low order; migration SQL performs drop-default → rename → create → USING-cast remap → set-default → drop-old; journal has the 0011 entry and 0011_snapshot.json reflects the new enum values with no career_contact except the single USING cast.</done>
+</task></p>
+<task type="auto">
+  <name>Task 2: Update all UI/sort references and migrate tests</name>
+  <files>src/features/contacts/lib/closeness-colors.ts, src/features/contacts/components/contact-table/options.tsx, src/features/contacts/components/triage/closeness-button-bar.tsx, src/app/api/contacts/connections/route.ts, src/features/networking/components/connection-finder.tsx, src/features/networking/components/outreach-list.tsx, src/features/networking/components/networking-dashboard.tsx, src/features/contacts/components/linkedin-import/import-review-table.tsx, src/features/job-leads/lib/prioritization.test.ts, src/app/api/contacts/import/categorize/route.test.ts</files>
+  <action>
+Replace the single career_contact entry with close_career then career (high→low order) in every list/map/select below:
+- closeness-colors.ts: replace the `career_contact: 'bg-indigo-...'` line with two entries. Reuse the existing indigo classes for `close_career`, and pick a distinct on-theme color for `career` (e.g. violet: `bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200`). Keep entries in high→low order.
+- contact-table/options.tsx CLOSENESS_OPTIONS: replace `{ value: 'career_contact', label: 'Career Contact' }` with `{ value: 'close_career', label: 'Close Career' }` and `{ value: 'career', label: 'Career' }`.
+- triage/closeness-button-bar.tsx: in `shortLabels`, replace `career_contact: 'Career'` with `close_career: 'Cls Career'` and `career: 'Career'`. The bar now has 9 buttons (was 8): update the keyboard-shortcut guard `if (key >= '1' && key <= '8')` to `'9'` so positional shortcuts 1–9 cover all options in CLOSENESS_OPTIONS order.
+- connections/route.ts: in the `closenessOrder` array, replace 'career_contact' with 'close_career', 'career'.
+- connection-finder.tsx: in `closenessRank`, replace `career_contact: 4` and renumber so the map stays a contiguous 0..8 high→low rank: close_friend:0, close_colleague:1, friend:2, colleague:3, close_career:4, career:5, acquaintance:6, linkedin_only:7, never_met:8.
+- outreach-list.tsx: same `closenessRank` renumber as connection-finder (0..8). Also in the closeness Select, replace the `career_contact` SelectItem with `<SelectItem value='close_career'>Close Career</SelectItem>` and `<SelectItem value='career'>Career</SelectItem>`.
+- networking-dashboard.tsx: in `closenessOrder` array, replace 'career_contact' with 'close_career', 'career'.
+- import-review-table.tsx: replace the `career_contact` SelectItem with `<SelectItem value='close_career'>Close Career</SelectItem>` and `<SelectItem value='career'>Career</SelectItem>`.<p>Update tests so they pass after removal (career_contact no longer a valid enum value):</p>
+<ul>
+<li>prioritization.test.ts: no literal &#39;career_contact&#39; present (it fuzzes over contactClosenessValues, which now excludes it) — no change required, but re-run to confirm the bounds/monotonicity tests still hold with the new weights.</li>
+<li>categorize/route.test.ts: Test 1 seeds and asserts <code>closeness: &#39;career_contact&#39;</code> (lines 47, 61). Replace BOTH occurrences with &#39;career&#39; (the migrated tier) so the insert/assert use a valid enum value. The comment on line 58 (&quot;Carol → career_contact&quot;) should read &quot;Carol → career&quot;.</li>
+</ul>
+<p>After edits, confirm no career_contact reference remains anywhere in src/.
+  </action>
+  <verify>
+    <automated>cd /Users/sbronstein/Github/heimdall &amp;&amp; [ &quot;$(grep -rc career_contact src/ | grep -v &#39;:0$&#39; | wc -l | tr -d &#39; &#39;)&quot; = &quot;0&quot; ] &amp;&amp; grep -q &quot;close_career&quot; src/features/contacts/lib/closeness-colors.ts &amp;&amp; grep -q &quot;key &lt;= &#39;9&#39;&quot; src/features/contacts/components/triage/closeness-button-bar.tsx &amp;&amp; npm run build &amp;&amp; npm run test:run</automated>
+  </verify>
+  <done>No <code>career_contact</code> token remains in src/; color map, CLOSENESS_OPTIONS, triage shortLabels (with 1–9 shortcuts), connections sort order, both networking closenessRank maps (contiguous 0..8) and selects, networking-dashboard order, and import-review select all carry close_career then career in high→low order; the categorize test seeds/asserts the migrated <code>career</code> tier; <code>npm run build</code> and <code>npm run test:run</code> pass.</done>
+</task></p>
+</tasks><verification>
+- `npm run build` succeeds (TypeScript strict typecheck across the new enum value union).
+- `npm run test:run` passes — notably the categorize route test (PGlite applies migration 0011, so the enum must accept `career` and reject `career_contact`) and the prioritization fuzz/monotonicity tests under the new 50/40 weights.
+- `grep -rn career_contact src/` returns nothing.
+- `grep -v '^--' drizzle/migrations/0011_split_career_closeness.sql | grep -c career_contact` returns exactly 1 (the USING cast).
+- The five distinct closeness orderings (enum, types array, color map, CLOSENESS_OPTIONS, triage bar) plus the three networking rank/order structures all follow: close_friend, close_colleague, friend, colleague, close_career, career, acquaintance, linkedin_only, never_met.
+</verification><success_criteria>
+- `career_contact` is fully removed from the `contact_closeness` enum and from all application code (only surviving reference is the migration's USING cast that maps it to `career`).
+- `close_career` (weight 50) and `career` (weight 40) exist as distinct tiers in the enum, types array, bridge-score weights, triage UI (with 9-button keyboard shortcuts), contact-table filter, networking selects/ranks, and color map.
+- Existing `career_contact` rows migrate to `career` via the hand-authored enum-swap migration; column default stays `acquaintance`.
+- Migration journal and 0011 snapshot are updated so `npm run db:migrate` applies the migration and the PGlite test harness runs it cleanly.
+- `npm run build` and `npm run test:run` both pass.
+</success_criteria><output>
+Create `.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-SUMMARY.md` when done.<p>Note (per project CLAUDE.md): this is a <code>.planning/</code> markdown change — refresh the sibling HTML companion for the SUMMARY and PLAN, and regenerate <code>_index.html</code> via <code>node ~/.claude/scripts/build-index.mjs</code>, committing the HTML alongside the markdown.</p>
+<p>Reminder for the executor: after migration is applied to production (<code>npm run db:migrate</code> against Neon), the user should review whether any <code>career</code> contacts should be hand-promoted to <code>close_career</code> — this is a deliberate post-migration triage action, not part of this plan.
+</output></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

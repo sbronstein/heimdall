@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260521-bhf-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Quick Task 260521-bhf: split career closeness into close-career + career - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-21
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Task Boundary<p>Split the single <code>career_contact</code> contact-closeness tier into two distinct tiers — <code>close_career</code> and <code>career</code> — across the Postgres enum, the bridge-score weight table, the triage UI, the contact-table filter options, and the closeness color map. Existing data must be migrated and the old <code>career_contact</code> value fully removed.
+</domain></p>
+<decisions>
+## Implementation Decisions<h3>Enum naming &amp; labels</h3>
+<ul>
+<li>New enum values: <code>close_career</code> and <code>career</code>.</li>
+<li>Display labels: &quot;Close Career&quot; and &quot;Career&quot;.</li>
+<li>Triage short labels: &quot;Cls Career&quot; (or similar) for <code>close_career</code>, &quot;Career&quot; for <code>career</code>.</li>
+</ul>
+<h3>Hierarchy &amp; bridge-score weights</h3>
+<ul>
+<li>Insert both new tiers where <code>career_contact</code> (weight 45) used to sit — between <code>colleague</code> (60) and <code>acquaintance</code> (30).</li>
+<li><code>closenessWeights</code>: <code>close_career: 50</code>, <code>career: 40</code>.</li>
+<li>Resulting order (high→low): close_friend(100), close_colleague(90), friend(75), colleague(60), <strong>close_career(50), career(40)</strong>, acquaintance(30), linkedin_only(15), never_met(5).</li>
+<li>Enum/UI ordering and color-map ordering must follow this same high→low sequence.</li>
+</ul>
+<h3>Existing-data migration</h3>
+<ul>
+<li><strong>Replace entirely</strong>: <code>career_contact</code> is removed from the <code>contact_closeness</code> enum — no legacy value remains.</li>
+<li>Postgres cannot drop an enum value in place. Migration approach: create the new enum with the final value set, <code>ALTER ... TYPE ... USING</code> to cast the column, then drop the old enum type. Map the old default and every existing <code>career_contact</code> row in the cast.</li>
+<li><strong>All existing <code>career_contact</code> rows map to the lower <code>career</code> tier</strong> (Claude&#39;s discretion, per follow-up): we cannot distinguish close vs. ordinary career contacts automatically, and the conservative choice is not to overstate closeness. Re-promoting specific people to <code>close_career</code> is a deliberate triage action the user takes afterward.</li>
+<li>Column default stays <code>acquaintance</code> (unchanged).</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li>Exact triage keyboard-shortcut ordering (positional 1–N): the bar grows from 8 to 9 buttons; keep them in the high→low closeness order above.</li>
+<li>Color choices for the two new badges in <code>closeness-colors.ts</code> — pick two visually distinct, on-theme colors (the old <code>career_contact</code> indigo can be reused for one of them).</li>
+<li>Whether to author the enum-swap migration as raw SQL in a Drizzle migration file vs. <code>db:generate</code> output — use whichever produces a correct, reviewable enum value removal (raw SQL is expected here since drizzle-kit does not cleanly remove enum values).</decisions></li>
+</ul>
+<specifics>
+## Specific Ideas<p>Key files identified during discussion (must all be updated for consistency):</p>
+<ul>
+<li><code>drizzle/schema/enums.ts</code> — <code>contactClosenessEnum</code> value list</li>
+<li><code>drizzle/schema/contacts.ts:30</code> — <code>closeness</code> column (default <code>acquaintance</code> unchanged)</li>
+<li><code>src/lib/domain/types.ts</code> — <code>contactClosenessValues</code> array</li>
+<li><code>src/features/job-leads/lib/prioritization.ts:4-13</code> — <code>closenessWeights</code> table (replace <code>career_contact: 45</code> with <code>close_career: 50</code>, <code>career: 40</code>)</li>
+<li><code>src/features/contacts/lib/closeness-colors.ts</code> — badge color map</li>
+<li><code>src/features/contacts/components/contact-table/options.tsx</code> — <code>CLOSENESS_OPTIONS</code> filter labels</li>
+<li><code>src/features/contacts/components/triage/closeness-button-bar.tsx</code> — <code>shortLabels</code> + positional shortcuts</li>
+<li>New Drizzle migration in <code>drizzle/migrations/</code> — enum swap + row remap (<code>career_contact</code> → <code>career</code>)</li>
+<li>Tests referencing <code>career_contact</code>: <code>src/app/api/contacts/import/categorize/route.test.ts</code>, <code>src/features/job-leads/lib/prioritization.test.ts</code> (verify/update)</specifics></li>
+</ul>
+<canonical_refs>
+## Canonical References<p>No external specs — requirements fully captured in decisions above. Project conventions in <code>CLAUDE.md</code> apply (Drizzle query builder, Zod <code>z.enum(contactClosenessValues)</code> auto-derives, soft deletes, no raw SQL except where unavoidable — the enum migration is the sanctioned exception).
+</canonical_refs></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260521-bhf-split-career-closeness-into-close-career/260521-bhf-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
