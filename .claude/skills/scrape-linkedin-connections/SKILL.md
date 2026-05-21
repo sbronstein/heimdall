@@ -153,8 +153,8 @@ For the Company-URL and Bare-name flow navigation details, see `references/linke
 ## Profile-enrichment mode (single connection)
 
 Scrapes a single connection's LinkedIn profile page to extract the company and role
-they held at (or most recently before) the time of connection, then writes both fields
-back to the Heimdall contact record via REST.
+they held at the time of connection, then writes both fields back to the Heimdall
+contact record via REST.
 
 **Setup prerequisites:** same as above — `~/.heimdall/api-token`, `.env.local`, dev
 server on port 4000, agent-browser runnable, LinkedIn signed in at
@@ -181,34 +181,75 @@ If it is null, surface `"Contact $CONTACT_ID has no LinkedIn URL — cannot scra
 Launch `vercel-labs/agent-browser` against `~/.heimdall/linkedin-profile/`. If attach
 fails, instruct the user to confirm LinkedIn is signed in in the visible Chrome window.
 
-### Step 3: Navigate to the profile page
+### Step 3: Navigate to the full experience history page
 
 Follow `references/linkedin-navigation.md` § Profile-page path:
 
-Navigate to `https://www.linkedin.com/in/<slug>/` (derive `<slug>` from the contact's
-`linkedinUrl`). Wait for the page to settle (snapshot).
+Navigate to `https://www.linkedin.com/in/<slug>/details/experience/` (derive `<slug>`
+from the contact's `linkedinUrl`). This is the full experience history page — not just
+the top experience card — because date-matching requires the complete list of roles.
+Wait for the page to settle (snapshot).
 
 **Failure modes:**
 - Sign-in redirect → `LinkedIn navigation failed`.
 - Captcha challenge → `LinkedIn navigation failed`.
 - Page takes > 30s → `Timeout`.
 
-### Step 4: Extract company and role
+### Step 3b: Read the contact's connection date
 
-From the profile's experience section, extract **two fields** (best-effort current/most-recent
-— NOT historical as-of-date reconstruction; see CONTEXT.md §deferred):
+Fetch the contact record to obtain the target date for role matching:
 
-- `companyAtConnection` — the company name from the current or most-recent experience block.
-- `roleAtConnection` — the job title from the same block.
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:4000/api/contacts/$CONTACT_ID"
+```
+
+Read the `linkedinConnectionDate` field and hold it as `$CONNECTION_DATE` (ISO date
+string, e.g. `"2022-03-15"`). If `linkedinConnectionDate` is null, fall back to the
+most-recent role and note the limitation in the narration.
+
+### Step 4: Extract company and role as of the connection date
+
+From the full experience history page, reconstruct the company and role the person
+held on `$CONNECTION_DATE`. This is **as-of-connection-date reconstruction** — select
+the role whose date span CONTAINS the connection date, not the most-recent role.
+
+**Date-matching algorithm:**
+
+1. Parse every experience entry's date range (start–end; treat "Present" as ongoing /
+   today). LinkedIn groups multiple roles under one company header — handle grouped
+   sub-roles: each sub-role has its own title and date range nested under the parent
+   company name.
+2. Find the entry whose span CONTAINS `$CONNECTION_DATE` (i.e., start ≤ connection date ≤ end).
+3. For a grouped company entry, use the matching sub-role's title + the parent company
+   name as the company identifier.
+4. Set `companyAtConnection` and `roleAtConnection` from the selected entry.
+
+**Fallbacks (apply in order if no direct span match):**
+
+- **Connection date predates earliest listed role:** Set both fields to `null` and log
+  `"Profile history starts <year>, predates connection date <date>"`.
+- **Connection date lands in an employment gap:** Use the closest prior role (the one
+  whose end date is nearest to and before the connection date) and flag it:
+  log `"Connection date <date> falls in employment gap; using closest prior role"`.
+- **Multiple overlapping roles (concurrent employment):** Pick the primary or full-time
+  role and note the concurrency: log `"Concurrent roles found; selected primary role"`.
 
 **Selector hints** (hints only — LinkedIn DOM shifts; use a11y-tree text/role matching first):
 
-- Experience section: look for a `<section>` element whose heading contains "Experience".
-- Company name: the bold or heading-level text in the first experience item.
-- Role/title: the subheading-level text beneath the company name.
+| Target | Hint |
+|--------|------|
+| Experience list | section or landmark whose heading contains "Experience" on the `/details/experience/` page |
+| Role entry | each `<li>` or group role element in the experience list |
+| Role title | heading-level element (h3 / bold) at the top of each entry |
+| Company name | secondary text element beneath the role title (or parent group heading for sub-roles) |
+| Date range | text containing month/year patterns (e.g., "Jan 2021 – Mar 2023") or "Present" |
 
 Accept `null` for either field if the experience section is absent or unreadable — write
 back what you have and log the limitation.
+
+Do NOT touch the DB directly — every write goes through REST (architectural invariant).
 
 ### Step 5: Write back via REST
 
@@ -270,7 +311,7 @@ Then ask the user:
 ### Step 3: Loop per-profile with pacing
 
 For each approved profile, run the full Profile-enrichment mode flow (Steps 2–6 above)
-for that contact:
+for that contact — each profile is reconstructed as of its own `linkedinConnectionDate`:
 
 ```text
 for contact in queue:
