@@ -81,12 +81,14 @@ export function RecommendationList({ jobLeadId }: RecommendationListProps) {
           currentCompany={rec.contact.currentCompany}
           companyAtConnection={rec.contact.companyAtConnection}
           roleAtConnection={rec.contact.roleAtConnection}
+          contactLinkedinUrl={rec.contact.linkedinUrl}
           score={rec.score}
           prospects={rec.prospects.map((p) => ({
             name: p.prospect.name,
             title: p.prospect.title,
             seniorityLevel: p.prospect.seniorityLevel,
-            bridgeScore: p.bridgeScore
+            bridgeScore: p.bridgeScore,
+            linkedinUrl: p.prospect.linkedinUrl
           }))}
           onRequestIntro={() => handleRequestIntro(rec.contact.id)}
         />
