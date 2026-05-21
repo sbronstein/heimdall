@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260521-b6x-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260521-b6x-enrich-as-of-connection-date/260521-b6x-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260521-b6x
+plan: 01
+subsystem: skill-docs
+tags: [skill, linkedin, enrichment, documentation]
+dependency_graph:
+  requires: []
+  provides: [scrape-linkedin-connections/SKILL.md, scrape-linkedin-connections/references/linkedin-navigation.md]
+  affects: [batch-sweep-mode, profile-enrichment-mode]
+tech_stack:
+  added: []
+  patterns: []
+key_files:
+  created: []
+  modified:
+    - .claude/skills/scrape-linkedin-connections/SKILL.md
+    - .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md
+decisions:</p>
+<ul>
+<li>&quot;Navigate to /details/experience/ (full history page) for date-matching instead of bare profile header&quot;</li>
+<li>&quot;Three fallbacks documented: predates earliest role → null; employment gap → closest prior + flag; concurrent → primary + note&quot;</li>
+<li>&quot;linkedinConnectionDate null → fall back to most-recent role and note limitation&quot;
+metrics:
+  duration: ~10 min
+  completed: 2026-05-21
+  tasks_completed: 2
+  files_modified: 2</li>
+</ul>
+<hr>
+<h1>Quick Task 260521-b6x: Enrich As-Of Connection Date — Summary</h1>
+<p><strong>One-liner:</strong> Updated skill docs so profile-enrichment reconstructs company/role AS OF <code>linkedinConnectionDate</code> via <code>/details/experience/</code>, with date-matching algorithm and three fallbacks.</p>
+<h2>What Was Done</h2>
+<p>The <code>scrape-linkedin-connections</code> skill contained a contradiction: its Overview and the product intent said &quot;the company and role they held at the time of connection,&quot; but the Step 4 implementation said &quot;best-effort current/most-recent — NOT historical as-of-date reconstruction; see CONTEXT.md §deferred.&quot; The owner has validated the as-of-date method in practice; this quick task corrects the documentation to match the real extraction semantics.</p>
+<h3>Task 1: SKILL.md Profile-enrichment Steps 3-4 (commit <code>907a60a</code>)</h3>
+<ul>
+<li>Removed the &quot;or most recently before&quot; hedge from the section intro.</li>
+<li>Updated Step 3 navigation target from <code>https://www.linkedin.com/in/&lt;slug&gt;/</code> to <code>https://www.linkedin.com/in/&lt;slug&gt;/details/experience/</code> (full experience history, not just the top card).</li>
+<li>Added Step 3b to fetch <code>linkedinConnectionDate</code> via <code>GET /api/contacts/$CONTACT_ID</code>.</li>
+<li>Rewrote Step 4 entirely with the date-matching algorithm: parse all entries, match span containing connection date, handle grouped sub-roles (sub-role title + parent company name).</li>
+<li>Documented three fallbacks: (a) predates earliest role → null both + log; (b) employment gap → closest prior role + flag; (c) concurrent overlap → primary/full-time + note.</li>
+<li>Updated selector hints table to point at the experience list and date-range text rather than the first experience item.</li>
+<li>Added one-line note in batch-sweep Step 3 that each profile uses its own <code>linkedinConnectionDate</code>.</li>
+</ul>
+<h3>Task 2: linkedin-navigation.md Profile-page path (commit <code>1b237c6</code>)</h3>
+<ul>
+<li>Updated Profile-page Step 1 to construct <code>/details/experience/</code> URL instead of bare <code>/in/&lt;slug&gt;/</code>.</li>
+<li>Rewrote Step 2 goal/outcome to reflect landing on the full experience-history list with per-role date ranges.</li>
+<li>Added Step 2b to read <code>linkedinConnectionDate</code> via <code>GET /api/contacts/&lt;id&gt;</code> (cross-references <code>heimdall-api.md</code>).</li>
+<li>Rewrote Step 3 with the same date-matching algorithm and all three fallbacks.</li>
+<li>Reframed selector hints table for experience list entries (role title, company name, date range).</li>
+<li>Removed all &quot;current/most-recent&quot;, &quot;CONTEXT.md §deferred&quot;, and &quot;out of scope&quot; framing.</li>
+<li>Preserved: Profile-page Step 4 write-back, 300-char max-length note, null-safe partial write behavior, &quot;Does NOT converge into Shared&quot; note.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Verification</h2>
+<p>Both automated verify commands printed <code>PASS</code>:</p>
+<pre><code># Task 1
+grep -ciE &quot;current/most-recent|CONTEXT\.md.{0,5}deferred|most recently before&quot; SKILL.md → 0
+grep -qi &quot;linkedinConnectionDate&quot; SKILL.md → found
+grep -qi &quot;details/experience&quot; SKILL.md → found
+
+# Task 2
+grep -ciE &quot;current/most-recent|CONTEXT\.md.{0,5}deferred&quot; linkedin-navigation.md → 0
+grep -qi &quot;details/experience&quot; linkedin-navigation.md → found
+grep -qi &quot;linkedinConnectionDate&quot; linkedin-navigation.md → found
+grep -qiE &quot;predates|employment gap|concurren&quot; linkedin-navigation.md → found
+</code></pre>
+<h2>Known Stubs</h2>
+<p>None — documentation only.</p>
+<h2>Threat Flags</h2>
+<p>None — no code or API changes.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — modified, committed at <code>907a60a</code></li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> — modified, committed at <code>1b237c6</code></li>
+<li>Both commits exist on branch <code>worktree-agent-aa60a2251e1414168</code></li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260521-b6x-enrich-as-of-connection-date/260521-b6x-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
