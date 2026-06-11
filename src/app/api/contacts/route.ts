@@ -35,7 +35,8 @@ const createContactSchema = z.object({
   howMet: z.string().optional().nullable(),
   metDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   nextFollowUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
-  followUpNotes: z.string().optional().nullable()
+  followUpNotes: z.string().optional().nullable(),
+  doNotUseForIntros: z.boolean().optional()
 });
 
 export async function GET(request: Request) {

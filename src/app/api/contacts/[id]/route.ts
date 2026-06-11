@@ -36,7 +36,8 @@ const updateContactSchema = z.object({
   lastContactDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   nextFollowUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
   followUpNotes: z.string().optional().nullable(),
-  triagedAt: z.union([z.string().date(), z.string().datetime()]).optional().nullable()
+  triagedAt: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
+  doNotUseForIntros: z.boolean().optional()
 });
 
 export async function GET(
