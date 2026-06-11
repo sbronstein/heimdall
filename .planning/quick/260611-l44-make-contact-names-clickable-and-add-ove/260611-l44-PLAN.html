@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260611-l44-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260611-l44-make-contact-names-clickable-and-add-ove/260611-l44-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260611-l44
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/features/job-leads/components/recommendation-card.tsx</li>
+<li>src/features/job-leads/components/recommendation-list.tsx
+autonomous: true
+requirements: [quick-260611-l44]
+must_haves:
+  truths:<ul>
+<li>&quot;On the job lead drilldown, each contact name in a recommendation card is a clickable link to that contact&#39;s record page&quot;</li>
+<li>&quot;Each recommendation card shows an &#39;Override&#39; button to the right of the LinkedIn badge&quot;</li>
+<li>&quot;Clicking Override sets doNotUseForIntros=true on that contact via PUT /api/contacts/[id]&quot;</li>
+<li>&quot;After a successful override the contact&#39;s recommendation is removed from the list&quot;</li>
+<li>&quot;Override failure surfaces a toast and the card stays in place&quot;
+artifacts:</li>
+<li>path: &quot;src/features/job-leads/components/recommendation-card.tsx&quot;
+provides: &quot;contact name link + Override button&quot;
+contains: &quot;Override&quot;</li>
+<li>path: &quot;src/features/job-leads/components/recommendation-list.tsx&quot;
+provides: &quot;contactId threading + override handler with optimistic removal&quot;
+contains: &quot;doNotUseForIntros&quot;
+key_links:</li>
+<li>from: &quot;src/features/job-leads/components/recommendation-list.tsx&quot;
+to: &quot;/api/contacts/[id]&quot;
+via: &quot;PUT with doNotUseForIntros:true&quot;
+pattern: &quot;doNotUseForIntros&quot;</li>
+<li>from: &quot;src/features/job-leads/components/recommendation-card.tsx&quot;
+to: &quot;/dashboard/contacts/[contactId]&quot;
+via: &quot;next/link Link on contact name&quot;
+pattern: &quot;dashboard/contacts&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+In the job-leads intro-matches UI (RecommendationCard on the job lead drilldown page), make each contact name a clickable link to that contact's record page, and add an "Override" button next to the LinkedIn badge that excludes the contact from future intro recommendations by setting `doNotUseForIntros=true`.<p>Purpose: Lets the owner jump from a recommendation straight to the contact record, and prune contacts they don&#39;t want surfaced as intro paths — <code>buildRecommendations</code> already hard-excludes flagged contacts, so the override takes effect on the next load and is reflected immediately via optimistic removal.</p>
+<p>Output: Updated RecommendationCard (name link + Override button) and RecommendationList (contactId threading + override handler).
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/STATE.md
+@./CLAUDE.md<interfaces>
+<!-- Verified from codebase — use directly, no exploration needed. --><p>The contact record route exists at: src/app/dashboard/contacts/[contactId]/page.tsx
+  → link target is <code>/dashboard/contacts/${contactId}</code></p>
+<p>PUT /api/contacts/[id] accepts (src/app/api/contacts/[id]/route.ts):
+  updateContactSchema includes <code>doNotUseForIntros: z.boolean().optional()</code>
+  → PUT body <code>{ doNotUseForIntros: true }</code> flags a contact</p>
+<p>PrioritizedRecommendation (src/features/job-leads/lib/prioritization.ts):
+  { contact: Contact; prospects: [...]; score: number }
+  buildRecommendations() already does <code>if (contact.doNotUseForIntros) continue;</code>
+  → flagged contacts are excluded on next recommendations fetch</p>
+<p>RecommendationList already has <code>rec.contact.id</code> available when mapping cards.
+sonner toast pattern (used across features): <code>import { toast } from &#39;sonner&#39;</code> then <code>toast.success(...)</code> / <code>toast.error(...)</code>
+Button primitive: src/components/ui/button.tsx
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Add contact name link and Override button to RecommendationCard</name>
+  <files>src/features/job-leads/components/recommendation-card.tsx</files>
+  <action>
+Add two props to RecommendationCardProps: `contactId: string` and `onOverride?: () => void` (plus an optional `overriding?: boolean` to disable the button while the request is in flight).<p>Replace the plain <code>&lt;span className=&#39;font-medium&#39;&gt;{contactName}&lt;/span&gt;</code> (currently line ~62) with a <code>next/link</code> <code>Link</code> to <code>/dashboard/contacts/${contactId}</code> that renders the name. Keep the <code>font-medium</code> styling and add <code>hover:underline</code> so it reads as a link. Import <code>Link from &#39;next/link&#39;</code>.</p>
+<p>To the right of the existing LinkedIn <code>&lt;a&gt;</code> badge (inside the same <code>flex items-center gap-2</code> row, ~line 71-82), add an &quot;Override&quot; button. Render it only when <code>onOverride</code> is provided. Use the existing <code>Button</code> primitive from &#39;@/components/ui/button&#39; with <code>variant=&#39;outline&#39;</code> and <code>size=&#39;sm&#39;</code> (or match the LinkedIn badge&#39;s compact styling: <code>text-xs px-2 py-1</code>). Wire <code>onClick={onOverride}</code>, <code>disabled={overriding}</code>, and <code>tabIndex={-1}</code> to match the LinkedIn badge. Label it &quot;Override&quot;.</p>
+<p>Do NOT change the prospects rows — prospects have no contact record, so name links and Override apply only to the top-level contact.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2&gt;&amp;1 | grep -i recommendation-card || echo &quot;no type errors in recommendation-card&quot;</automated>
+  </verify>
+  <done>RecommendationCard renders the contact name as a Link to <code>/dashboard/contacts/${contactId}</code> and shows an Override button next to the LinkedIn badge when <code>onOverride</code> is passed. Type-checks clean.</done>
+</task></p>
+<task type="auto">
+  <name>Task 2: Thread contactId and wire override handler in RecommendationList</name>
+  <files>src/features/job-leads/components/recommendation-list.tsx</files>
+  <action>
+Import `{ toast } from 'sonner'`.<p>Add <code>contactId={rec.contact.id}</code> to the RecommendationCard props in the map.</p>
+<p>Add a <code>handleOverride</code> callback (useCallback) that takes <code>contactId: string</code> and:</p>
+<ol>
+<li>Tracks an in-flight set of contact ids in state (e.g. <code>overridingIds</code>) so the card&#39;s Override button can be disabled; pass <code>overriding={overridingIds.has(rec.contact.id)}</code> to the card.</li>
+<li>Calls <code>await fetch(&#39;/api/contacts/${contactId}&#39;, { method: &#39;PUT&#39;, headers: { &#39;Content-Type&#39;: &#39;application/json&#39; }, body: JSON.stringify({ doNotUseForIntros: true }) })</code>.</li>
+<li>On success (res.ok and json.success): optimistically remove the contact from local state with <code>setRecommendations((prev) =&gt; prev?.filter((r) =&gt; r.contact.id !== contactId) ?? null)</code> and <code>toast.success(&#39;Contact excluded from intro recommendations&#39;)</code>.</li>
+<li>On failure: <code>toast.error(json.error || &#39;Failed to override contact&#39;)</code> and leave the card in place; clear the in-flight id in a finally block.</li>
+</ol>
+<p>Pass <code>onOverride={() =&gt; handleOverride(rec.contact.id)}</code> to each RecommendationCard.</p>
+<p>Follow existing conventions: REST-only mutation (no server action), single quotes, 2-space indent, named export preserved.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2&gt;&amp;1 | grep -i recommendation-list || echo &quot;no type errors in recommendation-list&quot;</automated>
+  </verify>
+  <done>RecommendationList passes contactId to each card, and Override triggers PUT /api/contacts/[id] with <code>{ doNotUseForIntros: true }</code>; on success the card is removed from the list with a success toast, on failure a toast is shown and the card stays. Type-checks clean.</done>
+</task></p>
+</tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>client→API (PUT /api/contacts/[id])</td>
+<td>Override button sends a contactId + flag from the browser</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-l44-01</td>
+<td>Tampering</td>
+<td>PUT /api/contacts/[id] body</td>
+<td>mitigate</td>
+<td>Route already validates with <code>updateContactSchema</code> (zod) and only accepts <code>doNotUseForIntros: boolean</code>; no new input surface added</td>
+</tr>
+<tr>
+<td>T-l44-02</td>
+<td>Elevation of Privilege</td>
+<td>/api/contacts/[id]</td>
+<td>accept</td>
+<td>Clerk middleware single-user lock (<a href="mailto:steve@bronstein.org">steve@bronstein.org</a>) already gates all /dashboard and API access; no new auth surface</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` passes (no new type errors).
+- `npm run lint` reports no new errors in the two modified files.
+- Manual smoke: load a job lead drilldown with recommendations — contact names link to `/dashboard/contacts/<id>`, Override button appears next to the LinkedIn badge, clicking it removes the card and shows a success toast.
+</verification><success_criteria>
+- Contact names in recommendation cards are clickable links to the contact record page.
+- An Override button sits to the right of the LinkedIn badge for each contact.
+- Override sets `doNotUseForIntros=true` via PUT /api/contacts/[id] and removes the card from the list on success.
+- Failures surface a toast and keep the card in place.
+</success_criteria><output>
+Create `.planning/quick/260611-l44-make-contact-names-clickable-and-add-ove/260611-l44-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260611-l44-make-contact-names-clickable-and-add-ove/260611-l44-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
