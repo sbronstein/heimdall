@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260611-kqi-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260611-kqi-add-do-not-use-for-intros-override-flag-/260611-kqi-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260611-kqi
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>drizzle/schema/contacts.ts</li>
+<li>drizzle/migrations/</li>
+<li>src/app/api/contacts/route.ts</li>
+<li>src/app/api/contacts/[id]/route.ts</li>
+<li>src/features/contacts/components/contact-form.tsx</li>
+<li>src/features/job-leads/lib/prioritization.ts</li>
+<li>src/features/job-leads/lib/prioritization.test.ts
+autonomous: true
+requirements: [QUICK-260611-kqi]
+must_haves:
+  truths:<ul>
+<li>&quot;A contact can be flagged &#39;do not use for intros&#39; and the flag persists in the database&quot;</li>
+<li>&quot;The flag is set/cleared through the contacts REST API (POST create + PUT update) with Zod validation&quot;</li>
+<li>&quot;The flag is editable in the contact form UI as a toggle&quot;</li>
+<li>&quot;A flagged contact never appears in job-leads intro recommendations, regardless of seniority/closeness/recency&quot;
+artifacts:</li>
+<li>path: &quot;drizzle/schema/contacts.ts&quot;
+provides: &quot;do_not_use_for_intros boolean column, default false, NOT NULL&quot;
+contains: &quot;doNotUseForIntros&quot;</li>
+<li>path: &quot;src/features/job-leads/lib/prioritization.ts&quot;
+provides: &quot;hard exclusion of flagged contacts in buildRecommendations&quot;
+contains: &quot;doNotUseForIntros&quot;</li>
+<li>path: &quot;src/features/job-leads/lib/prioritization.test.ts&quot;
+provides: &quot;regression test proving flagged contacts are excluded&quot;
+contains: &quot;doNotUseForIntros&quot;
+key_links:</li>
+<li>from: &quot;src/features/contacts/components/contact-form.tsx&quot;
+to: &quot;/api/contacts/[id]&quot;
+via: &quot;PUT payload field doNotUseForIntros&quot;
+pattern: &quot;doNotUseForIntros&quot;</li>
+<li>from: &quot;src/app/api/contacts/[id]/route.ts&quot;
+to: &quot;contacts.doNotUseForIntros&quot;
+via: &quot;Zod-validated update value&quot;
+pattern: &quot;doNotUseForIntros&quot;</li>
+<li>from: &quot;src/features/job-leads/lib/prioritization.ts&quot;
+to: &quot;buildRecommendations exclusion&quot;
+via: &quot;skip contacts where doNotUseForIntros is true&quot;
+pattern: &quot;doNotUseForIntros&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Add a "do not use for intros" override flag to contacts. This is a hard, owner-controlled exclusion: a flagged contact is never recommended as an introduction path even if their bridge score is high.<p>Purpose: The owner sometimes knows a contact should not be approached for intros (sensitive relationship, already over-asked, etc.). Scores cannot capture this — it needs an explicit manual override that the recommendation engine respects absolutely.</p>
+<p>Output: New <code>do_not_use_for_intros</code> boolean column on contacts, exposed through the contacts REST API and contact form UI, and enforced as a hard exclusion in <code>buildRecommendations</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/STATE.md
+@CLAUDE.md<interfaces>
+<!-- Contacts schema (drizzle/schema/contacts.ts) uses pgTable with kebab DB column names.
+     Existing imports: pgTable, uuid, text, timestamp, index, uniqueIndex from 'drizzle-orm/pg-core'.
+     `boolean` is NOT yet imported — add it. --><!-- Domain type (src/lib/domain/types.ts) is inferred:
+     export type Contact = typeof contacts.$inferSelect;
+     Adding the column automatically extends Contact / NewContact — no manual type edit needed. --><!-- Contacts API update schema (src/app/api/contacts/[id]/route.ts):
+     const updateContactSchema = z.object({ firstName: ..., ... triagedAt: ... });
+     PUT spreads validated into `values` then sets updatedAt + date coercions, then db.update().
+     Create schema lives in src/app/api/contacts/route.ts as createContactSchema (same shape, fewer optionals). --><!-- prioritization.ts — buildRecommendations(bridges) loops over {bridge, prospect, contact},
+     builds a Map keyed by contact.id, then computes rec.score = max of bridgeScores.
+     Hard exclusion = skip the contact entirely before it ever enters the Map. --><!-- contact-form.tsx — react-hook-form + zodResolver. formSchema (local z.object), defaultValues,
+     and an onSubmit payload object. FormSwitch is available at '@/components/forms/form-switch'
+     (props: control, name, label, description?). Boolean field, no string coercion needed. -->
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Add do_not_use_for_intros column + migration</name>
+  <files>drizzle/schema/contacts.ts, drizzle/migrations/</files>
+  <action>
+    Add `boolean` to the import from 'drizzle-orm/pg-core' in drizzle/schema/contacts.ts. Add a new column in the "Triage" section (near triagedAt): `doNotUseForIntros: boolean('do_not_use_for_intros').notNull().default(false)`. The Drizzle-inferred Contact / NewContact types in src/lib/domain/types.ts update automatically — do NOT hand-edit types.<pre><code>Generate and apply the migration: run `npm run db:generate` to produce a migration file under drizzle/migrations/, then `npm run db:migrate` to apply it. If db:migrate fails due to local DB connectivity, fall back to `npm run db:push` (dev-only) and note it in the summary.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run db:generate &amp;&amp; grep -rl "do_not_use_for_intros" drizzle/migrations/ | head -1</automated>
+  </verify>
+  <done>contacts schema has doNotUseForIntros (NOT NULL, default false); a migration file containing "do_not_use_for_intros" exists in drizzle/migrations/ and has been applied (or pushed in dev).</done>
+</task><task type="auto">
+  <name>Task 2: Expose flag through REST API and contact form UI</name>
+  <files>src/app/api/contacts/route.ts, src/app/api/contacts/[id]/route.ts, src/features/contacts/components/contact-form.tsx</files>
+  <action>
+    API (both routes): add `doNotUseForIntros: z.boolean().optional()` to createContactSchema in src/app/api/contacts/route.ts and to updateContactSchema in src/app/api/contacts/[id]/route.ts. No date coercion needed — the boolean flows through the existing `...validated` spread into the insert/update values, so no further handler changes are required. The existing logTimeline call already fires on update; leave it as-is.<pre><code>UI (contact-form.tsx): import FormSwitch from &#39;@/components/forms/form-switch&#39;. Add `doNotUseForIntros: z.boolean().optional()` to the local formSchema. Add `doNotUseForIntros: initialData?.doNotUseForIntros ?? false` to defaultValues. Add the field to the onSubmit payload object (`doNotUseForIntros: values.doNotUseForIntros ?? false`). Render a `&lt;FormSwitch control={form.control} name=&#39;doNotUseForIntros&#39; label=&#39;Do not use for intros&#39; description=&#39;Exclude this contact from all job-lead intro recommendations.&#39; /&gt;` below the grid (full width, near the notes/follow-up section).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit -p tsconfig.json 2>&amp;1 | grep -i "contact" | head -5; echo "tsc-done"</automated>
+  </verify>
+  <done>POST and PUT contacts schemas accept doNotUseForIntros (boolean); the value persists via the existing spread; contact form renders a toggle bound to the field and sends it in the PUT/POST payload; project type-checks.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 3: Hard-exclude flagged contacts in buildRecommendations</name>
+  <files>src/features/job-leads/lib/prioritization.ts, src/features/job-leads/lib/prioritization.test.ts</files>
+  <behavior>
+    - A contact with doNotUseForIntros=true is absent from buildRecommendations output even when its bridge score is the highest in the set.
+    - A contact with doNotUseForIntros=false (or absent/false default) is included as before — existing tests still pass.
+    - Exclusion happens before the contact enters the recommendations Map, so it never appears in results, not merely scored to zero.
+  </behavior>
+  <action>
+    In buildRecommendations (src/features/job-leads/lib/prioritization.ts), inside the `for (const { bridge, prospect, contact } of bridges)` loop, add a guard at the top: if `contact.doNotUseForIntros` is true, `continue` (skip entirely so no Map entry is created). Do NOT touch computeBridgeScore — it stays a pure scoring function; the exclusion is a recommendation-builder concern.<pre><code>Add a test case to prioritization.test.ts in the existing `describe(&#39;buildRecommendations&#39;, ...)` block: build two bridges, one whose contact is flagged with the higher raw score and one unflagged, assert the flagged contact id does not appear in the returned recommendations and the unflagged one does.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/features/job-leads/lib/prioritization.test.ts</automated>
+  </verify>
+  <done>buildRecommendations skips flagged contacts entirely; new test proves a high-scoring flagged contact is excluded; all existing prioritization tests still pass.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>client/CLI → contacts API</td>
+<td>Untrusted JSON body crosses into the PUT/POST handlers</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-kqi-01</td>
+<td>Tampering</td>
+<td>doNotUseForIntros field in contacts API</td>
+<td>mitigate</td>
+<td><code>z.boolean().optional()</code> rejects non-boolean values at route entry; column is NOT NULL default false so a missing/invalid value never produces null state</td>
+</tr>
+<tr>
+<td>T-kqi-02</td>
+<td>Elevation of Privilege</td>
+<td>recommendation bypass</td>
+<td>accept</td>
+<td>Single-user app (Clerk lock on <a href="mailto:steve@bronstein.org">steve@bronstein.org</a>); only the owner can set or read the flag — no cross-tenant exposure</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- Migration containing `do_not_use_for_intros` exists and is applied.
+- `npx tsc --noEmit` passes (no new type errors).
+- `npm run test:run -- src/features/job-leads/lib/prioritization.test.ts` passes including the new exclusion test.
+- Manual smoke (optional): toggle the switch on a contact in the UI, save, confirm the contact disappears from a job lead's recommendations that previously listed them.
+</verification><success_criteria>
+- contacts table has a `do_not_use_for_intros` boolean column (NOT NULL, default false).
+- The flag round-trips through POST and PUT contacts API routes with Zod validation.
+- The contact form exposes the flag as a toggle and persists it.
+- `buildRecommendations` never returns a flagged contact, regardless of score, proven by an automated test.
+</success_criteria><output>
+Create `.planning/quick/260611-kqi-add-do-not-use-for-intros-override-flag-/260611-kqi-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260611-kqi-add-do-not-use-for-intros-override-flag-/260611-kqi-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
