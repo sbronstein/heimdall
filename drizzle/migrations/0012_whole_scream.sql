@@ -1,0 +1,1 @@
+ALTER TABLE "contacts" ADD COLUMN "do_not_use_for_intros" boolean DEFAULT false NOT NULL;

@@ -2,6 +2,7 @@
 
 import { FormInput } from '@/components/forms/form-input';
 import { FormSelect } from '@/components/forms/form-select';
+import { FormSwitch } from '@/components/forms/form-switch';
 import { FormTextarea } from '@/components/forms/form-textarea';
 import { FormDatePicker } from '@/components/forms/form-date-picker';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,8 @@ const formSchema = z.object({
   notes: z.string().optional().or(z.literal('')),
   tags: z.string().optional().or(z.literal('')),
   followUpNotes: z.string().optional().or(z.literal('')),
-  nextFollowUpDate: z.date().optional().nullable()
+  nextFollowUpDate: z.date().optional().nullable(),
+  doNotUseForIntros: z.boolean().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -76,7 +78,8 @@ export default function ContactForm({
       notes: initialData?.notes || '',
       tags: initialData?.tags?.join(', ') || '',
       followUpNotes: initialData?.followUpNotes || '',
-      nextFollowUpDate: initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate) : undefined
+      nextFollowUpDate: initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate) : undefined,
+      doNotUseForIntros: initialData?.doNotUseForIntros ?? false
     }
   });
 
@@ -98,7 +101,8 @@ export default function ContactForm({
         : null,
       linkedinConnectionDate: values.linkedinConnectionDate
         ? values.linkedinConnectionDate.toISOString()
-        : null
+        : null,
+      doNotUseForIntros: values.doNotUseForIntros ?? false
     };
 
     const url = initialData ? `/api/contacts/${initialData.id}` : '/api/contacts';
@@ -177,6 +181,12 @@ export default function ContactForm({
           </div>
           <FormTextarea control={form.control} name='notes' label='Notes' placeholder='Notes about this contact...' config={{ rows: 4 }} />
           <FormTextarea control={form.control} name='followUpNotes' label='Follow-up Notes' placeholder='What to follow up on...' config={{ rows: 2 }} />
+          <FormSwitch
+            control={form.control}
+            name='doNotUseForIntros'
+            label='Do not use for intros'
+            description='Exclude this contact from all job-lead intro recommendations.'
+          />
           <Button type='submit'>{initialData ? 'Update Contact' : 'Add Contact'}</Button>
         </Form>
       </CardContent>
