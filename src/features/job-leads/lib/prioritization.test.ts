@@ -39,6 +39,7 @@ function makeContact(overrides: Partial<Contact> = {}): Contact {
     followUpNotes: null,
     triagedAt: null,
     archivedAt: null,
+    doNotUseForIntros: false,
     ...overrides
   };
 }
@@ -173,5 +174,35 @@ describe('buildRecommendations', () => {
     // contact1's prospects are sorted desc by bridgeScore
     expect(result[1].prospects[0].bridgeScore).toBe(70);
     expect(result[1].prospects[1].bridgeScore).toBe(40);
+  });
+
+  it('excludes contacts flagged with doNotUseForIntros even when they have the highest score', () => {
+    const flaggedContact = makeContact({ doNotUseForIntros: true });
+    const normalContact = makeContact({ doNotUseForIntros: false });
+    const prospect1 = makeProspect();
+    const prospect2 = makeProspect();
+
+    const bridges = [
+      {
+        bridge: makeProspectBridge({ prospectId: prospect1.id, contactId: flaggedContact.id, score: 95 }),
+        prospect: prospect1,
+        contact: flaggedContact
+      },
+      {
+        bridge: makeProspectBridge({ prospectId: prospect2.id, contactId: normalContact.id, score: 40 }),
+        prospect: prospect2,
+        contact: normalContact
+      }
+    ];
+
+    const result = buildRecommendations(bridges);
+
+    // Flagged contact must not appear in results despite having the highest score
+    const ids = result.map((r) => r.contact.id);
+    expect(ids).not.toContain(flaggedContact.id);
+
+    // Normal contact with lower score should still appear
+    expect(ids).toContain(normalContact.id);
+    expect(result).toHaveLength(1);
   });
 });
