@@ -1,8 +1,10 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { closenessColors } from '@/features/contacts/lib/closeness-colors';
 import { IconBrandLinkedin } from '@tabler/icons-react';
+import Link from 'next/link';
 import type { SeniorityLevel } from '@/lib/domain/types';
 
 const seniorityColors: Record<SeniorityLevel, string> = {
@@ -22,6 +24,7 @@ function formatSeniority(level: string): string {
 }
 
 interface RecommendationCardProps {
+  contactId: string;
   contactName: string;
   contactLinkedinUrl?: string | null;
   closeness: string | null;
@@ -39,9 +42,12 @@ interface RecommendationCardProps {
     linkedinUrl?: string | null;
   }>;
   onRequestIntro?: () => void;
+  onOverride?: () => void;
+  overriding?: boolean;
 }
 
 export function RecommendationCard({
+  contactId,
   contactName,
   contactLinkedinUrl,
   closeness,
@@ -52,14 +58,21 @@ export function RecommendationCard({
   roleAtConnection,
   score,
   prospects,
-  onRequestIntro
+  onRequestIntro,
+  onOverride,
+  overriding
 }: RecommendationCardProps) {
   return (
     <div className='border-border rounded-lg border p-4'>
       <div className='flex items-start justify-between'>
         <div>
           <div className='flex items-center gap-2'>
-            <span className='font-medium'>{contactName}</span>
+            <Link
+              href={`/dashboard/contacts/${contactId}`}
+              className='font-medium hover:underline'
+            >
+              {contactName}
+            </Link>
             {closeness && (
               <Badge
                 variant='outline'
@@ -79,6 +92,17 @@ export function RecommendationCard({
                 <IconBrandLinkedin className='h-4 w-4' />
                 <span>LinkedIn</span>
               </a>
+            )}
+            {onOverride && (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={onOverride}
+                disabled={overriding}
+                tabIndex={-1}
+              >
+                Override
+              </Button>
             )}
           </div>
           {lastContactDate && (
