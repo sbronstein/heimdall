@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import {
   contactRelationshipEnum,
@@ -56,6 +56,7 @@ export const contacts = pgTable(
 
     // Triage
     triagedAt: timestamp('triaged_at'),
+    doNotUseForIntros: boolean('do_not_use_for_intros').notNull().default(false),
 
     // Metadata
     createdAt: timestamp('created_at').defaultNow().notNull(),
