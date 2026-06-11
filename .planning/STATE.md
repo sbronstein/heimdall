@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 Phase: 10 — COMPLETE
 Plan: 1 of 4
 Status: Phase 10 complete
-Last activity: 2026-05-21 -- Completed quick task 260521-dwi: Add LinkedIn link rectangle next to names and titles on job lead drilldown page
+Last activity: 2026-06-11 -- Completed quick task 260611-kqi: Add do-not-use-for-intros override flag to contacts with hard exclusion in intro prioritization
 
 **v1.1 Progress Rail:** Phase 7 · Phase 8 · Phase 9
 
@@ -88,6 +88,7 @@ None yet.
 | 260521-b6x | Fix scrape-linkedin-connections skill: enrichment reconstructs company/role AS OF connection date (not current/most-recent), with date-matching + 3 fallbacks | 2026-05-21 | 1b237c6 | [260521-b6x-enrich-as-of-connection-date](./quick/260521-b6x-enrich-as-of-connection-date/) |
 | 260521-bhf | Split career_contact closeness into close_career (bridge weight 50) + career (40) across enum, types, weights, color map, triage bar, networking selects; raw-SQL enum-swap migration remaps existing rows to career | 2026-05-21 | 10d430f | [260521-bhf-split-career-closeness-into-close-career](./quick/260521-bhf-split-career-closeness-into-close-career/) |
 | 260521-dwi | Add LinkedIn link rectangle next to names and titles on job lead drilldown page | 2026-05-21 | 48acb3d | [260521-dwi-add-linkedin-link-rectangle-next-to-name](./quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/) |
+| 260611-kqi | Add do-not-use-for-intros override flag to contacts (schema + REST + form toggle) with hard exclusion in buildRecommendations | 2026-06-11 | 9766e5b | [260611-kqi-add-do-not-use-for-intros-override-flag-](./quick/260611-kqi-add-do-not-use-for-intros-override-flag-/) |
 
 ### Roadmap Evolution
 
