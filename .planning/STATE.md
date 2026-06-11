@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 Phase: 10 — COMPLETE
 Plan: 1 of 4
 Status: Phase 10 complete
-Last activity: 2026-06-11 -- Completed quick task 260611-kqi: Add do-not-use-for-intros override flag to contacts with hard exclusion in intro prioritization
+Last activity: 2026-06-11 -- Completed quick task 260611-l44: Clickable contact names + Override button in job-lead intro recommendations
 
 **v1.1 Progress Rail:** Phase 7 · Phase 8 · Phase 9
 
@@ -89,6 +89,7 @@ None yet.
 | 260521-bhf | Split career_contact closeness into close_career (bridge weight 50) + career (40) across enum, types, weights, color map, triage bar, networking selects; raw-SQL enum-swap migration remaps existing rows to career | 2026-05-21 | 10d430f | [260521-bhf-split-career-closeness-into-close-career](./quick/260521-bhf-split-career-closeness-into-close-career/) |
 | 260521-dwi | Add LinkedIn link rectangle next to names and titles on job lead drilldown page | 2026-05-21 | 48acb3d | [260521-dwi-add-linkedin-link-rectangle-next-to-name](./quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/) |
 | 260611-kqi | Add do-not-use-for-intros override flag to contacts (schema + REST + form toggle) with hard exclusion in buildRecommendations | 2026-06-11 | 9766e5b | [260611-kqi-add-do-not-use-for-intros-override-flag-](./quick/260611-kqi-add-do-not-use-for-intros-override-flag-/) |
+| 260611-l44 | Clickable contact names (link to contact record) + Override button next to LinkedIn badge in RecommendationCard, optimistic removal on override | 2026-06-11 | b1a20b3 | [260611-l44-make-contact-names-clickable-and-add-ove](./quick/260611-l44-make-contact-names-clickable-and-add-ove/) |
 
 ### Roadmap Evolution
 

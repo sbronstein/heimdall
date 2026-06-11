@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260611-l44-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aef281282820b93b0/.planning/quick/260611-l44-make-contact-names-clickable-and-add-ove/260611-l44-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: quick-260611-l44
+plan: 01
+subsystem: job-leads/recommendations
+tags: [ui, contacts, job-leads, recommendations, override]
+dependency_graph:
+  requires: [260611-kqi-do-not-use-for-intros-flag]
+  provides: [clickable-contact-names, override-button-in-recommendations]
+  affects: [recommendation-card, recommendation-list]
+tech_stack:
+  added: []
+  patterns: [optimistic-removal, in-flight-set, toast-feedback]
+key_files:
+  modified:
+    - src/features/job-leads/components/recommendation-card.tsx
+    - src/features/job-leads/components/recommendation-list.tsx
+decisions:</p>
+<ul>
+<li>Override button placed inline with contact name row (same flex row as LinkedIn badge) for spatial proximity</li>
+<li>In-flight tracking uses Set<string> state to disable per-card button independently</li>
+<li>On failure the in-flight id is cleared in finally to re-enable the button; card stays in place
+metrics:
+  duration: ~3 min
+  completed_date: &quot;2026-06-11&quot;
+  tasks: 2
+  files_changed: 2</li>
+</ul>
+<hr>
+<h1>Phase quick-260611-l44 Plan 01: Clickable Contact Names + Override Button in Recommendations Summary</h1>
+<p><strong>One-liner:</strong> Contact names in recommendation cards now link to <code>/dashboard/contacts/${contactId}</code> and each card has an Override button that PUTs <code>doNotUseForIntros=true</code> and optimistically removes the card on success.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Add contact name link and Override button to RecommendationCard</td>
+<td>9a2d3a1</td>
+<td>src/features/job-leads/components/recommendation-card.tsx</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Thread contactId and wire override handler in RecommendationList</td>
+<td>3677d21</td>
+<td>src/features/job-leads/components/recommendation-list.tsx</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<p><strong>RecommendationCard (<code>recommendation-card.tsx</code>):</strong></p>
+<ul>
+<li>Added <code>contactId: string</code>, <code>onOverride?: () =&gt; void</code>, <code>overriding?: boolean</code> to <code>RecommendationCardProps</code></li>
+<li>Replaced plain <code>&lt;span className=&#39;font-medium&#39;&gt;{contactName}&lt;/span&gt;</code> with <code>&lt;Link href={/dashboard/contacts/${contactId}} className=&#39;font-medium hover:underline&#39;&gt;</code> using <code>next/link</code></li>
+<li>Added Override <code>&lt;Button variant=&#39;outline&#39; size=&#39;sm&#39;&gt;</code> rendered after the LinkedIn badge when <code>onOverride</code> is provided; wired <code>onClick</code>, <code>disabled={overriding}</code>, <code>tabIndex={-1}</code></li>
+<li>Imported <code>Button</code> from <code>@/components/ui/button</code> and <code>Link</code> from <code>next/link</code></li>
+</ul>
+<p><strong>RecommendationList (<code>recommendation-list.tsx</code>):</strong></p>
+<ul>
+<li>Added <code>overridingIds: Set&lt;string&gt;</code> state to track in-flight override requests per contact</li>
+<li>Added <code>handleOverride</code> useCallback: marks contactId as in-flight, calls <code>PUT /api/contacts/${contactId}</code> with <code>{ doNotUseForIntros: true }</code>, optimistically removes card on success (<code>setRecommendations</code> filter), shows <code>toast.success</code>; on failure shows <code>toast.error</code> and leaves card in place; clears in-flight id in finally</li>
+<li>Imported <code>toast</code> from <code>sonner</code></li>
+<li>Passed <code>contactId={rec.contact.id}</code>, <code>onOverride={() =&gt; handleOverride(rec.contact.id)}</code>, <code>overriding={overridingIds.has(rec.contact.id)}</code> to each RecommendationCard</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Verification</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> — no type errors</li>
+<li><code>next lint</code> — no errors in modified files</li>
+<li>ESLint CLI invocation fails with a pre-existing circular-ref error in <code>.eslintrc.json</code> (worktree environment issue, unrelated to this change); <code>next lint</code> confirms no new errors</li>
+</ul>
+<h2>Known Stubs</h2>
+<p>None.</p>
+<h2>Threat Flags</h2>
+<p>None — no new network endpoints, auth paths, or schema changes introduced. The Override button calls the existing PUT /api/contacts/[id] route which was already validated by Zod <code>updateContactSchema</code> (threat T-l44-01, mitigated by existing route validation).</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/job-leads/components/recommendation-card.tsx</code> — modified and committed (9a2d3a1)</li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/job-leads/components/recommendation-list.tsx</code> — modified and committed (3677d21)</li>
+<li><input checked="" disabled="" type="checkbox"> Commits 9a2d3a1 and 3677d21 present in git log</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aef281282820b93b0/.planning/quick/260611-l44-make-contact-names-clickable-and-add-ove/260611-l44-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
