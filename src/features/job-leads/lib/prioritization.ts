@@ -53,6 +53,9 @@ export function buildRecommendations(
   const byContact = new Map<string, PrioritizedRecommendation>();
 
   for (const { bridge, prospect, contact } of bridges) {
+    // Hard exclusion: owner-flagged contacts are never recommended as intro paths
+    if (contact.doNotUseForIntros) continue;
+
     const score = bridge.score ?? computeBridgeScore(prospect, contact);
 
     if (!byContact.has(contact.id)) {
