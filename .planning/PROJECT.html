@@ -54,12 +54,13 @@
 <div class="wrap">
 
 <h1>Heimdall <span class="codename">— Job Search Command Center</span></h1>
-<div class="meta">Last updated 2026-06-20 · v1.2 Networking Outreach Campaigns scoped (Phases 11–17) · v1.1 (Phases 7–10) &amp; v1.0 (Phases 1–6) shipped &amp; archived · <code>steve@bronstein.org</code> single-user lock</div>
+<div class="meta">Last updated 2026-06-20 · v1.2 Phase 11 (Schema, Enums, State Machine) complete — outreach tables + enums + <code>canEmailTransition()</code>, migration 0013 live on Neon; next Phase 12 (API Routes) · v1.1 (Phases 7–10) &amp; v1.0 (Phases 1–6) shipped &amp; archived · <code>steve@bronstein.org</code> single-user lock</div>
 
 <div class="card what-this-is" style="border-left-color: #6b8e6b;">
 <strong>Current State — v1.1 LinkedIn Scraping by Company (shipped 2026-05-20):</strong> The <code>scrape-linkedin-connections</code> skill now accepts a LinkedIn company URL or bare company name in addition to job IDs/URLs, creating synthetic <code>job_leads</code> (<code>linkedinJobUrl = null</code>) that flow through the existing queue, prospects, and recommendation pipeline. Triage also surfaces each connection's company and role <em>at the time of connection</em>, backfilled by a paced agent-browser sweep and just-in-time enrichment during company-scope triage.
 <p style="margin: 10px 0 0;">Prior: <strong>v1.0 MVP / Brownfield Hardening</strong> (Phases 1–6, 2026-05-14) — hydration-crash fix, Vitest + PGlite harness, <code>/api/*</code> auth, starter-template removal, out-of-app LinkedIn scrape skill, N+1 elimination + indexes. See <code>.planning/MILESTONES.md</code> and <code>.planning/milestones/</code>.</p>
 <p style="margin: 10px 0 0;"><strong>Current milestone — v1.2 Networking Outreach Campaigns (Phases 11–17):</strong> Run targeted networking-email campaigns end to end from Heimdall — filter and select contacts, let a skill draft personalized emails, review/edit/approve each, then push approved ones to Gmail as drafts. <em>Nothing ever sends automatically.</em></p>
+<p style="margin: 10px 0 0;"><strong>In progress — Phase 11 complete (2026-06-20):</strong> <code>outreach_campaigns</code> + <code>outreach_emails</code> tables, three pgEnums, and the <code>canEmailTransition()</code> email state machine landed; migration <code>0013_outreach_campaigns.sql</code> applied to live Neon. Next: Phase 12 (API Routes).</p>
 <ul class="req-list active" style="margin-top: 6px;">
   <li>Saved named campaigns + filterable contact selection (howMet, connection year/range, closeness, outreach status; checkbox multi-select) — new <code>outreach_campaigns</code> + <code>outreach_email</code>-per-contact tables</li>
   <li>Triage connection-date filter (e.g. 2021–2022 to surface ID.me people)</li>

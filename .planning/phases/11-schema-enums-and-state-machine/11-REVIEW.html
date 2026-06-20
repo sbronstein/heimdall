@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 11-schema-enums-and-state-machine
+reviewed: 2026-06-20T22:28:09Z
+depth: standard
+files_reviewed: 9
+files_reviewed_list:</p>
+<ul>
+<li>drizzle/schema/enums.ts</li>
+<li>drizzle/schema/index.ts</li>
+<li>drizzle/schema/outreach-campaigns.ts</li>
+<li>drizzle/schema/outreach-emails.ts</li>
+<li>drizzle/migrations/0013_outreach_campaigns.sql</li>
+<li>src/features/outreach/lib/email-status.ts</li>
+<li>src/features/outreach/lib/email-status.test.ts</li>
+<li>src/lib/db/<strong>phase11_schema</strong>.test.ts</li>
+<li>src/lib/domain/types.ts
+findings:
+  critical: 0
+  warning: 4
+  info: 3
+  total: 7
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 11: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-06-20T22:28:09Z
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 9
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 11 adds three pgEnums (<code>outreach_campaign_status</code>, <code>outreach_channel</code>, <code>outreach_email_status</code>), two tables (<code>outreach_campaigns</code>, <code>outreach_emails</code>), matching domain enum-value arrays, a Vitest-backed email-status state machine that mirrors <code>src/lib/domain/pipeline.ts</code>, and a PGlite schema regression test. The migration <code>0013_outreach_campaigns.sql</code> is correctly registered in <code>meta/_journal.json</code>, matches the schema definitions field-for-field, and the test files match the <code>vitest.config.ts</code> include glob (<code>src/**/*.test.{ts,tsx}</code>). The state-machine transition graph is internally complete (all six enum states are keys) and the tests exercise both valid and invalid moves.</p>
+<p>No correctness-breaking or security defects were found — the work is fundamentally sound. The findings below are convention/consistency gaps and one state-machine modeling gap that will bite Phase 12/17 routes if not resolved now, while the schema is still empty and cheap to change.</p>
+<h2>Warnings</h2>
+<h3>WR-01: <code>outreach_emails</code> has no <code>archivedAt</code>, and the UNIQUE is unscoped — soft-delete convention violation + re-add lockout</h3>
+<p><strong>File:</strong> <code>drizzle/schema/outreach-emails.ts:52-59</code>
+<strong>Issue:</strong> Every other primary entity table in this codebase carries an <code>archivedAt</code> soft-delete column (<code>companies</code>, <code>contacts</code>, <code>applications</code>, <code>job_leads</code> — see <code>drizzle/schema/contacts.ts:64</code>, <code>job-leads.ts:43</code>), and CLAUDE.md mandates &quot;Soft deletes via <code>archived_at</code> timestamp (never hard delete during active search).&quot; <code>outreach_emails</code> omits it. Combined with the <strong>full</strong> <code>UNIQUE(campaign_id, contact_id)</code> constraint, this reproduces exactly the bug the <code>contacts</code> table already learned from: <code>contacts</code> deliberately uses a <em>partial</em> unique index scoped to active rows (<code>drizzle/schema/contacts.ts:71-73</code>, &quot;D-13 #2 … so re-importing a previously-archived linkedin_url creates a fresh active row&quot;). Here, once an outreach email exists for a (campaign, contact) pair, the only way to remove it is a hard delete (banned by convention), and even after one you could re-insert — but you can never soft-archive-and-re-add. A contact dropped from a campaign and later re-added cannot get a fresh row.
+<strong>Fix:</strong> Add the column and scope the unique constraint to active rows, mirroring the contacts pattern:</p>
+<pre><code class="language-ts">archivedAt: timestamp(&#39;archived_at&#39;) // soft delete — never hard delete
+// ...
+(table) =&gt; [
+  uniqueIndex(&#39;outreach_emails_campaign_contact_unique&#39;)
+    .on(table.campaignId, table.contactId)
+    .where(sql`${table.archivedAt} IS NULL`),
+  // ...
+]
+</code></pre>
+<p>(Requires regenerating <code>0013_outreach_campaigns.sql</code>.) If single-emails are intentionally never archived, document that decision explicitly in the schema and CONTEXT so the divergence from convention is deliberate, not accidental.</p>
+<h3>WR-02: Email state machine has no path to <code>failed</code> from <code>approved</code>/<code>drafted</code>, but the schema provisions failure tracking there</h3>
+<p><strong>File:</strong> <code>src/features/outreach/lib/email-status.ts:1-8</code>
+<strong>Issue:</strong> <code>failed</code> is reachable only from <code>pending</code> and <code>generated</code>. The <code>approved → drafted</code> transition is the Gmail draft-creation step (<code>gmailDraftId</code>, &quot;Phase 17&quot;, <code>outreach-emails.ts:39-40</code>) — exactly the kind of external API call that fails. The schema deliberately adds <code>lastError</code>/<code>lastErrorAt</code> (&quot;CD-01 — mirror job-leads.ts:36-38&quot;, <code>outreach-emails.ts:42-44</code>) to record such failures. But the guard <code>canEmailTransition</code> will reject <code>approved → failed</code> and <code>drafted → failed</code>, so a draft-creation failure can populate <code>lastError</code> while <code>status</code> is stuck at <code>approved</code>/<code>drafted</code>. The UI/CLI then cannot distinguish a healthy approved row from one whose drafting blew up. In <code>job-leads.ts</code> (the cited precedent) <code>failed</code> is reachable from the long-running step that actually fails; this machine drops that affordance for the drafting step.
+<strong>Fix:</strong> Either add <code>failed</code> as a destination from the states whose outbound step can fail, or commit to a retry-in-place model and document it:</p>
+<pre><code class="language-ts">approved: [&#39;drafted&#39;, &#39;edited&#39;, &#39;failed&#39;], // Gmail draft creation can fail
+drafted: [&#39;edited&#39;, &#39;failed&#39;],             // re-draft can fail
+</code></pre>
+<p>If draft failures are meant to stay in <code>approved</code> with <code>lastError</code> set (retry the same transition), state that in a comment so the <code>lastError</code>-without-<code>failed</code> combination is understood as intentional.</p>
+<h3>WR-03: Missing exported domain types for the three new outreach enums — breaks the established pattern and forces loose <code>string</code> typing</h3>
+<p><strong>File:</strong> <code>src/lib/domain/types.ts:246-261</code>
+<strong>Issue:</strong> <code>outreachCampaignStatusValues</code>, <code>outreachChannelValues</code>, and <code>outreachEmailStatusValues</code> are added as <code>as const</code> arrays but, unlike the immediately-preceding additions, ship <strong>no</strong> corresponding exported type. <code>seniorityLevelValues</code> exports <code>SeniorityLevel</code> (line 234) and <code>contactEnrichmentStatusValues</code> exports <code>ContactEnrichmentStatus</code> (line 243). Because no <code>OutreachEmailStatus</code> type exists, the state machine in <code>email-status.ts</code> is forced to type its graph and function signatures as bare <code>string</code> (<code>Record&lt;string, string[]&gt;</code>, <code>canEmailTransition(from: string, to: string)</code>), so a typo like <code>canEmailTransition(&#39;aproved&#39;, &#39;drafted&#39;)</code> compiles cleanly and silently returns <code>false</code>. (Note: <code>pipeline.ts</code> also uses <code>string</code>, so the state machine matches that older precedent — but the missing type exports are the root cause and a clear regression from the newer convention.)
+<strong>Fix:</strong> Add the three types and tighten the state-machine signatures:</p>
+<pre><code class="language-ts">// types.ts
+export type OutreachCampaignStatus = (typeof outreachCampaignStatusValues)[number];
+export type OutreachChannel = (typeof outreachChannelValues)[number];
+export type OutreachEmailStatus = (typeof outreachEmailStatusValues)[number];
+</code></pre>
+<pre><code class="language-ts">// email-status.ts
+const validEmailTransitions: Record&lt;OutreachEmailStatus, OutreachEmailStatus[]&gt; = { /* ... */ };
+export function canEmailTransition(from: OutreachEmailStatus, to: OutreachEmailStatus): boolean { /* ... */ }
+</code></pre>
+<h3>WR-04: <code>UNIQUE(campaign_id, contact_id)</code> omits <code>channel</code> — a contact cannot be reached on both email and LinkedIn in one campaign</h3>
+<p><strong>File:</strong> <code>drizzle/schema/outreach-emails.ts:55-59</code>
+<strong>Issue:</strong> <code>channel</code> is a first-class column with two values (<code>email</code>, <code>linkedin_message</code>), but the uniqueness key is <code>(campaign_id, contact_id)</code>. That permanently caps each contact at one outreach row per campaign across both channels, so you can never queue both an email and a LinkedIn message to the same person in the same campaign. The D-07 comment (&quot;needs LinkedIn is a channel, not a status&quot;) suggests one-message-per-contact is intended, in which case this is correct — but the presence of a <code>channel</code> column alongside a key that ignores it is the kind of latent contradiction that surfaces as a confusing 23505 error in Phase 12.
+<strong>Fix:</strong> Confirm the intent. If multi-channel-per-contact is ever desired, include <code>channel</code> in the key: <code>unique(&#39;...&#39;).on(table.campaignId, table.contactId, table.channel)</code>. If single-channel is intentional, add a one-line comment on the constraint stating that <code>channel</code> is intentionally excluded.</p>
+<h2>Info</h2>
+<h3>IN-01: Redundant standalone index on <code>campaign_id</code></h3>
+<p><strong>File:</strong> <code>drizzle/schema/outreach-emails.ts:56-60</code>
+<strong>Issue:</strong> The <code>UNIQUE(campaign_id, contact_id)</code> constraint creates a btree whose leading column is <code>campaign_id</code>, which already serves queries that filter or join on <code>campaign_id</code> alone. The separate <code>outreach_emails_campaign_id_idx</code> (line 60) is therefore largely redundant and just adds write overhead. (Performance is out of v1 scope; flagged only as a cleanliness/duplication note.)
+<strong>Fix:</strong> Consider dropping <code>outreach_emails_campaign_id_idx</code> and relying on the unique constraint&#39;s index; keep the <code>status</code> and <code>contact_id</code> indexes.</p>
+<h3>IN-02: Mixed timezone-awareness across timestamp columns in the same table</h3>
+<p><strong>File:</strong> <code>drizzle/schema/outreach-emails.ts:44-53</code>
+<strong>Issue:</strong> <code>lastErrorAt</code>, <code>generatedAt</code>, <code>approvedAt</code>, <code>draftedAt</code> are <code>timestamp with time zone</code>, while <code>createdAt</code>/<code>updatedAt</code> are plain <code>timestamp</code> (no tz). This matches the <code>job_leads</code> precedent (<code>job-leads.ts:38</code> vs <code>:41-43</code>), so it is consistent with the codebase — but mixing <code>timestamptz</code> and <code>timestamp</code> within one table is a known foot-gun for cross-column comparisons.
+<strong>Fix:</strong> No action required for parity; if standardizing later, prefer <code>withTimezone: true</code> for all timestamp columns project-wide.</p>
+<h3>IN-03: Empty <code>terminalEmailStates</code> makes the terminal guard and <code>isEmailTerminalState</code> permanently constant</h3>
+<p><strong>File:</strong> <code>src/features/outreach/lib/email-status.ts:10-19</code>
+<strong>Issue:</strong> <code>terminalEmailStates</code> is <code>[]</code> by design (D-06: every state recoverable), so <code>if (terminalEmailStates.includes(from)) return false;</code> (line 13) is dead and <code>isEmailTerminalState</code> always returns <code>false</code>. This mirrors <code>pipeline.ts</code> structure and is defensible future-proofing, and the test pins the invariant — noting only so the dead guard isn&#39;t mistaken for a live check.
+<strong>Fix:</strong> Keep as-is for symmetry with <code>pipeline.ts</code>; optionally add a one-line comment that the guard is retained for structural parity.</p>
+<hr>
+<p><em>Reviewed: 2026-06-20T22:28:09Z</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

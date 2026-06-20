@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 11-schema-enums-and-state-machine
+verified: 2026-06-20T18:32:00Z
+status: passed
+score: 10/10 must-haves verified
+overrides_applied: 0
+re_verification: false</h2>
+<h1>Phase 11: Schema, Enums, and State Machine — Verification Report</h1>
+<p><strong>Phase Goal:</strong> Two new Drizzle tables (outreach_campaigns, outreach_emails), three pgEnums (outreach_campaign_status, outreach_channel, outreach_email_status), and the canEmailTransition() state machine locking the full email status lifecycle before any consumer is built.
+<strong>Verified:</strong> 2026-06-20T18:32:00Z
+<strong>Status:</strong> PASSED
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>outreach_campaigns</code> and <code>outreach_emails</code> tables exist in Neon Postgres with all columns, indexes, and unique constraint on <code>(campaign_id, contact_id)</code></td>
+<td>VERIFIED</td>
+<td><code>drizzle/migrations/0013_outreach_campaigns.sql</code> contains <code>CREATE TABLE &quot;outreach_campaigns&quot;</code> and <code>CREATE TABLE &quot;outreach_emails&quot;</code> with <code>CONSTRAINT &quot;outreach_emails_campaign_contact_unique&quot; UNIQUE(&quot;campaign_id&quot;,&quot;contact_id&quot;)</code>; journal entry at idx 13 confirms lineage; migration confirmed applied to live Neon</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Three new pgEnums (<code>outreach_campaign_status</code>, <code>outreach_channel</code>, <code>outreach_email_status</code>) exist as Postgres types</td>
+<td>VERIFIED</td>
+<td><code>drizzle/schema/enums.ts</code> lines 193–211 declare all three; migration SQL contains three <code>CREATE TYPE &quot;public&quot;.&quot;...&quot;</code> statements</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>outreach_emails</code> enforces UNIQUE (campaign_id, contact_id) at the DB level</td>
+<td>VERIFIED</td>
+<td>Constraint declared in schema (<code>unique(&#39;outreach_emails_campaign_contact_unique&#39;).on(table.campaignId, table.contactId)</code>) and generated in DDL; PGlite regression test asserts duplicate insert throws (12/12 tests pass)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>canEmailTransition()</code> at <code>src/features/outreach/lib/email-status.ts</code> rejects invalid moves and accepts valid lifecycle moves</td>
+<td>VERIFIED</td>
+<td>Function exists with exact 6-state transition map; Vitest test asserts <code>pending→drafted</code> false, <code>approved→pending</code> false, <code>pending→approved</code> false; full forward chain accepted; unknown <code>from</code> returns false</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Regenerate edges (<code>generated→pending</code>, <code>edited→pending</code>) are accepted; <code>drafted→edited</code> is accepted</td>
+<td>VERIFIED</td>
+<td><code>validEmailTransitions</code> map: <code>generated</code> includes <code>&#39;pending&#39;</code>, <code>edited</code> includes <code>&#39;pending&#39;</code>, <code>drafted</code> includes <code>&#39;edited&#39;</code>; test explicitly asserts each</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>isEmailTerminalState(status)</code> returns false for every status in outreachEmailStatusValues (terminal set is empty)</td>
+<td>VERIFIED</td>
+<td><code>terminalEmailStates = []</code>; test iterates all 6 values from <code>outreachEmailStatusValues</code> and asserts <code>false</code> for each</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>OutreachCampaign</code> and <code>OutreachEmail</code> Drizzle-inferred types are exported from <code>src/lib/domain/types.ts</code></td>
+<td>VERIFIED</td>
+<td>Lines 33–34: <code>export type OutreachCampaign = typeof outreachCampaigns.$inferSelect</code> and <code>export type OutreachEmail = typeof outreachEmails.$inferSelect</code>; <code>NewOutreachCampaign</code> and <code>NewOutreachEmail</code> also present</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Three <code>*Values</code> arrays (<code>outreachCampaignStatusValues</code>, <code>outreachChannelValues</code>, <code>outreachEmailStatusValues</code>) are exported from <code>src/lib/domain/types.ts</code></td>
+<td>VERIFIED</td>
+<td>Lines 246–261: all three arrays present with correct values matching the pgEnum declarations in enums.ts</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Vitest state-machine test pins all transition edges</td>
+<td>VERIFIED</td>
+<td><code>src/features/outreach/lib/email-status.test.ts</code> — 8 test assertions covering valid/invalid/regenerate/unknown from; all pass (<code>npx vitest run</code> 12/12 tests)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>PGlite schema-regression test proves unique constraint rejects duplicates and defaults read back correctly</td>
+<td>VERIFIED</td>
+<td><code>src/lib/db/__phase11_schema__.test.ts</code> — two it() blocks: defaults (status=pending, channel=email, editedSubject=null) and duplicate insert throws; both pass</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 10/10 truths verified</p>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/enums.ts</code></td>
+<td>outreachCampaignStatusEnum, outreachChannelEnum, outreachEmailStatusEnum</td>
+<td>VERIFIED</td>
+<td>Lines 193–211; all three pgEnums appended after contactEnrichmentStatusEnum</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/outreach-campaigns.ts</code></td>
+<td>outreachCampaigns table with id, name, goal_instruction, status, timestamps, archivedAt</td>
+<td>VERIFIED</td>
+<td>12-line file; all columns present including archivedAt soft-delete</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/outreach-emails.ts</code></td>
+<td>outreachEmails table with unique constraint + 3 indexes + FKs</td>
+<td>VERIFIED</td>
+<td>64-line file; unique + 3 indexes; FK references to outreachCampaigns.id and contacts.id</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/index.ts</code></td>
+<td>Barrel re-exports outreach-campaigns and outreach-emails</td>
+<td>VERIFIED</td>
+<td>Lines 13–14: <code>export * from &#39;./outreach-campaigns&#39;</code> and <code>export * from &#39;./outreach-emails&#39;</code></td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/0013_outreach_campaigns.sql</code></td>
+<td>DDL with 3 CREATE TYPEs, 2 CREATE TABLEs, unique constraint, 3 indexes, 2 FKs</td>
+<td>VERIFIED</td>
+<td>40-line file contains all expected DDL; journal entry idx 13 tag <code>0013_outreach_campaigns</code></td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/email-status.ts</code></td>
+<td>canEmailTransition, isEmailTerminalState, validEmailTransitions, terminalEmailStates exports</td>
+<td>VERIFIED</td>
+<td>22-line file; all four exports present; exact 6-state transition map with empty terminal set</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code></td>
+<td>OutreachCampaign, NewOutreachCampaign, OutreachEmail, NewOutreachEmail + 3 *Values arrays</td>
+<td>VERIFIED</td>
+<td>Lines 15–16 (imports), 33–34/50–51 (4 types), 246–261 (3 value arrays)</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/email-status.test.ts</code></td>
+<td>State-machine unit test (pure, no DB)</td>
+<td>VERIFIED</td>
+<td>67-line file; imports from <code>@/features/outreach/lib/email-status</code> and <code>@/lib/domain/types</code></td>
+</tr>
+<tr>
+<td><code>src/lib/db/__phase11_schema__.test.ts</code></td>
+<td>Schema-regression test over outreach migration via PGlite</td>
+<td>VERIFIED</td>
+<td>80-line file; uses createTestDb(), imports outreachEmails, outreachCampaigns, contacts</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/outreach-emails.ts</code></td>
+<td><code>drizzle/schema/outreach-campaigns.ts</code></td>
+<td><code>references(() =&gt; outreachCampaigns.id)</code></td>
+<td>WIRED</td>
+<td>Line 20–21 in outreach-emails.ts; FK in migration SQL confirmed</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/outreach-emails.ts</code></td>
+<td><code>drizzle/schema/contacts.ts</code></td>
+<td><code>references(() =&gt; contacts.id)</code></td>
+<td>WIRED</td>
+<td>Line 23–24 in outreach-emails.ts; FK in migration SQL confirmed</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code></td>
+<td><code>drizzle/schema</code> (outreachCampaigns, outreachEmails)</td>
+<td><code>$inferSelect / $inferInsert</code></td>
+<td>WIRED</td>
+<td>Lines 15–16 import both tables; lines 33–34, 50–51 use <code>$inferSelect</code> and <code>$inferInsert</code></td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/email-status.ts</code></td>
+<td><code>validEmailTransitions</code> map</td>
+<td>map lookup with <code>?? false</code></td>
+<td>WIRED</td>
+<td>Line 14: <code>validEmailTransitions[from]?.includes(to) ?? false</code></td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/email-status.test.ts</code></td>
+<td><code>src/features/outreach/lib/email-status.ts</code></td>
+<td><code>import canEmailTransition</code></td>
+<td>WIRED</td>
+<td>Lines 2–5: imports canEmailTransition, isEmailTerminalState, validEmailTransitions from <code>@/features/outreach/lib/email-status</code></td>
+</tr>
+<tr>
+<td><code>src/lib/db/__phase11_schema__.test.ts</code></td>
+<td><code>drizzle/migrations/0013_outreach_campaigns.sql</code></td>
+<td><code>createTestDb()</code> replays committed migrations</td>
+<td>WIRED</td>
+<td><code>createTestDb</code> replays all <code>drizzle/migrations/*.sql</code> in sorted order; migration at idx 13 is present</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>Not applicable. Phase 11 delivers no UI components, no pages, and no API routes that render dynamic data. All deliverables are schema definitions, a pure state-machine function, and test files. No data-flow trace is required.</p>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>State machine unit tests pass</td>
+<td><code>npx vitest run src/features/outreach/lib/email-status.test.ts src/lib/db/__phase11_schema__.test.ts</code></td>
+<td>2 test files, 12 tests, 0 failures, duration 1.30s</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Migration file exists with correct DDL</td>
+<td><code>grep -c &#39;CREATE TABLE&#39; drizzle/migrations/0013_outreach_campaigns.sql</code></td>
+<td>2 (outreach_campaigns, outreach_emails)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Journal entry at idx 13 with correct tag</td>
+<td><code>cat drizzle/migrations/meta/_journal.json</code></td>
+<td>idx 13, tag &quot;0013_outreach_campaigns&quot;</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Barrel index exports both new tables</td>
+<td><code>grep outreach drizzle/schema/index.ts</code></td>
+<td>Lines 13–14 confirmed</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<p>No probes declared in PLAN files and no <code>scripts/*/tests/probe-*.sh</code> found for this phase. Behavioral spot-checks above subsume probe verification.</p>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REV-05</td>
+<td>11-01, 11-02, 11-03</td>
+<td>Email status lifecycle validated at API boundary via canEmailTransition() state machine</td>
+<td>SATISFIED</td>
+<td><code>canEmailTransition()</code> encodes the full <code>pending → generated → edited → approved → drafted</code> lifecycle with <code>failed</code> handling; tests pin all transitions; Phase 12 will wire it to the HTTP boundary (by design — Phase 11 ships the enforcement logic, Phase 12 adds the route)</td>
+</tr>
+</tbody></table>
+<p><strong>Note on REV-05 boundary:</strong> REQUIREMENTS.md states the lifecycle &quot;is validated at the API boundary via a <code>canEmailTransition()</code> state machine.&quot; Phase 11 ships the state machine; wiring it to an HTTP route (the API boundary) is Phase 12&#39;s deliverable. The REQUIREMENTS.md traceability table marks REV-05 as Complete for Phase 11, consistent with this split. This is not a gap.</p>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(none)</td>
+<td>—</td>
+<td>No TBD/FIXME/XXX/TODO/HACK/PLACEHOLDER markers found in any Phase 11 modified file</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p>No debt markers. No empty return stubs. No placeholder implementations.</p>
+<h3>Code Review Warnings (from 11-REVIEW.md — advisory only, 0 blockers)</h3>
+<p>All four warnings from the code review are advisory design notes. They do not block the phase goal:</p>
+<ul>
+<li><strong>WR-01</strong>: <code>outreach_emails</code> has no <code>archivedAt</code> and the UNIQUE is unscoped. The plan explicitly documents this choice: &quot;Do NOT add archivedAt to outreach_emails (CONTEXT line 159 omits it — emails belong to a soft-deleting campaign).&quot; Intentional deviation; schema is still empty so a future migration could add it before any data exists.</li>
+<li><strong>WR-02</strong>: <code>failed</code> state unreachable from <code>approved</code>/<code>drafted</code>. The Phase 11 transition map matches the CONTEXT spec exactly (D-03). Phase 12 can add <code>approved→failed</code> / <code>drafted→failed</code> edges when the Gmail drafting route is designed. No Phase 11 must-have requires these edges.</li>
+<li><strong>WR-03</strong>: No exported <code>OutreachEmailStatus</code> / <code>OutreachCampaignStatus</code> / <code>OutreachChannel</code> union types. The <code>*Values</code> arrays are present and functional; the missing type aliases do not break any Phase 11 deliverable. They follow the older <code>pipeline.ts</code> convention.</li>
+<li><strong>WR-04</strong>: <code>channel</code> not in the UNIQUE constraint. Single-email-per-contact-per-campaign is a deliberate design choice per D-07. The constraint as shipped is consistent with the plan spec.</li>
+</ul>
+<h3>Human Verification Required</h3>
+<p>None. Phase 11 is schema, pure-function, and test work only — no UI, no HTTP routes, no external service integration. All verifiable behavior is pinned by the 12 passing Vitest tests.</p>
+<h3>Gaps Summary</h3>
+<p>No gaps. All 10 must-have truths are verified against the actual codebase. Tests pass 12/12. Migration lineage is intact (idx 0–13, journal consistent). No debt markers. The code review found 0 critical findings and 4 advisory warnings that do not block the phase goal.</p>
+<hr>
+<p><em>Verified: 2026-06-20T18:32:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
