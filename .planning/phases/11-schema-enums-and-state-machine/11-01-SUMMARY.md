@@ -6,10 +6,10 @@ tags: [drizzle, schema, enums, postgres, migration, outreach]
 dependency_graph:
   requires: []
   provides:
-    - outreachCampaigns table (drizzle schema)
-    - outreachEmails table with unique constraint + 3 indexes (drizzle schema)
-    - outreachCampaignStatusEnum, outreachChannelEnum, outreachEmailStatusEnum (pgEnums)
-    - 0013_outreach_campaigns.sql migration (generated, committed — pending apply to Neon)
+    - outreachCampaigns table (drizzle schema + live Neon)
+    - outreachEmails table with unique constraint + 3 indexes (drizzle schema + live Neon)
+    - outreachCampaignStatusEnum, outreachChannelEnum, outreachEmailStatusEnum (Postgres enum types, live)
+    - 0013_outreach_campaigns.sql migration (generated, committed, applied to live Neon)
   affects:
     - drizzle/schema/index.ts (barrel exports added)
 tech_stack:
@@ -39,15 +39,15 @@ decisions:
   - UNIQUE (campaign_id, contact_id) backs Phase 12 onConflictDoNothing() bulk add (T-11-01)
   - Migration auto-numbered 0013 by drizzle-kit (not 0011 as stale CONTEXT.md said)
 metrics:
-  duration: ~8 min
+  duration: ~10 min
   completed: 2026-06-20
-  tasks_completed: 1.5 of 2 (Task 2 migration generated+committed; apply to Neon pending)
+  tasks_completed: 2 of 2
   files_changed: 7
 ---
 
 # Phase 11 Plan 01: Schema Enums and Outreach Tables Summary
 
-**One-liner:** Three outreach pgEnums and two tables (`outreach_campaigns`, `outreach_emails`) added to Drizzle schema with unique constraint, 3 indexes, and migration 0013 generated and committed — pending `db:migrate` apply to live Neon.
+**One-liner:** Three outreach pgEnums and two tables (`outreach_campaigns`, `outreach_emails`) added to Drizzle schema with unique constraint, 3 indexes, migration 0013 generated and applied clean to live Neon — Phase 11 Success Criterion #1 satisfied.
 
 ## Tasks Completed
 
@@ -55,7 +55,7 @@ metrics:
 |------|--------|--------|
 | Task 1: Three enums, two tables, barrel exports | DONE | d6edc05 |
 | Task 2: Generate migration 0013_outreach_campaigns.sql | DONE | af92a6b |
-| Task 2: Apply migration to live Neon DB (`npm run db:migrate`) | PENDING HUMAN ACTION | — |
+| Task 2: Apply migration to live Neon DB (`npm run db:migrate`) | DONE (applied by orchestrator after user authorization) | — |
 
 ## What Was Built
 
@@ -100,25 +100,15 @@ export * from './outreach-emails';
 - `npx tsc --noEmit` exits 0 — no TypeScript errors introduced
 - `grep -c` count of 9 required DDL patterns in migration SQL = 9 (all present)
 
-## Pending: Live DB Apply
-
-`npm run db:migrate` was denied by the auto-mode classifier (live production DB write). The migration file and journal entry are committed. To complete Task 2:
-
-```bash
-npm run db:migrate
-```
-
-Expected: exits 0, Drizzle applies `0013_outreach_campaigns.sql` to the Neon DB.
-
 ## Deviations from Plan
 
 ### Migration ordinal is 0013, not 0011
 
 The CONTEXT.md references "migration 0011" for the outreach tables — stale reference from before quick tasks `260521-bhf` (migration 0011 = `0011_split_career_closeness`) and `0012_whole_scream`. The PLAN.md explicitly documented this correction: drizzle-kit auto-numbered from the journal tail (idx 12) and emitted `0013_outreach_campaigns.sql`. The migration file was NOT renamed — it carries the journal-assigned ordinal as required by the plan.
 
-### Auto-mode gate on `npm run db:migrate`
+### Auto-mode gate on `npm run db:migrate` (resolved)
 
-The auto-mode classifier denied `npm run db:migrate` (live production DB write). Surfaced as `checkpoint:human-action`. Not a bug or architectural deviation — the migration file is correct and ready to apply.
+The auto-mode classifier denied `npm run db:migrate` (live production DB write). Surfaced as `checkpoint:human-action`. The user authorized and the orchestrator applied the migration. Verified live: both tables (`outreach_campaigns`, `outreach_emails`), all 3 enum types, and the `outreach_emails_campaign_contact_unique` constraint confirmed present in Neon prod. Not a bug or architectural deviation — the migration file was correct; the gate was correct safety behavior for prod writes.
 
 ## Threat Surface Scan
 
@@ -139,4 +129,4 @@ None — this plan delivers schema/DDL only. No UI rendering paths or data sourc
 - [x] `drizzle/migrations/0013_outreach_campaigns.sql` exists with 9 required DDL patterns
 - [x] Task 1 commit `d6edc05` exists
 - [x] Task 2 migration commit `af92a6b` exists
-- [ ] `npm run db:migrate` applied to live Neon — PENDING HUMAN ACTION
+- [x] `npm run db:migrate` applied to live Neon — CONFIRMED (orchestrator verified via SQL: 2 tables, 3 enums, unique constraint all present)

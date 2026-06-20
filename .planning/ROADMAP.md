@@ -57,7 +57,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   2. `canEmailTransition()` at `src/features/outreach/lib/email-status.ts` rejects invalid moves (e.g. `pending → drafted`, `approved → pending`) and accepts valid ones (`pending → generated → edited → approved → drafted`) — pinned by a Vitest test
   3. Drizzle-inferred types `OutreachCampaign` and `OutreachEmail` are exported from `src/lib/domain/types.ts`
 **Plans**: 3 plans
-- [x] 11-01-PLAN.md — Enums, two tables, barrel exports + migration 0011 applied to Neon (Wave 1)
+- [x] 11-01-PLAN.md — Enums, two tables, barrel exports + migration 0013 applied to live Neon (Wave 1) — COMPLETE
 - [ ] 11-02-PLAN.md — Inferred types + enum value arrays + `canEmailTransition()` state machine (Wave 2)
 - [ ] 11-03-PLAN.md — Vitest state-machine test + PGlite schema-regression test (Wave 3)
 
