@@ -10,6 +10,8 @@ See `.planning/MILESTONES.md` for the full ledger and `.planning/milestones/` fo
 
 ## Current Milestone: v1.2 Networking Outreach Campaigns
 
+**In progress:** Phase 11 (Schema, Enums, and State Machine) complete (2026-06-20) — `outreach_campaigns` + `outreach_emails` tables, three pgEnums, and the `canEmailTransition()` email state machine landed and the `0013_outreach_campaigns.sql` migration is applied to live Neon. Next: Phase 12 (API Routes).
+
 **Goal:** Run targeted networking-email campaigns end to end from Heimdall — filter and select contacts, let a skill draft personalized emails, review/edit/approve each, then push approved ones to Gmail as drafts.
 
 **Target features:**
@@ -153,4 +155,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-20 — v1.2 Networking Outreach Campaigns scoped via `/gsd:new-milestone`. v1.0 (Phases 1–6) and v1.1 (Phases 7–10) shipped and archived in `.planning/milestones/`. Next: define requirements → roadmap, then `/gsd:discuss-phase 11`.*
+*Last updated: 2026-06-20 — v1.2 Phase 11 (Schema, Enums, and State Machine) complete: outreach tables + enums + `canEmailTransition()` state machine, migration 0013 applied to live Neon. v1.0 (Phases 1–6) and v1.1 (Phases 7–10) shipped and archived in `.planning/milestones/`. Next: `/gsd:discuss-phase 12` (API Routes).*
