@@ -11,7 +11,9 @@ import type {
   searchMetrics,
   jobLeads,
   prospects,
-  prospectBridges
+  prospectBridges,
+  outreachCampaigns,
+  outreachEmails
 } from '../../../drizzle/schema';
 
 // Inferred select types (what you get back from queries)
@@ -28,6 +30,8 @@ export type SearchMetric = typeof searchMetrics.$inferSelect;
 export type JobLead = typeof jobLeads.$inferSelect;
 export type Prospect = typeof prospects.$inferSelect;
 export type ProspectBridge = typeof prospectBridges.$inferSelect;
+export type OutreachCampaign = typeof outreachCampaigns.$inferSelect;
+export type OutreachEmail = typeof outreachEmails.$inferSelect;
 
 // Inferred insert types (what you pass to create)
 export type NewCompany = typeof companies.$inferInsert;
@@ -43,6 +47,8 @@ export type NewSearchMetric = typeof searchMetrics.$inferInsert;
 export type NewJobLead = typeof jobLeads.$inferInsert;
 export type NewProspect = typeof prospects.$inferInsert;
 export type NewProspectBridge = typeof prospectBridges.$inferInsert;
+export type NewOutreachCampaign = typeof outreachCampaigns.$inferInsert;
+export type NewOutreachEmail = typeof outreachEmails.$inferInsert;
 
 // Enum value arrays for zod schemas and filter options
 export const companyStageValues = [
@@ -135,12 +141,7 @@ export const contactRelationshipValues = [
   'other'
 ] as const;
 
-export const contactWarmthValues = [
-  'hot',
-  'warm',
-  'lukewarm',
-  'cold'
-] as const;
+export const contactWarmthValues = ['hot', 'warm', 'lukewarm', 'cold'] as const;
 
 export const interactionTypeValues = [
   'email_sent',
@@ -176,12 +177,7 @@ export const taskStatusValues = [
   'cancelled'
 ] as const;
 
-export const taskPriorityValues = [
-  'urgent',
-  'high',
-  'medium',
-  'low'
-] as const;
+export const taskPriorityValues = ['urgent', 'high', 'medium', 'low'] as const;
 
 export const contactClosenessValues = [
   'close_friend',
@@ -244,4 +240,22 @@ export const contactEnrichmentStatusValues = [
   'failed'
 ] as const;
 
-export type ContactEnrichmentStatus = (typeof contactEnrichmentStatusValues)[number];
+export type ContactEnrichmentStatus =
+  (typeof contactEnrichmentStatusValues)[number];
+
+export const outreachCampaignStatusValues = [
+  'draft',
+  'active',
+  'completed'
+] as const;
+
+export const outreachChannelValues = ['email', 'linkedin_message'] as const;
+
+export const outreachEmailStatusValues = [
+  'pending',
+  'generated',
+  'edited',
+  'approved',
+  'drafted',
+  'failed'
+] as const;
