@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>REQUIREMENTS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/REQUIREMENTS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Requirements: Heimdall — v1.2 Networking Outreach Campaigns</h1>
+<p><strong>Defined:</strong> 2026-06-20
+<strong>Core Value:</strong> The owner can run their entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths for any role — without leaving the app.</p>
+<p><strong>Milestone goal:</strong> Run targeted networking-email campaigns end to end from Heimdall — filter and select contacts, let a skill draft personalized emails, review/edit/approve each, then push approved ones to Gmail as drafts. <strong>Nothing ever sends automatically.</strong></p>
+<h2>v1.2 Requirements</h2>
+<p>Requirements for this milestone. Each maps to exactly one roadmap phase (see Traceability).</p>
+<h3>Campaigns (CAMP) — selection &amp; persistence</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>CAMP-01</strong>: User can filter contacts by how they know them (<code>howMet</code>) when building a campaign</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-02</strong>: User can filter contacts by connection year / date range (<code>linkedinConnectionDate</code>) when building a campaign</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-03</strong>: User can filter contacts by closeness tier when building a campaign</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-04</strong>: User can filter contacts by outreach status when building a campaign</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-05</strong>: User can checkbox-multi-select contacts (including select-all within the current filter) to choose recipients</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-06</strong>: User can create a named campaign with a goal/instruction that drives generation</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-07</strong>: Saving a campaign persists the selected contacts as one <code>outreach_email</code> row per contact in a single bulk insert, deduped so a contact can&#39;t be added twice</li>
+<li><input disabled="" type="checkbox"> <strong>CAMP-08</strong>: User can view a list of campaigns with per-campaign progress (selected / generated / approved / drafted counts)</li>
+</ul>
+<h3>Triage (TRGE) — connection-date filter</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>TRGE-01</strong>: User can filter the existing triage workflow by connection year / date range (e.g. 2021–2022 to surface people met at a given company)</li>
+</ul>
+<h3>Generation (GEN) — AI email drafting skill</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>GEN-01</strong>: User can run a skill that generates a subject line + body for every pending email in a campaign</li>
+<li><input disabled="" type="checkbox"> <strong>GEN-02</strong>: Generated emails are personalized from CRM context (<code>howMet</code>, company/role, closeness, prior interactions) plus the campaign goal</li>
+<li><input disabled="" type="checkbox"> <strong>GEN-03</strong>: Generation calibrates tone to closeness tier and follows the owner&#39;s voice conventions, including an LLM-tell scan (reusing <code>tailor-application-materials</code> style references)</li>
+<li><input disabled="" type="checkbox"> <strong>GEN-04</strong>: Generation references only history present in the provided contact context (no hallucinated shared history); low-context contacts are flagged for extra review</li>
+<li><input disabled="" type="checkbox"> <strong>GEN-05</strong>: All generation runs in the skill (never in an API route); the API only enqueues <code>pending</code> rows and accepts write-back</li>
+</ul>
+<h3>Review &amp; Approval (REV)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>REV-01</strong>: User can review each generated email (subject + body) for a campaign in the UI</li>
+<li><input disabled="" type="checkbox"> <strong>REV-02</strong>: User can edit a generated email inline (subject and body)</li>
+<li><input disabled="" type="checkbox"> <strong>REV-03</strong>: User can regenerate a single email (resets it to <code>pending</code> for the skill to redo)</li>
+<li><input disabled="" type="checkbox"> <strong>REV-04</strong>: User can approve an email; only approved emails advance to drafting (approve gate)</li>
+<li><input disabled="" type="checkbox"> <strong>REV-05</strong>: Email status lifecycle (<code>pending → generated → edited → approved → drafted</code>, plus <code>failed</code>) is validated at the API boundary via a <code>canEmailTransition()</code> state machine</li>
+<li><input disabled="" type="checkbox"> <strong>REV-06</strong>: Contacts with no email found show a &quot;needs LinkedIn message&quot; badge; archived contacts show an &quot;archived&quot; badge that blocks approval</li>
+</ul>
+<h3>Email Discovery (DISC)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>DISC-01</strong>: For approved emails on contacts without a stored address, the drafting skill discovers an email via Gmail thread search (<code>mcp__gmail__search_threads</code> / <code>get_thread</code>)</li>
+<li><input disabled="" type="checkbox"> <strong>DISC-02</strong>: Discovery requires at least two matching signals; ambiguous multi-match candidates surface in the review UI for manual selection; a discovered address is written back to the email row</li>
+<li><input disabled="" type="checkbox"> <strong>DISC-03</strong>: When no email is found by any method, the contact is flagged for a LinkedIn message (<code>channel = linkedin_message</code>) — never silently dropped</li>
+</ul>
+<h3>Gmail Drafting (DRFT)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>DRFT-01</strong>: User can run a skill that creates a Gmail draft for each approved email that has a recipient</li>
+<li><input disabled="" type="checkbox"> <strong>DRFT-02</strong>: The drafting skill NEVER sends — it only ever calls <code>create_draft</code> (hard safety invariant; verified by a code-review/grep checklist before any real run)</li>
+<li><input disabled="" type="checkbox"> <strong>DRFT-03</strong>: Drafting is idempotent — re-running does not create duplicate drafts (checks <code>gmailDraftId</code>; updates the existing draft in place when re-drafting an edited email)</li>
+<li><input disabled="" type="checkbox"> <strong>DRFT-04</strong>: Each created draft stores the Gmail draft id back on the email, marks it <code>drafted</code>, and logs a <code>timeline_events</code> row</li>
+<li><input disabled="" type="checkbox"> <strong>DRFT-05</strong>: Drafting an email updates the contact&#39;s <code>outreachStatus</code> to <code>reached_out</code></li>
+</ul>
+<h2>Future Requirements (v1.x / v2)</h2>
+<p>Deferred to a future release. Tracked but not in this roadmap.</p>
+<h3>Discovery</h3>
+<ul>
+<li><strong>DISC-F1</strong>: Google Contacts / People API lookup as a supplementary discovery source (requires separate People API MCP/OAuth setup) — add only if Gmail-search discovery rate proves insufficient</li>
+</ul>
+<h3>Campaigns</h3>
+<ul>
+<li><strong>CAMP-F1</strong>: Campaign analytics — reply rate, meeting-booked rate (useful after several campaigns have run)</li>
+<li><strong>CAMP-F2</strong>: Auto-create a follow-up task when a draft is created</li>
+</ul>
+<h3>Outreach</h3>
+<ul>
+<li><strong>OUT-F1</strong>: LinkedIn message composition assistance for <code>linkedin_message</code>-channel contacts (manual LinkedIn message from the review badge is the v1.2 path)</li>
+<li><strong>VEC-01/02</strong>: pgvector semantic search over notes/interactions/JDs (existing v2 backlog)</li>
+</ul>
+<h2>Out of Scope</h2>
+<p>Explicitly excluded. Anti-features documented to prevent scope creep — several are hard safety boundaries.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Auto-send / any <code>messages.send</code> or <code>drafts.send</code> call</td>
+<td><strong>Hard safety invariant</strong> — the system only ever creates drafts; the owner sends manually in Gmail</td>
+</tr>
+<tr>
+<td>Sending email from within Heimdall</td>
+<td>Drafts-only by design (owner&#39;s choice); review and send happen in Gmail</td>
+</tr>
+<tr>
+<td>Email open / click tracking pixels</td>
+<td>Destroys the personal tone of VP-level 1:1 outreach</td>
+</tr>
+<tr>
+<td>CAN-SPAM unsubscribe blocks</td>
+<td>This is personal correspondence, not marketing</td>
+</tr>
+<tr>
+<td>Bulk generate-all then auto-approve</td>
+<td>Defeats the approve gate; every email gets human review</td>
+</tr>
+<tr>
+<td>Email template library with merge fields</td>
+<td>AI generation from CRM data is strictly better; the owner explicitly chose campaign-goal + per-contact context</td>
+</tr>
+<tr>
+<td>Google Contacts / People API discovery in v1.2</td>
+<td>Not connected to the session; needs separate OAuth setup with a 7-day-token gotcha. Gmail-search discovery covers v1.2; People API deferred to DISC-F1</td>
+</tr>
+<tr>
+<td>Multi-user / shared campaigns</td>
+<td>App is single-user by design (Clerk locks <code>steve@bronstein.org</code>)</td>
+</tr>
+</tbody></table>
+<h2>Traceability</h2>
+<p>Which phases cover which requirements. Updated during roadmap creation (2026-06-20).</p>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Phase</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CAMP-01</td>
+<td>Phase 14</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-02</td>
+<td>Phase 14</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-03</td>
+<td>Phase 14</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-04</td>
+<td>Phase 14</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-05</td>
+<td>Phase 14</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-06</td>
+<td>Phase 12</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-07</td>
+<td>Phase 12</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>CAMP-08</td>
+<td>Phase 12</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>TRGE-01</td>
+<td>Phase 13</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>GEN-01</td>
+<td>Phase 16</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>GEN-02</td>
+<td>Phase 16</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>GEN-03</td>
+<td>Phase 16</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>GEN-04</td>
+<td>Phase 16</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>GEN-05</td>
+<td>Phase 12</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>REV-01</td>
+<td>Phase 15</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>REV-02</td>
+<td>Phase 15</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>REV-03</td>
+<td>Phase 15</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>REV-04</td>
+<td>Phase 15</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>REV-05</td>
+<td>Phase 11</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>REV-06</td>
+<td>Phase 15</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DISC-01</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DISC-02</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DISC-03</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DRFT-01</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DRFT-02</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DRFT-03</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DRFT-04</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>DRFT-05</td>
+<td>Phase 17</td>
+<td>Pending</td>
+</tr>
+</tbody></table>
+<p><strong>Coverage:</strong></p>
+<ul>
+<li>v1.2 requirements: 28 total</li>
+<li>Mapped to phases: 28 / 28 ✓</li>
+<li>Unmapped: 0</li>
+</ul>
+<hr>
+<p><em>Requirements defined: 2026-06-20</em>
+<em>Last updated: 2026-06-20 — traceability table populated from ROADMAP.md v1.2 phase structure (Phases 11–17)</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/REQUIREMENTS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

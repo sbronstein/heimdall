@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Networking Outreach Campaigns
 status: planning
-last_updated: "2026-06-20T18:59:29.771Z"
+last_updated: "2026-06-20T00:00:00.000Z"
 last_activity: 2026-06-20
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-20)
 
 **Core value:** Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-**Current focus:** Between milestones — scope v1.2 via `/gsd:new-milestone`.
+**Current focus:** v1.2 Networking Outreach Campaigns — roadmap defined (Phases 11–17), ready to plan Phase 11.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 11 (Schema, Enums, and State Machine) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-20 — Milestone v1.2 started
+Status: Roadmap defined; ready for `/gsd:plan-phase 11`
+Last activity: 2026-06-20 — v1.2 roadmap created (Phases 11–17, 28 requirements mapped)
+
+## Phase Rail
+
+```
+[11] Schema+SM  →  [12] API  →  [13] Triage Filter  →  [14] Campaign UI  →  [15] Review UI  →  [16] Gen Skill  →  [17] Draft Skill
+ ○ not started      ○              ○                       ○                    ○                  ○                  ○
+```
 
 ## Performance Metrics
 
@@ -66,15 +73,20 @@ Recent decisions affecting current work:
 - v1.1 disambiguation: when a bare company name matches multiple LinkedIn companies, the skill presents top 3–5 results inline (name + employee count + industry) and waits for user pick.
 - v1.1 drain mode: same `/api/job-leads?status=queued` queue. Skill navigation branches on whether `linkedinJobUrl` is null.
 - v1.1 phase structure: Schema + API (Phase 7) → Skill (Phase 8) → UI (Phase 9). Schema first because skill and UI both depend on the nullable-column shape and synthetic-lead creation route.
+- v1.2 phase structure: Schema+SM (11) → API (12) → Triage Filter (13, parallel-eligible) → Campaign Builder UI (14) → Review UI (15) → Generation Skill (16) → Drafting Skill (17). Schema first for the same reason; state machine co-located because it's a pure TS module with no external dependencies; API before all UI and skills; highest-risk external integration (Gmail MCP) last.
+- v1.2 Gmail MCP: already connected to this Claude Code session — no OAuth setup phase needed. `create_draft`, `search_threads`, `get_thread` are the only permitted tools. `messages.send` and `drafts.send` are permanently out of scope.
+- v1.2 email discovery: Gmail thread search only (two-signal requirement). Google Contacts/People API deferred to DISC-F1.
+- v1.2 generation boundary: all AI generation runs in the `generate-outreach-emails` skill, never in an API route (Vercel 60-second timeout would be exceeded for a full campaign).
+- v1.2 N+1 prevention: bulk INSERT with `onConflictDoNothing()` for campaign creation; dedicated generation-context endpoint for the skill to fetch all contact data in one call.
 
 ### Pending Todos
 
-None yet.
+- Phase 17 requires phase-level research during planning: inspect `mcp__gmail__search_threads` actual response shape and validate two-signal confidence-scoring heuristics against real contacts before writing the discovery sub-flow.
 
 ### Blockers/Concerns
 
 - LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)
-- Phase 7 must verify whether `linkedinJobUrl` and `roleTitle` are already nullable in the current schema (Phase 5 may have added nullable `linkedinJobUrl`) — planner should check `drizzle/schema/job-leads.ts` before writing the migration plan
+- Phase 11 must check whether migration 0011 slot is free and what the current highest migration number is in `drizzle/migrations/` before writing the new migration.
 - **Pending user action (quick task 260520-n3s):** run `node scripts/backfill-enrichment-reset.mjs` (dry-run) then `--apply` to reset the ~1500 legacy contacts whose at-connection fields equal current — repopulates the enrichment queue. Live Neon prod write; not yet run.
 
 ### Quick Tasks Completed
@@ -91,6 +103,7 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 10 added (2026-05-20): Connection Company + Role Enrichment for Triage — surface company/role-at-time-of-connection in triage, agent-browser skill to backfill the CSV gap with anti-bot pacing across 1000+ profiles, plus just-in-time enrichment of mutual connections during company shared-connection triage.
+- Phases 11–17 added (2026-06-20): v1.2 Networking Outreach Campaigns — campaign creation + contact selection + AI email generation + review/approval + Gmail drafting. Research-guided dependency order: schema → API → triage filter → campaign UI → review UI → generation skill → drafting skill.
 
 ## Deferred Items
 
@@ -116,6 +129,6 @@ Items acknowledged and deferred at v1.1 milestone close (2026-06-20):
 ## Session Continuity
 
 Last session: 2026-06-20
-Stopped at: v1.1 milestone archived + tagged
+Stopped at: v1.2 roadmap created (Phases 11–17)
 Resume file: None
-Next action: `/clear` then `/gsd:new-milestone` to scope v1.2
+Next action: `/gsd:plan-phase 11`

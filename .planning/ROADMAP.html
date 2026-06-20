@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ROADMAP</title>
+<title>ROADMAP — Heimdall</title>
 <style>
 :root {
   --bg: #faf8f5;
@@ -15,6 +15,9 @@
   --warn: #b85a3a;
   --line: #e4ddd2;
   --code-bg: #f4efe7;
+  --phase-ship: #6b8e6b;
+  --phase-active: #c97a4a;
+  --phase-pending: #9ea8b3;
 }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
@@ -42,6 +45,27 @@ a:hover { border-bottom-style: solid; }
 footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
 .meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
 img { max-width: 100%; height: auto; }
+/* Phase cards */
+.phase-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px 14px; margin: 16px 0; position: relative; padding-left: 20px; }
+.phase-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 10px 0 0 10px; }
+.phase-card.shipped::before { background: var(--phase-ship); }
+.phase-card.pending::before { background: var(--phase-pending); }
+.phase-card .phase-num { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.phase-card h4 { font-size: 16px; margin: 0 0 6px; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.phase-card .goal { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+.phase-card .sc-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.phase-card .sc-list li { font-size: 13.5px; color: var(--muted); padding: 2px 0 2px 16px; position: relative; }
+.phase-card .sc-list li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; vertical-align: middle; margin-left: 6px; }
+.badge-pending { background: #f0ebe2; color: var(--muted); }
+.badge-good { background: #e8f3e8; color: var(--phase-ship); }
+.badge-ui { background: #e8f0f8; color: #3a6ea8; }
+.badge-research { background: #fff0e6; color: var(--warn); }
+.reqs { font-size: 12px; color: var(--accent-2); font-family: "SF Mono", Menlo, Consolas, monospace; margin: 4px 0 0; }
+details summary { cursor: pointer; user-select: none; padding: 8px 0; font-weight: 600; }
+details summary::-webkit-details-marker { color: var(--muted); }
+.progress-row-shipped td { color: var(--muted); }
+.progress-row-active td:first-child { font-weight: 700; }
 </style>
 </head>
 <body>
@@ -49,121 +73,218 @@ img { max-width: 100%; height: auto; }
 <div class="meta">Source of truth: <code>.planning/ROADMAP.md</code> · Rendered from markdown · May lag behind</div>
 
 <h1>Roadmap: Heimdall</h1>
-<p>Heimdall is brownfield — the executive job-search CRM is already shipped and in daily use. This roadmap tracks improvement milestones. Completed milestones are collapsed below; full per-milestone detail lives in <code>.planning/milestones/v[X.Y]-ROADMAP.md</code>.</p>
+<p>Heimdall is brownfield — the executive job-search CRM is already shipped and in daily use. This roadmap tracks improvement milestones. Completed milestones are collapsed; full per-milestone detail lives in <code>.planning/milestones/v[X.Y]-ROADMAP.md</code>.</p>
+
 <h2>Milestones</h2>
 <ul>
-<li>✅ <strong>v1.0 MVP / Brownfield Hardening</strong> — Phases 1–6 (shipped 2026-05-14)</li>
-<li>✅ <strong>v1.1 LinkedIn Scraping by Company</strong> — Phases 7–10 (shipped 2026-05-20)</li>
-<li>📋 <strong>v1.2 (next)</strong> — to be defined via <code>/gsd:new-milestone</code></li>
+  <li>✅ <strong>v1.0 MVP / Brownfield Hardening</strong> — Phases 1–6 (shipped 2026-05-14)</li>
+  <li>✅ <strong>v1.1 LinkedIn Scraping by Company</strong> — Phases 7–10 (shipped 2026-05-20)</li>
+  <li>📋 <strong>v1.2 Networking Outreach Campaigns</strong> — Phases 11–17 (in progress)</li>
 </ul>
+
 <h2>Phases</h2>
+
 <details>
-<summary>✅ v1.0 MVP / Brownfield Hardening (Phases 1–6) — SHIPPED 2026-05-14</summary><ul>
-<li><input checked="" disabled="" type="checkbox"> Phase 1: Critical Bug Fix (1/1 plan) — completed 2026-05-12 — eliminated the sidebar hydration crash that broke navigation after LinkedIn imports</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 2: Test Infrastructure (5/5 plans) — completed 2026-05-12 — Vitest + PGlite harness pinning load-bearing logic + the BUG-01 regression</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 3: Security Hardening (2/2 plans) — completed 2026-05-13 — authenticate every <code>/api/*</code> route + strip starter-template auth artifacts</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 4: Starter-Template Cleanup (5/5 plans) — completed 2026-05-13 — delete unused routes, components, dead imports, <code>__CLEANUP__/</code></li>
-<li><input checked="" disabled="" type="checkbox"> Phase 5: Job Leads Completion (7/7 plans) — completed 2026-05-14 — scraping moved out of the app into a Claude Code skill driving <code>vercel-labs/agent-browser</code>; queue + categorized failures in the DB</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 6: Performance (5/5 plans) — completed 2026-05-14 — eliminate N+1 patterns + add hot-path indexes (migration 0008)</li>
+<summary>✅ v1.0 MVP / Brownfield Hardening (Phases 1–6) — SHIPPED 2026-05-14</summary>
+<ul>
+  <li>✅ Phase 1: Critical Bug Fix (1/1 plan) — completed 2026-05-12 — eliminated the sidebar hydration crash that broke navigation after LinkedIn imports</li>
+  <li>✅ Phase 2: Test Infrastructure (5/5 plans) — completed 2026-05-12 — Vitest + PGlite harness pinning load-bearing logic + the BUG-01 regression</li>
+  <li>✅ Phase 3: Security Hardening (2/2 plans) — completed 2026-05-13 — authenticate every <code>/api/*</code> route + strip starter-template auth artifacts</li>
+  <li>✅ Phase 4: Starter-Template Cleanup (5/5 plans) — completed 2026-05-13 — delete unused routes, components, dead imports, <code>__CLEANUP__/</code></li>
+  <li>✅ Phase 5: Job Leads Completion (7/7 plans) — completed 2026-05-14 — scraping moved out of the app into a Claude Code skill driving <code>vercel-labs/agent-browser</code></li>
+  <li>✅ Phase 6: Performance (5/5 plans) — completed 2026-05-14 — eliminate N+1 patterns + add hot-path indexes (migration 0008)</li>
 </ul>
-<p><em>Full Phase 1–6 detail remains in git history (v1.0 was recorded retroactively at the v1.1 close; see <code>.planning/MILESTONES.md</code>).</em></p>
-</details><details>
-<summary>✅ v1.1 LinkedIn Scraping by Company (Phases 7–10) — SHIPPED 2026-05-20</summary><ul>
-<li><input checked="" disabled="" type="checkbox"> Phase 7: Schema + API for Company-Scope Leads (3/3 plans) — completed 2026-05-19 — nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> + API route for synthetic job leads without a job URL</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 8: Skill Input Parsing, Navigation Branching + Drain (3/3 plans) — completed 2026-05-19 — skill accepts company URLs and bare names, navigates direct to employees when no job URL, disambiguates multi-match</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 9: UI for Company-Scope Leads (1/1 plan) — completed 2026-05-20 — detail + list render company-scope leads cleanly without broken job-URL affordances</li>
-<li><input checked="" disabled="" type="checkbox"> Phase 10: Connection Company + Role Enrichment for Triage (4/4 plans) — completed 2026-05-20 — surface company/role at-time-of-connection in triage; paced agent-browser backfill + just-in-time enrichment</li>
+<p><em>Full Phase 1–6 detail remains in git history; see <code>.planning/MILESTONES.md</code>.</em></p>
+</details>
+
+<details>
+<summary>✅ v1.1 LinkedIn Scraping by Company (Phases 7–10) — SHIPPED 2026-05-20</summary>
+<ul>
+  <li>✅ Phase 7: Schema + API for Company-Scope Leads (3/3 plans) — completed 2026-05-19 — nullable <code>linkedinJobUrl</code>/<code>roleTitle</code> + API route for synthetic job leads without a job URL</li>
+  <li>✅ Phase 8: Skill Input Parsing, Navigation Branching + Drain (3/3 plans) — completed 2026-05-19 — skill accepts company URLs and bare names, navigates direct to employees when no job URL, disambiguates multi-match</li>
+  <li>✅ Phase 9: UI for Company-Scope Leads (1/1 plan) — completed 2026-05-20 — detail + list render company-scope leads cleanly without broken job-URL affordances</li>
+  <li>✅ Phase 10: Connection Company + Role Enrichment for Triage (4/4 plans) — completed 2026-05-20 — surface company/role at-time-of-connection in triage; paced agent-browser backfill + just-in-time enrichment</li>
 </ul>
 <p><em>Full Phase 7–10 detail: <code>.planning/milestones/v1.1-ROADMAP.md</code>.</em></p>
-</details><h3>📋 v1.2 (next milestone — to be defined)</h3>
-<p>Run <code>/gsd:new-milestone</code> to scope the next milestone. Candidate sources: the v2 deferred backlog in <code>.planning/milestones/v1.1-REQUIREMENTS.md</code> (production-grade scraping JL2-01..04, pgvector VEC-01/02, structured logging OBS-01/02, mobile/bulk-edit UX-01/02) and the deferred items in STATE.md.</p>
+</details>
+
+<h3>📋 v1.2 Networking Outreach Campaigns (Phases 11–17)</h3>
+<ul>
+  <li>☐ <strong>Phase 11: Schema, Enums, and State Machine</strong> — Two new Drizzle tables, three pgEnums, and <code>canEmailTransition()</code> locking the full email status lifecycle</li>
+  <li>☐ <strong>Phase 12: API Routes</strong> — Full <code>/api/outreach-campaigns/</code> route tree (campaign CRUD, bulk email add, status transitions, skill write-back endpoints)</li>
+  <li>☐ <strong>Phase 13: Triage Connection-Date Filter</strong> — Additive year-range filter on the existing triage workflow; independent of the campaign route tree</li>
+  <li>☐ <strong>Phase 14: Campaign Builder UI</strong> — Contact filter UI, checkbox multi-select, and campaign creation form</li>
+  <li>☐ <strong>Phase 15: Review and Approval UI</strong> — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header</li>
+  <li>☐ <strong>Phase 16: Email Generation Skill</strong> — <code>generate-outreach-emails</code> skill: drains pending queue, personalizes with closeness-tier tone and LLM-tell guardrails, writes back via REST</li>
+  <li>☐ <strong>Phase 17: Gmail Drafting and Email Discovery Skill</strong> — <code>draft-outreach-emails</code> skill: discovers emails via Gmail thread search, creates Gmail drafts (never sends), idempotent</li>
+</ul>
+
+<h2>Phase Details</h2>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 11 · v1.2</div>
+  <h4>Schema, Enums, and State Machine <span class="badge badge-pending">Not started</span></h4>
+  <p class="goal">The data model for outreach campaigns is in Postgres and the email status lifecycle is enforced at the API boundary before any other code depends on it.</p>
+  <div class="reqs">REV-05</div>
+  <ul class="sc-list">
+    <li><code>outreach_campaigns</code> and <code>outreach_emails</code> tables exist in Neon with all columns, indexes, and the unique constraint on <code>(campaign_id, contact_id)</code> — migration 0011 runs clean</li>
+    <li><code>canEmailTransition()</code> at <code>src/features/outreach/lib/email-status.ts</code> rejects invalid moves and accepts valid ones (<code>pending → generated → edited → approved → drafted</code>) — pinned by Vitest</li>
+    <li>Drizzle-inferred types <code>OutreachCampaign</code> and <code>OutreachEmail</code> are exported from <code>src/lib/domain/types.ts</code></li>
+  </ul>
+</div>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 12 · v1.2</div>
+  <h4>API Routes <span class="badge badge-pending">Not started</span></h4>
+  <p class="goal">The full REST API surface for outreach campaigns is live and usable from the CLI; skills and UI have working endpoints to build against.</p>
+  <div class="reqs">CAMP-06, CAMP-07, CAMP-08, GEN-05</div>
+  <ul class="sc-list">
+    <li>User (via CLI) can create a named campaign with a goal/instruction and get back the new campaign id</li>
+    <li>User (via CLI) can add a list of contact IDs to a campaign in one request; a second add of the same contact is silently deduped</li>
+    <li>User (via CLI) can list campaigns and see per-campaign counts: selected / generated / approved / drafted</li>
+    <li>User (via CLI) can transition an email's status through the lifecycle; invalid transitions return 400 with the state machine's rejection reason</li>
+    <li>All new routes return the standard <code>{ success, data, error, meta }</code> envelope and reject unauthenticated requests</li>
+  </ul>
+</div>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 13 · v1.2</div>
+  <h4>Triage Connection-Date Filter <span class="badge badge-pending">Not started</span> <span class="badge badge-ui">UI</span></h4>
+  <p class="goal">The owner can filter the existing triage queue by connection year or date range to surface cohorts of people (e.g. ID.me colleagues from 2021–2022).</p>
+  <div class="reqs">TRGE-01</div>
+  <ul class="sc-list">
+    <li>Year buttons in the triage UI filter the queue to contacts whose <code>linkedinConnectionDate</code> falls within that year</li>
+    <li>A two-year range (e.g. 2021–2022) can be set and the queue shows only matching contacts</li>
+    <li>The year filter survives a page reload (URL-driven via nuqs query params)</li>
+    <li>Clearing the filter restores the full triage queue</li>
+  </ul>
+</div>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 14 · v1.2</div>
+  <h4>Campaign Builder UI <span class="badge badge-pending">Not started</span> <span class="badge badge-ui">UI</span></h4>
+  <p class="goal">The owner can create a named campaign with a goal by filtering contacts and multi-selecting recipients from the browser.</p>
+  <div class="reqs">CAMP-01, CAMP-02, CAMP-03, CAMP-04, CAMP-05</div>
+  <ul class="sc-list">
+    <li>Navigating to <code>/dashboard/outreach/</code> shows the campaign list with per-campaign progress</li>
+    <li>The campaign builder lets the owner filter contacts simultaneously by howMet, connection year/date range, closeness tier, and outreach status</li>
+    <li>The owner can checkbox-select individual contacts or use select-all within the current filter</li>
+    <li>Providing a campaign name and goal and saving creates the campaign and navigates to its review page</li>
+    <li>Selecting the same contact twice across separate saves does not create a duplicate email row</li>
+  </ul>
+</div>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 15 · v1.2</div>
+  <h4>Review and Approval UI <span class="badge badge-pending">Not started</span> <span class="badge badge-ui">UI</span></h4>
+  <p class="goal">The owner can review generated email content for each contact in a campaign, edit it inline, and approve or regenerate individual emails from the browser.</p>
+  <div class="reqs">REV-01, REV-02, REV-03, REV-04, REV-06</div>
+  <ul class="sc-list">
+    <li>The campaign review page shows all emails with their current status and, once generated, the subject line and body</li>
+    <li>The owner can edit a generated email's subject and body inline; saving the edit advances the status to <code>edited</code></li>
+    <li>The owner can approve an email; the approve button is disabled for contacts with <code>archived_at</code> set</li>
+    <li>The owner can click regenerate on a single email to reset it to <code>pending</code></li>
+    <li>Contacts with no stored email show a "needs LinkedIn message" badge; the campaign header shows progress counts (approved / total)</li>
+  </ul>
+</div>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 16 · v1.2</div>
+  <h4>Email Generation Skill <span class="badge badge-pending">Not started</span></h4>
+  <p class="goal">Running the <code>generate-outreach-emails</code> skill fills all pending emails in a campaign with personalized subject lines and bodies, in the owner's voice, without hallucinating history.</p>
+  <div class="reqs">GEN-01, GEN-02, GEN-03, GEN-04</div>
+  <ul class="sc-list">
+    <li>Running the skill against a campaign advances all <code>pending</code> emails to <code>generated</code> with a subject line and body written back via REST</li>
+    <li>Generated emails reference only facts present in the provided contact context; low-context contacts (fewer than 2 logged interactions) are flagged in the write-back</li>
+    <li>Generated tone is calibrated to closeness tier — conversational for tiers 1–2, professional-warm for tiers 3–5, brief and direct for tiers 7–8</li>
+    <li>Every generated email passes a built-in LLM-tell scan (no em-dashes, "leverage", "robust", or generic openers)</li>
+    <li>When generation fails for a contact, that email is marked <code>failed</code> and the skill continues without crashing</li>
+  </ul>
+</div>
+
+<div class="phase-card pending">
+  <div class="phase-num">Phase 17 · v1.2</div>
+  <h4>Gmail Drafting and Email Discovery Skill <span class="badge badge-pending">Not started</span> <span class="badge badge-research">Research needed</span></h4>
+  <p class="goal">Approved emails are pushed to Gmail as drafts (never sent), contacts without stored emails have addresses discovered from Gmail thread history, and LinkedIn-only contacts are clearly flagged.</p>
+  <div class="reqs">DISC-01, DISC-02, DISC-03, DRFT-01, DRFT-02, DRFT-03, DRFT-04, DRFT-05</div>
+  <ul class="sc-list">
+    <li>Running the skill creates a Gmail draft for each approved email with a recipient; draft id stored, email marked <code>drafted</code>, contact's <code>outreachStatus</code> set to <code>reached_out</code>, timeline event logged</li>
+    <li>For approved emails where the contact has no stored email, the skill searches Gmail threads and writes back a discovered address only when at least two signals match; ambiguous multi-match candidates surface in the review UI</li>
+    <li>When no email is found, the contact's channel is set to <code>linkedin_message</code> and the badge appears in the review UI — never silently dropped</li>
+    <li>Re-running the skill is idempotent: no duplicate drafts; re-drafting an edited email updates the existing Gmail draft in-place</li>
+    <li>The skill contains zero send-family Gmail calls — every Gmail action is <code>create_draft</code> or <code>drafts.update</code>, verifiable by grepping for "send"</li>
+  </ul>
+</div>
+
 <h2>Progress</h2>
-<p><strong>Execution order:</strong> Phases executed in numeric order 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10.</p>
+<p><strong>Execution order:</strong> Phases executed in numeric order 1 → 2 → … → 17.</p>
 <table>
 <thead>
 <tr>
-<th>Phase</th>
-<th>Milestone</th>
-<th>Plans Complete</th>
-<th>Status</th>
-<th>Completed</th>
+  <th>Phase</th>
+  <th>Milestone</th>
+  <th>Plans Complete</th>
+  <th>Status</th>
+  <th>Completed</th>
 </tr>
 </thead>
-<tbody><tr>
-<td>1. Critical Bug Fix</td>
-<td>v1.0</td>
-<td>1/1</td>
-<td>Complete</td>
-<td>2026-05-12</td>
+<tbody>
+<tr class="progress-row-shipped">
+  <td>1. Critical Bug Fix</td><td>v1.0</td><td>1/1</td><td>Complete</td><td>2026-05-12</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>2. Test Infrastructure</td><td>v1.0</td><td>5/5</td><td>Complete</td><td>2026-05-12</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>3. Security Hardening</td><td>v1.0</td><td>2/2</td><td>Complete</td><td>2026-05-13</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>4. Starter-Template Cleanup</td><td>v1.0</td><td>5/5</td><td>Complete</td><td>2026-05-13</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>5. Job Leads Completion</td><td>v1.0</td><td>7/7</td><td>Complete</td><td>2026-05-14</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>6. Performance</td><td>v1.0</td><td>5/5</td><td>Complete</td><td>2026-05-14</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>7. Schema + API for Company-Scope Leads</td><td>v1.1</td><td>3/3</td><td>Complete</td><td>2026-05-19</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>8. Skill Input Parsing, Navigation Branching + Drain</td><td>v1.1</td><td>3/3</td><td>Complete</td><td>2026-05-19</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>9. UI for Company-Scope Leads</td><td>v1.1</td><td>1/1</td><td>Complete</td><td>2026-05-20</td>
+</tr>
+<tr class="progress-row-shipped">
+  <td>10. Connection Company + Role Enrichment for Triage</td><td>v1.1</td><td>4/4</td><td>Complete</td><td>2026-05-20</td>
+</tr>
+<tr class="progress-row-active">
+  <td>11. Schema, Enums, and State Machine</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
-<td>2. Test Infrastructure</td>
-<td>v1.0</td>
-<td>5/5</td>
-<td>Complete</td>
-<td>2026-05-12</td>
+  <td>12. API Routes</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
-<td>3. Security Hardening</td>
-<td>v1.0</td>
-<td>2/2</td>
-<td>Complete</td>
-<td>2026-05-13</td>
+  <td>13. Triage Connection-Date Filter</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
-<td>4. Starter-Template Cleanup</td>
-<td>v1.0</td>
-<td>5/5</td>
-<td>Complete</td>
-<td>2026-05-13</td>
+  <td>14. Campaign Builder UI</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
-<td>5. Job Leads Completion</td>
-<td>v1.0</td>
-<td>7/7</td>
-<td>Complete</td>
-<td>2026-05-14</td>
+  <td>15. Review and Approval UI</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
-<td>6. Performance</td>
-<td>v1.0</td>
-<td>5/5</td>
-<td>Complete</td>
-<td>2026-05-14</td>
+  <td>16. Email Generation Skill</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
-<td>7. Schema + API for Company-Scope Leads</td>
-<td>v1.1</td>
-<td>3/3</td>
-<td>Complete</td>
-<td>2026-05-19</td>
+  <td>17. Gmail Drafting and Email Discovery Skill</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
 </tr>
-<tr>
-<td>8. Skill Input Parsing, Navigation Branching + Drain</td>
-<td>v1.1</td>
-<td>3/3</td>
-<td>Complete</td>
-<td>2026-05-19</td>
-</tr>
-<tr>
-<td>9. UI for Company-Scope Leads</td>
-<td>v1.1</td>
-<td>1/1</td>
-<td>Complete</td>
-<td>2026-05-20</td>
-</tr>
-<tr>
-<td>10. Connection Company + Role Enrichment for Triage</td>
-<td>v1.1</td>
-<td>4/4</td>
-<td>Complete</td>
-<td>2026-05-20</td>
-</tr>
-</tbody></table>
+</tbody>
+</table>
+
 <hr>
-<p><em>Last updated: 2026-06-20 — v1.1 milestone archived. Completed-milestone detail in <code>.planning/milestones/</code>.</em></p>
-
-
+<p><em>Last updated: 2026-06-20 — v1.2 Networking Outreach Campaigns roadmap created (Phases 11–17). v1.0 (Phases 1–6) and v1.1 (Phases 7–10) shipped and archived in <code>.planning/milestones/</code>.</em></p>
 
 <footer>
 Source of truth: <code>.planning/ROADMAP.md</code> · This HTML companion may lag behind the markdown.

@@ -90,22 +90,44 @@ Explicitly excluded. Anti-features documented to prevent scope creep — several
 
 ## Traceability
 
-Which phases cover which requirements. Populated during roadmap creation.
+Which phases cover which requirements. Updated during roadmap creation (2026-06-20).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAMP-01..08 | TBD | Pending |
-| TRGE-01 | TBD | Pending |
-| GEN-01..05 | TBD | Pending |
-| REV-01..06 | TBD | Pending |
-| DISC-01..03 | TBD | Pending |
-| DRFT-01..05 | TBD | Pending |
+| CAMP-01 | Phase 14 | Pending |
+| CAMP-02 | Phase 14 | Pending |
+| CAMP-03 | Phase 14 | Pending |
+| CAMP-04 | Phase 14 | Pending |
+| CAMP-05 | Phase 14 | Pending |
+| CAMP-06 | Phase 12 | Pending |
+| CAMP-07 | Phase 12 | Pending |
+| CAMP-08 | Phase 12 | Pending |
+| TRGE-01 | Phase 13 | Pending |
+| GEN-01 | Phase 16 | Pending |
+| GEN-02 | Phase 16 | Pending |
+| GEN-03 | Phase 16 | Pending |
+| GEN-04 | Phase 16 | Pending |
+| GEN-05 | Phase 12 | Pending |
+| REV-01 | Phase 15 | Pending |
+| REV-02 | Phase 15 | Pending |
+| REV-03 | Phase 15 | Pending |
+| REV-04 | Phase 15 | Pending |
+| REV-05 | Phase 11 | Pending |
+| REV-06 | Phase 15 | Pending |
+| DISC-01 | Phase 17 | Pending |
+| DISC-02 | Phase 17 | Pending |
+| DISC-03 | Phase 17 | Pending |
+| DRFT-01 | Phase 17 | Pending |
+| DRFT-02 | Phase 17 | Pending |
+| DRFT-03 | Phase 17 | Pending |
+| DRFT-04 | Phase 17 | Pending |
+| DRFT-05 | Phase 17 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 28 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 28 ⚠️ (roadmapper will map all)
+- Mapped to phases: 28 / 28 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-06-20*
-*Last updated: 2026-06-20 after initial v1.2 definition*
+*Last updated: 2026-06-20 — traceability table populated from ROADMAP.md v1.2 phase structure (Phases 11–17)*

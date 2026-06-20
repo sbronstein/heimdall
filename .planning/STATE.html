@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>STATE</title>
+<title>STATE — Heimdall</title>
 <style>
 :root {
   --bg: #faf8f5;
@@ -31,7 +31,6 @@ em { font-style: italic; }
 code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
 pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
 pre code { background: transparent; padding: 0; border-radius: 0; }
-blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
 table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
 thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
 tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -41,259 +40,162 @@ a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var
 a:hover { border-bottom-style: solid; }
 footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
 .meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
-img { max-width: 100%; height: auto; }
+/* Position card */
+.position-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 16px 0; border-left: 5px solid var(--accent-2); }
+.position-card .milestone-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+.position-card .milestone-name { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.position-card .position-detail { font-size: 14px; color: var(--muted); margin: 3px 0; }
+/* Phase rail */
+.phase-rail { display: flex; gap: 0; margin: 18px 0; flex-wrap: wrap; align-items: center; }
+.phase-rail .dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); position: relative; }
+.phase-rail .dot.pending { background: #f4efe7; color: var(--muted); }
+.phase-rail .dot.next { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+.phase-rail .arrow { font-size: 12px; color: var(--line); padding: 0 2px; }
+.phase-rail .dot-label { font-size: 10px; color: var(--muted); text-align: center; margin-top: 3px; }
+.phase-rail-row { display: flex; flex-direction: column; align-items: center; }
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; vertical-align: middle; margin-left: 4px; }
+.badge-pending { background: #f0ebe2; color: var(--muted); }
+.badge-good { background: #e8f3e8; color: var(--accent); }
+.badge-warn { background: #fff0e6; color: var(--warn); }
 </style>
 </head>
 <body>
 <div class="wrap">
 <div class="meta">Source of truth: <code>.planning/STATE.md</code> · Rendered from markdown · May lag behind</div>
 
-<hr>
-<h2>gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: LinkedIn Scraping by Company
-status: shipped
-stopped_at: v1.1 milestone archived
-last_updated: &quot;2026-06-20T00:00:00.000Z&quot;
-last_activity: 2026-06-20 -- v1.1 milestone archived (Phases 7-10); tagged v1.1
-progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 36
-  completed_plans: 36
-  percent: 100</h2>
 <h1>Project State</h1>
+
+<div class="position-card">
+  <div class="milestone-label">v1.2 · Active Milestone</div>
+  <div class="milestone-name">Networking Outreach Campaigns</div>
+  <div class="position-detail"><strong>Phase:</strong> 11 (Schema, Enums, and State Machine) — not started</div>
+  <div class="position-detail"><strong>Status:</strong> Roadmap defined · Ready for <code>/gsd:plan-phase 11</code></div>
+  <div class="position-detail"><strong>Last activity:</strong> 2026-06-20 — v1.2 roadmap created (Phases 11–17, 28 requirements mapped)</div>
+  <div class="position-detail"><strong>v1.2 progress:</strong> 0 / 7 phases complete</div>
+</div>
+
+<h3>Phase Rail (v1.2)</h3>
+<div class="phase-rail">
+  <div class="phase-rail-row"><div class="dot next">11</div><div class="dot-label">Schema</div></div>
+  <div class="arrow">→</div>
+  <div class="phase-rail-row"><div class="dot pending">12</div><div class="dot-label">API</div></div>
+  <div class="arrow">→</div>
+  <div class="phase-rail-row"><div class="dot pending">13</div><div class="dot-label">Triage</div></div>
+  <div class="arrow">→</div>
+  <div class="phase-rail-row"><div class="dot pending">14</div><div class="dot-label">Camp UI</div></div>
+  <div class="arrow">→</div>
+  <div class="phase-rail-row"><div class="dot pending">15</div><div class="dot-label">Review UI</div></div>
+  <div class="arrow">→</div>
+  <div class="phase-rail-row"><div class="dot pending">16</div><div class="dot-label">Gen Skill</div></div>
+  <div class="arrow">→</div>
+  <div class="phase-rail-row"><div class="dot pending">17</div><div class="dot-label">Draft Skill</div></div>
+</div>
+
 <h2>Project Reference</h2>
-<p>See: .planning/PROJECT.md (updated 2026-06-20)</p>
-<p><strong>Core value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-<strong>Current focus:</strong> Between milestones — scope v1.2 via <code>/gsd:new-milestone</code>.</p>
-<h2>Current Position</h2>
-<p>Milestone: v1.1 LinkedIn Scraping by Company — ✅ SHIPPED 2026-05-20, archived 2026-06-20 (tag <code>v1.1</code>)
-Phases: 7–10 complete (11 plans)
-Status: Milestone closed. No active phase.
-Last activity: 2026-06-20 -- v1.1 milestone archived to .planning/milestones/</p>
-<p><strong>Shipped milestones:</strong> v1.0 (Phases 1–6) · v1.1 (Phases 7–10)</p>
+<p>See: <code>.planning/PROJECT.md</code> (updated 2026-06-20)</p>
+<p><strong>Core value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.</p>
+<p><strong>Current focus:</strong> v1.2 Networking Outreach Campaigns — roadmap defined (Phases 11–17), ready to plan Phase 11.</p>
+
 <h2>Performance Metrics</h2>
 <p><strong>Velocity (v1.0 reference):</strong></p>
 <ul>
-<li>Total plans completed: 31 (Phases 1–6)</li>
-<li>Average duration: ~10 min/plan</li>
+  <li>Total plans completed: 31 (Phases 1–6)</li>
+  <li>Average duration: ~10 min/plan</li>
 </ul>
-<p><strong>By Phase (v1.0):</strong></p>
 <table>
 <thead>
-<tr>
-<th>Phase</th>
-<th>Plans</th>
-<th>Total</th>
-<th>Avg/Plan</th>
-</tr>
+<tr><th>Phase</th><th>Plans</th><th>Total</th><th>Avg/Plan</th></tr>
 </thead>
-<tbody><tr>
-<td>01-critical-bug-fix</td>
-<td>1</td>
-<td>~15 min</td>
-<td>~15 min</td>
-</tr>
-<tr>
-<td>02-test-infrastructure</td>
-<td>5</td>
-<td>~75 min</td>
-<td>~15 min</td>
-</tr>
-<tr>
-<td>03-security-hardening</td>
-<td>2</td>
-<td>~20 min</td>
-<td>~10 min</td>
-</tr>
-<tr>
-<td>04-starter-template-cleanup</td>
-<td>5</td>
-<td>~23 min</td>
-<td>~5 min</td>
-</tr>
-<tr>
-<td>05-job-leads-completion</td>
-<td>7</td>
-<td>TBD</td>
-<td>TBD</td>
-</tr>
-<tr>
-<td>06-performance</td>
-<td>5</td>
-<td>TBD</td>
-<td>TBD</td>
-</tr>
-<tr>
-<td>07</td>
-<td>3</td>
-<td>-</td>
-<td>-</td>
-</tr>
-<tr>
-<td>08</td>
-<td>3</td>
-<td>-</td>
-<td>-</td>
-</tr>
-</tbody></table>
-<p><strong>v1.1 plans completed:</strong> 0 / TBD</p>
-<p><em>Updated after each plan completion</em>
-| Phase 09 P01 | 11m | 2 tasks | 4 files |</p>
+<tbody>
+<tr><td>01-critical-bug-fix</td><td>1</td><td>~15 min</td><td>~15 min</td></tr>
+<tr><td>02-test-infrastructure</td><td>5</td><td>~75 min</td><td>~15 min</td></tr>
+<tr><td>03-security-hardening</td><td>2</td><td>~20 min</td><td>~10 min</td></tr>
+<tr><td>04-starter-template-cleanup</td><td>5</td><td>~23 min</td><td>~5 min</td></tr>
+<tr><td>05-job-leads-completion</td><td>7</td><td>TBD</td><td>TBD</td></tr>
+<tr><td>06-performance</td><td>5</td><td>TBD</td><td>TBD</td></tr>
+<tr><td>07</td><td>3</td><td>—</td><td>—</td></tr>
+<tr><td>08</td><td>3</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
 <h2>Accumulated Context</h2>
+
 <h3>Decisions</h3>
-<p>Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:</p>
+<p>Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecting current work:</p>
 <ul>
-<li>v1.1 data model: synthetic <code>job_leads</code> row (<code>linkedinJobUrl = null</code>, <code>roleTitle = null</code> or &quot;Company-wide scrape&quot;). No new entity, no new table for company scrapes. Reuse existing routes/UI/state machine.</li>
-<li>v1.1 role filter: none — the skill returns all 2nd-degree connections at the company.</li>
-<li>v1.1 disambiguation: when a bare company name matches multiple LinkedIn companies, the skill presents top 3–5 results inline (name + employee count + industry) and waits for user pick.</li>
-<li>v1.1 drain mode: same <code>/api/job-leads?status=queued</code> queue. Skill navigation branches on whether <code>linkedinJobUrl</code> is null.</li>
-<li>v1.1 phase structure: Schema + API (Phase 7) → Skill (Phase 8) → UI (Phase 9). Schema first because skill and UI both depend on the nullable-column shape and synthetic-lead creation route.</li>
+  <li>v1.1 data model: synthetic <code>job_leads</code> row (<code>linkedinJobUrl = null</code>). No new entity for company scrapes; reuse existing pipeline.</li>
+  <li>v1.2 phase structure: Schema+SM (11) → API (12) → Triage Filter (13) → Campaign Builder UI (14) → Review UI (15) → Generation Skill (16) → Drafting Skill (17). Schema first to lock Postgres enums; API before all UI/skills; highest-risk external integration (Gmail MCP) last.</li>
+  <li>v1.2 Gmail MCP: already connected — no OAuth setup phase needed. <code>create_draft</code>, <code>search_threads</code>, <code>get_thread</code> are the only permitted tools. <code>messages.send</code> and <code>drafts.send</code> are permanently out of scope.</li>
+  <li>v1.2 email discovery: Gmail thread search only (two-signal requirement). Google Contacts/People API deferred to DISC-F1.</li>
+  <li>v1.2 generation boundary: all AI generation runs in the <code>generate-outreach-emails</code> skill, never in an API route (Vercel 60-second timeout).</li>
+  <li>v1.2 N+1 prevention: bulk INSERT with <code>onConflictDoNothing()</code> for campaign creation; dedicated generation-context endpoint for the skill to fetch all contact data in one call.</li>
 </ul>
+
 <h3>Pending Todos</h3>
-<p>None yet.</p>
+<ul>
+  <li>Phase 17 requires phase-level research during planning: inspect <code>mcp__gmail__search_threads</code> actual response shape and validate two-signal confidence-scoring heuristics against real contacts before writing the discovery sub-flow.</li>
+</ul>
+
 <h3>Blockers/Concerns</h3>
 <ul>
-<li>LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)</li>
-<li>Phase 7 must verify whether <code>linkedinJobUrl</code> and <code>roleTitle</code> are already nullable in the current schema (Phase 5 may have added nullable <code>linkedinJobUrl</code>) — planner should check <code>drizzle/schema/job-leads.ts</code> before writing the migration plan</li>
-<li><strong>Pending user action (quick task 260520-n3s):</strong> run <code>node scripts/backfill-enrichment-reset.mjs</code> (dry-run) then <code>--apply</code> to reset the ~1500 legacy contacts whose at-connection fields equal current — repopulates the enrichment queue. Live Neon prod write; not yet run.</li>
+  <li>LinkedIn scraping requires local dev / Docker with host browser; cannot run on Vercel serverless (acknowledged out-of-scope)</li>
+  <li>Phase 11 must check the current highest migration number in <code>drizzle/migrations/</code> before writing the new migration</li>
+  <li><strong>Pending user action (quick task 260520-n3s):</strong> run <code>node scripts/backfill-enrichment-reset.mjs</code> (dry-run) then <code>--apply</code> to reset ~1500 legacy contacts — repopulates the enrichment queue. Live Neon prod write; not yet run.</li>
 </ul>
+
 <h3>Quick Tasks Completed</h3>
 <table>
 <thead>
-<tr>
-<th>#</th>
-<th>Description</th>
-<th>Date</th>
-<th>Commit</th>
-<th>Directory</th>
-</tr>
+<tr><th>#</th><th>Description</th><th>Date</th><th>Commit</th></tr>
 </thead>
-<tbody><tr>
-<td>260520-n3s</td>
-<td>Correct current-vs-at-connection contact model (import seeds current-only; triage shows both; backfill script)</td>
-<td>2026-05-20</td>
-<td>4cafde2</td>
-<td><a href="./quick/260520-n3s-current-vs-at-connection-fields/">260520-n3s-current-vs-at-connection-fields</a></td>
-</tr>
-<tr>
-<td>260521-b6x</td>
-<td>Fix scrape-linkedin-connections skill: enrichment reconstructs company/role AS OF connection date (not current/most-recent), with date-matching + 3 fallbacks</td>
-<td>2026-05-21</td>
-<td>1b237c6</td>
-<td><a href="./quick/260521-b6x-enrich-as-of-connection-date/">260521-b6x-enrich-as-of-connection-date</a></td>
-</tr>
-<tr>
-<td>260521-bhf</td>
-<td>Split career_contact closeness into close_career (bridge weight 50) + career (40) across enum, types, weights, color map, triage bar, networking selects; raw-SQL enum-swap migration remaps existing rows to career</td>
-<td>2026-05-21</td>
-<td>10d430f</td>
-<td><a href="./quick/260521-bhf-split-career-closeness-into-close-career/">260521-bhf-split-career-closeness-into-close-career</a></td>
-</tr>
-<tr>
-<td>260521-dwi</td>
-<td>Add LinkedIn link rectangle next to names and titles on job lead drilldown page</td>
-<td>2026-05-21</td>
-<td>48acb3d</td>
-<td><a href="./quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/">260521-dwi-add-linkedin-link-rectangle-next-to-name</a></td>
-</tr>
-<tr>
-<td>260611-kqi</td>
-<td>Add do-not-use-for-intros override flag to contacts (schema + REST + form toggle) with hard exclusion in buildRecommendations</td>
-<td>2026-06-11</td>
-<td>9766e5b</td>
-<td><a href="./quick/260611-kqi-add-do-not-use-for-intros-override-flag-/">260611-kqi-add-do-not-use-for-intros-override-flag-</a></td>
-</tr>
-<tr>
-<td>260611-l44</td>
-<td>Clickable contact names (link to contact record) + Override button next to LinkedIn badge in RecommendationCard, optimistic removal on override</td>
-<td>2026-06-11</td>
-<td>b1a20b3</td>
-<td><a href="./quick/260611-l44-make-contact-names-clickable-and-add-ove/">260611-l44-make-contact-names-clickable-and-add-ove</a></td>
-</tr>
-</tbody></table>
+<tbody>
+<tr><td>260520-n3s</td><td>Correct current-vs-at-connection contact model</td><td>2026-05-20</td><td>4cafde2</td></tr>
+<tr><td>260521-b6x</td><td>Fix scrape-linkedin-connections skill: enrichment reconstructs company/role AS OF connection date</td><td>2026-05-21</td><td>1b237c6</td></tr>
+<tr><td>260521-bhf</td><td>Split career_contact closeness into close_career + career across enum, types, weights</td><td>2026-05-21</td><td>10d430f</td></tr>
+<tr><td>260521-dwi</td><td>Add LinkedIn link rectangle next to names and titles on job lead drilldown page</td><td>2026-05-21</td><td>48acb3d</td></tr>
+<tr><td>260611-kqi</td><td>Add do-not-use-for-intros override flag to contacts (schema + REST + form toggle)</td><td>2026-06-11</td><td>9766e5b</td></tr>
+<tr><td>260611-l44</td><td>Clickable contact names + Override button in RecommendationCard</td><td>2026-06-11</td><td>b1a20b3</td></tr>
+</tbody>
+</table>
+
 <h3>Roadmap Evolution</h3>
 <ul>
-<li>Phase 10 added (2026-05-20): Connection Company + Role Enrichment for Triage — surface company/role-at-time-of-connection in triage, agent-browser skill to backfill the CSV gap with anti-bot pacing across 1000+ profiles, plus just-in-time enrichment of mutual connections during company shared-connection triage.</li>
+  <li>Phase 10 added (2026-05-20): Connection Company + Role Enrichment for Triage — surface company/role-at-time-of-connection in triage; paced agent-browser backfill + just-in-time enrichment.</li>
+  <li>Phases 11–17 added (2026-06-20): v1.2 Networking Outreach Campaigns — campaign creation + contact selection + AI email generation + review/approval + Gmail drafting. Research-guided dependency order: schema → API → triage filter → campaign UI → review UI → generation skill → drafting skill.</li>
 </ul>
+
 <h2>Deferred Items</h2>
 <p>Items acknowledged and carried forward from v1.0:</p>
 <table>
 <thead>
-<tr>
-<th>Category</th>
-<th>Item</th>
-<th>Status</th>
-<th>Deferred At</th>
-</tr>
+<tr><th>Category</th><th>Item</th><th>Status</th><th>Deferred At</th></tr>
 </thead>
-<tbody><tr>
-<td>Performance</td>
-<td>pg_trgm GIN for cross-entity ilike search</td>
-<td>Deferred to v2</td>
-<td>Phase 6</td>
-</tr>
-<tr>
-<td>Playwright</td>
-<td>Move playwright from dependencies to devDependencies</td>
-<td>Deferred to v2 as JL2-02</td>
-<td>Phase 5</td>
-</tr>
-</tbody></table>
+<tbody>
+<tr><td>Performance</td><td>pg_trgm GIN for cross-entity ilike search</td><td>Deferred to v2</td><td>Phase 6</td></tr>
+<tr><td>Playwright</td><td>Move playwright from dependencies to devDependencies</td><td>Deferred to v2 as JL2-02</td><td>Phase 5</td></tr>
+</tbody>
+</table>
 <p>Items acknowledged and deferred at v1.1 milestone close (2026-06-20):</p>
 <table>
 <thead>
-<tr>
-<th>Category</th>
-<th>Item</th>
-<th>Status</th>
-</tr>
+<tr><th>Category</th><th>Item</th><th>Status</th></tr>
 </thead>
-<tbody><tr>
-<td>UAT</td>
-<td>Phase 6 human UAT — 1 open scenario</td>
-<td>partial</td>
-</tr>
-<tr>
-<td>UAT</td>
-<td>Phase 8 human UAT — 4 open scenarios</td>
-<td>partial</td>
-</tr>
-<tr>
-<td>Verification</td>
-<td>Phase 1 verification sign-off</td>
-<td>human_needed</td>
-</tr>
-<tr>
-<td>Verification</td>
-<td>Phase 6 verification sign-off</td>
-<td>human_needed</td>
-</tr>
-<tr>
-<td>Verification</td>
-<td>Phase 8 verification sign-off</td>
-<td>human_needed</td>
-</tr>
-<tr>
-<td>Verification</td>
-<td>Phase 9 verification</td>
-<td>gaps_found</td>
-</tr>
-<tr>
-<td>Data</td>
-<td>Run <code>backfill-enrichment-reset.mjs</code> dry-run then <code>--apply</code> to reset ~1500 legacy contacts + repopulate enrichment queue (live Neon prod write — quick task 260520-n3s)</td>
-<td>pending</td>
-</tr>
-</tbody></table>
+<tbody>
+<tr><td>UAT</td><td>Phase 6 human UAT — 1 open scenario</td><td>partial</td></tr>
+<tr><td>UAT</td><td>Phase 8 human UAT — 4 open scenarios</td><td>partial</td></tr>
+<tr><td>Verification</td><td>Phase 1 verification sign-off</td><td>human_needed</td></tr>
+<tr><td>Verification</td><td>Phase 6 verification sign-off</td><td>human_needed</td></tr>
+<tr><td>Verification</td><td>Phase 8 verification sign-off</td><td>human_needed</td></tr>
+<tr><td>Verification</td><td>Phase 9 verification</td><td>gaps_found</td></tr>
+<tr><td>Data</td><td>Run <code>backfill-enrichment-reset.mjs</code> dry-run then <code>--apply</code> to reset ~1500 legacy contacts (quick task 260520-n3s)</td><td>pending</td></tr>
+</tbody>
+</table>
+
 <h2>Session Continuity</h2>
-<p>Last session: 2026-06-20
-Stopped at: v1.1 milestone archived + tagged
-Resume file: None
-Next action: <code>/clear</code> then <code>/gsd:new-milestone</code> to scope v1.2</p>
-
-
+<p><strong>Last session:</strong> 2026-06-20<br>
+<strong>Stopped at:</strong> v1.2 roadmap created (Phases 11–17)<br>
+<strong>Resume file:</strong> None<br>
+<strong>Next action:</strong> <code>/gsd:plan-phase 11</code></p>
 
 <footer>
 Source of truth: <code>.planning/STATE.md</code> · This HTML companion may lag behind the markdown.
