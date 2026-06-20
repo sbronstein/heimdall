@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 11-schema-enums-and-state-machine
+plan: 02
+type: execute
+wave: 2
+depends_on: [&quot;11-01&quot;]
+files_modified:</p>
+<ul>
+<li>src/lib/domain/types.ts</li>
+<li>src/features/outreach/lib/email-status.ts
+autonomous: true
+requirements: [REV-05]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;OutreachCampaign and OutreachEmail Drizzle-inferred types are exported from src/lib/domain/types.ts&quot;
+    - &quot;canEmailTransition(from, to) returns true for valid lifecycle moves and false for invalid ones&quot;
+    - &quot;isEmailTerminalState(status) returns false for every status (terminal set is empty)&quot;
+    - &quot;Regenerate edges (generated→pending, edited→pending) are accepted; drafted→edited is accepted&quot;
+  artifacts:
+    - path: &quot;src/lib/domain/types.ts&quot;
+      provides: &quot;OutreachCampaign, NewOutreachCampaign, OutreachEmail, NewOutreachEmail types + 3 *Values arrays&quot;
+      contains: &quot;export type OutreachEmail =&quot;
+    - path: &quot;src/features/outreach/lib/email-status.ts&quot;
+      provides: &quot;canEmailTransition, isEmailTerminalState, validEmailTransitions, terminalEmailStates&quot;
+      contains: &quot;export function canEmailTransition(&quot;
+  key_links:
+    - from: &quot;src/lib/domain/types.ts&quot;
+      to: &quot;drizzle/schema (outreachCampaigns, outreachEmails)&quot;
+      via: &quot;$inferSelect / $inferInsert&quot;
+      pattern: &quot;typeof outreachEmails.\$inferSelect&quot;
+    - from: &quot;src/features/outreach/lib/email-status.ts&quot;
+      to: &quot;validEmailTransitions map&quot;
+      via: &quot;map lookup with ?? false&quot;
+  pattern: &quot;validEmailTransitions\[from\]\?\.includes\(to\)&quot;
+</p>
+<hr>
+<objective>
+Export the four Drizzle-inferred outreach types + three enum value arrays from `src/lib/domain/types.ts`, and create the `email-status.ts` state machine (`canEmailTransition` / `isEmailTerminalState` + exported maps) mirroring `src/lib/domain/pipeline.ts`.<p>Purpose: Give Phase 12 Zod schemas, UI option lists, and the <code>/status</code> route a stable, typed surface — the email status lifecycle is the REV-05 deliverable.
+Output: <code>src/lib/domain/types.ts</code> (3 edits) + new <code>src/features/outreach/lib/email-status.ts</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md
+@.planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md<interfaces>
+<!-- Contracts this plan builds against / produces. Mirror these exactly. --><p>From src/lib/domain/pipeline.ts (the module shape to copy verbatim):</p>
+<pre><code class="language-typescript">export function canTransition(from: string, to: string): boolean {
+  if (terminalStates.includes(from)) return false;
+  return validTransitions[from]?.includes(to) ?? false;
+}
+export function isTerminalState(status: string): boolean {
+  return terminalStates.includes(status);
+}
+export { validTransitions, terminalStates };
+</code></pre>
+<p>From drizzle/schema (produced by Plan 11-01, imported via &#39;../../../drizzle/schema&#39;):</p>
+<ul>
+<li>outreachCampaigns (table) — $inferSelect / $inferInsert</li>
+<li>outreachEmails (table) — $inferSelect / $inferInsert</interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Create the email-status state machine</name>
+  <files>src/features/outreach/lib/email-status.ts</files>
+  <read_first>
+    - src/lib/domain/pipeline.ts (entire 55-line file — copy structure verbatim: guard order is terminal-check-first then map lookup with ?? false)
+    - .planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md (D-03/D-04/D-05/D-06 + <specifics> lines 139-158 — the exact transition map)
+    - .planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md (email-status.ts copy-from excerpt, lines 268-291)
+  </read_first>
+  <behavior>
+    - canEmailTransition('pending', 'generated') → true; canEmailTransition('pending', 'drafted') → false
+    - canEmailTransition('generated', 'pending') → true (regenerate, D-04); canEmailTransition('edited', 'pending') → true
+    - canEmailTransition('approved', 'edited') → true (un-approve, D-06); canEmailTransition('approved', 'pending') → false
+    - canEmailTransition('drafted', 'edited') → true (D-05, NOT terminal); canEmailTransition('pending', 'approved') → false
+    - canEmailTransition('nonexistent', 'pending') → false (unknown from)
+    - isEmailTerminalState(x) → false for every value in outreachEmailStatusValues (terminal set empty, D-06)
+  </behavior>
+  <action>
+Create the directory src/features/outreach/lib/ (does not exist yet) and the file email-status.ts. Mirror src/lib/domain/pipeline.ts exactly. Define:
+- validEmailTransitions: Record<string, string[]> with EXACTLY these edges (D-03/D-04/D-05/D-06):
+  pending: ['generated', 'failed']
+  generated: ['edited', 'approved', 'failed', 'pending']   // pending = regenerate (D-04)
+  edited: ['approved', 'pending']                          // pending = regenerate (D-04)
+  approved: ['drafted', 'edited']                          // edited = un-approve (D-06)
+  drafted: ['edited']                                      // revise after draft (D-05, DRFT-03)
+  failed: ['pending']                                      // retry
+- terminalEmailStates: string[] = []   // empty — every state recoverable (D-06)
+- export function canEmailTransition(from: string, to: string): boolean — terminal check first, then validEmailTransitions[from]?.includes(to) ?? false
+- export function isEmailTerminalState(status: string): boolean — terminalEmailStates.includes(status)
+- export { validEmailTransitions, terminalEmailStates }
+Do NOT build a campaign state machine (D-10). Keep guard order identical to pipeline.ts so unknown `from` returns false and an empty terminal set short-circuits correctly. Use named exports only (project convention).
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -c "email-status" ; echo "expect 0 errors above"</automated>
+  </verify>
+  <acceptance_criteria>
+    - src/features/outreach/lib/email-status.ts contains export function canEmailTransition(
+    - src/features/outreach/lib/email-status.ts contains export function isEmailTerminalState(
+    - src/features/outreach/lib/email-status.ts contains export { validEmailTransitions, terminalEmailStates }
+    - The drafted key maps to ['edited'] and terminalEmailStates is an empty array
+    - npx tsc --noEmit reports no errors for email-status.ts
+  </acceptance_criteria>
+  <done>email-status.ts exports the four symbols, encodes the exact D-03 map with empty terminal set, and compiles under TS strict. (Behavior pinned by the Vitest test in Plan 11-03.)</done>
+</task><task type="auto">
+  <name>Task 2: Export outreach inferred types and enum value arrays</name>
+  <files>src/lib/domain/types.ts</files>
+  <read_first>
+    - src/lib/domain/types.ts (file being modified — locate the import-type-from-drizzle block, the JobLead/NewJobLead inferred-type block, and the jobLeadStatusValues `as const` block to mirror)
+    - .planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md (types.ts three-edit excerpt, lines 222-245)
+    - .planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md (<specifics> — exact enum value arrays D-01/D-07/D-10)
+  </read_first>
+  <action>
+Three edits to src/lib/domain/types.ts mirroring the JobLead pattern:
+1. Add outreachCampaigns and outreachEmails to the existing `import type { ... } from '../../../drizzle/schema'` block.
+2. Add four inferred types alongside the existing JobLead/NewJobLead block:
+   export type OutreachCampaign = typeof outreachCampaigns.$inferSelect
+   export type NewOutreachCampaign = typeof outreachCampaigns.$inferInsert
+   export type OutreachEmail = typeof outreachEmails.$inferSelect
+   export type NewOutreachEmail = typeof outreachEmails.$inferInsert
+3. Add three `as const` value arrays (must stay value-identical to the pgEnums in enums.ts — same strings, same order — consumed by Phase 12 Zod schemas + UI):
+   export const outreachCampaignStatusValues = ['draft', 'active', 'completed'] as const
+   export const outreachChannelValues = ['email', 'linkedin_message'] as const
+   export const outreachEmailStatusValues = ['pending', 'generated', 'edited', 'approved', 'drafted', 'failed'] as const
+Use named exports. Do not introduce a separate DTO layer — types are inferred from the Drizzle schema (single source of truth).
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit ; echo "tsc-exit=$?"</automated>
+  </verify>
+  <acceptance_criteria>
+    - src/lib/domain/types.ts contains export type OutreachCampaign = typeof outreachCampaigns.$inferSelect
+    - src/lib/domain/types.ts contains export type OutreachEmail = typeof outreachEmails.$inferSelect
+    - src/lib/domain/types.ts contains export type NewOutreachCampaign and export type NewOutreachEmail
+    - src/lib/domain/types.ts contains outreachEmailStatusValues with the 6 D-01 values in order
+    - src/lib/domain/types.ts contains outreachChannelValues and outreachCampaignStatusValues
+    - npx tsc --noEmit exits 0
+  </acceptance_criteria>
+  <done>Four inferred outreach types + three enum value arrays exported and type-checking; Success Criterion #3 (OutreachCampaign/OutreachEmail exported) satisfied.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(none in this phase)</td>
+<td>Pure TypeScript types and a pure transition function. No HTTP route, no auth, no user input parsing — those arrive in Phase 12.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-11-04</td>
+<td>Tampering</td>
+<td>email-status transition map</td>
+<td>mitigate</td>
+<td><code>canEmailTransition()</code> encodes the locked transition graph (D-03); Phase 12&#39;s <code>/status</code> route enforces it at the HTTP boundary. This plan ships the integrity logic; enforcement is wired in Phase 12.</td>
+</tr>
+<tr>
+<td>T-11-05</td>
+<td>Information Disclosure</td>
+<td>outreach types</td>
+<td>accept</td>
+<td>Inferred types expose only schema column shapes already known to the single authenticated owner; no new disclosure surface (no route emits them yet).</td>
+</tr>
+</tbody></table>
+<p>No package installs in this plan → no supply-chain checkpoint required.
+</threat_model></p>
+<verification>
+- `npx tsc --noEmit` passes with the new types and state machine.
+- `email-status.ts` exports `canEmailTransition`, `isEmailTerminalState`, `validEmailTransitions`, `terminalEmailStates`.
+- `types.ts` exports `OutreachCampaign`, `OutreachEmail`, and the three `*Values` arrays.
+</verification><success_criteria>
+- Phase Success Criterion #2 (source): `canEmailTransition()` at `src/features/outreach/lib/email-status.ts` exists and encodes the locked transition graph (pinned by Vitest in Plan 11-03).
+- Phase Success Criterion #3: `OutreachCampaign` and `OutreachEmail` are exported from `src/lib/domain/types.ts`.
+</success_criteria><output>
+Create `.planning/phases/11-schema-enums-and-state-machine/11-02-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

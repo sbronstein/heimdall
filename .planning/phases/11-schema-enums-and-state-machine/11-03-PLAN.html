@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 11-schema-enums-and-state-machine
+plan: 03
+type: tdd
+wave: 3
+depends_on: [&quot;11-01&quot;, &quot;11-02&quot;]
+files_modified:</p>
+<ul>
+<li>src/features/outreach/lib/email-status.test.ts</li>
+<li>src/lib/db/<strong>phase11_schema</strong>.test.ts
+autonomous: true
+requirements: [REV-05]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;A Vitest test pins canEmailTransition: valid moves accepted, invalid moves rejected, regenerate edges accepted, unknown from returns false&quot;
+    - &quot;isEmailTerminalState returns false for every status — asserted by the test&quot;
+    - &quot;A PGlite schema-regression test proves the UNIQUE (campaign_id, contact_id) constraint rejects a duplicate outreach_emails row&quot;
+    - &quot;outreach_emails defaults (status=pending, channel=email) and nullable editedSubject are pinned by read-back&quot;
+  artifacts:
+    - path: &quot;src/features/outreach/lib/email-status.test.ts&quot;
+      provides: &quot;state-machine unit test (pure, no DB)&quot;
+      contains: &quot;canEmailTransition&quot;
+    - path: &quot;src/lib/db/<strong>phase11_schema</strong>.test.ts&quot;
+      provides: &quot;schema-regression test over migration 0011 via PGlite&quot;
+      contains: &quot;outreachEmails&quot;
+  key_links:
+    - from: &quot;src/lib/db/<strong>phase11_schema</strong>.test.ts&quot;
+      to: &quot;drizzle/migrations/0011_outreach_campaigns.sql&quot;
+      via: &quot;createTestDb() replays committed migrations into PGlite&quot;
+      pattern: &quot;createTestDb\(\)&quot;
+    - from: &quot;src/features/outreach/lib/email-status.test.ts&quot;
+      to: &quot;src/features/outreach/lib/email-status.ts&quot;
+      via: &quot;import canEmailTransition&quot;
+  pattern: &quot;from &#39;@/features/outreach/lib/email-status&#39;&quot;
+</p>
+<hr>
+<objective>
+Pin Phase 11's behavior with two Vitest tests: a pure-function state-machine test for `canEmailTransition` (Success Criterion #2) and a PGlite schema-regression test proving the `UNIQUE (campaign_id, contact_id)` constraint and column defaults of migration 0011.<p>Purpose: Lock the email status lifecycle (REV-05) against regression and prove the live migration is well-formed before any consumer builds on it.
+Output: <code>src/features/outreach/lib/email-status.test.ts</code> + <code>src/lib/db/__phase11_schema__.test.ts</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md
+@.planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md<interfaces>
+<!-- Test harness + subjects (produced by Plans 11-01 and 11-02). --><p>From src/test-utils/pglite.ts:</p>
+<pre><code class="language-typescript">// Returns a fresh in-memory PGlite db with ALL drizzle/migrations/*.sql replayed in sorted order.
+// 0011_outreach_campaigns.sql MUST be committed (Plan 11-01) for outreach tables to exist here.
+export async function createTestDb(): Promise&lt;Db&gt;;
+</code></pre>
+<p>From src/features/outreach/lib/email-status.ts (Plan 11-02):</p>
+<pre><code class="language-typescript">export function canEmailTransition(from: string, to: string): boolean;
+export function isEmailTerminalState(status: string): boolean;
+export { validEmailTransitions, terminalEmailStates };
+</code></pre>
+<p>Vitest runs with GLOBALS enabled — do NOT import describe/it/expect (see src/lib/domain/pipeline.test.ts).
+contacts.firstName and contacts.lastName are .notNull() — supply both in the FK-target insert.
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: State-machine unit test (pure, no DB)</name>
+  <files>src/features/outreach/lib/email-status.test.ts</files>
+  <read_first>
+    - src/lib/domain/pipeline.test.ts (85-line analog — globals-style describe/it, loop-over-validTransitions assertion at lines 1-13)
+    - src/features/outreach/lib/email-status.ts (subject under test — Plan 11-02)
+    - .planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md (<specifics> line 161 — required test cases) and 11-PATTERNS.md (lines 316-324)
+  </read_first>
+  <action>
+Create src/features/outreach/lib/email-status.test.ts co-located beside email-status.ts. Import canEmailTransition, isEmailTerminalState, validEmailTransitions from '@/features/outreach/lib/email-status' and outreachEmailStatusValues from '@/lib/domain/types'. Do NOT import describe/it/expect (vitest globals). Cases required by SC #2 (CONTEXT line 161):
+- Valid moves accepted: loop over Object.entries(validEmailTransitions), assert canEmailTransition(from, to) === true for every edge (mirror pipeline.test.ts lines 7-13). Also explicitly assert the chain pending→generated→edited→approved→drafted.
+- Rejected: canEmailTransition('pending','drafted') === false; canEmailTransition('approved','pending') === false; canEmailTransition('pending','approved') === false.
+- Regenerate accepted: canEmailTransition('edited','pending') === true; canEmailTransition('generated','pending') === true.
+- drafted→edited accepted: canEmailTransition('drafted','edited') === true (D-05).
+- Unknown from returns false: canEmailTransition('nonexistent','pending') === false.
+- isEmailTerminalState: iterate outreachEmailStatusValues, assert isEmailTerminalState(s) === false for EVERY value (terminal set empty, D-06) — inverts the analog's "returns true" block.
+  </action>
+  <verify>
+    <automated>npx vitest run src/features/outreach/lib/email-status.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - src/features/outreach/lib/email-status.test.ts imports from '@/features/outreach/lib/email-status'
+    - Test asserts canEmailTransition('pending','drafted') is false and canEmailTransition('drafted','edited') is true
+    - Test asserts isEmailTerminalState is false for every value in outreachEmailStatusValues
+    - npx vitest run src/features/outreach/lib/email-status.test.ts exits 0
+  </acceptance_criteria>
+  <done>State machine pinned: all valid edges pass, listed invalid moves rejected, regenerate + drafted→edited accepted, unknown from returns false, every status non-terminal — Success Criterion #2 satisfied.</done>
+</task><task type="auto">
+  <name>Task 2: Schema-regression test over migration 0011 (PGlite)</name>
+  <files>src/lib/db/__phase11_schema__.test.ts</files>
+  <read_first>
+    - src/lib/db/__phase7_schema__.test.ts (77-line template — createTestDb usage, seed FK target, insert + read-back assertions, relative '../../../drizzle/schema' import)
+    - src/test-utils/pglite.ts (createTestDb replays all committed migrations; do NOT modify — CD-04 says inline inserts, no new fixtures)
+    - drizzle/schema/contacts.ts (firstName/lastName .notNull() — both required in the seed insert)
+    - .planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md (CD-05 — exact assertions)
+  </read_first>
+  <action>
+Create src/lib/db/__phase11_schema__.test.ts mirroring __phase7_schema__.test.ts. Import { createTestDb } from '@/test-utils/pglite'; import { contacts, outreachCampaigns, outreachEmails } from '../../../drizzle/schema' (relative path, matching the analog — not the @/ alias); import { eq } from 'drizzle-orm'. Per CD-05:
+- Seed one contacts row (supply firstName AND lastName — both .notNull()) and one outreachCampaigns row (name + goalInstruction notNull).
+- Insert one outreachEmails row for (campaignId, contactId) with editedSubject: null. Read it back and assert: editedSubject === null (D-09 nullable content), status === 'pending' (default), channel === 'email' (default).
+- Insert a SECOND outreachEmails row with the SAME (campaignId, contactId). Assert it is rejected by the unique constraint: await expect(db.insert(outreachEmails).values({...}).returning()).rejects.toThrow() (or .rejects.toThrow()/try-catch matching the harness style).
+Do NOT add helpers to src/test-utils/pglite.ts — inline the inserts (CD-04: only one DB consumer, below the DRY threshold). This test depends on 0011_*.sql being committed (Plan 11-01) since createTestDb replays migrations from drizzle/migrations/.
+  </action>
+  <verify>
+    <automated>npx vitest run src/lib/db/__phase11_schema__.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - src/lib/db/__phase11_schema__.test.ts contains createTestDb() and imports outreachEmails, outreachCampaigns, contacts
+    - Test inserts a second (campaignId, contactId) duplicate and asserts it rejects/throws (unique constraint)
+    - Test reads back the first row asserting status==='pending', channel==='email', editedSubject===null
+    - npx vitest run src/lib/db/__phase11_schema__.test.ts exits 0
+  </acceptance_criteria>
+  <done>Migration 0011 proven well-formed via PGlite replay: unique (campaign_id, contact_id) rejects duplicates, defaults and nullable content read back correctly.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(none in this phase)</td>
+<td>Tests only — no runtime route, auth, or user input. Trust boundaries arrive in Phase 12.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-11-06</td>
+<td>Tampering</td>
+<td>UNIQUE (campaign_id, contact_id)</td>
+<td>mitigate</td>
+<td>The schema-regression test is the verification control proving the DB-level integrity constraint actually rejects duplicates — pins T-11-01 against future schema drift.</td>
+</tr>
+<tr>
+<td>T-11-07</td>
+<td>Repudiation</td>
+<td>state-machine regression</td>
+<td>mitigate</td>
+<td>The Vitest state-machine test pins the locked transition graph so a future edit silently loosening it (e.g. allowing <code>pending→drafted</code>) fails CI.</td>
+</tr>
+</tbody></table>
+<p>No package installs in this plan → no supply-chain checkpoint required.
+</threat_model></p>
+<verification>
+- `npx vitest run src/features/outreach/lib/email-status.test.ts` passes.
+- `npx vitest run src/lib/db/__phase11_schema__.test.ts` passes (requires 0011 migration committed by Plan 11-01).
+- Full suite green: `npm run test:run`.
+</verification><success_criteria>
+Phase Success Criterion #2 (pinned): `canEmailTransition()` rejects invalid moves and accepts valid ones — verified by a passing Vitest test. The schema-regression test additionally proves Success Criterion #1's unique constraint behaves at the DB level.
+</success_criteria><output>
+Create `.planning/phases/11-schema-enums-and-state-machine/11-03-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
