@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 11-schema-enums-and-state-machine
+plan: 01
+subsystem: database-schema
+tags: [drizzle, schema, enums, postgres, migration, outreach]
+dependency_graph:
+  requires: []
+  provides:
+    - outreachCampaigns table (drizzle schema)
+    - outreachEmails table with unique constraint + 3 indexes (drizzle schema)
+    - outreachCampaignStatusEnum, outreachChannelEnum, outreachEmailStatusEnum (pgEnums)
+    - 0013_outreach_campaigns.sql migration (generated, committed — pending apply to Neon)
+  affects:
+    - drizzle/schema/index.ts (barrel exports added)
+tech_stack:
+  added:
+    - outreach_campaign_status Postgres enum type
+    - outreach_channel Postgres enum type
+    - outreach_email_status Postgres enum type
+  patterns:
+    - pgTable with third-arg unique + index array (mirrors prospectBridges pattern)
+    - FK references with .references(() =&gt; table.id).notNull()
+    - Failure tracking columns (lastError + lastErrorAt) mirroring job-leads.ts
+    - Soft delete via archivedAt (campaigns only; emails omitted per spec)
+key_files:
+  created:
+    - drizzle/schema/outreach-campaigns.ts
+    - drizzle/schema/outreach-emails.ts
+    - drizzle/migrations/0013_outreach_campaigns.sql
+    - drizzle/migrations/meta/0013_snapshot.json
+  modified:
+    - drizzle/schema/enums.ts
+    - drizzle/schema/index.ts
+    - drizzle/migrations/meta/_journal.json
+decisions:</p>
+<ul>
+<li>outreach_channel enum landed in this migration (D-08) — not deferred to Phase 17</li>
+<li>outreach_emails has no archivedAt — emails soft-delete through their parent campaign</li>
+<li>channel default is &#39;email&#39;; linkedin_message is a channel value not a status (D-07)</li>
+<li>UNIQUE (campaign_id, contact_id) backs Phase 12 onConflictDoNothing() bulk add (T-11-01)</li>
+<li>Migration auto-numbered 0013 by drizzle-kit (not 0011 as stale CONTEXT.md said)
+metrics:
+  duration: ~8 min
+  completed: 2026-06-20
+  tasks_completed: 1.5 of 2 (Task 2 migration generated+committed; apply to Neon pending)
+  files_changed: 7</li>
+</ul>
+<hr>
+<h1>Phase 11 Plan 01: Schema Enums and Outreach Tables Summary</h1>
+<p><strong>One-liner:</strong> Three outreach pgEnums and two tables (<code>outreach_campaigns</code>, <code>outreach_emails</code>) added to Drizzle schema with unique constraint, 3 indexes, and migration 0013 generated and committed — pending <code>db:migrate</code> apply to live Neon.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Status</th>
+<th>Commit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Task 1: Three enums, two tables, barrel exports</td>
+<td>DONE</td>
+<td>d6edc05</td>
+</tr>
+<tr>
+<td>Task 2: Generate migration 0013_outreach_campaigns.sql</td>
+<td>DONE</td>
+<td>af92a6b</td>
+</tr>
+<tr>
+<td>Task 2: Apply migration to live Neon DB (<code>npm run db:migrate</code>)</td>
+<td>PENDING HUMAN ACTION</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Schema Files</h3>
+<p><strong><code>drizzle/schema/enums.ts</code></strong> — Appended 3 pgEnums after <code>contactEnrichmentStatusEnum</code>:</p>
+<ul>
+<li><code>outreachCampaignStatusEnum</code> → <code>pgEnum(&#39;outreach_campaign_status&#39;, [&#39;draft&#39;, &#39;active&#39;, &#39;completed&#39;])</code></li>
+<li><code>outreachChannelEnum</code> → <code>pgEnum(&#39;outreach_channel&#39;, [&#39;email&#39;, &#39;linkedin_message&#39;])</code></li>
+<li><code>outreachEmailStatusEnum</code> → <code>pgEnum(&#39;outreach_email_status&#39;, [&#39;pending&#39;, &#39;generated&#39;, &#39;edited&#39;, &#39;approved&#39;, &#39;drafted&#39;, &#39;failed&#39;])</code></li>
+</ul>
+<p><strong><code>drizzle/schema/outreach-campaigns.ts</code></strong> (new) — <code>outreach_campaigns</code> table with <code>id</code>, <code>name</code>, <code>goal_instruction</code>, <code>status</code> (enum default <code>&#39;draft&#39;</code>), <code>created_at</code>, <code>updated_at</code>, <code>archived_at</code>.</p>
+<p><strong><code>drizzle/schema/outreach-emails.ts</code></strong> (new) — <code>outreach_emails</code> table with:</p>
+<ul>
+<li>FKs: <code>campaign_id → outreach_campaigns.id</code>, <code>contact_id → contacts.id</code></li>
+<li>Channel: <code>outreach_channel</code> enum default <code>&#39;email&#39;</code>, NOT NULL</li>
+<li>Content: <code>generated_subject/body</code> + <code>edited_subject/body</code> (nullable; final = <code>editedX ?? generatedX</code>)</li>
+<li>Status: <code>outreach_email_status</code> enum default <code>&#39;pending&#39;</code>, NOT NULL</li>
+<li>Gmail linkage: <code>gmail_draft_id</code> (nullable, Phase 17)</li>
+<li>Failure tracking: <code>last_error</code>, <code>last_error_at</code> (timezone, mirrors <code>job-leads.ts:36-38</code>)</li>
+<li>Lifecycle timestamps: <code>generated_at</code>, <code>approved_at</code>, <code>drafted_at</code> (timezone, nullable)</li>
+<li><code>UNIQUE (campaign_id, contact_id)</code> constraint</li>
+<li>3 indexes: <code>outreach_emails_campaign_id_idx</code>, <code>outreach_emails_status_idx</code>, <code>outreach_emails_contact_id_idx</code></li>
+</ul>
+<p><strong><code>drizzle/schema/index.ts</code></strong> — Appended barrel re-exports after <code>./job-leads</code>:</p>
+<pre><code>export * from &#39;./outreach-campaigns&#39;;
+export * from &#39;./outreach-emails&#39;;
+</code></pre>
+<h3>Migration File</h3>
+<p><strong><code>drizzle/migrations/0013_outreach_campaigns.sql</code></strong> — Generated by drizzle-kit from journal tail idx 12 (<code>0012_whole_scream</code>). Contains:</p>
+<ul>
+<li><code>CREATE TYPE &quot;public&quot;.&quot;outreach_campaign_status&quot;</code> / <code>&quot;outreach_channel&quot;</code> / <code>&quot;outreach_email_status&quot;</code> (3 types)</li>
+<li><code>CREATE TABLE &quot;outreach_campaigns&quot;</code> + <code>CREATE TABLE &quot;outreach_emails&quot;</code> (2 tables)</li>
+<li><code>CONSTRAINT &quot;outreach_emails_campaign_contact_unique&quot; UNIQUE(&quot;campaign_id&quot;,&quot;contact_id&quot;)</code></li>
+<li>3 indexes: <code>outreach_emails_campaign_id_idx</code>, <code>outreach_emails_status_idx</code>, <code>outreach_emails_contact_id_idx</code></li>
+<li>2 FK constraints on <code>campaign_id</code> and <code>contact_id</code></li>
+<li><code>_journal.json</code> updated with idx 13 entry tagged <code>0013_outreach_campaigns</code></li>
+</ul>
+<h3>Verification (Task 1)</h3>
+<ul>
+<li><code>npx tsc --noEmit</code> exits 0 — no TypeScript errors introduced</li>
+<li><code>grep -c</code> count of 9 required DDL patterns in migration SQL = 9 (all present)</li>
+</ul>
+<h2>Pending: Live DB Apply</h2>
+<p><code>npm run db:migrate</code> was denied by the auto-mode classifier (live production DB write). The migration file and journal entry are committed. To complete Task 2:</p>
+<pre><code class="language-bash">npm run db:migrate
+</code></pre>
+<p>Expected: exits 0, Drizzle applies <code>0013_outreach_campaigns.sql</code> to the Neon DB.</p>
+<h2>Deviations from Plan</h2>
+<h3>Migration ordinal is 0013, not 0011</h3>
+<p>The CONTEXT.md references &quot;migration 0011&quot; for the outreach tables — stale reference from before quick tasks <code>260521-bhf</code> (migration 0011 = <code>0011_split_career_closeness</code>) and <code>0012_whole_scream</code>. The PLAN.md explicitly documented this correction: drizzle-kit auto-numbered from the journal tail (idx 12) and emitted <code>0013_outreach_campaigns.sql</code>. The migration file was NOT renamed — it carries the journal-assigned ordinal as required by the plan.</p>
+<h3>Auto-mode gate on <code>npm run db:migrate</code></h3>
+<p>The auto-mode classifier denied <code>npm run db:migrate</code> (live production DB write). Surfaced as <code>checkpoint:human-action</code>. Not a bug or architectural deviation — the migration file is correct and ready to apply.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints, auth paths, or file access patterns introduced. Phase 11 is DDL only — no HTTP routes.</p>
+<p>The <code>UNIQUE (campaign_id, contact_id)</code> constraint (T-11-01) is present in the generated SQL at line 33 — threat mitigation verified in the DDL.</p>
+<h2>Known Stubs</h2>
+<p>None — this plan delivers schema/DDL only. No UI rendering paths or data sources to stub.</p>
+<h2>Self-Check</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>drizzle/schema/outreach-campaigns.ts</code> exists</li>
+<li><input checked="" disabled="" type="checkbox"> <code>drizzle/schema/outreach-emails.ts</code> exists</li>
+<li><input checked="" disabled="" type="checkbox"> <code>drizzle/schema/enums.ts</code> contains all 3 new enum declarations</li>
+<li><input checked="" disabled="" type="checkbox"> <code>drizzle/schema/index.ts</code> exports <code>./outreach-campaigns</code> and <code>./outreach-emails</code></li>
+<li><input checked="" disabled="" type="checkbox"> <code>drizzle/migrations/0013_outreach_campaigns.sql</code> exists with 9 required DDL patterns</li>
+<li><input checked="" disabled="" type="checkbox"> Task 1 commit <code>d6edc05</code> exists</li>
+<li><input checked="" disabled="" type="checkbox"> Task 2 migration commit <code>af92a6b</code> exists</li>
+<li><input disabled="" type="checkbox"> <code>npm run db:migrate</code> applied to live Neon — PENDING HUMAN ACTION</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -38,7 +38,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase (see Tra
 - [ ] **REV-02**: User can edit a generated email inline (subject and body)
 - [ ] **REV-03**: User can regenerate a single email (resets it to `pending` for the skill to redo)
 - [ ] **REV-04**: User can approve an email; only approved emails advance to drafting (approve gate)
-- [ ] **REV-05**: Email status lifecycle (`pending → generated → edited → approved → drafted`, plus `failed`) is validated at the API boundary via a `canEmailTransition()` state machine
+- [x] **REV-05**: Email status lifecycle (`pending → generated → edited → approved → drafted`, plus `failed`) is validated at the API boundary via a `canEmailTransition()` state machine
 - [ ] **REV-06**: Contacts with no email found show a "needs LinkedIn message" badge; archived contacts show an "archived" badge that blocks approval
 
 ### Email Discovery (DISC)
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation (2026-06-
 | REV-02 | Phase 15 | Pending |
 | REV-03 | Phase 15 | Pending |
 | REV-04 | Phase 15 | Pending |
-| REV-05 | Phase 11 | Pending |
+| REV-05 | Phase 11 | Complete |
 | REV-06 | Phase 15 | Pending |
 | DISC-01 | Phase 17 | Pending |
 | DISC-02 | Phase 17 | Pending |
