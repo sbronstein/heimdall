@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Networking Outreach Campaigns
-status: verifying
-stopped_at: Phase 11 Plan 03 complete — TDD tests for email-status state machine + PGlite schema regression
-last_updated: "2026-06-20T22:19:24.678Z"
+status: ready_to_plan
+stopped_at: Phase 11 complete (3/3) — ready to discuss Phase 12
+last_updated: 2026-06-20T22:33:38.354Z
 last_activity: 2026-06-20
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 3
-  completed_plans: 3
+  completed_plans: 39
   percent: 14
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-20)
 
 **Core value:** Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-**Current focus:** Phase 11 — schema-enums-and-state-machine
+**Current focus:** Phase 12 — api routes
 
 ## Current Position
 
-Phase: 11 (schema-enums-and-state-machine) — EXECUTING
-Plan: 3 of 3 (plans 01–02 complete)
-Status: Phase complete — ready for verification
+Phase: 12
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-20
 
 ## Phase Rail
@@ -41,7 +41,7 @@ Last activity: 2026-06-20
 
 **Velocity (v1.0 reference):**
 
-- Total plans completed: 31 (Phases 1–6)
+- Total plans completed: 34 (Phases 1–6)
 - Average duration: ~10 min/plan
 
 **By Phase (v1.0):**
@@ -56,6 +56,7 @@ Last activity: 2026-06-20
 | 06-performance | 5 | TBD | TBD |
 | 07 | 3 | - | - |
 | 08 | 3 | - | - |
+| 11 | 3 | - | - |
 
 **v1.1 plans completed:** 0 / TBD
 
