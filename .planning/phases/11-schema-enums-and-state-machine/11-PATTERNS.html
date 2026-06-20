@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 11: Schema, Enums, and State Machine - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-06-20
+<strong>Files analyzed:</strong> 9 (3 modified, 4 new, 2 test analogs)
+<strong>Analogs found:</strong> 9 / 9 (all in-repo, exact or near-exact)</p>
+<p>This is a backend/schema phase. No UI, no API routes (those are Phase 12+). Every new file has a strong existing analog — there is <strong>no &quot;no analog found&quot; bucket</strong>. The planner should treat the excerpts below as copy-from sources and apply the listed adaptations.</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/enums.ts</code> (MODIFY)</td>
+<td>model / schema</td>
+<td>transform (DDL)</td>
+<td><code>jobLeadStatusEnum</code> in same file</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/outreach-campaigns.ts</code> (NEW)</td>
+<td>model / schema</td>
+<td>CRUD (table)</td>
+<td><code>jobLeads</code> table in <code>job-leads.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/outreach-emails.ts</code> (NEW)</td>
+<td>model / schema</td>
+<td>CRUD (table)</td>
+<td><code>jobLeads</code> (cols) + <code>prospectBridges</code> (3rd-arg unique/index)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/index.ts</code> (MODIFY)</td>
+<td>config / barrel</td>
+<td>—</td>
+<td>existing barrel lines</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code> (MODIFY)</td>
+<td>model / types</td>
+<td>—</td>
+<td><code>JobLead</code>/<code>NewJobLead</code>/<code>jobLeadStatusValues</code> block</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/email-status.ts</code> (NEW)</td>
+<td>utility / domain logic</td>
+<td>transform (pure fn)</td>
+<td><code>src/lib/domain/pipeline.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/email-status.test.ts</code> (NEW)</td>
+<td>test</td>
+<td>transform</td>
+<td><code>src/lib/domain/pipeline.test.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/lib/db/__phase11_schema__.test.ts</code> (NEW)</td>
+<td>test</td>
+<td>CRUD (DB)</td>
+<td><code>src/lib/db/__phase7_schema__.test.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/test-utils/pglite.ts</code> (MAYBE MODIFY — CD-04)</td>
+<td>test harness</td>
+<td>—</td>
+<td>existing <code>createTestDb()</code></td>
+<td>exact</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>drizzle/schema/enums.ts</code> (MODIFY — append 3 pgEnums)</h3>
+<p><strong>Analog:</strong> <code>jobLeadStatusEnum</code> in the same file (lines 161–172).</p>
+<p><strong>Pattern</strong> (lines 161–172):</p>
+<pre><code class="language-typescript">export const jobLeadStatusEnum = pgEnum(&#39;job_lead_status&#39;, [
+  &#39;pending&#39;,
+  &#39;scraping&#39;,
+  // ...
+  &#39;failed&#39;
+]);
+</code></pre>
+<p><strong>Adaptation</strong> — append three exports at the end of the file (after <code>contactEnrichmentStatusEnum</code>, line 191). Snake_case DB name string, camelCase <code>*Enum</code> export:</p>
+<pre><code class="language-typescript">export const outreachCampaignStatusEnum = pgEnum(&#39;outreach_campaign_status&#39;, [
+  &#39;draft&#39;,
+  &#39;active&#39;,
+  &#39;completed&#39;
+]);
+
+export const outreachChannelEnum = pgEnum(&#39;outreach_channel&#39;, [
+  &#39;email&#39;,
+  &#39;linkedin_message&#39;
+]);
+
+export const outreachEmailStatusEnum = pgEnum(&#39;outreach_email_status&#39;, [
+  &#39;pending&#39;,
+  &#39;generated&#39;,
+  &#39;edited&#39;,
+  &#39;approved&#39;,
+  &#39;drafted&#39;,
+  &#39;failed&#39;
+]);
+</code></pre>
+<p>Values are locked by D-01 / D-07 / D-10. Do <strong>not</strong> add the rejected richer values (<code>generating</code>, <code>drafting</code>, <code>skipped</code>, <code>needs_linkedin_message</code>).</p>
+<hr>
+<h3><code>drizzle/schema/outreach-campaigns.ts</code> (NEW table, campaign CRUD)</h3>
+<p><strong>Analog:</strong> <code>jobLeads</code> table in <code>drizzle/schema/job-leads.ts</code> (lines 15–44) for column conventions; soft-delete via <code>archivedAt</code>.</p>
+<p><strong>Imports + table pattern to mirror</strong> (<code>job-leads.ts</code> lines 1–28, 40–44):</p>
+<pre><code class="language-typescript">import { pgTable, uuid, text, timestamp } from &#39;drizzle-orm/pg-core&#39;;
+import { jobLeadStatusEnum } from &#39;./enums&#39;;
+// ...
+export const jobLeads = pgTable(&#39;job_leads&#39;, {
+  id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+  // ...
+  status: jobLeadStatusEnum(&#39;status&#39;).default(&#39;pending&#39;).notNull(),
+  // ...
+  createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull(),
+  updatedAt: timestamp(&#39;updated_at&#39;).defaultNow().notNull(),
+  archivedAt: timestamp(&#39;archived_at&#39;)
+});
+</code></pre>
+<p><strong>Adaptation</strong> — columns per CONTEXT line 160 (D-10):</p>
+<pre><code class="language-typescript">import { pgTable, uuid, text, timestamp } from &#39;drizzle-orm/pg-core&#39;;
+import { outreachCampaignStatusEnum } from &#39;./enums&#39;;
+
+export const outreachCampaigns = pgTable(&#39;outreach_campaigns&#39;, {
+  id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+  name: text(&#39;name&#39;).notNull(),
+  goalInstruction: text(&#39;goal_instruction&#39;).notNull(),
+  status: outreachCampaignStatusEnum(&#39;status&#39;).default(&#39;draft&#39;).notNull(),
+  createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull(),
+  updatedAt: timestamp(&#39;updated_at&#39;).defaultNow().notNull(),
+  archivedAt: timestamp(&#39;archived_at&#39;) // soft delete — never hard delete
+});
+</code></pre>
+<p>No state machine for campaigns (D-10). Soft-delete column present per project convention.</p>
+<hr>
+<h3><code>drizzle/schema/outreach-emails.ts</code> (NEW table, email CRUD + unique + 3 indexes)</h3>
+<p><strong>Analog A — columns:</strong> <code>jobLeads</code> in <code>job-leads.ts</code> (status enum, failure columns <code>lastError</code>/<code>lastErrorAt</code> lines 36–38, timestamps).
+<strong>Analog B — 3rd-arg unique/index style:</strong> <code>prospectBridges</code> in <code>job-leads.ts</code> (lines 66–86) + <code>contacts.ts</code> index naming (lines 68–79).</p>
+<p><strong>Failure-column pattern</strong> (<code>job-leads.ts</code> lines 36–38) — CD-01 says match this exactly:</p>
+<pre><code class="language-typescript">// Error tracking (D-07)
+lastError: text(&#39;last_error&#39;),
+lastErrorAt: timestamp(&#39;last_error_at&#39;, { withTimezone: true }),
+</code></pre>
+<p><strong>Third-arg unique + index pattern</strong> (<code>prospectBridges</code>, <code>job-leads.ts</code> lines 66–86):</p>
+<pre><code class="language-typescript">export const prospectBridges = pgTable(
+  &#39;prospect_bridges&#39;,
+  {
+    id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+    prospectId: uuid(&#39;prospect_id&#39;).references(() =&gt; prospects.id).notNull(),
+    contactId: uuid(&#39;contact_id&#39;).references(() =&gt; contacts.id).notNull(),
+    // ...
+  },
+  (table) =&gt; [unique(&#39;prospect_bridge_unique&#39;).on(table.prospectId, table.contactId)]
+);
+</code></pre>
+<p><strong>Index naming pattern</strong> (<code>contacts.ts</code> lines 68–79): <code>index(&#39;&lt;table&gt;_&lt;col&gt;_idx&#39;).on(table.col)</code>.</p>
+<p><strong>Adaptation</strong> — full table per CONTEXT line 159 (D-07/D-09 + CD-01/CD-02). FK targets: <code>outreachCampaigns.id</code> and <code>contacts.id</code>:</p>
+<pre><code class="language-typescript">import { pgTable, uuid, text, timestamp, unique, index } from &#39;drizzle-orm/pg-core&#39;;
+import { outreachChannelEnum, outreachEmailStatusEnum } from &#39;./enums&#39;;
+import { outreachCampaigns } from &#39;./outreach-campaigns&#39;;
+import { contacts } from &#39;./contacts&#39;;
+
+export const outreachEmails = pgTable(
+  &#39;outreach_emails&#39;,
+  {
+    id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+
+    // Links
+    campaignId: uuid(&#39;campaign_id&#39;).references(() =&gt; outreachCampaigns.id).notNull(),
+    contactId: uuid(&#39;contact_id&#39;).references(() =&gt; contacts.id).notNull(),
+
+    // Channel (D-07) — &quot;needs LinkedIn&quot; is a channel, not a status
+    channel: outreachChannelEnum(&#39;channel&#39;).default(&#39;email&#39;).notNull(),
+    recipientEmail: text(&#39;recipient_email&#39;),
+
+    // Generated vs edited content (D-09) — final = editedX ?? generatedX
+    generatedSubject: text(&#39;generated_subject&#39;),
+    generatedBody: text(&#39;generated_body&#39;),
+    editedSubject: text(&#39;edited_subject&#39;),
+    editedBody: text(&#39;edited_body&#39;),
+
+    // Status (state machine guarded — D-01..D-06)
+    status: outreachEmailStatusEnum(&#39;status&#39;).default(&#39;pending&#39;).notNull(),
+
+    // Gmail draft linkage (Phase 17)
+    gmailDraftId: text(&#39;gmail_draft_id&#39;),
+
+    // Failure tracking (CD-01 — mirror job-leads.ts:36-38)
+    lastError: text(&#39;last_error&#39;),
+    lastErrorAt: timestamp(&#39;last_error_at&#39;, { withTimezone: true }),
+
+    // Lifecycle timestamps (CD-02 — set by Phase 12 routes on transition)
+    generatedAt: timestamp(&#39;generated_at&#39;, { withTimezone: true }),
+    approvedAt: timestamp(&#39;approved_at&#39;, { withTimezone: true }),
+    draftedAt: timestamp(&#39;drafted_at&#39;, { withTimezone: true }),
+
+    // Metadata
+    createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull(),
+    updatedAt: timestamp(&#39;updated_at&#39;).defaultNow().notNull()
+  },
+  (table) =&gt; [
+    unique(&#39;outreach_emails_campaign_contact_unique&#39;).on(table.campaignId, table.contactId),
+    index(&#39;outreach_emails_campaign_id_idx&#39;).on(table.campaignId),
+    index(&#39;outreach_emails_status_idx&#39;).on(table.status),
+    index(&#39;outreach_emails_contact_id_idx&#39;).on(table.contactId)
+  ]
+);
+</code></pre>
+<p>Notes for the planner:</p>
+<ul>
+<li>No <code>archivedAt</code> on <code>outreach_emails</code> (CONTEXT line 159 omits it — emails belong to a campaign that soft-deletes; planner may confirm but the spec does not list it).</li>
+<li>The <code>UNIQUE (campaign_id, contact_id)</code> backs Phase 12&#39;s <code>onConflictDoNothing()</code> bulk-add (CONTEXT line 129).</li>
+<li>CONTEXT line 159 lists <code>createdAt</code>/<code>updatedAt</code> without timezone (like <code>job-leads.ts</code>); lifecycle + failure timestamps use <code>{ withTimezone: true }</code> to match <code>job-leads.ts:38</code>. Keep that asymmetry — it mirrors the analog.</li>
+</ul>
+<hr>
+<h3><code>drizzle/schema/index.ts</code> (MODIFY — barrel)</h3>
+<p><strong>Analog:</strong> the existing barrel lines (current line 12 <code>export * from &#39;./job-leads&#39;;</code>).</p>
+<p><strong>Adaptation</strong> — append two lines:</p>
+<pre><code class="language-typescript">export * from &#39;./outreach-campaigns&#39;;
+export * from &#39;./outreach-emails&#39;;
+</code></pre>
+<p>Order matters only for readability, not resolution. Place after <code>./job-leads</code>.</p>
+<hr>
+<h3><code>src/lib/domain/types.ts</code> (MODIFY — 4 types + 3 value arrays)</h3>
+<p><strong>Analog:</strong> the <code>JobLead</code>/<code>NewJobLead</code>/<code>jobLeadStatusValues</code> block (lines 28, 43, 206–217).</p>
+<p><strong>Pattern</strong> (lines 28, 43, 206–217):</p>
+<pre><code class="language-typescript">export type JobLead = typeof jobLeads.$inferSelect;
+export type NewJobLead = typeof jobLeads.$inferInsert;
+
+export const jobLeadStatusValues = [
+  &#39;pending&#39;, &#39;scraping&#39;, /* ... */ &#39;failed&#39;
+] as const;
+</code></pre>
+<p><strong>Adaptation — three edits:</strong></p>
+<ol>
+<li>Add to the <code>import type { ... } from &#39;../../../drizzle/schema&#39;</code> block (lines 1–15):</li>
+</ol>
+<pre><code class="language-typescript">  outreachCampaigns,
+  outreachEmails
+</code></pre>
+<ol start="2">
+<li>Add inferred select + insert types (alongside lines 28–30 / 43–45):</li>
+</ol>
+<pre><code class="language-typescript">export type OutreachCampaign = typeof outreachCampaigns.$inferSelect;
+export type OutreachEmail = typeof outreachEmails.$inferSelect;
+export type NewOutreachCampaign = typeof outreachCampaigns.$inferInsert;
+export type NewOutreachEmail = typeof outreachEmails.$inferInsert;
+</code></pre>
+<ol start="3">
+<li>Add three <code>*Values as const</code> arrays (mirroring the enum in <code>enums.ts</code>, for Zod schemas in Phase 12 + UI):</li>
+</ol>
+<pre><code class="language-typescript">export const outreachCampaignStatusValues = [&#39;draft&#39;, &#39;active&#39;, &#39;completed&#39;] as const;
+export const outreachChannelValues = [&#39;email&#39;, &#39;linkedin_message&#39;] as const;
+export const outreachEmailStatusValues = [
+  &#39;pending&#39;, &#39;generated&#39;, &#39;edited&#39;, &#39;approved&#39;, &#39;drafted&#39;, &#39;failed&#39;
+] as const;
+</code></pre>
+<p>Optionally export <code>(typeof X)[number]</code> union types as <code>seniorityLevelValues</code> does (line 238) — discretionary, not required by CONTEXT (which only names the 4 inferred types + 3 arrays).</p>
+<hr>
+<h3><code>src/features/outreach/lib/email-status.ts</code> (NEW — pure-function state machine)</h3>
+<p><strong>Analog:</strong> <code>src/lib/domain/pipeline.ts</code> (entire file, 55 lines) — copy structure verbatim.</p>
+<p><strong>Pattern</strong> (<code>pipeline.ts</code> lines 46–55):</p>
+<pre><code class="language-typescript">export function canTransition(from: string, to: string): boolean {
+  if (terminalStates.includes(from)) return false;
+  return validTransitions[from]?.includes(to) ?? false;
+}
+
+export function isTerminalState(status: string): boolean {
+  return terminalStates.includes(status);
+}
+
+export { validTransitions, terminalStates };
+</code></pre>
+<p><strong>Adaptation</strong> — exact map from CONTEXT D-03/D-04/D-05/D-06 (lines 141–157). Note <code>src/features/outreach/lib/</code> does not exist yet — the directory is created with this file:</p>
+<pre><code class="language-typescript">const validEmailTransitions: Record&lt;string, string[]&gt; = {
+  pending:   [&#39;generated&#39;, &#39;failed&#39;],
+  generated: [&#39;edited&#39;, &#39;approved&#39;, &#39;failed&#39;, &#39;pending&#39;], // pending = regenerate (D-04)
+  edited:    [&#39;approved&#39;, &#39;pending&#39;],                      // pending = regenerate (D-04)
+  approved:  [&#39;drafted&#39;, &#39;edited&#39;],                        // edited = un-approve (D-06)
+  drafted:   [&#39;edited&#39;],                                   // revise after draft (D-05, DRFT-03)
+  failed:    [&#39;pending&#39;]                                   // retry
+};
+
+const terminalEmailStates: string[] = []; // empty — every state recoverable (D-06)
+
+export function canEmailTransition(from: string, to: string): boolean {
+  if (terminalEmailStates.includes(from)) return false;
+  return validEmailTransitions[from]?.includes(to) ?? false;
+}
+
+export function isEmailTerminalState(status: string): boolean {
+  return terminalEmailStates.includes(status);
+}
+
+export { validEmailTransitions, terminalEmailStates };
+</code></pre>
+<p>Guard order (terminal check first, then map lookup with <code>?? false</code>) is load-bearing — keep it identical to <code>pipeline.ts</code> so an empty terminal set still short-circuits correctly and unknown <code>from</code> returns <code>false</code>.</p>
+<hr>
+<h3><code>src/features/outreach/lib/email-status.test.ts</code> (NEW — Vitest, pure)</h3>
+<p><strong>Analog:</strong> <code>src/lib/domain/pipeline.test.ts</code> (85 lines). No DB — pure function, skips the PGlite harness (CD-04).</p>
+<p><strong>Pattern</strong> (<code>pipeline.test.ts</code> lines 1–13) — globals-style <code>describe</code>/<code>it</code> (no imports of <code>describe</code>/<code>expect</code>; vitest globals are configured):</p>
+<pre><code class="language-typescript">import { canTransition, isTerminalState, validTransitions, terminalStates } from &#39;@/lib/domain/pipeline&#39;;
+
+describe(&#39;pipeline&#39;, () =&gt; {
+  describe(&#39;canTransition&#39;, () =&gt; {
+    describe(&#39;valid forward moves&#39;, () =&gt; {
+      it(&#39;allows all valid transitions in the graph&#39;, () =&gt; {
+        for (const [from, destinations] of Object.entries(validTransitions)) {
+          for (const to of destinations) {
+            expect(canTransition(from, to)).toBe(true);
+          }
+        }
+      });
+    });
+</code></pre>
+<p><strong>Adaptation</strong> — import from <code>@/features/outreach/lib/email-status</code> and <code>outreachEmailStatusValues</code> from <code>@/lib/domain/types</code>. Required cases per CONTEXT line 161 (SC #2):</p>
+<ul>
+<li>Valid chain accepted: <code>pending→generated→edited→approved→drafted</code> (and the loop-over-<code>validEmailTransitions</code> assertion like the analog line 7–13).</li>
+<li>Rejected: <code>pending→drafted</code>, <code>approved→pending</code>, <code>pending→approved</code>.</li>
+<li>Regenerate accepted: <code>edited→pending</code>, <code>generated→pending</code>.</li>
+<li><code>drafted→edited</code> accepted (D-05).</li>
+<li>Unknown <code>from</code> returns <code>false</code> (e.g. <code>canEmailTransition(&#39;nonexistent&#39;, &#39;pending&#39;)</code>).</li>
+<li><code>isEmailTerminalState</code> returns <code>false</code> for <strong>all</strong> values (terminal set empty, D-06) — invert the analog&#39;s &quot;returns true for accepted&quot; block: iterate <code>outreachEmailStatusValues</code>, assert every one is <code>false</code>.</li>
+</ul>
+<p>Filename note: CONTEXT names this <code>src/lib/domain/pipeline.test.ts</code> as the <em>analog</em>; place the new test next to its subject at <code>src/features/outreach/lib/email-status.test.ts</code> (co-located like <code>pipeline.test.ts</code> sits beside <code>pipeline.ts</code>).</p>
+<hr>
+<h3><code>src/lib/db/__phase11_schema__.test.ts</code> (NEW — schema-regression, PGlite)</h3>
+<p><strong>Analog:</strong> <code>src/lib/db/__phase7_schema__.test.ts</code> (77 lines).</p>
+<p><strong>Pattern</strong> (<code>__phase7_schema__.test.ts</code> lines 1–42):</p>
+<pre><code class="language-typescript">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { jobLeads, companies } from &#39;../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+
+describe(&#39;Phase 7 schema regression (D-06)&#39;, () =&gt; {
+  it(&#39;job_leads accepts linkedinJobUrl: null ...&#39;, async () =&gt; {
+    const db = await createTestDb();
+    const [company] = await db.insert(companies).values({ name: &#39;TestCo&#39; }).returning();
+    const [inserted] = await db.insert(jobLeads).values({ /* ... */ }).returning();
+    expect(inserted.linkedinJobUrl).toBeNull();
+    const [readBack] = await db.select().from(jobLeads).where(eq(jobLeads.id, inserted.id));
+    expect(readBack.status).toBe(&#39;queued&#39;);
+  });
+});
+</code></pre>
+<p><strong>Adaptation</strong> — per CD-05 (CONTEXT line 77). <code>createTestDb()</code> auto-applies all <code>drizzle/migrations/*.sql</code> in sorted order, so 0011 must be generated/committed before this test passes:</p>
+<ul>
+<li>Insert one <code>contacts</code> row (FK target; <code>contacts.firstName</code>/<code>lastName</code> are <code>.notNull()</code> — supply both) + one <code>outreachCampaigns</code> row.</li>
+<li>Insert one <code>outreachEmails</code> row for <code>(campaignId, contactId)</code> with <code>editedSubject: null</code> — assert it reads back null (D-09 nullable content).</li>
+<li>Insert a <strong>second</strong> <code>outreachEmails</code> row with the same <code>(campaignId, contactId)</code> — assert it is rejected by the unique constraint (<code>await expect(db.insert(...)).rejects.toThrow()</code>).</li>
+<li>Optionally assert defaults: <code>status</code> defaults <code>&#39;pending&#39;</code>, <code>channel</code> defaults <code>&#39;email&#39;</code>.</li>
+</ul>
+<p>Import tables from <code>&#39;../../../drizzle/schema&#39;</code> (relative, matching the analog line 2 — not the <code>@/</code> alias).</p>
+<hr>
+<h3><code>src/test-utils/pglite.ts</code> (MAYBE MODIFY — CD-04 fixtures)</h3>
+<p><strong>Analog:</strong> existing <code>createTestDb()</code> in the same file (the only export).</p>
+<p><strong>Decision gate (CD-04, CONTEXT line 76):</strong> Add <code>createOutreachCampaign()</code> / <code>createOutreachEmail()</code> helpers here <strong>only if reused across both</strong> the state-machine test and the schema-regression test. The state-machine test is pure (no DB), so reuse is across <strong>one</strong> DB test only → <strong>recommendation: do NOT add fixtures</strong>; inline the inserts in <code>__phase11_schema__.test.ts</code> (as <code>__phase7_schema__.test.ts</code> does — it inlines <code>db.insert(companies)</code> rather than using a helper). The existing file already provides everything the DB test needs (<code>createTestDb()</code> + the <code>db.batch</code> shim). Leave this file untouched unless the planner introduces a third DB consumer.</p>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>Enum ↔ <code>*Values</code> mirror (cross-cutting, all 3 enums)</h3>
+<p><strong>Source:</strong> <code>drizzle/schema/enums.ts</code> + <code>src/lib/domain/types.ts</code>
+<strong>Apply to:</strong> every new enum
+Each enum is declared once as a <code>pgEnum</code> in <code>enums.ts</code> and re-listed as an <code>as const</code> array in <code>types.ts</code>. The two must stay value-identical (same strings, same order). Phase 12 Zod schemas and UI option lists consume the <code>*Values</code> arrays, never the <code>pgEnum</code>.</p>
+<h3>Column conventions (both new tables)</h3>
+<p><strong>Source:</strong> <code>drizzle/schema/job-leads.ts</code>
+<strong>Apply to:</strong> <code>outreach-campaigns.ts</code>, <code>outreach-emails.ts</code></p>
+<pre><code class="language-typescript">id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+status: &lt;enum&gt;(&#39;status&#39;).default(&lt;x&gt;).notNull(),
+createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull(),
+updatedAt: timestamp(&#39;updated_at&#39;).defaultNow().notNull(),
+archivedAt: timestamp(&#39;archived_at&#39;) // campaigns only — soft delete
+</code></pre>
+<p>Snake_case DB column name string, camelCase TS property. <code>updatedAt</code> defaults <code>defaultNow()</code> but is set manually (<code>new Date()</code>) on UPDATE in Phase 12 routes — not relevant to Phase 11 inserts but the default must be present.</p>
+<h3>State-machine module shape</h3>
+<p><strong>Source:</strong> <code>src/lib/domain/pipeline.ts</code>
+<strong>Apply to:</strong> <code>src/features/outreach/lib/email-status.ts</code>
+<code>canX(from, to)</code> guards: terminal check first → <code>map[from]?.includes(to) ?? false</code>. Export <code>canX</code>, <code>isXTerminalState</code>, and re-export the <code>validX</code>/<code>terminalX</code> consts for the test to iterate.</p>
+<h3>Migration generation (CD-03)</h3>
+<p><strong>Source:</strong> Phase 7 lineage (<code>07-CONTEXT.md</code> D-05).
+Run <code>npm run db:generate -- --name=outreach_campaigns</code> → expect <code>0011_outreach_campaigns.sql</code> containing <code>CREATE TYPE</code> ×3, <code>CREATE TABLE</code> ×2, the unique constraint, and 3 indexes. Inspect before <code>npm run db:migrate</code>. <code>createTestDb()</code> replays this file from <code>drizzle/migrations/</code>, so the schema-regression test is the gate that proves the migration is well-formed.</p>
+<hr>
+<h2>No Analog Found</h2>
+<p>None. Every file maps to an in-repo analog. The planner does not need RESEARCH.md fallbacks for this phase.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong> <code>drizzle/schema/</code>, <code>src/lib/domain/</code>, <code>src/lib/db/</code>, <code>src/test-utils/</code>, <code>src/features/</code>
+<strong>Files scanned:</strong> enums.ts, job-leads.ts, contacts.ts, schema/index.ts, pipeline.ts, pipeline.test.ts, <strong>phase7_schema</strong>.test.ts, pglite.ts, types.ts, package.json, vitest.config.ts
+<strong>Test runner:</strong> Vitest 4 (globals — <code>describe</code>/<code>it</code>/<code>expect</code> not imported), config at <code>vitest.config.ts</code>, scripts <code>npm test</code> / <code>npm run test:run</code>
+<strong>Pattern extraction date:</strong> 2026-06-20</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

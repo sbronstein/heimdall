@@ -72,11 +72,11 @@ requirements: [REV-05]</li>
       provides: &quot;state-machine unit test (pure, no DB)&quot;
       contains: &quot;canEmailTransition&quot;
     - path: &quot;src/lib/db/<strong>phase11_schema</strong>.test.ts&quot;
-      provides: &quot;schema-regression test over migration 0011 via PGlite&quot;
+      provides: &quot;schema-regression test over the outreach migration via PGlite&quot;
       contains: &quot;outreachEmails&quot;
   key_links:
     - from: &quot;src/lib/db/<strong>phase11_schema</strong>.test.ts&quot;
-      to: &quot;drizzle/migrations/0011_outreach_campaigns.sql&quot;
+      to: &quot;drizzle/migrations/0013_outreach_campaigns.sql&quot;
       via: &quot;createTestDb() replays committed migrations into PGlite&quot;
       pattern: &quot;createTestDb\(\)&quot;
     - from: &quot;src/features/outreach/lib/email-status.test.ts&quot;
@@ -86,7 +86,7 @@ requirements: [REV-05]</li>
 </p>
 <hr>
 <objective>
-Pin Phase 11's behavior with two Vitest tests: a pure-function state-machine test for `canEmailTransition` (Success Criterion #2) and a PGlite schema-regression test proving the `UNIQUE (campaign_id, contact_id)` constraint and column defaults of migration 0011.<p>Purpose: Lock the email status lifecycle (REV-05) against regression and prove the live migration is well-formed before any consumer builds on it.
+Pin Phase 11's behavior with two Vitest tests: a pure-function state-machine test for `canEmailTransition` (Success Criterion #2) and a PGlite schema-regression test proving the `UNIQUE (campaign_id, contact_id)` constraint and column defaults of the outreach migration (drizzle auto-numbered `0013_outreach_campaigns.sql`).<p>Purpose: Lock the email status lifecycle (REV-05) against regression and prove the live migration is well-formed before any consumer builds on it.
 Output: <code>src/features/outreach/lib/email-status.test.ts</code> + <code>src/lib/db/__phase11_schema__.test.ts</code>.
 </objective></p>
 <execution_context>
@@ -97,7 +97,7 @@ Output: <code>src/features/outreach/lib/email-status.test.ts</code> + <code>src/
 @.planning/phases/11-schema-enums-and-state-machine/11-PATTERNS.md<interfaces>
 <!-- Test harness + subjects (produced by Plans 11-01 and 11-02). --><p>From src/test-utils/pglite.ts:</p>
 <pre><code class="language-typescript">// Returns a fresh in-memory PGlite db with ALL drizzle/migrations/*.sql replayed in sorted order.
-// 0011_outreach_campaigns.sql MUST be committed (Plan 11-01) for outreach tables to exist here.
+// The outreach migration (drizzle auto-numbered 0013_outreach_campaigns.sql) MUST be committed (Plan 11-01) for outreach tables to exist here.
 export async function createTestDb(): Promise&lt;Db&gt;;
 </code></pre>
 <p>From src/features/outreach/lib/email-status.ts (Plan 11-02):</p>
@@ -137,7 +137,7 @@ Create src/features/outreach/lib/email-status.test.ts co-located beside email-st
   </acceptance_criteria>
   <done>State machine pinned: all valid edges pass, listed invalid moves rejected, regenerate + drafted→edited accepted, unknown from returns false, every status non-terminal — Success Criterion #2 satisfied.</done>
 </task><task type="auto">
-  <name>Task 2: Schema-regression test over migration 0011 (PGlite)</name>
+  <name>Task 2: Schema-regression test over the outreach migration (PGlite)</name>
   <files>src/lib/db/__phase11_schema__.test.ts</files>
   <read_first>
     - src/lib/db/__phase7_schema__.test.ts (77-line template — createTestDb usage, seed FK target, insert + read-back assertions, relative '../../../drizzle/schema' import)
@@ -150,7 +150,7 @@ Create src/lib/db/__phase11_schema__.test.ts mirroring __phase7_schema__.test.ts
 - Seed one contacts row (supply firstName AND lastName — both .notNull()) and one outreachCampaigns row (name + goalInstruction notNull).
 - Insert one outreachEmails row for (campaignId, contactId) with editedSubject: null. Read it back and assert: editedSubject === null (D-09 nullable content), status === 'pending' (default), channel === 'email' (default).
 - Insert a SECOND outreachEmails row with the SAME (campaignId, contactId). Assert it is rejected by the unique constraint: await expect(db.insert(outreachEmails).values({...}).returning()).rejects.toThrow() (or .rejects.toThrow()/try-catch matching the harness style).
-Do NOT add helpers to src/test-utils/pglite.ts — inline the inserts (CD-04: only one DB consumer, below the DRY threshold). This test depends on 0011_*.sql being committed (Plan 11-01) since createTestDb replays migrations from drizzle/migrations/.
+Do NOT add helpers to src/test-utils/pglite.ts — inline the inserts (CD-04: only one DB consumer, below the DRY threshold). This test depends on the outreach migration (0013_outreach_campaigns.sql) being committed (Plan 11-01) since createTestDb replays migrations from drizzle/migrations/.
   </action>
   <verify>
     <automated>npx vitest run src/lib/db/__phase11_schema__.test.ts</automated>
@@ -161,7 +161,7 @@ Do NOT add helpers to src/test-utils/pglite.ts — inline the inserts (CD-04: on
     - Test reads back the first row asserting status==='pending', channel==='email', editedSubject===null
     - npx vitest run src/lib/db/__phase11_schema__.test.ts exits 0
   </acceptance_criteria>
-  <done>Migration 0011 proven well-formed via PGlite replay: unique (campaign_id, contact_id) rejects duplicates, defaults and nullable content read back correctly.</done>
+  <done>The outreach migration proven well-formed via PGlite replay: unique (campaign_id, contact_id) rejects duplicates, defaults and nullable content read back correctly.</done>
 </task></tasks><threat_model>
 ## Trust Boundaries<table>
 <thead>
@@ -205,7 +205,7 @@ Do NOT add helpers to src/test-utils/pglite.ts — inline the inserts (CD-04: on
 </threat_model></p>
 <verification>
 - `npx vitest run src/features/outreach/lib/email-status.test.ts` passes.
-- `npx vitest run src/lib/db/__phase11_schema__.test.ts` passes (requires 0011 migration committed by Plan 11-01).
+- `npx vitest run src/lib/db/__phase11_schema__.test.ts` passes (requires the outreach migration committed by Plan 11-01).
 - Full suite green: `npm run test:run`.
 </verification><success_criteria>
 Phase Success Criterion #2 (pinned): `canEmailTransition()` rejects invalid moves and accepts valid ones — verified by a passing Vitest test. The schema-regression test additionally proves Success Criterion #1's unique constraint behaves at the DB level.
