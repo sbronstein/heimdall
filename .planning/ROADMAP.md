@@ -58,7 +58,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   3. Drizzle-inferred types `OutreachCampaign` and `OutreachEmail` are exported from `src/lib/domain/types.ts`
 **Plans**: 3 plans
 - [x] 11-01-PLAN.md — Enums, two tables, barrel exports + migration 0013 applied to live Neon (Wave 1) — COMPLETE
-- [ ] 11-02-PLAN.md — Inferred types + enum value arrays + `canEmailTransition()` state machine (Wave 2)
+- [x] 11-02-PLAN.md — Inferred types + enum value arrays + `canEmailTransition()` state machine (Wave 2)
 - [ ] 11-03-PLAN.md — Vitest state-machine test + PGlite schema-regression test (Wave 3)
 
 ### Phase 12: API Routes
@@ -152,7 +152,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 8. Skill Input Parsing, Navigation Branching + Drain | v1.1 | 3/3 | Complete | 2026-05-19 |
 | 9. UI for Company-Scope Leads | v1.1 | 1/1 | Complete | 2026-05-20 |
 | 10. Connection Company + Role Enrichment for Triage | v1.1 | 4/4 | Complete | 2026-05-20 |
-| 11. Schema, Enums, and State Machine | v1.2 | 1/3 | In Progress|  |
+| 11. Schema, Enums, and State Machine | v1.2 | 2/3 | In Progress|  |
 | 12. API Routes | v1.2 | 0/TBD | Not started | - |
 | 13. Triage Connection-Date Filter | v1.2 | 0/TBD | Not started | - |
 | 14. Campaign Builder UI | v1.2 | 0/TBD | Not started | - |

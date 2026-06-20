@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 11-schema-enums-and-state-machine
+plan: &quot;02&quot;
+subsystem: domain-types
+tags: [state-machine, types, outreach, email-status]
+dependency_graph:
+  requires: [&quot;11-01&quot;]
+  provides: [&quot;11-03&quot;]
+  affects: [&quot;src/lib/domain/types.ts&quot;, &quot;src/features/outreach/lib/email-status.ts&quot;]
+tech_stack:
+  added: []
+  patterns: [&quot;Drizzle $inferSelect/$inferInsert inferred types&quot;, &quot;pipeline.ts mirror for email-status state machine&quot;]
+key_files:
+  created:
+    - src/features/outreach/lib/email-status.ts
+  modified:
+    - src/lib/domain/types.ts
+decisions:</p>
+<ul>
+<li>&quot;terminalEmailStates is empty — every email state is recoverable (D-06)&quot;</li>
+<li>&quot;Guard order mirrors pipeline.ts: terminal check first, then map lookup ?? false&quot;</li>
+<li>&quot;outreachEmailStatusValues array in types.ts must stay value-identical to outreach_email_status pgEnum in enums.ts&quot;
+metrics:
+  duration: &quot;~8 min&quot;
+  completed: &quot;2026-06-20&quot;
+  tasks: 2
+  files: 2</li>
+</ul>
+<hr>
+<h1>Phase 11 Plan 02: Inferred Types and Email-Status State Machine Summary</h1>
+<p><strong>One-liner:</strong> Drizzle-inferred OutreachCampaign/OutreachEmail types + three enum value arrays exported from types.ts, plus canEmailTransition() state machine at src/features/outreach/lib/email-status.ts mirroring pipeline.ts.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Create email-status state machine</td>
+<td>4cddef4</td>
+<td>src/features/outreach/lib/email-status.ts (created)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Export outreach inferred types and enum value arrays</td>
+<td>12ab3cd</td>
+<td>src/lib/domain/types.ts (modified)</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1 — email-status.ts</h3>
+<p>Created <code>src/features/outreach/lib/email-status.ts</code> (directory <code>src/features/outreach/lib/</code> also created). Mirrors <code>src/lib/domain/pipeline.ts</code> exactly in module shape:</p>
+<ul>
+<li><code>validEmailTransitions</code> map encodes the D-03 graph: 6 states, all edges including regenerate (generated→pending, edited→pending per D-04), un-approve (approved→edited per D-06), revise-after-draft (drafted→edited per D-05/DRFT-03).</li>
+<li><code>terminalEmailStates = []</code> — empty, so <code>isEmailTerminalState()</code> returns <code>false</code> for every status value (D-06).</li>
+<li><code>canEmailTransition(from, to)</code>: terminal check first → <code>validEmailTransitions[from]?.includes(to) ?? false</code>.</li>
+<li><code>isEmailTerminalState(status)</code>: <code>terminalEmailStates.includes(status)</code>.</li>
+<li>All four symbols exported: <code>canEmailTransition</code>, <code>isEmailTerminalState</code>, <code>validEmailTransitions</code>, <code>terminalEmailStates</code>.</li>
+</ul>
+<h3>Task 2 — types.ts</h3>
+<p>Three edits to <code>src/lib/domain/types.ts</code>:</p>
+<ol>
+<li>Added <code>outreachCampaigns</code> and <code>outreachEmails</code> to the <code>import type { ... } from &#39;../../../drizzle/schema&#39;</code> block.</li>
+<li>Added four inferred types: <code>OutreachCampaign</code>, <code>OutreachEmail</code>, <code>NewOutreachCampaign</code>, <code>NewOutreachEmail</code>.</li>
+<li>Added three <code>as const</code> value arrays mirroring the pgEnums from enums.ts:<ul>
+<li><code>outreachCampaignStatusValues = [&#39;draft&#39;, &#39;active&#39;, &#39;completed&#39;]</code></li>
+<li><code>outreachChannelValues = [&#39;email&#39;, &#39;linkedin_message&#39;]</code></li>
+<li><code>outreachEmailStatusValues = [&#39;pending&#39;, &#39;generated&#39;, &#39;edited&#39;, &#39;approved&#39;, &#39;drafted&#39;, &#39;failed&#39;]</code></li>
+</ul>
+</li>
+</ol>
+<h2>Verification</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> exits 0 — no TypeScript errors in the project</li>
+<li><code>grep -c &quot;email-status&quot;</code> in tsc output: 0 (no errors referencing email-status.ts)</li>
+<li>All 4 symbols present in email-status.ts: <code>canEmailTransition</code>, <code>isEmailTerminalState</code>, <code>validEmailTransitions</code>, <code>terminalEmailStates</code></li>
+<li>All required exports present in types.ts: <code>OutreachCampaign</code>, <code>OutreachEmail</code>, <code>NewOutreachCampaign</code>, <code>NewOutreachEmail</code>, plus the 3 <code>*Values</code> arrays</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<p>The <code>tdd=&quot;true&quot;</code> flag on Task 1 is noted: the plan&#39;s <code>&lt;done&gt;</code> tag explicitly states &quot;(Behavior pinned by the Vitest test in Plan 11-03.)&quot; and <code>&lt;files&gt;</code> listed only the implementation file. The comprehensive behavioral test suite is Plan 11-03&#39;s deliverable; no test file was created here.</p>
+<h2>Known Stubs</h2>
+<p>None. This plan produces pure TypeScript types and a pure function — no UI, no data binding, no placeholders.</p>
+<h2>Threat Flags</h2>
+<p>No new security surface introduced. This plan is pure TypeScript types and a pure transition function with no HTTP endpoints, no auth paths, and no external I/O. T-11-04 (integrity of the transition map) is mitigated: the locked D-03 graph is encoded in <code>validEmailTransitions</code>; Phase 12&#39;s <code>/status</code> route will enforce it at the HTTP boundary.</p>
+<h2>Self-Check</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>src/features/outreach/lib/email-status.ts</code> exists</li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/lib/domain/types.ts</code> modified with outreach types + value arrays</li>
+<li><input checked="" disabled="" type="checkbox"> Commit 4cddef4 (email-status.ts) exists</li>
+<li><input checked="" disabled="" type="checkbox"> Commit 12ab3cd (types.ts) exists</li>
+<li><input checked="" disabled="" type="checkbox"> <code>npx tsc --noEmit</code> passed (exit 0)</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
