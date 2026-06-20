@@ -38,7 +38,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 
 ### 📋 v1.2 Networking Outreach Campaigns (Phases 11–17)
 
-- [ ] **Phase 11: Schema, Enums, and State Machine** — Two new Drizzle tables, three pgEnums, and the `canEmailTransition()` state machine locking the full email status lifecycle before any consumer is built
+- [x] **Phase 11: Schema, Enums, and State Machine** — Two new Drizzle tables, three pgEnums, and the `canEmailTransition()` state machine locking the full email status lifecycle before any consumer is built (completed 2026-06-20)
 - [ ] **Phase 12: API Routes** — Full `/api/outreach-campaigns/` route tree (campaign CRUD, bulk email add, status transitions, skill write-back endpoints, generation-context bulk fetch) so skills and UI have a stable REST surface to build against
 - [ ] **Phase 13: Triage Connection-Date Filter** — Additive year-range filter on the existing triage workflow; independent of the campaign route tree
 - [ ] **Phase 14: Campaign Builder UI** — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner's ability to name and save a campaign from the browser
@@ -59,7 +59,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 **Plans**: 3 plans
 - [x] 11-01-PLAN.md — Enums, two tables, barrel exports + migration 0013 applied to live Neon (Wave 1) — COMPLETE
 - [x] 11-02-PLAN.md — Inferred types + enum value arrays + `canEmailTransition()` state machine (Wave 2)
-- [ ] 11-03-PLAN.md — Vitest state-machine test + PGlite schema-regression test (Wave 3)
+- [x] 11-03-PLAN.md — Vitest state-machine test + PGlite schema-regression test (Wave 3)
 
 ### Phase 12: API Routes
 **Goal**: The full REST API surface for outreach campaigns is live and usable from the CLI; skills and UI have working endpoints to build against
@@ -152,7 +152,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 8. Skill Input Parsing, Navigation Branching + Drain | v1.1 | 3/3 | Complete | 2026-05-19 |
 | 9. UI for Company-Scope Leads | v1.1 | 1/1 | Complete | 2026-05-20 |
 | 10. Connection Company + Role Enrichment for Triage | v1.1 | 4/4 | Complete | 2026-05-20 |
-| 11. Schema, Enums, and State Machine | v1.2 | 2/3 | In Progress|  |
+| 11. Schema, Enums, and State Machine | v1.2 | 3/3 | Complete   | 2026-06-20 |
 | 12. API Routes | v1.2 | 0/TBD | Not started | - |
 | 13. Triage Connection-Date Filter | v1.2 | 0/TBD | Not started | - |
 | 14. Campaign Builder UI | v1.2 | 0/TBD | Not started | - |

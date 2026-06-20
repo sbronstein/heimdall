@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 11-schema-enums-and-state-machine
+plan: &quot;03&quot;
+subsystem: outreach/testing
+tags: [vitest, pglite, state-machine, schema-regression, tdd]
+dependency_graph:
+  requires: [&quot;11-01&quot;, &quot;11-02&quot;]
+  provides: [&quot;REV-05-pinned&quot;, &quot;T-11-06-mitigated&quot;, &quot;T-11-07-mitigated&quot;]
+  affects: []
+tech_stack:
+  added: []
+  patterns: [pglite-schema-regression, vitest-globals]
+key_files:
+  created:
+    - src/features/outreach/lib/email-status.test.ts
+    - src/lib/db/<strong>phase11_schema</strong>.test.ts
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;isEmailTerminalState asserts false for every outreachEmailStatusValues value — D-06 (every state recoverable) verified by exhaustive iteration&quot;</li>
+<li>&quot;Duplicate (campaign_id, contact_id) insert asserts .rejects.toThrow() — T-11-06 proven at DB level via PGlite constraint enforcement&quot;
+metrics:
+  duration: ~12 min
+  completed: &quot;2026-06-20&quot;
+  tasks: 2
+  files_created: 2
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 11 Plan 03: TDD — Pin Email Status + Schema Regression Summary</h1>
+<p><strong>One-liner:</strong> Vitest tests lock the email-status state machine (canEmailTransition graph, isEmailTerminalState exhaustive false) and prove the outreach migration via PGlite (UNIQUE constraint, column defaults, nullable editedSubject).</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>State-machine unit test (pure, no DB)</td>
+<td>95f59a4</td>
+<td>src/features/outreach/lib/email-status.test.ts</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Schema-regression test (PGlite)</td>
+<td>082dd58</td>
+<td>src/lib/db/<strong>phase11_schema</strong>.test.ts</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1: <code>src/features/outreach/lib/email-status.test.ts</code></h3>
+<p>Pure Vitest unit test (no DB) pinning <code>canEmailTransition</code> and <code>isEmailTerminalState</code>:</p>
+<ul>
+<li><strong>Valid graph coverage:</strong> loops <code>Object.entries(validEmailTransitions)</code> and asserts every edge returns true (mirrors pipeline.test.ts pattern).</li>
+<li><strong>Explicit chain:</strong> pending→generated→edited→approved→drafted asserted step by step.</li>
+<li><strong>Regenerate edges:</strong> edited→pending and generated→pending asserted true.</li>
+<li><strong>D-05:</strong> drafted→edited asserted true (revise after draft).</li>
+<li><strong>Invalid skips:</strong> pending→drafted, approved→pending, pending→approved all asserted false.</li>
+<li><strong>Unknown from:</strong> canEmailTransition(&#39;nonexistent&#39;,&#39;pending&#39;) asserted false.</li>
+<li><strong>D-06 (terminal states empty):</strong> isEmailTerminalState asserted false for every value in outreachEmailStatusValues via exhaustive iteration.</li>
+</ul>
+<p>10/10 tests pass. Runs in &lt;100ms (pure TS, no I/O).</p>
+<h3>Task 2: <code>src/lib/db/__phase11_schema__.test.ts</code></h3>
+<p>PGlite schema regression test replaying all <code>drizzle/migrations/*.sql</code> (including <code>0013_outreach_campaigns.sql</code>) into an in-memory database:</p>
+<ul>
+<li>Seeds FK targets: contacts row (firstName + lastName notNull) and outreachCampaigns row (name + goalInstruction notNull).</li>
+<li>Inserts outreachEmails with editedSubject: null — reads back and asserts status=&#39;pending&#39;, channel=&#39;email&#39;, editedSubject=null.</li>
+<li>Inserts duplicate (campaignId, contactId) and asserts <code>.rejects.toThrow()</code> — DB-level UNIQUE constraint enforcement (T-11-06).</li>
+</ul>
+<p>2/2 tests pass in ~1.0s.</p>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Threat Mitigations Applied</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-11-06 (Tampering: UNIQUE constraint)</td>
+<td>Mitigated — schema-regression test proves duplicate (campaign_id, contact_id) row is rejected at DB level</td>
+</tr>
+<tr>
+<td>T-11-07 (Repudiation: state-machine regression)</td>
+<td>Mitigated — state-machine test pins the full transition graph; any future loosening (e.g. pending→drafted) will fail CI</td>
+</tr>
+</tbody></table>
+<h2>Pre-existing Test Failures (Out of Scope)</h2>
+<p>The full suite (<code>npm run test:run</code>) shows 6 pre-existing timeouts in <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code>. All 6 fail at 60000ms — these existed before Phase 11 and are unrelated to outreach. Scope boundary: not investigated or fixed here.</p>
+<h2>Verification Results</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npx vitest run src/features/outreach/lib/email-status.test.ts</code></td>
+<td>10/10 passed</td>
+</tr>
+<tr>
+<td><code>npx vitest run src/lib/db/__phase11_schema__.test.ts</code></td>
+<td>2/2 passed</td>
+</tr>
+<tr>
+<td><code>npm run test:run</code></td>
+<td>192/198 passed (6 pre-existing timeouts in unrelated file)</td>
+</tr>
+</tbody></table>
+<h2>TDD Gate Compliance</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Commit</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RED (test commit)</td>
+<td>95f59a4</td>
+<td>Present</td>
+</tr>
+<tr>
+<td>GREEN (feat commit)</td>
+<td>N/A (tests import Plan 11-02&#39;s feat commits 4cddef4, 12ab3cd)</td>
+<td>Plan 03 is test-only</td>
+</tr>
+</tbody></table>
+<p>This plan is test-only — GREEN implementation was committed in Plans 11-01 and 11-02. The test commits here are the RED gate for Phase 11 as a whole.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/features/outreach/lib/email-status.test.ts</code> exists: FOUND</li>
+<li><code>src/lib/db/__phase11_schema__.test.ts</code> exists: FOUND</li>
+<li>Commit 95f59a4 exists: FOUND</li>
+<li>Commit 082dd58 exists: FOUND</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/11-schema-enums-and-state-machine/11-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
