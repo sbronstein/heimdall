@@ -189,3 +189,23 @@ export const contactEnrichmentStatusEnum = pgEnum('contact_enrichment_status', [
   'enriched',
   'failed'
 ]);
+
+export const outreachCampaignStatusEnum = pgEnum('outreach_campaign_status', [
+  'draft',
+  'active',
+  'completed'
+]);
+
+export const outreachChannelEnum = pgEnum('outreach_channel', [
+  'email',
+  'linkedin_message'
+]);
+
+export const outreachEmailStatusEnum = pgEnum('outreach_email_status', [
+  'pending',
+  'generated',
+  'edited',
+  'approved',
+  'drafted',
+  'failed'
+]);
