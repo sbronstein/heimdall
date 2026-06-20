@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: LinkedIn Scraping by Company
-status: shipped
-stopped_at: v1.1 milestone archived
-last_updated: "2026-06-20T00:00:00.000Z"
-last_activity: 2026-06-20 -- v1.1 milestone archived (Phases 7-10); tagged v1.1
+milestone: v1.2
+milestone_name: Networking Outreach Campaigns
+status: planning
+last_updated: "2026-06-20T18:59:29.771Z"
+last_activity: 2026-06-20
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 36
-  completed_plans: 36
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-20)
 
 ## Current Position
 
-Milestone: v1.1 LinkedIn Scraping by Company — ✅ SHIPPED 2026-05-20, archived 2026-06-20 (tag `v1.1`)
-Phases: 7–10 complete (11 plans)
-Status: Milestone closed. No active phase.
-Last activity: 2026-06-20 -- v1.1 milestone archived to .planning/milestones/
-
-**Shipped milestones:** v1.0 (Phases 1–6) · v1.1 (Phases 7–10)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-20 — Milestone v1.2 started
 
 ## Performance Metrics
 

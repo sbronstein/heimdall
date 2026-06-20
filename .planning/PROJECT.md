@@ -8,10 +8,22 @@ Prior milestone: v1.0 MVP / Brownfield Hardening (Phases 1–6, 2026-05-14) — 
 
 See `.planning/MILESTONES.md` for the full ledger and `.planning/milestones/` for per-milestone archives.
 
-### Next Milestone Goals (v1.2 — to be scoped via `/gsd:new-milestone`)
+## Current Milestone: v1.2 Networking Outreach Campaigns
 
-Candidate themes from the v2 backlog and deferred items:
-- Production-grade scraping — decouple the scrape worker from the API route / remote browser service reachable from Vercel (JL2-01), move `playwright` to devDependencies (JL2-02), captcha/rate-limit backoff (JL2-03), pagination beyond page 1 (JL2-04)
+**Goal:** Run targeted networking-email campaigns end to end from Heimdall — filter and select contacts, let a skill draft personalized emails, review/edit/approve each, then push approved ones to Gmail as drafts.
+
+**Target features:**
+- **Saved campaigns + contact selection** — Filterable contact search (how I know them / `howMet`, connection year or date range, closeness tier, outreach status) with checkbox multi-select, saved as **named campaigns** carrying a campaign goal/instruction. New `outreach_campaigns` table + one `outreach_email` row per contact per campaign.
+- **Triage connection-date filter** — Filter the existing triage workflow by connection year / date range (e.g. 2021–2022 to surface ID.me people), feeding the selection flow.
+- **AI email-generation skill** — Per campaign, generates a subject line + body per contact, personalized from contact data (howMet, company/role, closeness, prior interactions) + the campaign goal, in the owner's voice (reusing the voice + LLM-tell conventions from the `tailor-application-materials` skill).
+- **Email discovery** — For contacts with no stored email: look up via Google Contacts + Gmail search; store what's found; if nothing, flag the contact for a **LinkedIn message** instead.
+- **Review & approval UI** — Per-email inline edit, regenerate a single email, and an **approve gate** (generated → edited → approved). Only approved emails with a recipient get drafted.
+- **Gmail drafting skill** — Creates Gmail **drafts** (never sends) for approved emails, stores the Gmail draft id, marks status `drafted`, logs a timeline event; missing-email contacts surface as "needs email / LinkedIn".
+
+### Deferred themes (not in v1.2)
+
+Carried in the v2 backlog and deferred-items ledger:
+- Production-grade scraping — remote browser service reachable from Vercel (JL2-01), move `playwright` to devDependencies (JL2-02), captcha/rate-limit backoff (JL2-03), pagination beyond page 1 (JL2-04)
 - Drain the legacy enrichment backlog (run `backfill-enrichment-reset.mjs`; ~1500 contacts) and close out the paced sweep
 - pgvector semantic search over notes/interactions/JDs (VEC-01/02)
 - Structured logging / error reporting beyond `console.error` (OBS-01), background-job dashboard for scrape status (OBS-02)
@@ -72,9 +84,9 @@ A personal CRM and pipeline tracker for an executive job search targeting VP Dat
 
 ### Active
 
-<!-- No open requirements: v1.0 and v1.1 are shipped. Next-milestone scope is defined via `/gsd:new-milestone`. See "Next Milestone Goals" above and the v2 backlog in .planning/milestones/v1.1-REQUIREMENTS.md. -->
+<!-- v1.2 Networking Outreach Campaigns — requirements defined in .planning/REQUIREMENTS.md, mapped to phases in .planning/ROADMAP.md. -->
 
-- _(none — between milestones; scope v1.2 via `/gsd:new-milestone`)_
+- ☐ **v1.2 Networking Outreach Campaigns** — see `.planning/REQUIREMENTS.md` for the scoped requirement set (campaigns, contact selection, triage date filter, email generation, email discovery, review/approve, Gmail drafting).
 
 ### Out of Scope
 
@@ -141,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-20 after v1.1 milestone. v1.0 (Phases 1–6) and v1.1 (Phases 7–10, LinkedIn Scraping by Company + at-connection enrichment) both shipped and archived in `.planning/milestones/`. Next: scope v1.2 via `/gsd:new-milestone`.*
+*Last updated: 2026-06-20 — v1.2 Networking Outreach Campaigns scoped via `/gsd:new-milestone`. v1.0 (Phases 1–6) and v1.1 (Phases 7–10) shipped and archived in `.planning/milestones/`. Next: define requirements → roadmap, then `/gsd:discuss-phase 11`.*
