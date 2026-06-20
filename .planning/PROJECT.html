@@ -54,19 +54,21 @@
 <div class="wrap">
 
 <h1>Heimdall <span class="codename">— Job Search Command Center</span></h1>
-<div class="meta">Last updated 2026-06-20 · v1.1 (LinkedIn Scraping by Company, Phases 7–10) shipped &amp; archived · v1.0 (Phases 1–6) shipped · between milestones · <code>steve@bronstein.org</code> single-user lock</div>
+<div class="meta">Last updated 2026-06-20 · v1.2 Networking Outreach Campaigns scoped (Phases 11–17) · v1.1 (Phases 7–10) &amp; v1.0 (Phases 1–6) shipped &amp; archived · <code>steve@bronstein.org</code> single-user lock</div>
 
 <div class="card what-this-is" style="border-left-color: #6b8e6b;">
 <strong>Current State — v1.1 LinkedIn Scraping by Company (shipped 2026-05-20):</strong> The <code>scrape-linkedin-connections</code> skill now accepts a LinkedIn company URL or bare company name in addition to job IDs/URLs, creating synthetic <code>job_leads</code> (<code>linkedinJobUrl = null</code>) that flow through the existing queue, prospects, and recommendation pipeline. Triage also surfaces each connection's company and role <em>at the time of connection</em>, backfilled by a paced agent-browser sweep and just-in-time enrichment during company-scope triage.
 <p style="margin: 10px 0 0;">Prior: <strong>v1.0 MVP / Brownfield Hardening</strong> (Phases 1–6, 2026-05-14) — hydration-crash fix, Vitest + PGlite harness, <code>/api/*</code> auth, starter-template removal, out-of-app LinkedIn scrape skill, N+1 elimination + indexes. See <code>.planning/MILESTONES.md</code> and <code>.planning/milestones/</code>.</p>
-<p style="margin: 10px 0 0;"><strong>Next milestone (v1.2 — scope via <code>/gsd:new-milestone</code>):</strong></p>
+<p style="margin: 10px 0 0;"><strong>Current milestone — v1.2 Networking Outreach Campaigns (Phases 11–17):</strong> Run targeted networking-email campaigns end to end from Heimdall — filter and select contacts, let a skill draft personalized emails, review/edit/approve each, then push approved ones to Gmail as drafts. <em>Nothing ever sends automatically.</em></p>
 <ul class="req-list active" style="margin-top: 6px;">
-  <li>Production-grade scraping — decouple worker from API route / remote browser reachable from Vercel (JL2-01), <code>playwright</code> → devDependencies (JL2-02), captcha/rate-limit backoff (JL2-03), pagination (JL2-04)</li>
-  <li>Drain the legacy enrichment backlog (<code>backfill-enrichment-reset.mjs</code>; ~1500 contacts)</li>
-  <li>pgvector semantic search over notes/interactions/JDs (VEC-01/02)</li>
-  <li>Structured logging / error reporting (OBS-01); background-job dashboard for scrape status (OBS-02)</li>
-  <li>Close the open UAT + verification sign-offs deferred from v1.0/v1.1 (Phases 1, 6, 8, 9 — see STATE.md → Deferred Items)</li>
+  <li>Saved named campaigns + filterable contact selection (howMet, connection year/range, closeness, outreach status; checkbox multi-select) — new <code>outreach_campaigns</code> + <code>outreach_email</code>-per-contact tables</li>
+  <li>Triage connection-date filter (e.g. 2021–2022 to surface ID.me people)</li>
+  <li>AI email-generation skill — subject + body per contact, personalized from CRM context + campaign goal, in the owner's voice</li>
+  <li>Email discovery via Gmail thread search; no email found → flag for LinkedIn message</li>
+  <li>Review &amp; approval UI (inline edit, regenerate-single, approve gate) — only approved + addressed get drafted</li>
+  <li>Gmail drafting skill — creates drafts (<strong>never sends</strong>), stores draft id, marks <code>drafted</code>, logs timeline event</li>
 </ul>
+<p style="margin: 10px 0 0; font-size: 14px; color: var(--muted);">Deferred (not in v1.2): production-grade scraping (JL2-01..04), enrichment-backlog drain, pgvector search (VEC-01/02), structured logging (OBS-01/02), Google Contacts discovery (DISC-F1), open UAT/verification sign-offs.</p>
 </div>
 
 <div class="card what-this-is">
@@ -123,9 +125,9 @@
   <li><span class="reqid">ENR-01..ENR-06</span> · At-connection enrichment — <code>contacts</code> columns + <code>contact_enrichment_status</code> enum (migration 0010), CSV seeding, <code>PATCH /enrichment</code> + <code>GET /enrichment-queue</code>, triage card render + just-in-time enrichment, skill per-profile + paced batch-sweep modes with anti-bot pacing docs. (Phase 10)</li>
 </ul>
 
-<h3>Active <span class="reason">— no open requirements; scope v1.2 via <code>/gsd:new-milestone</code></span></h3>
+<h3>Active <span class="reason">— v1.2 Networking Outreach Campaigns; see <code>.planning/REQUIREMENTS.md</code> + <code>ROADMAP.md</code></span></h3>
 <ul class="req-list active">
-  <li><em>(none — between milestones)</em></li>
+  <li><span class="reqid">v1.2</span> · Networking Outreach Campaigns — 28 requirements across CAMP / TRGE / GEN / REV / DISC / DRFT, mapped to Phases 11–17</li>
 </ul>
 
 <h3>Out of Scope</h3>
