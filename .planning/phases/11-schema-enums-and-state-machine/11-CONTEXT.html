@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 11: Schema, Enums, and State Machine - Context</h1>
+<p><strong>Gathered:</strong> 2026-06-20
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>The Postgres data model for v1.2 Networking Outreach Campaigns, plus the email-status state machine — landed <strong>before any consumer is built</strong> so API routes (Phase 12), UI (Phases 14–15), and skills (Phases 16–17) all build against a stable, locked surface.</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>Three new <code>pgEnum</code>s in <code>drizzle/schema/enums.ts</code>: <code>outreach_campaign_status</code>, <code>outreach_channel</code>, <code>outreach_email_status</code></li>
+<li>New table <code>outreach_campaigns</code> (<code>drizzle/schema/outreach-campaigns.ts</code>)</li>
+<li>New table <code>outreach_emails</code> (<code>drizzle/schema/outreach-emails.ts</code>) with three indexes and the <code>UNIQUE (campaign_id, contact_id)</code> constraint</li>
+<li>Barrel exports in <code>drizzle/schema/index.ts</code></li>
+<li>Inferred types (<code>OutreachCampaign</code>, <code>NewOutreachCampaign</code>, <code>OutreachEmail</code>, <code>NewOutreachEmail</code>) and enum value arrays (<code>outreachCampaignStatusValues</code>, <code>outreachChannelValues</code>, <code>outreachEmailStatusValues</code>) in <code>src/lib/domain/types.ts</code></li>
+<li>Migration <code>0011_*</code> generated via <code>npm run db:generate</code> and run against the live Neon DB via <code>npm run db:migrate</code></li>
+<li><code>canEmailTransition()</code> + <code>isEmailTerminalState()</code> + exported transition map at <code>src/features/outreach/lib/email-status.ts</code>, mirroring <code>src/lib/domain/pipeline.ts</code></li>
+<li>Vitest test pinning the state machine (valid + invalid moves) and a schema-shape regression test mirroring <code>__phase7_schema__.test.ts</code></li>
+</ul>
+<p><strong>Out of scope (later phases — do NOT build here):</strong></p>
+<ul>
+<li>Any API route under <code>/api/outreach-campaigns/</code> — Phase 12</li>
+<li>The <code>howMet</code> / <code>connectionYearStart</code> / <code>connectionYearEnd</code> filter params on <code>GET /api/contacts</code> — Phase 12</li>
+<li>Triage connection-date filter — Phase 13</li>
+<li>All UI (<code>src/features/outreach/components/*</code>, dashboard pages, sidebar nav) — Phases 14–15</li>
+<li>Generation and drafting skills, Google OAuth, Gmail MIME — Phases 16–17</li>
+<li>New timeline event types — <strong>resolved during scout: none needed.</strong> <code>timeline_events.event_type</code> is free-text (<code>text</code>, not an enum), so outreach event types require no enum/migration; they are written by Phase 12+ routes.</li>
+<li>A campaign-status state machine — only <strong>email</strong> status is guarded (see D-09)</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Email Status Enum (Area 1)</h3>
+<ul>
+<li><strong>D-01:</strong> <strong>Lean 6-value <code>outreach_email_status</code> enum</strong>, exactly as REV-05 / ROADMAP lock it: <code>[&#39;pending&#39;, &#39;generated&#39;, &#39;edited&#39;, &#39;approved&#39;, &#39;drafted&#39;, &#39;failed&#39;]</code>. Rejected the richer PITFALLS.md Pitfall-4 set (<code>generating</code>, <code>drafting</code>, <code>skipped</code>, <code>needs_linkedin_message</code>): <code>generating</code>/<code>drafting</code> are never persisted because skills act per-email <strong>synchronously</strong> (no transient state is ever observed by a reader), and <code>needs_linkedin_message</code> is modeled by the <code>channel</code> column (D-07), not a status. No dead enum values.</li>
+<li><strong>D-02:</strong> <strong><code>pending</code> is the queue signal.</strong> The Phase 16 generation skill drains <code>WHERE status = &#39;pending&#39;</code>. Every &quot;(re)generate&quot; path resolves to <code>pending</code> (D-04) so the skill stays dumb — one queue semantic, no secondary flag.</li>
+</ul>
+<h3>Transition Graph (Area 2) — <code>canEmailTransition()</code></h3>
+<ul>
+<li><strong>D-03:</strong> <strong>Full transition map</strong> (mirrors <code>validTransitions</code> in <code>pipeline.ts</code>):<pre><code class="language-ts">const validEmailTransitions: Record&lt;string, string[]&gt; = {
+  pending:   [&#39;generated&#39;, &#39;failed&#39;],
+  generated: [&#39;edited&#39;, &#39;approved&#39;, &#39;failed&#39;, &#39;pending&#39;], // pending = regenerate
+  edited:    [&#39;approved&#39;, &#39;pending&#39;],                      // pending = regenerate
+  approved:  [&#39;drafted&#39;, &#39;edited&#39;],                        // edited = un-approve
+  drafted:   [&#39;edited&#39;],                                   // edited = revise after draft (DRFT-03)
+  failed:    [&#39;pending&#39;]                                   // retry
+};
+const terminalEmailStates: string[] = []; // empty — every state is recoverable
+</code></pre>
+</li>
+<li><strong>D-04:</strong> <strong>Regenerate → <code>pending</code></strong> (not <code>→ generated</code>). <code>generated → pending</code> and <code>edited → pending</code> are the regenerate edges. Resetting to <code>pending</code> is what makes the generation skill re-pick the row via its <code>WHERE status=&#39;pending&#39;</code> queue. This is the research&#39;s own corrected model; the contradictory <code>edited → generated</code> variant in ARCHITECTURE.md §&quot;Email Status State Machine&quot; is <strong>rejected</strong>.</li>
+<li><strong>D-05:</strong> <strong><code>drafted</code> is NOT terminal — <code>drafted → edited</code> is allowed.</strong> Required by DRFT-03 (Phase 17): editing an already-drafted email must update the existing Gmail draft in place. Flow: <code>drafted → edited → approved → drafted</code> (the re-draft is idempotent via the <code>gmailDraftId</code> check in the skill). This <strong>overrides</strong> ARCHITECTURE.md&#39;s <code>terminalEmailStates = [&#39;drafted&#39;]</code>. Locking it here means Phase 17 never has to touch the state machine.</li>
+<li><strong>D-06:</strong> <strong><code>approved → edited</code> (un-approve) is allowed</strong> so the approve gate is reversible — the owner can pull an email back out of &quot;approved&quot; to re-edit before it&#39;s drafted. Terminal set is therefore empty; <code>isEmailTerminalState()</code> returns <code>false</code> for all states but is still exported to mirror <code>pipeline.ts</code> (UI may use it).</li>
+</ul>
+<h3>Channel / &quot;Needs LinkedIn&quot; Modeling (Area 3)</h3>
+<ul>
+<li><strong>D-07:</strong> <strong><code>outreach_channel</code> enum <code>[&#39;email&#39;, &#39;linkedin_message&#39;]</code>, default <code>&#39;email&#39;</code>, NOT NULL</strong>, on <code>outreach_emails</code>. &quot;Needs LinkedIn message&quot; is a <strong>channel value, not a status</strong> (consistent with D-01). The Phase 15 REV-06 badge and Phase 17 DISC-03 both key off <code>channel = &#39;linkedin_message&#39;</code>.</li>
+<li><strong>D-08:</strong> <strong>Land the channel enum + column in migration 0011 now</strong> — not deferred to Phase 17. Phase 11&#39;s whole job is to lock the full model so no later phase needs a schema migration; Phase 15 (which ships before Phase 17) needs the column to render REV-06&#39;s badge. Discovery state reads cleanly from existing columns: <code>channel=&#39;email&#39; &amp; recipientEmail IS NULL</code> = discovery not yet run; <code>channel=&#39;email&#39; &amp; recipientEmail</code> set = ready to draft; <code>channel=&#39;linkedin_message&#39;</code> = manual LinkedIn.</li>
+</ul>
+<h3>Edited Content Storage (Area 4)</h3>
+<ul>
+<li><strong>D-09:</strong> <strong>Separate <code>editedSubject</code> / <code>editedBody</code> columns</strong> alongside <code>generatedSubject</code> / <code>generatedBody</code>. The skill writes <code>generated*</code>; the owner&#39;s inline edits write <code>edited*</code> (null until edited). <strong>Final content used for drafting = <code>editedSubject ?? generatedSubject</code></strong> (likewise body) — this coalesce is the canonical resolution Phases 15/17 use. Preserves the AI original after edits (provenance / &quot;revert to original&quot; in Phase 15). Regenerate (D-04) resets the row to <code>pending</code>; the planner decides whether the <code>/status</code> route clears <code>edited*</code>/<code>generated*</code> on that reset (recommended: clear both so the skill rewrites cleanly).</li>
+</ul>
+<h3>Campaign Status (no question asked — captured for the planner)</h3>
+<ul>
+<li><strong>D-10:</strong> <strong><code>outreach_campaign_status</code> enum <code>[&#39;draft&#39;, &#39;active&#39;, &#39;completed&#39;]</code>, default <code>&#39;draft&#39;</code>, NOT NULL.</strong> <strong>No state machine</strong> guards campaign status — only email status is guarded. The Phase 12 <code>PATCH /api/outreach-campaigns/[id]</code> route sets it freely. Do not build a <code>canCampaignTransition()</code>.</li>
+</ul>
+<h3>Claude&#39;s Discretion (planner decides; recommendation given)</h3>
+<ul>
+<li><strong>CD-01:</strong> <strong>Match the <code>job_leads</code> failure pattern: both <code>lastError</code> (text) AND <code>lastErrorAt</code> (timestamp, withTimezone)</strong> on <code>outreach_emails</code>. ARCHITECTURE.md lists only <code>lastError</code>; adding <code>lastErrorAt</code> keeps the failure-tracking shape identical to <code>job-leads.ts:36-37</code>. Recommended yes.</li>
+<li><strong>CD-02:</strong> <strong>Lifecycle timestamp columns</strong> <code>generatedAt</code>, <code>approvedAt</code>, <code>draftedAt</code> (nullable, set by Phase 12 routes on the corresponding transition) per ARCHITECTURE.md. Include them in 0011 so the routes have somewhere to write. Recommended yes.</li>
+<li><strong>CD-03:</strong> <strong>Migration filename</strong> — run <code>npm run db:generate -- --name=outreach_campaigns</code>; expect <code>0011_outreach_campaigns.sql</code>. Inspect the emitted SQL: it should <code>CREATE TYPE</code> for the three enums, <code>CREATE TABLE</code> ×2, the unique constraint, and three indexes. Hand-edit only if Drizzle Kit emits anything unexpected.</li>
+<li><strong>CD-04:</strong> <strong>Test fixtures</strong> — a <code>createOutreachCampaign()</code> / <code>createOutreachEmail()</code> helper in <code>src/test-utils/pglite.ts</code> only if reused across both the state-machine test and the schema-regression test (DRY threshold). The <code>canEmailTransition()</code> unit test needs no DB at all (pure function, like <code>pipeline.test.ts</code>).</li>
+<li><strong>CD-05:</strong> <strong>Schema-regression test</strong> mirroring <code>src/lib/db/__phase7_schema__.test.ts</code>: insert an <code>outreach_campaigns</code> row + two <code>outreach_emails</code> rows for the same <code>(campaignId, contactId)</code>, assert the second is rejected by the unique constraint; insert with <code>editedSubject: null</code> and read back. Recommended as <code>src/lib/db/__phase11_schema__.test.ts</code>.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.2 milestone trail</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;REV-05&quot; — the email-status state-machine requirement this phase delivers; §&quot;CAMP-07&quot; / &quot;REV-06&quot; / &quot;DISC-03&quot; / &quot;DRFT-03&quot; inform the table shape and transition edges</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 11: Schema, Enums, and State Machine&quot; — goal + 3 success criteria (tables + migration 0011 clean; <code>canEmailTransition()</code> pinned by Vitest; inferred types exported)</li>
+<li><code>.planning/research/ARCHITECTURE.md</code> §&quot;New Data Model&quot;, §&quot;Email Status State Machine&quot;, §&quot;Dependency-Ordered Build Sequence&quot; Steps 1–2 — the proposed schema/state-machine design. <strong>Note the two corrections locked here:</strong> regenerate → <code>pending</code> (D-04) and <code>drafted</code> NOT terminal (D-05) override the contradictory/terminal variants in that doc.</li>
+<li><code>.planning/research/PITFALLS.md</code> §&quot;Pitfall 4&quot; (status lifecycle gaps) — <strong>considered and the rich enum was rejected</strong> (D-01); §&quot;Pitfall 1/2/3&quot; are Phase 17 concerns, not Phase 11</li>
+</ul>
+<h3>Patterns to mirror (read before writing)</h3>
+<ul>
+<li><code>src/lib/domain/pipeline.ts</code> — the exact module shape to mirror for <code>email-status.ts</code> (<code>canTransition</code>/<code>isTerminalState</code>/exported maps → <code>canEmailTransition</code>/<code>isEmailTerminalState</code>/<code>validEmailTransitions</code>+<code>terminalEmailStates</code>)</li>
+<li><code>src/lib/domain/pipeline.test.ts</code> — the Vitest shape for the state-machine test (SC #2)</li>
+<li><code>drizzle/schema/job-leads.ts</code> — column conventions: UUID PK <code>defaultRandom()</code>, <code>status</code> enum with <code>.default().notNull()</code>, <code>lastError</code>/<code>lastErrorAt</code> failure columns, <code>createdAt</code>/<code>updatedAt</code>/<code>archivedAt</code>, <code>unique(...)</code> + index helpers (<code>prospectBridges</code> shows the <code>pgTable(name, cols, (t) =&gt; [...])</code> index/unique style)</li>
+<li><code>drizzle/schema/enums.ts</code> — <code>pgEnum</code> shape; new enums append here following <code>jobLeadStatusEnum</code>&#39;s form</li>
+<li><code>drizzle/schema/timeline-events.ts</code> — confirms <code>event_type</code> is <code>text</code> (free-text), so no new timeline enum is needed</li>
+<li><code>src/lib/domain/types.ts</code> — where inferred types + <code>*Values as const</code> arrays live (mirror the <code>JobLead</code>/<code>NewJobLead</code>/<code>jobLeadStatusValues</code> block)</li>
+<li><code>src/lib/db/__phase7_schema__.test.ts</code> — template for the schema-regression test (CD-05)</li>
+<li><code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code> — Phase 2 harness for the schema/regression test</li>
+</ul>
+<h3>Prior-phase lineage</h3>
+<ul>
+<li><code>.planning/phases/07-schema-api-for-company-scope-leads/07-CONTEXT.md</code> — the most recent schema-migration phase; D-05/D-06 there show the <code>db:generate --name=...</code> + PGlite schema-regression-test approach reused here</li>
+<li><code>.planning/phases/06-performance/06-CONTEXT.md</code> §&quot;D-02..D-03&quot; — <code>db.batch()</code> atomicity note (neon-http has no interactive transactions) — relevant if any future multi-statement write appears (not needed in Phase 11 itself)</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> / <code>.planning/PROJECT.md</code> — TS strict, named exports, soft-delete via <code>archived_at</code>, REST-only (no server actions), Drizzle query builder, <code>updatedAt: new Date()</code> set manually on UPDATE</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, <code>import type</code>, enum value arrays shared between Zod and UI</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>src/lib/domain/pipeline.ts</code></strong> — copy its structure verbatim for <code>src/features/outreach/lib/email-status.ts</code>. Same guard order: <code>if (terminalEmailStates.includes(from)) return false;</code> then map lookup with <code>?? false</code>.</li>
+<li><strong><code>drizzle/schema/job-leads.ts</code></strong> — the closest table analog (status enum + failure columns + soft delete). <code>prospectBridges</code> in the same file demonstrates the <code>pgTable(name, cols, (t) =&gt; [unique(...).on(...), index(...).on(...)])</code> third-arg style for the unique constraint + indexes.</li>
+<li><strong><code>src/lib/domain/types.ts</code></strong> — append the four inferred types + three <code>*Values</code> arrays in the existing pattern; add the two new tables to the top-level <code>import type { ... } from &#39;../../../drizzle/schema&#39;</code> block.</li>
+<li><strong>Phase 2 PGlite + <code>callRoute</code> harness</strong> — no new test infra; the schema-regression test runs on it. The <code>canEmailTransition()</code> unit test is a pure function and needs no DB.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>Enum-as-<code>pgEnum</code> + <code>*Values as const</code> mirror</strong> — every enum is declared once in <code>enums.ts</code> and re-listed as a value array in <code>types.ts</code> for Zod/UI. Keep both in sync for all three new enums.</li>
+<li><strong><code>updatedAt</code> set manually on UPDATE</strong> — relevant to Phase 12 routes, not Phase 11 inserts, but the columns must default <code>defaultNow().notNull()</code>.</li>
+<li><strong>State machine gates PATCH transitions only; INSERTs are unrestricted</strong> — new <code>outreach_emails</code> rows insert at <code>status=&#39;pending&#39;</code> directly (no transition check), exactly like job-lead inserts at <code>queued</code> (Phase 7 D-03).</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Phase 12 API routes</strong> consume <code>canEmailTransition()</code> (the <code>/status</code> route) and the enum value arrays (Zod schemas). The <code>/generation</code>, <code>/draft</code>, <code>/recipient</code> write-back routes write <code>generated*</code>, <code>gmailDraftId</code>+<code>draftedAt</code>, and <code>recipientEmail</code>+<code>channel</code> respectively.</li>
+<li><strong>Phase 15 review UI</strong> keys the &quot;needs LinkedIn&quot; badge off <code>channel=&#39;linkedin_message&#39;</code> and renders <code>editedSubject ?? generatedSubject</code>.</li>
+<li><strong>Phase 16/17 skills</strong> drain <code>WHERE status=&#39;pending&#39;</code> (generation) and <code>WHERE status=&#39;approved&#39;</code> (drafting); the unique <code>(campaign_id, contact_id)</code> constraint backs Phase 12&#39;s <code>onConflictDoNothing()</code> bulk add.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><strong><code>outreach_email_status</code> enum</strong> (D-01): <code>[&#39;pending&#39;, &#39;generated&#39;, &#39;edited&#39;, &#39;approved&#39;, &#39;drafted&#39;, &#39;failed&#39;]</code></li>
+<li><strong><code>outreach_channel</code> enum</strong> (D-07): <code>[&#39;email&#39;, &#39;linkedin_message&#39;]</code> — default <code>&#39;email&#39;</code></li>
+<li><strong><code>outreach_campaign_status</code> enum</strong> (D-10): <code>[&#39;draft&#39;, &#39;active&#39;, &#39;completed&#39;]</code> — default <code>&#39;draft&#39;</code></li>
+<li><strong><code>email-status.ts</code> transition map</strong> (D-03/D-04/D-05/D-06):<pre><code class="language-ts">const validEmailTransitions: Record&lt;string, string[]&gt; = {
+  pending:   [&#39;generated&#39;, &#39;failed&#39;],
+  generated: [&#39;edited&#39;, &#39;approved&#39;, &#39;failed&#39;, &#39;pending&#39;],
+  edited:    [&#39;approved&#39;, &#39;pending&#39;],
+  approved:  [&#39;drafted&#39;, &#39;edited&#39;],
+  drafted:   [&#39;edited&#39;],
+  failed:    [&#39;pending&#39;]
+};
+const terminalEmailStates: string[] = [];
+export function canEmailTransition(from: string, to: string): boolean {
+  if (terminalEmailStates.includes(from)) return false;
+  return validEmailTransitions[from]?.includes(to) ?? false;
+}
+export function isEmailTerminalState(status: string): boolean {
+  return terminalEmailStates.includes(status);
+}
+export { validEmailTransitions, terminalEmailStates };
+</code></pre>
+</li>
+<li><strong><code>outreach_emails</code> columns</strong> (D-07/D-09 + CD-01/CD-02): <code>id</code>, <code>campaignId</code> (FK → outreach_campaigns), <code>contactId</code> (FK → contacts), <code>channel</code> (enum, default <code>&#39;email&#39;</code>, NOT NULL), <code>recipientEmail</code> (text, nullable), <code>generatedSubject</code>, <code>generatedBody</code>, <code>editedSubject</code>, <code>editedBody</code> (text, nullable), <code>status</code> (enum, default <code>&#39;pending&#39;</code>, NOT NULL), <code>gmailDraftId</code> (text, nullable), <code>lastError</code> (text), <code>lastErrorAt</code> (timestamp tz), <code>generatedAt</code>/<code>approvedAt</code>/<code>draftedAt</code> (timestamp, nullable), <code>createdAt</code>/<code>updatedAt</code> (NOT NULL), plus <code>UNIQUE (campaign_id, contact_id)</code> and indexes on <code>campaign_id</code>, <code>status</code>, <code>contact_id</code>.</li>
+<li><strong><code>outreach_campaigns</code> columns</strong>: <code>id</code>, <code>name</code> (text NOT NULL), <code>goalInstruction</code> (text NOT NULL), <code>status</code> (enum, default <code>&#39;draft&#39;</code>, NOT NULL), <code>createdAt</code>, <code>updatedAt</code>, <code>archivedAt</code> (nullable — soft delete).</li>
+<li><strong>State-machine test cases</strong> (SC #2): assert valid moves accepted (<code>pending→generated→edited→approved→drafted</code>); assert rejected (<code>pending→drafted</code>, <code>approved→pending</code>, <code>pending→approved</code>); assert regenerate (<code>edited→pending</code>, <code>generated→pending</code>); assert <code>drafted→edited</code> accepted; assert unknown <code>from</code> returns <code>false</code>.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Richer email-status enum</strong> (<code>generating</code>, <code>drafting</code>, <code>skipped</code>, <code>needs_linkedin_message</code>) from PITFALLS.md Pitfall 4 — rejected (D-01). Revisit only if a real workflow surfaces a need; <code>ALTER TYPE ... ADD VALUE</code> can extend the enum later if so.</li>
+<li><strong><code>skipped</code> status</strong> (decline-a-contact-without-delete) — considered during Area 1, not adopted. If the owner later wants to exclude a contact from a campaign without a <code>DELETE</code>, this is the cleanest add. Tracked, not built.</li>
+<li><strong><code>canCampaignTransition()</code> campaign state machine</strong> — explicitly declined (D-10). Campaign status is owner-set free-text-ish via the Phase 12 PATCH route.</li>
+<li><strong>DB-side enforcement that <code>editedSubject ?? generatedSubject</code> is non-null before <code>approved</code></strong> — not a schema constraint in Phase 11; the Phase 12 <code>/status</code> route (or Phase 15 UI) enforces &quot;can&#39;t approve an empty email.&quot; Noted so the planner of Phase 12 considers it.</li>
+<li><strong>Google OAuth token table</strong> (<code>google_oauth_tokens</code>) — ARCHITECTURE.md notes a possible future DB-backed token store; v1.2 uses the <code>~/.heimdall/google-token.json</code> file convention instead (Phase 17). Not a Phase 11 table.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos matched this phase.</p>
+</deferred><hr>
+<p><em>Phase: 11-Schema, Enums, and State Machine</em>
+<em>Context gathered: 2026-06-20</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

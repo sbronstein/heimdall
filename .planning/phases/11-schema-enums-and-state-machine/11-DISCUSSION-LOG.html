@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 11: Schema, Enums, and State Machine - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-06-20
+<strong>Phase:</strong> 11-schema-enums-and-state-machine
+<strong>Areas discussed:</strong> Email status enum set, Transition graph rules, &#39;Needs LinkedIn&#39; modeling, Edited content storage</p>
+<hr>
+<h2>Email status enum set</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lean 6 (REV-05 exact)</td>
+<td>pending, generated, edited, approved, drafted, failed. &#39;Needs LinkedIn&#39; via channel enum, not status. No transient generating/drafting (skills act per-email synchronously).</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Lean 6 + skipped</td>
+<td>Adds <code>skipped</code> for decline-without-delete.</td>
+<td></td>
+</tr>
+<tr>
+<td>Rich set (PITFALLS)</td>
+<td>Adds generating, drafting, skipped, needs_linkedin_message. Risk of dead enum values.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Lean 6 (REV-05 exact)
+<strong>Notes:</strong> Matches the locked requirement REV-05 and the ROADMAP success criterion verbatim. <code>generating</code>/<code>drafting</code> are never persisted; <code>needs_linkedin_message</code> is absorbed by the channel column.</p>
+<hr>
+<h2>Transition graph rules</h2>
+<h3>Sub-question A — Regenerate target</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>→ pending (re-queue)</td>
+<td>generated→pending and edited→pending; skill drains WHERE status=&#39;pending&#39;. Research&#39;s corrected model.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>→ generated (in-place)</td>
+<td>Keeps status at generated; needs a second queue signal beyond status.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> → pending (re-queue)</p>
+<h3>Sub-question B — Is <code>drafted</code> terminal?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Not terminal: drafted→edited</td>
+<td>Supports DRFT-03 (edit-after-draft updates Gmail draft in place). Empty terminal set. Locks lifecycle so Phase 17 needn&#39;t touch the state machine.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Terminal (research&#39;s default)</td>
+<td>terminalEmailStates=[&#39;drafted&#39;]; contradicts DRFT-03&#39;s edit-after-draft requirement.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Not terminal: drafted→edited
+<strong>Notes:</strong> Resolved the research&#39;s self-contradiction (edited→generated vs edited→pending) in favor of →pending, and its conflict with DRFT-03 (terminal drafted) in favor of a recoverable drafted. Un-approve (approved→edited) and retry (failed→pending) folded into the recommended graph; terminal set is empty.</p>
+<hr>
+<h2>&#39;Needs LinkedIn&#39; modeling</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Now, in 0011</td>
+<td>Add outreachChannelEnum=[&#39;email&#39;,&#39;linkedin_message&#39;] (default &#39;email&#39;, NOT NULL) + channel column in this migration. All three enums + full table shape ship in Phase 11.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Defer to Phase 17</td>
+<td>Only 2 enums now; add channel when discovery is built. Forces a 2nd migration and leaves Phase 15 with no column for the REV-06 badge.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Now, in 0011
+<strong>Notes:</strong> &quot;Needs LinkedIn&quot; is a channel value, not a status (consistent with the lean-6 enum choice). Phase 15 ships before Phase 17 and needs the column for REV-06&#39;s badge.</p>
+<hr>
+<h2>Edited content storage</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Separate edited* columns</td>
+<td>generatedSubject/Body + editedSubject/Body (null until edited). Final = editedSubject ?? generatedSubject. Preserves AI original; enables revert/provenance.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Single subject/body pair</td>
+<td>Editing overwrites in place; status=&#39;edited&#39; is the only signal. Simpler (2 cols), no provenance.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Separate edited* columns
+<strong>Notes:</strong> Matches the research the rest of the design assumes; gives Phase 15 a clean &quot;revert to original&quot; and Phase 17 a clear final-content resolution via coalesce.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<ul>
+<li><strong>CD-01:</strong> Add both <code>lastError</code> and <code>lastErrorAt</code> to <code>outreach_emails</code> to match the <code>job_leads</code> failure pattern (recommended yes).</li>
+<li><strong>CD-02:</strong> Include <code>generatedAt</code>/<code>approvedAt</code>/<code>draftedAt</code> lifecycle timestamps so Phase 12 routes have write targets.</li>
+<li><strong>CD-03:</strong> Migration filename <code>0011_outreach_campaigns</code>; inspect emitted SQL (3 CREATE TYPE, 2 CREATE TABLE, unique + 3 indexes).</li>
+<li><strong>CD-04:</strong> Test fixture helpers in <code>src/test-utils/pglite.ts</code> only above the DRY threshold; <code>canEmailTransition()</code> test is pure-function (no DB).</li>
+<li><strong>CD-05:</strong> Schema-regression test <code>src/lib/db/__phase11_schema__.test.ts</code> mirroring <code>__phase7_schema__.test.ts</code> (assert unique constraint, nullable edited columns).</li>
+<li><strong>D-10 (not asked):</strong> <code>outreach_campaign_status</code> = [&#39;draft&#39;,&#39;active&#39;,&#39;completed&#39;], default &#39;draft&#39;, NOT NULL; no campaign state machine — only email status is guarded.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Richer email-status enum (generating/drafting/skipped/needs_linkedin_message) — rejected; <code>ALTER TYPE ... ADD VALUE</code> can extend later.</li>
+<li><code>skipped</code> status (decline-without-delete) — tracked, not built.</li>
+<li><code>canCampaignTransition()</code> — declined.</li>
+<li>DB-side non-null-content-before-approved constraint — left to Phase 12/15 enforcement.</li>
+<li>Google OAuth token DB table — v1.2 uses <code>~/.heimdall/google-token.json</code>; Phase 17.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/11-schema-enums-and-state-machine/11-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
