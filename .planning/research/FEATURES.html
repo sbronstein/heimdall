@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FEATURES</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/research/FEATURES.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Feature Research</h1>
+<p><strong>Domain:</strong> Personal networking outreach email campaign (single-user, draft-only, 1:1 personalized)
+<strong>Researched:</strong> 2026-06-20
+<strong>Confidence:</strong> HIGH — domain is well-understood from existing CRM context; Gmail API and Google Contacts API are mature and well-documented.</p>
+<hr>
+<h2>Framing: What This Is Not</h2>
+<p>Before listing features, establishing what this tool is NOT eliminates a large category of scope creep. This is not:</p>
+<ul>
+<li>An email marketing platform (Mailchimp, HubSpot, SendGrid) — no bulk blasts, no merge fields, no lists.</li>
+<li>A sales engagement platform (Outreach.io, Apollo, Salesloft) — no sequences, no cadences, no open tracking.</li>
+<li>An automation engine — nothing sends, schedules, or fires without the owner&#39;s explicit approval of each email.</li>
+<li>A multi-user tool — one person, one Gmail account, one session.</li>
+</ul>
+<p>The correct mental model is: <strong>a drafting assistant that helps the owner write better personal emails faster, batched across a named contact cohort, and pushes the approved drafts to Gmail where the owner decides what to do with them.</strong></p>
+<hr>
+<h2>Feature Landscape</h2>
+<h3>Table Stakes (Users Expect These)</h3>
+<p>Features that must exist for the milestone to be complete. Missing any of these makes the workflow non-functional.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Why Expected</th>
+<th>Complexity</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Named campaign creation (name + goal/instruction)</td>
+<td>No way to organize or batch emails without a campaign container</td>
+<td>LOW</td>
+<td>New <code>outreach_campaigns</code> table; campaign goal is the primary prompt signal for AI generation</td>
+</tr>
+<tr>
+<td>Contact filter UI (howMet, connection date range, closeness tier, outreach status)</td>
+<td>Can&#39;t build a recipient list without filtering 1500+ contacts</td>
+<td>MEDIUM</td>
+<td>All filter fields already exist on <code>contacts</code>; trickiest part is the date-range picker for <code>linkedinConnectionDate</code> / <code>metDate</code>; must filter out archived contacts</td>
+</tr>
+<tr>
+<td>Checkbox multi-select with &quot;select all within filter&quot;</td>
+<td>Reviewer must be able to include/exclude individuals before committing to a campaign</td>
+<td>LOW</td>
+<td>Standard pattern; UI complexity only</td>
+</tr>
+<tr>
+<td>Save selection as campaign (create <code>outreach_email</code> rows)</td>
+<td>Persists who is in the campaign before emails are generated; lets the owner exit and return</td>
+<td>LOW</td>
+<td>One INSERT per selected contact into <code>outreach_emails</code> with initial status <code>pending</code></td>
+</tr>
+<tr>
+<td>Triage connection-date filter</td>
+<td>Lets the owner scope triage to a specific company era (e.g. &quot;show me people I connected with in 2021-2022&quot;)</td>
+<td>LOW</td>
+<td>Filter on existing <code>linkedinConnectionDate</code> in the triage query — additive to existing triage filters</td>
+</tr>
+<tr>
+<td>Per-contact AI email generation (subject + body)</td>
+<td>The whole point of the milestone; replaces manual drafting</td>
+<td>MEDIUM</td>
+<td>Calls the AI skill with contact data + campaign goal; stores result in <code>outreach_emails.generatedSubject</code> + <code>generatedBody</code></td>
+</tr>
+<tr>
+<td>Per-email inline editing</td>
+<td>Generated text is always a first draft; owner must be able to correct it before approving</td>
+<td>LOW</td>
+<td>Simple textarea in the review UI; edit saves to <code>editedSubject</code> / <code>editedBody</code> columns</td>
+</tr>
+<tr>
+<td>Regenerate single email</td>
+<td>Bad generations happen; must be recoverable without touching the rest of the campaign</td>
+<td>LOW</td>
+<td>Re-runs the generation skill for one contact, overwrites generated columns, resets status to <code>generated</code></td>
+</tr>
+<tr>
+<td>Approve gate (generated → approved)</td>
+<td>Hard requirement from milestone spec; only approved emails get drafted</td>
+<td>LOW</td>
+<td>Status transition button in UI; API validates transition</td>
+</tr>
+<tr>
+<td>Campaign-level progress summary</td>
+<td>Owner needs to know where they stand (X of N approved, Y drafted)</td>
+<td>LOW</td>
+<td>Computed from <code>outreach_emails</code> status counts; can be a header in the review UI</td>
+</tr>
+<tr>
+<td>Gmail draft creation for approved emails</td>
+<td>The terminal output of the whole workflow</td>
+<td>MEDIUM</td>
+<td>Claude Code skill; calls Gmail API <code>drafts.create</code>; never calls <code>messages.send</code></td>
+</tr>
+<tr>
+<td>Gmail draft ID stored on <code>outreach_emails</code></td>
+<td>Allows the owner to locate the draft in Gmail and track which were created</td>
+<td>LOW</td>
+<td><code>gmailDraftId</code> column on <code>outreach_emails</code></td>
+</tr>
+<tr>
+<td>Status <code>drafted</code> + timeline event on successful draft creation</td>
+<td>Consistent with every other write operation in Heimdall; provides audit trail</td>
+<td>LOW</td>
+<td><code>logTimeline()</code> call from drafting skill after each successful <code>drafts.create</code></td>
+</tr>
+<tr>
+<td>&quot;Needs email / LinkedIn message&quot; flag for contacts with no email found</td>
+<td>Without this, email-missing contacts silently fall off the workflow</td>
+<td>LOW</td>
+<td><code>noEmailFound</code> boolean or <code>channel</code> enum (<code>email</code> / <code>linkedin_message</code>) on <code>outreach_emails</code></td>
+</tr>
+<tr>
+<td>Email status state machine (pending → generated → edited → approved → drafted)</td>
+<td>Without explicit status, the review UI has no way to track progress per email</td>
+<td>LOW</td>
+<td>Enum column on <code>outreach_emails</code>; transitions validated at the API boundary (mirrors <code>canTransition()</code> pattern)</td>
+</tr>
+</tbody></table>
+<h3>Differentiators (Competitive Advantage)</h3>
+<p>Features that elevate this above &quot;write 50 emails manually&quot; or a mail-merge template approach. These are why the milestone is worth doing.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Value Proposition</th>
+<th>Complexity</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Per-contact personalization from CRM data (howMet, company/role, closeness, prior interactions)</td>
+<td>Each email reflects what the owner actually knows about the person — not a generic &quot;hope this finds you well&quot;</td>
+<td>MEDIUM</td>
+<td>The generation prompt assembles a contact brief from <code>contacts.howMet</code>, <code>contacts.companyAtConnection</code>, <code>contacts.roleAtConnection</code>, <code>contacts.closeness</code>, and recent <code>interactions</code> rows; closeness tier calibrates tone and presumed familiarity</td>
+</tr>
+<tr>
+<td>Campaign goal/instruction as the generation driver</td>
+<td>Owner states what they want (e.g. &quot;reintroduce myself and ask for a 20-min call about VP Data roles&quot;) and the AI adapts every email to that goal</td>
+<td>LOW</td>
+<td>Single free-text field on <code>outreach_campaigns.goalInstruction</code>; passed verbatim into each email generation prompt</td>
+</tr>
+<tr>
+<td>Voice-consistent generation (no LLM tells)</td>
+<td>Emails sound like Steve wrote them — casual, story-led, no em dashes, no &quot;it&#39;s not X, it&#39;s Y&quot; constructions</td>
+<td>LOW</td>
+<td>Reuse LLM-tell conventions and voice guidance from the <code>tailor-application-materials</code> skill&#39;s <code>cover-letter-style.md</code> reference</td>
+</tr>
+<tr>
+<td>Email discovery via Google Contacts + Gmail search</td>
+<td>Contacts imported from LinkedIn CSV rarely have email addresses; this closes the gap without the owner manually looking up each one</td>
+<td>HIGH</td>
+<td>Requires Google OAuth2 with <code>contacts.readonly</code> + <code>gmail.readonly</code> scopes; skill queries Google People API then falls back to Gmail thread search; HIGH complexity because OAuth token management is new to this codebase</td>
+</tr>
+<tr>
+<td>LinkedIn message fallback channel for no-email contacts</td>
+<td>Prevents contacts from being silently dropped; owner gets an actionable list of who to message on LinkedIn instead</td>
+<td>LOW</td>
+<td><code>channel</code> field on <code>outreach_emails</code>; review UI shows a &quot;LinkedIn&quot; badge instead of email preview</td>
+</tr>
+<tr>
+<td>Prior interactions as personalization signal</td>
+<td>If the owner talked to this person 6 months ago, the email should acknowledge it — this is the CRM data advantage over generic tools</td>
+<td>MEDIUM</td>
+<td>Generation skill queries <code>interactions</code> WHERE <code>contactId = ?</code> ORDER BY <code>occurredAt DESC</code> LIMIT 3; summarizes in the prompt</td>
+</tr>
+<tr>
+<td>Inline review of all emails in one campaign view</td>
+<td>Owner can scan all generated emails in a scrollable list, edit inline, and approve/reject without navigating away</td>
+<td>MEDIUM</td>
+<td>Single-page review UI; virtual-scroll if campaign has 50+ contacts; shadcn Textarea for inline edits</td>
+</tr>
+</tbody></table>
+<h3>Anti-Features (Commonly Requested, Often Problematic)</h3>
+<p>Features that are natural to reach for but wrong for this single-user, draft-only, 1:1 personal context.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Why Requested</th>
+<th>Why Problematic</th>
+<th>Alternative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bulk &quot;generate all then auto-approve&quot;</td>
+<td>Speed; skip the review step</td>
+<td>Defeats the approve gate, which is load-bearing — a bad AI generation sent to someone the owner has a real relationship with damages the relationship</td>
+<td>Keep the two-step flow (generate → review → approve); the skill can generate all at once in batch but approval remains per-email</td>
+</tr>
+<tr>
+<td>Email open/click tracking (pixel, link wrapping)</td>
+<td>Analytics</td>
+<td>1:1 personal email with tracking pixels looks like surveillance to the recipient; destroys the personal tone; no statistical value at this volume</td>
+<td>Owner knows if they got a reply; that&#39;s the only metric that matters for exec networking</td>
+</tr>
+<tr>
+<td>Unsubscribe links and CAN-SPAM compliance blocks</td>
+<td>&quot;Best practice&quot; for email marketing</td>
+<td>These are markers of bulk email, not personal outreach; including them signals &quot;I mass-emailed you&quot; to VP-level recipients; legally, CAN-SPAM exempts transactional and personal correspondence</td>
+<td>Never include; this is personal outreach, not marketing</td>
+</tr>
+<tr>
+<td>Send from Heimdall (skip Gmail drafts)</td>
+<td>One less step</td>
+<td>Adds Gmail send scope; introduces risk of accidental sends; removes the Gmail compose moment where the owner can do a final check and choose the right From address</td>
+<td>Gmail drafts only; owner sends from Gmail</td>
+</tr>
+<tr>
+<td>Sequence / follow-up automation</td>
+<td>&quot;Remind me if no reply in 7 days&quot;</td>
+<td>Follow-up scheduling at this relationship depth should be deliberate, not automated; automated follow-up nudges to VP-level contacts are off-putting</td>
+<td>Create a Task in Heimdall when the owner wants to follow up; the existing tasks CRUD handles this</td>
+</tr>
+<tr>
+<td>Email template library (merge-field approach)</td>
+<td>Re-use messaging across campaigns</td>
+<td>Templates produce generic output that the owner still has to personalize manually; AI generation from CRM data is strictly better because it uses what the owner already knows</td>
+<td>AI generation with campaign goal replaces templates entirely</td>
+</tr>
+<tr>
+<td>A/B testing subject lines</td>
+<td>&quot;Best practice&quot;</td>
+<td>No statistical significance at 20-50 recipient cohorts; adds UI complexity with no actionable output</td>
+<td>Write one good subject line per contact; the personalization is the A/B test</td>
+</tr>
+<tr>
+<td>Contact deduplication within a campaign</td>
+<td>Prevent sending two emails to the same person</td>
+<td>Deduplication belongs at import time (LinkedIn CSV import already handles it); within a campaign, the owner&#39;s filter should produce a clean list; adding dedup UI here complicates the flow</td>
+<td>Rely on the existing <code>contacts_linkedin_url_unique_idx</code>; add a guard at campaign-creation time (API checks for duplicate <code>contactId</code> within the campaign)</td>
+</tr>
+<tr>
+<td>Multi-email-address per contact (primary/secondary)</td>
+<td>Some contacts have work + personal email</td>
+<td>Adds schema complexity for a rare case; email discovery should return one best address</td>
+<td>Discovery returns the single best address found; owner can manually edit the <code>to</code> field in Gmail</td>
+</tr>
+<tr>
+<td>Campaign cloning and re-use</td>
+<td>Run the same outreach again later</td>
+<td>Campaigns are point-in-time; contact data and relationships change; a &quot;clone&quot; would just produce stale personalization</td>
+<td>Create a new campaign; the filter UI makes it fast to rebuild a similar recipient list</td>
+</tr>
+<tr>
+<td>LinkedIn message composition from Heimdall</td>
+<td>Close the loop on the LinkedIn fallback channel</td>
+<td>Requires LinkedIn OAuth or browser automation, which is in-scope for the scraping skill but not safe to automate for sending (ToS risk)</td>
+<td>Owner sees the &quot;LinkedIn&quot; badge in the review UI and sends manually from LinkedIn; Heimdall can log the interaction afterward</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Feature Dependencies</h2>
+<pre><code>Campaign creation (name + goal)
+    └──requires──&gt; Contact filter UI
+                       └──requires──&gt; contacts table (CONT-V1) [EXISTING]
+                       └──requires──&gt; linkedinConnectionDate (CONT-V2) [EXISTING]
+
+Checkbox multi-select
+    └──requires──&gt; Contact filter UI
+
+Save selection as campaign
+    └──requires──&gt; Campaign creation
+    └──requires──&gt; Checkbox multi-select
+    └──requires──&gt; outreach_campaigns table [NEW]
+    └──requires──&gt; outreach_emails table [NEW]
+
+AI email generation (skill)
+    └──requires──&gt; outreach_emails rows (pending status)
+    └──requires──&gt; contacts data: howMet, closeness, companyAtConnection, roleAtConnection [EXISTING]
+    └──requires──&gt; interactions history [INTR-V1 EXISTING]
+    └──requires──&gt; campaign goalInstruction
+
+Email discovery (skill)
+    └──requires──&gt; contacts with no email column set
+    └──requires──&gt; Google OAuth2 (contacts.readonly + gmail.readonly scopes) [NEW]
+
+Review &amp; approval UI
+    └──requires──&gt; outreach_emails rows (generated status)
+    └──requires──&gt; per-email inline edit (updates editedSubject / editedBody)
+    └──requires──&gt; approve action (status → approved)
+
+Gmail drafting skill
+    └──requires──&gt; outreach_emails rows (approved status + recipient email set)
+    └──requires──&gt; Gmail OAuth2 (gmail.compose scope) [NEW]
+    └──requires──&gt; logTimeline() [TIME-V1 EXISTING]
+
+Triage connection-date filter
+    └──requires──&gt; contacts.linkedinConnectionDate [CONT-V2 EXISTING]
+    └──enhances──&gt; Contact filter UI (same filter, different context)
+
+Status state machine
+    └──required-by──&gt; Review &amp; approval UI
+    └──required-by──&gt; Gmail drafting skill
+    └──mirrors──&gt; pipeline canTransition() pattern [EXISTING]
+</code></pre>
+<h3>Dependency Notes</h3>
+<ul>
+<li><strong>Campaign creation requires contact filter UI:</strong> The filter defines who is in scope before the owner commits to a campaign. The filter UI and the campaign form are the same page/flow.</li>
+<li><strong>AI generation requires existing contacts data:</strong> The quality of personalization is directly proportional to how complete the contact&#39;s <code>howMet</code>, <code>closeness</code>, <code>companyAtConnection</code>, and <code>roleAtConnection</code> fields are. Contacts that haven&#39;t gone through triage (Phase 10 enrichment) will produce weaker emails — this is expected and acceptable.</li>
+<li><strong>Email discovery is independent of generation:</strong> Discovery can run before or after generation. It is a blocker only for the drafting step (no email = no draft). It should run as a pre-flight step when the campaign is ready for approval.</li>
+<li><strong>Gmail drafting skill requires both Gmail OAuth and approved status:</strong> These are independent blockers — both must be met. The skill should validate both before attempting <code>drafts.create</code>.</li>
+<li><strong>Triage connection-date filter is additive:</strong> It does not replace existing triage filters; it adds a date-range predicate to the existing triage query. It can be built independently of the campaign flow and shipped in the same phase or earlier.</li>
+</ul>
+<hr>
+<h2>MVP Definition</h2>
+<h3>Launch With (v1.2)</h3>
+<p>All of these are required for the milestone to be complete.</p>
+<ul>
+<li><input disabled="" type="checkbox"> Campaign creation + contact filter (howMet, date range, closeness, outreach status) with checkbox multi-select</li>
+<li><input disabled="" type="checkbox"> Save selection → create <code>outreach_campaigns</code> + <code>outreach_emails</code> rows</li>
+<li><input disabled="" type="checkbox"> Triage connection-date filter (additive to existing triage UI)</li>
+<li><input disabled="" type="checkbox"> AI email generation skill (per campaign → per contact → subject + body)</li>
+<li><input disabled="" type="checkbox"> Per-email inline editing in review UI</li>
+<li><input disabled="" type="checkbox"> Single-email regenerate</li>
+<li><input disabled="" type="checkbox"> Approve gate (status transition, validated at API)</li>
+<li><input disabled="" type="checkbox"> Email discovery (Google Contacts + Gmail search; flag no-email contacts for LinkedIn)</li>
+<li><input disabled="" type="checkbox"> Gmail drafting skill (drafts.create only; store draft ID; log timeline; mark <code>drafted</code>)</li>
+<li><input disabled="" type="checkbox"> &quot;Needs LinkedIn message&quot; surface in review UI for no-email contacts</li>
+</ul>
+<h3>Add After Validation (v1.x)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Campaign-level analytics summary (reply rate, meeting-booked rate) — add once a few campaigns have run and the owner wants to see patterns</li>
+<li><input disabled="" type="checkbox"> Follow-up task auto-create on draft creation — &quot;create a Task if no interaction logged in 14 days&quot; — add if the owner finds manual follow-up tracking tedious</li>
+</ul>
+<h3>Future Consideration (v2+)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> LinkedIn message composition assistance — requires revisiting LinkedIn ToS and automation risk</li>
+<li><input disabled="" type="checkbox"> pgvector semantic search over interactions to find best prior-contact signal (VEC-01/02 backlog)</li>
+<li><input disabled="" type="checkbox"> Campaign templates / saved filter presets — only valuable after 5+ campaigns show repeated patterns</li>
+</ul>
+<hr>
+<h2>Feature Prioritization Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>User Value</th>
+<th>Implementation Cost</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Campaign creation + contact filter UI</td>
+<td>HIGH</td>
+<td>MEDIUM</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Triage connection-date filter</td>
+<td>HIGH</td>
+<td>LOW</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Save selection as campaign (DB rows)</td>
+<td>HIGH</td>
+<td>LOW</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>AI email generation skill</td>
+<td>HIGH</td>
+<td>MEDIUM</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Review &amp; approval UI (inline edit + approve)</td>
+<td>HIGH</td>
+<td>MEDIUM</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Gmail drafting skill</td>
+<td>HIGH</td>
+<td>MEDIUM</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Single-email regenerate</td>
+<td>MEDIUM</td>
+<td>LOW</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Status state machine + API validation</td>
+<td>MEDIUM</td>
+<td>LOW</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Email discovery (Google Contacts + Gmail)</td>
+<td>MEDIUM</td>
+<td>HIGH</td>
+<td>P1 (required for Gmail drafts to work for most contacts)</td>
+</tr>
+<tr>
+<td>&quot;Needs LinkedIn&quot; flag in review UI</td>
+<td>MEDIUM</td>
+<td>LOW</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Campaign progress summary (X of N approved)</td>
+<td>MEDIUM</td>
+<td>LOW</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Follow-up task auto-create</td>
+<td>LOW</td>
+<td>LOW</td>
+<td>P3</td>
+</tr>
+<tr>
+<td>Campaign analytics (reply/meeting rate)</td>
+<td>LOW</td>
+<td>MEDIUM</td>
+<td>P3</td>
+</tr>
+</tbody></table>
+<p><strong>Priority key:</strong></p>
+<ul>
+<li>P1: Required for v1.2 milestone to be complete</li>
+<li>P2: Should have, add in the same milestone if low-cost</li>
+<li>P3: Nice to have, future consideration</li>
+</ul>
+<hr>
+<h2>Competitor Feature Analysis</h2>
+<p>This is not a competitive product. The closest analogues are:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Clay / Apollo (sales outreach)</th>
+<th>Superhuman / Gmail</th>
+<th>Our Approach</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Contact segmentation</td>
+<td>Filter by enriched firmographic data</td>
+<td>Manual labels/folders</td>
+<td>Filter by CRM fields already in Heimdall (howMet, closeness, date)</td>
+</tr>
+<tr>
+<td>Email personalization</td>
+<td>Merge-field templates + AI &quot;personalization snippets&quot;</td>
+<td>Manual writing</td>
+<td>Full AI generation from CRM relationship context — no merge fields</td>
+</tr>
+<tr>
+<td>Approval gate</td>
+<td>Typically absent (auto-send sequences)</td>
+<td>N/A</td>
+<td>Explicit per-email approve required; no draft created without it</td>
+</tr>
+<tr>
+<td>Email discovery</td>
+<td>Data provider enrichment (ZoomInfo, Clearbit)</td>
+<td>Manual</td>
+<td>Google Contacts + Gmail search (uses existing relationship context, not cold data provider)</td>
+</tr>
+<tr>
+<td>Send mechanism</td>
+<td>ESP or direct send</td>
+<td>Gmail compose</td>
+<td>Gmail drafts only; owner sends</td>
+</tr>
+<tr>
+<td>Compliance</td>
+<td>CAN-SPAM, unsubscribe, opt-out</td>
+<td>N/A</td>
+<td>Explicitly omitted; this is personal correspondence, not marketing</td>
+</tr>
+<tr>
+<td>Relationship data as signal</td>
+<td>Firmographic only (company, title)</td>
+<td>None</td>
+<td>Full CRM depth: howMet, closeness tier, prior interactions, connection date</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Implementation Notes for Requirements Definition</h2>
+<p>The following are observations from analyzing the existing codebase that bear on feature complexity and build order:</p>
+<p><strong>Existing patterns that apply directly:</strong></p>
+<ul>
+<li><code>canTransition()</code> pipeline state machine in <code>src/lib/domain/pipeline.ts</code> is the exact pattern for the <code>outreach_emails</code> status state machine (pending → generated → edited → approved → drafted). Copy the pattern.</li>
+<li><code>logTimeline()</code> in <code>src/lib/db/timeline.ts</code> must be called from every API write in the campaign flow — no exceptions (this is enforced by convention throughout the codebase).</li>
+<li>The <code>scrape-linkedin-connections</code> skill is the structural model for the Gmail drafting skill: a Claude Code skill reads from the DB (approved <code>outreach_emails</code>), calls an external API, writes results back via REST API calls to Heimdall. Same pattern.</li>
+<li>The <code>tailor-application-materials</code> skill&#39;s LLM-tell conventions and voice guidance (<code>cover-letter-style.md</code>) apply directly to email generation. The email generation skill should read those references.</li>
+</ul>
+<p><strong>New complexity introduced:</strong></p>
+<ul>
+<li><strong>Google OAuth2 is the only genuinely new external auth pattern in this codebase.</strong> Clerk handles user auth. Gmail + Google Contacts need a separate OAuth2 token flow with scopes <code>https://www.googleapis.com/auth/contacts.readonly</code>, <code>https://www.googleapis.com/auth/gmail.readonly</code>, and <code>https://www.googleapis.com/auth/gmail.compose</code>. Token storage (access + refresh token) needs a <code>google_oauth_tokens</code> table or an environment-variable-based approach for single-user use. The single-user nature simplifies this significantly — no per-user token management needed.</li>
+<li><strong>Gmail API <code>drafts.create</code></strong> takes a MIME-encoded RFC 2822 message. The skill must construct a valid MIME message (To, Subject, From, Content-Type, body). This is straightforward with Node&#39;s built-in capabilities but is not already in the codebase.</li>
+<li><strong>Google People API</strong> (formerly Contacts API) uses <code>connections.list</code> to fetch all contacts then filter by name. Gmail search uses the <code>q</code> parameter (<code>from:&lt;name&gt; OR to:&lt;name&gt;</code>). Neither requires a library beyond <code>fetch</code> with a bearer token.</li>
+<li><strong>Performance:</strong> 1500+ contacts but campaigns are typically 20–100 contacts. No N+1 concerns. A single <code>SELECT * FROM contacts WHERE id = ANY($1)</code> with the selected IDs covers the generation prompt assembly.</li>
+</ul>
+<p><strong>Schema additions (minimal):</strong></p>
+<ul>
+<li><code>outreach_campaigns</code> table: <code>id</code>, <code>name</code>, <code>goalInstruction</code>, <code>status</code> enum (<code>draft | active | completed</code>), <code>createdAt</code>, <code>updatedAt</code></li>
+<li><code>outreach_emails</code> table: <code>id</code>, <code>campaignId</code>, <code>contactId</code>, <code>channel</code> enum (<code>email | linkedin_message</code>), <code>recipientEmail</code>, <code>generatedSubject</code>, <code>generatedBody</code>, <code>editedSubject</code>, <code>editedBody</code>, <code>status</code> enum (<code>pending | generated | edited | approved | drafted | failed</code>), <code>gmailDraftId</code>, <code>noEmailFound</code> bool, <code>generatedAt</code>, <code>approvedAt</code>, <code>draftedAt</code>, <code>createdAt</code>, <code>updatedAt</code></li>
+</ul>
+<p><strong>Conflicts with existing design:</strong></p>
+<ul>
+<li>None identified. The outreach campaign flow is additive — no existing tables need structural changes. The <code>contacts.outreachStatus</code> field (already exists: <code>not_reached_out | reached_out | meeting_scheduled | meeting_completed | ongoing</code>) should be updated when an email is drafted (<code>reached_out</code>) and when a reply-interaction is logged later. This update should come from the drafting skill or a subsequent interaction log, not automatically.</li>
+</ul>
+<hr>
+<h2>Sources</h2>
+<ul>
+<li>Heimdall <code>drizzle/schema/</code> — existing data model (contacts, interactions, enums) — HIGH confidence</li>
+<li>Heimdall <code>.planning/PROJECT.md</code> — constraints, architecture, existing features — HIGH confidence</li>
+<li><code>.claude/skills/tailor-application-materials/SKILL.md</code> — voice and LLM-tell conventions reusable for email generation — HIGH confidence</li>
+<li>Gmail API documentation (drafts.create, MIME encoding) — well-documented, stable API — HIGH confidence</li>
+<li>Google People API documentation (contacts.list) — well-documented, stable API — HIGH confidence</li>
+<li>Domain knowledge: personal executive networking email conventions vs bulk marketing — HIGH confidence (single-author CRM context makes this unambiguous)</li>
+</ul>
+<hr>
+<p><em>Feature research for: v1.2 Networking Outreach Campaigns (Heimdall)</em>
+<em>Researched: 2026-06-20</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/research/FEATURES.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ARCHITECTURE</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/research/ARCHITECTURE.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Architecture Research</h1>
+<p><strong>Domain:</strong> v1.2 Networking Outreach Campaigns — integration into existing Heimdall CRM
+<strong>Researched:</strong> 2026-06-20
+<strong>Confidence:</strong> HIGH — all evidence drawn directly from the existing codebase; no external lookups required.</p>
+<hr>
+<h2>Integration Framing</h2>
+<p>This is an <strong>additive milestone</strong>. The existing architecture is fixed and well-understood. No tables are structurally modified. No routing patterns change. The new features plug into four existing seams:</p>
+<ol>
+<li><strong>Schema layer</strong> — two new tables, three new enums, one optional new index</li>
+<li><strong>API layer</strong> — new route tree under <code>/api/outreach-campaigns/</code>, additive filter params on the existing <code>/api/contacts/</code> route, minor additive change to the triage RSC page</li>
+<li><strong>Feature layer</strong> — new <code>src/features/outreach/</code> domain; additive filter UI in <code>src/features/contacts/components/triage/</code></li>
+<li><strong>Skill layer</strong> — two new skills following the <code>scrape-linkedin-connections</code> read-queue → act → write-back-via-REST pattern</li>
+</ol>
+<hr>
+<h2>New Data Model</h2>
+<h3>New Enums (add to <code>drizzle/schema/enums.ts</code>)</h3>
+<pre><code class="language-typescript">export const outreachCampaignStatusEnum = pgEnum(&#39;outreach_campaign_status&#39;, [
+  &#39;draft&#39;,      // building the recipient list, not yet generating
+  &#39;active&#39;,     // generation and/or approval in progress
+  &#39;completed&#39;   // all emails drafted or deliberately closed out
+]);
+
+export const outreachChannelEnum = pgEnum(&#39;outreach_channel&#39;, [
+  &#39;email&#39;,            // will become a Gmail draft
+  &#39;linkedin_message&#39;  // no email found; owner sends manually on LinkedIn
+]);
+
+export const outreachEmailStatusEnum = pgEnum(&#39;outreach_email_status&#39;, [
+  &#39;pending&#39;,    // contact added to campaign; no generation yet
+  &#39;generated&#39;,  // skill has written back generatedSubject + generatedBody
+  &#39;edited&#39;,     // owner has modified the generated text
+  &#39;approved&#39;,   // owner has explicitly approved; eligible for drafting
+  &#39;drafted&#39;,    // Gmail draft created; gmailDraftId populated
+  &#39;failed&#39;      // generation or drafting failed; lastError set
+]);
+</code></pre>
+<h3><code>outreach_campaigns</code> Table (<code>drizzle/schema/outreach-campaigns.ts</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td>uuid PK</td>
+<td>N</td>
+<td><code>defaultRandom()</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>text</td>
+<td>N</td>
+<td>Display name for the campaign</td>
+</tr>
+<tr>
+<td><code>goalInstruction</code></td>
+<td>text</td>
+<td>N</td>
+<td>Free-text prompt passed to generation skill (e.g. &quot;reintroduce myself and ask for a 20-min call about VP Data roles&quot;)</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>outreachCampaignStatusEnum</code></td>
+<td>N</td>
+<td>Default <code>&#39;draft&#39;</code></td>
+</tr>
+<tr>
+<td><code>createdAt</code></td>
+<td>timestamp</td>
+<td>N</td>
+<td><code>defaultNow()</code></td>
+</tr>
+<tr>
+<td><code>updatedAt</code></td>
+<td>timestamp</td>
+<td>N</td>
+<td><code>defaultNow()</code> — set manually on every UPDATE</td>
+</tr>
+<tr>
+<td><code>archivedAt</code></td>
+<td>timestamp</td>
+<td>Y</td>
+<td>Soft delete — never hard delete</td>
+</tr>
+</tbody></table>
+<p>No foreign keys. Campaigns are top-level entities; they reference contacts indirectly through <code>outreach_emails</code>.</p>
+<h3><code>outreach_emails</code> Table (<code>drizzle/schema/outreach-emails.ts</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Nullable</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td>uuid PK</td>
+<td>N</td>
+<td><code>defaultRandom()</code></td>
+</tr>
+<tr>
+<td><code>campaignId</code></td>
+<td>uuid FK → <code>outreach_campaigns.id</code></td>
+<td>N</td>
+<td>Parent campaign</td>
+</tr>
+<tr>
+<td><code>contactId</code></td>
+<td>uuid FK → <code>contacts.id</code></td>
+<td>N</td>
+<td>The recipient</td>
+</tr>
+<tr>
+<td><code>channel</code></td>
+<td><code>outreachChannelEnum</code></td>
+<td>N</td>
+<td>Default <code>&#39;email&#39;</code>; skill sets to <code>&#39;linkedin_message&#39;</code> when no email found</td>
+</tr>
+<tr>
+<td><code>recipientEmail</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Null until discovery runs or owner sets manually; must be non-null for drafting</td>
+</tr>
+<tr>
+<td><code>generatedSubject</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Written by generation skill</td>
+</tr>
+<tr>
+<td><code>generatedBody</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Written by generation skill</td>
+</tr>
+<tr>
+<td><code>editedSubject</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Written by owner via review UI; null until owner edits</td>
+</tr>
+<tr>
+<td><code>editedBody</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Written by owner via review UI; null until owner edits</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>outreachEmailStatusEnum</code></td>
+<td>N</td>
+<td>Default <code>&#39;pending&#39;</code></td>
+</tr>
+<tr>
+<td><code>gmailDraftId</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Written by drafting skill after <code>drafts.create</code> succeeds</td>
+</tr>
+<tr>
+<td><code>lastError</code></td>
+<td>text</td>
+<td>Y</td>
+<td>Set on <code>&#39;failed&#39;</code>; categorized error string matching scraping skill convention</td>
+</tr>
+<tr>
+<td><code>generatedAt</code></td>
+<td>timestamp</td>
+<td>Y</td>
+<td>Set when status transitions to <code>&#39;generated&#39;</code></td>
+</tr>
+<tr>
+<td><code>approvedAt</code></td>
+<td>timestamp</td>
+<td>Y</td>
+<td>Set when status transitions to <code>&#39;approved&#39;</code></td>
+</tr>
+<tr>
+<td><code>draftedAt</code></td>
+<td>timestamp</td>
+<td>Y</td>
+<td>Set when status transitions to <code>&#39;drafted&#39;</code></td>
+</tr>
+<tr>
+<td><code>createdAt</code></td>
+<td>timestamp</td>
+<td>N</td>
+<td><code>defaultNow()</code></td>
+</tr>
+<tr>
+<td><code>updatedAt</code></td>
+<td>timestamp</td>
+<td>N</td>
+<td><code>defaultNow()</code> — set manually on every UPDATE</td>
+</tr>
+</tbody></table>
+<p><strong>Unique constraint:</strong> <code>UNIQUE (campaignId, contactId)</code> — one email row per contact per campaign. Enforced at schema level with <code>unique(&#39;outreach_email_campaign_contact_unique&#39;).on(table.campaignId, table.contactId)</code>. The API layer checks for duplicate <code>contactId</code> at campaign-creation time via <code>onConflictDoNothing()</code>.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+<li><code>outreach_emails_campaign_id_idx</code> on <code>campaignId</code> — every API route filters by campaignId</li>
+<li><code>outreach_emails_status_idx</code> on <code>status</code> — skills read the queue with <code>WHERE status = $1</code></li>
+<li><code>outreach_emails_contact_id_idx</code> on <code>contactId</code> — join key for contact data</li>
+</ul>
+<h3>No Changes to Existing Tables</h3>
+<p>The <code>contacts</code> table gains no new columns. The <code>timeline_events</code> table gains no new columns. Campaign and email IDs are stored in the <code>metadata</code> JSONB field of timeline events:</p>
+<pre><code class="language-typescript">await logTimeline({
+  eventType: &#39;outreach_email_drafted&#39;,
+  title: `Drafted email to ${contact.firstName} ${contact.lastName} in campaign &quot;${campaign.name}&quot;`,
+  contactId: contact.id,
+  metadata: { campaignId: campaign.id, outreachEmailId: email.id, gmailDraftId }
+});
+</code></pre>
+<p>This avoids a migration just for timeline FK columns, consistent with how optional entity references are handled elsewhere (e.g., enrichment events use <code>metadata</code> for context beyond the standard FK set).</p>
+<hr>
+<h2>Email Status State Machine</h2>
+<p>Located at <code>src/features/outreach/lib/email-status.ts</code>. Mirrors <code>src/lib/domain/pipeline.ts</code> exactly — same module shape, same <code>canEmailTransition()</code> and <code>isEmailTerminalState()</code> exports.</p>
+<pre><code class="language-typescript">const validEmailTransitions: Record&lt;string, string[]&gt; = {
+  pending:   [&#39;generated&#39;, &#39;failed&#39;],
+  generated: [&#39;edited&#39;, &#39;approved&#39;, &#39;failed&#39;],
+  edited:    [&#39;approved&#39;, &#39;generated&#39;],    // &#39;generated&#39; = regenerate (resets to pending→generated)
+  approved:  [&#39;drafted&#39;, &#39;edited&#39;],        // &#39;edited&#39; = un-approve for re-edit
+  failed:    [&#39;pending&#39;],                  // retry
+};
+
+const terminalEmailStates = [&#39;drafted&#39;];   // &#39;failed&#39; is recoverable via retry
+
+export function canEmailTransition(from: string, to: string): boolean {
+  if (terminalEmailStates.includes(from)) return false;
+  return validEmailTransitions[from]?.includes(to) ?? false;
+}
+
+export function isEmailTerminalState(status: string): boolean {
+  return terminalEmailStates.includes(status);
+}
+</code></pre>
+<p><strong>Transition semantics:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Transition</th>
+<th>Trigger</th>
+<th>Who</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pending → generated</code></td>
+<td>Generation skill writes back subject + body</td>
+<td>Skill via <code>PATCH .../generation</code></td>
+</tr>
+<tr>
+<td><code>pending → failed</code></td>
+<td>Generation skill fails</td>
+<td>Skill via <code>PATCH .../status</code></td>
+</tr>
+<tr>
+<td><code>generated → edited</code></td>
+<td>Owner saves any edit to subject or body</td>
+<td>UI via <code>PATCH .../emails/[id]</code></td>
+</tr>
+<tr>
+<td><code>generated → approved</code></td>
+<td>Owner approves without editing</td>
+<td>UI via <code>PATCH .../emails/[id]/status</code></td>
+</tr>
+<tr>
+<td><code>generated → failed</code></td>
+<td>Regeneration attempt fails</td>
+<td>Skill via <code>PATCH .../status</code></td>
+</tr>
+<tr>
+<td><code>edited → approved</code></td>
+<td>Owner approves after editing</td>
+<td>UI via <code>PATCH .../emails/[id]/status</code></td>
+</tr>
+<tr>
+<td><code>edited → generated</code></td>
+<td>Owner requests regeneration — resets generated fields</td>
+<td>UI via <code>PATCH .../emails/[id]/status</code> then skill picks up</td>
+</tr>
+<tr>
+<td><code>approved → drafted</code></td>
+<td>Drafting skill creates Gmail draft</td>
+<td>Skill via <code>PATCH .../draft</code></td>
+</tr>
+<tr>
+<td><code>approved → edited</code></td>
+<td>Owner un-approves to re-edit</td>
+<td>UI via <code>PATCH .../emails/[id]/status</code></td>
+</tr>
+<tr>
+<td><code>failed → pending</code></td>
+<td>Owner triggers retry</td>
+<td>UI via <code>PATCH .../emails/[id]/status</code></td>
+</tr>
+</tbody></table>
+<p>The <code>PATCH .../emails/[id]/status</code> handler validates all status transitions via <code>canEmailTransition()</code> before writing, returning <code>400 validationError(&#39;Invalid email status transition: ...&#39;)</code> on rejection — identical to how the pipeline transition endpoint works.</p>
+<p>When <code>edited → generated</code> (regenerate): the API clears <code>generatedSubject</code>, <code>generatedBody</code>, <code>editedSubject</code>, <code>editedBody</code>, sets <code>status = &#39;generated&#39;</code>... actually, no — regenerate should set status back to <code>&#39;pending&#39;</code> so the skill picks it up again. The correct transition is <code>edited → pending</code> (the skill will then write it to <code>generated</code>). Let me reconsider:</p>
+<p>The cleaner model: <code>edited → pending</code> is the &quot;regenerate&quot; trigger. The generation skill&#39;s queue query is <code>WHERE status = &#39;pending&#39;</code>, so it picks up the reset email. Update the state machine accordingly:</p>
+<pre><code class="language-typescript">const validEmailTransitions: Record&lt;string, string[]&gt; = {
+  pending:   [&#39;generated&#39;, &#39;failed&#39;],
+  generated: [&#39;edited&#39;, &#39;approved&#39;, &#39;failed&#39;, &#39;pending&#39;],  // &#39;pending&#39; = regenerate
+  edited:    [&#39;approved&#39;, &#39;pending&#39;],                       // &#39;pending&#39; = regenerate
+  approved:  [&#39;drafted&#39;, &#39;edited&#39;],
+  failed:    [&#39;pending&#39;],
+};
+</code></pre>
+<p>The &quot;Regenerate&quot; button in the UI sends <code>PATCH .../status</code> with <code>{ status: &#39;pending&#39; }</code>, which resets the email to the queue. The generation skill drains the queue next time it runs.</p>
+<hr>
+<h2>REST API Surface</h2>
+<h3>New Route Tree: <code>/api/outreach-campaigns/</code></h3>
+<p>All routes follow the standard Zod validation → Drizzle → <code>logTimeline()</code> → response envelope pattern. All are authenticated via Clerk middleware (no changes to <code>src/proxy.ts</code> needed).</p>
+<h4>Campaign CRUD</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Route</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/api/outreach-campaigns</code></td>
+<td>List campaigns (cursor paginated)</td>
+<td>—</td>
+<td><code>paginated(campaigns[], meta)</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/outreach-campaigns</code></td>
+<td>Create campaign</td>
+<td><code>{ name, goalInstruction }</code></td>
+<td><code>created(campaign)</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/outreach-campaigns/[id]</code></td>
+<td>Get single campaign + email counts by status</td>
+<td>—</td>
+<td><code>success({ campaign, emailCounts })</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/api/outreach-campaigns/[id]</code></td>
+<td>Update name, goalInstruction, status</td>
+<td><code>{ name?, goalInstruction?, status? }</code></td>
+<td><code>success(campaign)</code></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/outreach-campaigns/[id]</code></td>
+<td>Soft delete</td>
+<td>—</td>
+<td><code>success({ id })</code></td>
+</tr>
+</tbody></table>
+<h4>Email Management</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Route</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails</code></td>
+<td>List emails with contact data joined; supports <code>?status=</code> filter</td>
+<td>—</td>
+<td><code>paginated(emails[], meta)</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails</code></td>
+<td>Add selected contacts to campaign</td>
+<td><code>{ contactIds: string[] }</code></td>
+<td><code>created({ inserted: N, rows: [] })</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]</code></td>
+<td>Save inline edits (subject, body, recipientEmail)</td>
+<td><code>{ editedSubject?, editedBody?, recipientEmail? }</code></td>
+<td><code>success(email)</code> — auto-transitions to <code>&#39;edited&#39;</code> if was <code>&#39;generated&#39;</code></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]</code></td>
+<td>Remove contact from campaign</td>
+<td>—</td>
+<td><code>success({ id })</code></td>
+</tr>
+</tbody></table>
+<h4>Explicit Status Transitions (validated by <code>canEmailTransition()</code>)</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Route</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PATCH</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]/status</code></td>
+<td>Approve, un-approve, regenerate (→ pending), retry (failed → pending)</td>
+<td><code>{ status: outreachEmailStatus }</code></td>
+<td><code>success(email)</code> or <code>400 validationError</code></td>
+</tr>
+</tbody></table>
+<h4>Skill Write-Back Routes</h4>
+<p>These are the seams where skills write results back into the app, matching the <code>scrape-linkedin-connections</code> precedent exactly.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Route</th>
+<th>Called By</th>
+<th>Body</th>
+<th>Side Effects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PATCH</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]/generation</code></td>
+<td>Generation skill</td>
+<td><code>{ generatedSubject, generatedBody }</code></td>
+<td>Sets status → <code>&#39;generated&#39;</code>, sets <code>generatedAt</code>, calls <code>logTimeline()</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]/recipient</code></td>
+<td>Discovery skill</td>
+<td><code>{ recipientEmail?, channel }</code></td>
+<td>Sets <code>recipientEmail</code> and/or <code>channel</code>; if <code>channel = &#39;linkedin_message&#39;</code> also sets <code>recipientEmail = null</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]/draft</code></td>
+<td>Drafting skill</td>
+<td><code>{ gmailDraftId }</code></td>
+<td>Sets status → <code>&#39;drafted&#39;</code>, sets <code>draftedAt</code>, sets <code>gmailDraftId</code>, calls <code>logTimeline()</code></td>
+</tr>
+</tbody></table>
+<p>The generation and draft write-back routes validate that the email exists and belongs to the campaign before writing. The skill authenticates via <code>Authorization: Bearer $TOKEN</code> (same <code>~/.heimdall/api-token</code> pattern as <code>scrape-linkedin-connections</code>).</p>
+<h3>Modified Route: <code>GET /api/contacts</code></h3>
+<p>Two new filter query parameters — additive, no breaking changes:</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Drizzle Predicate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>howMet</code></td>
+<td>string</td>
+<td><code>ilike(contacts.howMet, &#39;%${value}%&#39;)</code></td>
+</tr>
+<tr>
+<td><code>connectionYearStart</code></td>
+<td>YYYY string</td>
+<td><code>gte(contacts.linkedinConnectionDate, new Date(&#39;${value}-01-01&#39;))</code></td>
+</tr>
+<tr>
+<td><code>connectionYearEnd</code></td>
+<td>YYYY string</td>
+<td><code>lte(contacts.linkedinConnectionDate, new Date(&#39;${value}-12-31T23:59:59&#39;))</code></td>
+</tr>
+</tbody></table>
+<p>Existing filters (<code>closeness</code>, <code>outreachStatus</code>, <code>warmth</code>, <code>relationship</code>, <code>search</code>) already cover the other campaign-builder filter requirements. The campaign builder calls <code>GET /api/contacts</code> with these params to populate the checkbox multi-select.</p>
+<h3>Triage Page: No New API Route</h3>
+<p>The triage page (<code>src/app/dashboard/contacts/triage/page.tsx</code>) is an RSC that queries Drizzle directly. The connection-date filter is added as URL <code>searchParams</code> read by the page function, which applies <code>gte</code>/<code>lte</code> predicates on <code>contacts.linkedinConnectionDate</code> in the existing query. No new API route is needed; the triage URL becomes <code>/dashboard/contacts/triage?connectionYearStart=2021&amp;connectionYearEnd=2022</code>.</p>
+<hr>
+<h2>New Feature Structure</h2>
+<pre><code>src/features/outreach/
+├── components/
+│   ├── campaign-list.tsx           # &#39;use client&#39;; renders campaign table with status badges
+│   ├── campaign-builder.tsx        # &#39;use client&#39;; contact filter UI + checkbox multi-select + campaign name/goal form
+│   ├── review-panel.tsx            # &#39;use client&#39;; scrollable per-email review list with inline edit + approve
+│   └── email-card.tsx              # &#39;use client&#39;; single email card — Textarea for subject/body, approve/reject buttons
+└── lib/
+    └── email-status.ts             # canEmailTransition(), isEmailTerminalState(), validEmailTransitions
+
+src/app/dashboard/outreach/
+├── page.tsx                        # RSC: query outreach_campaigns → &lt;CampaignList /&gt;
+├── new/
+│   └── page.tsx                    # RSC: pass filter context → &lt;CampaignBuilder /&gt;
+└── [id]/
+    └── page.tsx                    # RSC: query campaign + emails with contact JOIN → &lt;ReviewPanel /&gt;
+</code></pre>
+<p><strong>Modified files:</strong></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/contacts/components/triage/triage-workflow.tsx</code></td>
+<td>Add connection-year filter toggle; reads <code>connectionYearStart</code>/<code>End</code> from URL params via nuqs; updates URL on selection</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/contacts/triage/page.tsx</code></td>
+<td>Accept <code>searchParams</code>; add <code>gte</code>/<code>lte</code> predicates to Drizzle query</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/route.ts</code></td>
+<td>Add <code>howMet</code> and <code>connectionYearStart</code>/<code>End</code> filter params</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/index.ts</code></td>
+<td>Add barrel exports for <code>outreachCampaigns</code>, <code>outreachEmails</code></td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code></td>
+<td>Add inferred types <code>OutreachCampaign</code>, <code>OutreachEmail</code>, <code>NewOutreachCampaign</code>, <code>NewOutreachEmail</code>; add enum value arrays <code>outreachCampaignStatusValues</code>, <code>outreachChannelValues</code>, <code>outreachEmailStatusValues</code></td>
+</tr>
+</tbody></table>
+<p><strong>New schema files:</strong></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/outreach-campaigns.ts</code></td>
+<td><code>outreachCampaigns</code> pgTable</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/outreach-emails.ts</code></td>
+<td><code>outreachEmails</code> pgTable</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/enums.ts</code></td>
+<td>Three new pgEnum additions</td>
+</tr>
+</tbody></table>
+<p><strong>New migration:</strong> <code>drizzle/migrations/0011_outreach_campaigns.sql</code> — all of the above in one migration.</p>
+<hr>
+<h2>Skill Designs</h2>
+<p>Both skills follow the <code>scrape-linkedin-connections</code> model: read queue via authenticated REST → act (external service call) → write results back via authenticated REST. Skills never touch the DB directly.</p>
+<h3>Skill 1: <code>generate-outreach-emails</code></h3>
+<p><strong>Location:</strong> <code>.claude/skills/generate-outreach-emails/</code></p>
+<p><strong>Invocation:</strong></p>
+<ul>
+<li><code>generate-outreach-emails &lt;campaign-id&gt;</code> — batch mode: generates all <code>status=pending</code> emails in the campaign</li>
+<li><code>generate-outreach-emails &lt;campaign-id&gt; --email &lt;email-id&gt;</code> — single mode: regenerates one specific email</li>
+</ul>
+<p><strong>Queue read:</strong></p>
+<pre><code class="language-bash">GET /api/outreach-campaigns/&lt;campaignId&gt;/emails?status=pending
+</code></pre>
+<p><strong>Per-email flow:</strong></p>
+<ol>
+<li><code>GET /api/contacts/&lt;contactId&gt;</code> — fetch full contact (howMet, closeness, companyAtConnection, roleAtConnection, currentCompany, title, email)</li>
+<li><code>GET /api/interactions?contactId=&lt;contactId&gt;&amp;limit=3</code> — recent interaction summaries for personalization</li>
+<li>Assemble generation prompt: campaign <code>goalInstruction</code> + contact brief. Use LLM-tell conventions and voice guidance from <code>tailor-application-materials</code> skill references (no em dashes, casual and story-led, no generic openers).</li>
+<li>Generate subject + body via Claude API (Sonnet-class model).</li>
+<li>Write back:<pre><code class="language-bash">PATCH /api/outreach-campaigns/&lt;campaignId&gt;/emails/&lt;emailId&gt;/generation
+body: { &quot;generatedSubject&quot;: &quot;...&quot;, &quot;generatedBody&quot;: &quot;...&quot; }
+</code></pre>
+Confirm <code>{ success: true }</code>. API transitions status → <code>&#39;generated&#39;</code> and logs timeline event server-side.</li>
+</ol>
+<p><strong>Error handling:</strong> If generation fails, <code>PATCH .../status</code> with <code>{ status: &#39;failed&#39;, lastError: &#39;Generation failed: &lt;first 200 chars&gt;&#39; }</code>. Contact stays failed; owner retries via UI.</p>
+<p><strong>References needed in skill:</strong></p>
+<ul>
+<li><code>references/heimdall-api.md</code> (same pattern as scraping skill)</li>
+<li><code>references/voice-guide.md</code> (reuse or symlink from <code>tailor-application-materials</code> skill&#39;s <code>cover-letter-style.md</code>)</li>
+</ul>
+<h3>Skill 2: <code>draft-outreach-emails</code></h3>
+<p><strong>Location:</strong> <code>.claude/skills/draft-outreach-emails/</code></p>
+<p><strong>Invocation:</strong></p>
+<ul>
+<li><code>draft-outreach-emails &lt;campaign-id&gt;</code> — full mode: runs discovery then drafting</li>
+<li><code>draft-outreach-emails &lt;campaign-id&gt; --discover-only</code> — only runs email discovery, no drafts created</li>
+<li><code>draft-outreach-emails &lt;campaign-id&gt; --draft-only</code> — skips discovery, drafts approved emails that already have recipients</li>
+</ul>
+<p><strong>Google OAuth token:</strong> Stored at <code>~/.heimdall/google-token.json</code> (<code>{ accessToken, refreshToken, expiresAt }</code>). Skill reads, refreshes if expired using the Google OAuth2 token endpoint, writes updated token back. This is the same file-based convention as <code>~/.heimdall/api-token</code>. One-time setup: user runs a local OAuth2 authorization flow (described in skill README) to obtain initial tokens with scopes <code>contacts.readonly</code>, <code>gmail.readonly</code>, <code>gmail.compose</code>.</p>
+<p><strong>Discovery sub-flow (for emails with <code>recipientEmail IS NULL</code>):</strong></p>
+<p>Queue:</p>
+<pre><code class="language-bash">GET /api/outreach-campaigns/&lt;campaignId&gt;/emails?status=approved
+# Filter client-side: emails where recipientEmail IS NULL
+</code></pre>
+<p>Per-contact:</p>
+<ol>
+<li>Query Google People API: <code>GET https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses</code> — filter by <code>displayName</code> match with <code>contact.firstName + &#39; &#39; + contact.lastName</code>.</li>
+<li>If found: use the best email match.</li>
+<li>If not found: query Gmail: <code>GET https://gmail.googleapis.com/gmail/v1/users/me/messages?q=from:&lt;firstName&gt;+&lt;lastName&gt;+OR+to:&lt;firstName&gt;+&lt;lastName&gt;&amp;maxResults=5</code> — extract email addresses from <code>From</code>/<code>To</code> headers.</li>
+<li>Write back:<ul>
+<li>Found: <code>PATCH .../recipient</code> with <code>{ recipientEmail: &quot;...&quot;, channel: &quot;email&quot; }</code></li>
+<li>Not found: <code>PATCH .../recipient</code> with <code>{ channel: &quot;linkedin_message&quot; }</code> — sets channel, leaves recipientEmail null; UI shows &quot;LinkedIn&quot; badge</li>
+</ul>
+</li>
+</ol>
+<p><strong>Drafting sub-flow (for emails with <code>status = &#39;approved&#39;</code> and <code>channel = &#39;email&#39;</code> and <code>recipientEmail IS NOT NULL</code>):</strong></p>
+<p>Queue:</p>
+<pre><code class="language-bash">GET /api/outreach-campaigns/&lt;campaignId&gt;/emails?status=approved
+# Filter client-side: channel=email AND recipientEmail IS NOT NULL
+</code></pre>
+<p>Per-email:</p>
+<ol>
+<li>Use <code>editedSubject ?? generatedSubject</code> and <code>editedBody ?? generatedBody</code> as the final content.</li>
+<li>Construct RFC 2822 MIME message (base64url-encoded): <code>To</code>, <code>Subject</code>, <code>From</code> (owner&#39;s email), <code>Content-Type: text/plain; charset=utf-8</code>, body.</li>
+<li>Call Gmail API: <code>POST https://gmail.googleapis.com/gmail/v1/users/me/drafts</code> with <code>{ message: { raw: &lt;base64url&gt; } }</code>.</li>
+<li>Write back:<pre><code class="language-bash">PATCH /api/outreach-campaigns/&lt;campaignId&gt;/emails/&lt;emailId&gt;/draft
+body: { &quot;gmailDraftId&quot;: &quot;r&lt;draft-id&gt;&quot; }
+</code></pre>
+API transitions status → <code>&#39;drafted&#39;</code>, sets <code>draftedAt</code>, logs <code>outreach_email_drafted</code> timeline event.</li>
+</ol>
+<p><strong>Error handling:</strong> Per-email failures write <code>lastError</code> via <code>PATCH .../status</code> with <code>{ status: &#39;failed&#39;, lastError: &#39;...&#39; }</code>. Batch continues; summary at end. Terminal pattern identical to <code>scrape-linkedin-connections</code>.</p>
+<hr>
+<h2>Data Flows</h2>
+<h3>Campaign Creation + Contact Selection</h3>
+<pre><code>User fills campaign form + applies filters
+    ↓
+GET /api/contacts?closeness=...&amp;howMet=...&amp;connectionYearStart=2021&amp;connectionYearEnd=2022
+    ↓ (returns paginated contact list)
+User checkbox-selects contacts
+    ↓
+POST /api/outreach-campaigns → creates outreach_campaigns row
+POST /api/outreach-campaigns/[id]/emails → { contactIds: [...] }
+    ↓ (bulk INSERT with onConflictDoNothing on unique (campaignId, contactId))
+outreach_emails rows created with status = &#39;pending&#39;
+</code></pre>
+<h3>Email Generation (Skill)</h3>
+<pre><code>User runs: generate-outreach-emails &lt;campaign-id&gt;
+    ↓
+GET /api/outreach-campaigns/[id]/emails?status=pending
+    ↓ (for each pending email)
+GET /api/contacts/[contactId]
+GET /api/interactions?contactId=[contactId]&amp;limit=3
+    ↓ (assemble prompt, call Claude API)
+PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation
+    body: { generatedSubject, generatedBody }
+    ↓ (API: set status=&#39;generated&#39;, generatedAt, logTimeline)
+</code></pre>
+<h3>Review, Edit, Approve (UI)</h3>
+<pre><code>User navigates to /dashboard/outreach/[id]
+    ↓ (RSC queries campaign + emails JOIN contacts)
+&lt;ReviewPanel /&gt; renders all emails as &lt;EmailCard /&gt; components
+    ↓
+Owner edits subject/body in Textarea
+    PATCH /api/outreach-campaigns/[id]/emails/[emailId]
+    body: { editedSubject, editedBody }
+    → API auto-transitions status: generated → edited
+    ↓
+Owner clicks &quot;Approve&quot;
+    PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status
+    body: { status: &#39;approved&#39; }
+    → canEmailTransition(&#39;edited&#39;, &#39;approved&#39;) validates
+    ↓
+Owner clicks &quot;Regenerate&quot; on a bad generation
+    PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status
+    body: { status: &#39;pending&#39; }
+    → resets to queue; owner re-runs generation skill
+</code></pre>
+<h3>Gmail Drafting (Skill)</h3>
+<pre><code>User runs: draft-outreach-emails &lt;campaign-id&gt;
+    ↓
+GET /api/outreach-campaigns/[id]/emails?status=approved
+    ↓ (discovery sub-flow for emails with no recipientEmail)
+Google People API → Gmail thread search → PATCH .../recipient
+    ↓ (drafting sub-flow for approved emails with recipientEmail)
+Gmail drafts.create (MIME message) →
+    PATCH /api/outreach-campaigns/[id]/emails/[emailId]/draft
+    body: { gmailDraftId }
+    → API: status=&#39;drafted&#39;, draftedAt set, logTimeline(&#39;outreach_email_drafted&#39;)
+    ↓
+Review UI shows &quot;Drafted&quot; badge; owner opens Gmail to send
+</code></pre>
+<h3>Triage Connection-Date Filter (additive to existing flow)</h3>
+<pre><code>User visits /dashboard/contacts/triage?connectionYearStart=2021&amp;connectionYearEnd=2022
+    ↓ (RSC reads searchParams)
+Drizzle query adds: AND linkedin_connection_date &gt;= &#39;2021-01-01&#39;
+                    AND linkedin_connection_date &lt;= &#39;2022-12-31T23:59:59&#39;
+    ↓ (passes filtered contact list to TriageWorkflow)
+Existing triage keyboard flow unchanged
+    ↓
+TriageWorkflow renders year-filter toggle buttons (e.g. &quot;2021&quot;, &quot;2022&quot;, &quot;2023&quot;, &quot;All&quot;)
+→ selecting a year calls router.push with updated searchParams (nuqs pattern)
+</code></pre>
+<hr>
+<h2>Component Responsibilities</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Responsibility</th>
+<th>Pattern</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/outreach/lib/email-status.ts</code></td>
+<td><code>canEmailTransition()</code> + <code>isEmailTerminalState()</code> + transition map</td>
+<td>Mirrors <code>src/lib/domain/pipeline.ts</code> exactly</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/route.ts</code></td>
+<td>Campaign list + create</td>
+<td>Standard Zod → Drizzle → logTimeline → envelope</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code></td>
+<td>Email list (with contact JOIN) + bulk add contacts</td>
+<td>Bulk INSERT with <code>onConflictDoNothing()</code> — mirrors <code>PATCH /api/contacts/import/categorize</code> pattern</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code></td>
+<td>Status transitions (approve, un-approve, regenerate, retry)</td>
+<td>Validates via <code>canEmailTransition()</code> — mirrors pipeline status transition route</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code></td>
+<td>Skill write-back: generated subject + body</td>
+<td>Mirrors <code>POST /api/job-leads/[id]/prospects</code> — sets status, logs timeline, confirms success</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code></td>
+<td>Skill write-back: gmailDraftId + drafted status</td>
+<td>Same pattern as generation write-back</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code></td>
+<td>Skill write-back: discovered email or linkedin_message flag</td>
+<td>Sets recipientEmail and/or channel</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-builder.tsx</code></td>
+<td>Contact filter + checkbox multi-select + campaign form</td>
+<td><code>&#39;use client&#39;</code>; calls GET /api/contacts with filter params; calls POST /api/outreach-campaigns then POST .../emails</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/review-panel.tsx</code></td>
+<td>Per-email inline edit + approve gate + regenerate</td>
+<td><code>&#39;use client&#39;</code>; virtual scroll for 50+ emails; calls PATCH on edit/approve/regenerate</td>
+</tr>
+<tr>
+<td><code>.claude/skills/generate-outreach-emails/</code></td>
+<td>Queue drain: pending → generated (AI-written subject + body)</td>
+<td>Read queue via REST → Claude API → write-back via REST</td>
+</tr>
+<tr>
+<td><code>.claude/skills/draft-outreach-emails/</code></td>
+<td>Discovery (Google People API + Gmail) + Gmail drafts.create</td>
+<td>Read queue via REST → Google APIs → write-back via REST</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Dependency-Ordered Build Sequence</h2>
+<h3>Step 1: Schema + Enums + Migration (no UI dependencies)</h3>
+<ul>
+<li>Add three new enums to <code>drizzle/schema/enums.ts</code></li>
+<li>Create <code>drizzle/schema/outreach-campaigns.ts</code></li>
+<li>Create <code>drizzle/schema/outreach-emails.ts</code> (with indexes and unique constraint)</li>
+<li>Update <code>drizzle/schema/index.ts</code> barrel</li>
+<li>Add inferred types and enum value arrays to <code>src/lib/domain/types.ts</code></li>
+<li>Run <code>npm run db:generate</code> → produces <code>drizzle/migrations/0011_outreach_campaigns.sql</code></li>
+<li>Run <code>npm run db:migrate</code></li>
+</ul>
+<p>Unblocks: everything else.</p>
+<h3>Step 2: Email Status State Machine (depends on Step 1 types)</h3>
+<ul>
+<li>Create <code>src/features/outreach/lib/email-status.ts</code></li>
+<li>Write unit tests mirroring <code>canTransition()</code> tests in the existing Vitest suite</li>
+</ul>
+<p>Unblocks: all API routes that validate status transitions.</p>
+<h3>Step 3: API Routes (depends on Steps 1–2)</h3>
+<p>Build in this sub-order:</p>
+<ol>
+<li>Campaign CRUD (<code>/api/outreach-campaigns/</code> and <code>[id]/</code>)</li>
+<li>Email bulk-add and list (<code>[id]/emails/</code>)</li>
+<li>Email inline edit (<code>[id]/emails/[emailId]/</code>)</li>
+<li>Email status transition (<code>[id]/emails/[emailId]/status/</code>) — depends on <code>canEmailTransition()</code></li>
+<li>Skill write-back routes: <code>generation</code>, <code>recipient</code>, <code>draft</code></li>
+</ol>
+<p>Also: add <code>howMet</code> and <code>connectionYearStart</code>/<code>End</code> filter params to <code>GET /api/contacts</code>.</p>
+<p>Unblocks: UI (needs campaign and email routes); skills (need generation and draft write-back routes).</p>
+<h3>Step 4: Triage Connection-Date Filter (depends on Step 3 contacts filter change; independent of outreach routes)</h3>
+<ul>
+<li>Update <code>src/app/dashboard/contacts/triage/page.tsx</code> to accept and apply <code>searchParams</code></li>
+<li>Add year-toggle filter controls to <code>src/features/contacts/components/triage/triage-workflow.tsx</code> using nuqs</li>
+</ul>
+<p>This can be built in parallel with Steps 3–5 once the contacts filter API change is in place (Step 3 last bullet).</p>
+<h3>Step 5: Campaign Builder + List UI (depends on Steps 1–3)</h3>
+<ul>
+<li><code>src/app/dashboard/outreach/page.tsx</code> (RSC)</li>
+<li><code>src/app/dashboard/outreach/new/page.tsx</code> (RSC)</li>
+<li><code>src/features/outreach/components/campaign-list.tsx</code></li>
+<li><code>src/features/outreach/components/campaign-builder.tsx</code></li>
+<li>Add &quot;Outreach&quot; to the dashboard sidebar nav</li>
+</ul>
+<p>Unblocks: Review UI (needs campaigns + emails to exist in DB to develop against).</p>
+<h3>Step 6: Review &amp; Approval UI (depends on Step 5 — campaigns must be creatable)</h3>
+<ul>
+<li><code>src/app/dashboard/outreach/[id]/page.tsx</code> (RSC)</li>
+<li><code>src/features/outreach/components/review-panel.tsx</code></li>
+<li><code>src/features/outreach/components/email-card.tsx</code></li>
+</ul>
+<p>At this point the full web UI flow is complete (create campaign → select contacts → review emails → approve).</p>
+<h3>Step 7: Email Generation Skill (depends on Step 3 write-back routes)</h3>
+<ul>
+<li>Create <code>.claude/skills/generate-outreach-emails/SKILL.md</code></li>
+<li>Create <code>references/heimdall-api.md</code> (or reuse/symlink from scraping skill)</li>
+<li>Create voice guide reference (symlink or copy from <code>tailor-application-materials</code>)</li>
+<li>Test: invoke skill against a real campaign; verify <code>PATCH .../generation</code> is called and status transitions to <code>&#39;generated&#39;</code> in the UI</li>
+</ul>
+<h3>Step 8: Gmail Drafting + Discovery Skill (depends on Steps 3 + 6; also requires Google OAuth setup)</h3>
+<ul>
+<li>Document and test one-time Google OAuth2 setup: <code>~/.heimdall/google-token.json</code> conventions, scope list, token refresh logic</li>
+<li>Create <code>.claude/skills/draft-outreach-emails/SKILL.md</code></li>
+<li>Test discovery sub-flow against real contacts (no email) → verify <code>PATCH .../recipient</code> writes channel correctly</li>
+<li>Test drafting sub-flow → verify <code>PATCH .../draft</code> writes <code>gmailDraftId</code>; verify draft appears in Gmail Drafts</li>
+</ul>
+<p>This is the highest-risk step (new external auth pattern, new MIME construction, Google API rate limits). Building it last means the rest of the system is already validated when the highest-uncertainty piece is introduced.</p>
+<hr>
+<h2>Integration Points</h2>
+<h3>External Services</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Integration Pattern</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Google People API (<code>people.googleapis.com</code>)</td>
+<td>OAuth2 Bearer token; <code>connections.list</code> with <code>personFields=names,emailAddresses</code></td>
+<td>Single-user token in <code>~/.heimdall/google-token.json</code>; refresh on 401</td>
+</tr>
+<tr>
+<td>Gmail API — draft creation (<code>gmail.googleapis.com</code>)</td>
+<td>OAuth2 Bearer token; <code>POST /gmail/v1/users/me/drafts</code> with MIME body</td>
+<td><code>gmail.compose</code> scope; MIME must be base64url-encoded; <code>drafts.create</code> — never <code>messages.send</code></td>
+</tr>
+<tr>
+<td>Gmail API — thread search</td>
+<td>OAuth2 Bearer token; <code>GET /gmail/v1/users/me/messages?q=...</code></td>
+<td><code>gmail.readonly</code> scope; used for email discovery only</td>
+</tr>
+<tr>
+<td>Claude API</td>
+<td>Skills call Claude directly (not through Heimdall REST)</td>
+<td>Email generation uses Sonnet-class model; prompt assembly includes contact brief + campaign goal + voice guide</td>
+</tr>
+</tbody></table>
+<h3>Internal Boundaries</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Communication</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Generation skill → Heimdall</td>
+<td><code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation</code></td>
+<td>Auth: <code>Authorization: Bearer $(cat ~/.heimdall/api-token)</code></td>
+</tr>
+<tr>
+<td>Drafting skill → Heimdall</td>
+<td><code>PATCH .../recipient</code> and <code>PATCH .../draft</code></td>
+<td>Same auth pattern</td>
+</tr>
+<tr>
+<td>Review UI → API</td>
+<td>Standard <code>fetch()</code> from <code>&#39;use client&#39;</code> components</td>
+<td>No Zustand needed for campaign/email state (no drag-and-drop optimism)</td>
+</tr>
+<tr>
+<td>Triage filter → URL state</td>
+<td>nuqs URL params; RSC reads <code>searchParams</code></td>
+<td>Filter is URL-driven, not client store-driven</td>
+</tr>
+<tr>
+<td>Email status transitions → state machine</td>
+<td><code>canEmailTransition()</code> imported from <code>src/features/outreach/lib/email-status.ts</code></td>
+<td>Called by the <code>/status</code> API route before any write</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Anti-Patterns to Avoid</h2>
+<h3>Calling Generation Inline from the API Route</h3>
+<p><strong>What:</strong> Adding LLM generation directly inside a Next.js API route handler (fire-and-forget async IIFE, similar to the now-removed in-app Playwright scraper).</p>
+<p><strong>Why it&#39;s wrong:</strong> Vercel serverless functions have a 10s (Hobby) or 60s (Pro) execution limit. Claude API generation per email takes 5–15s per contact × 50 contacts = cannot complete in a single request. More importantly, the PROJECT.md Key Decisions table shows the in-app fire-and-forget IIFE was called out as a mistake that was fixed in Phase 5 by moving scraping to a skill.</p>
+<p><strong>Do this instead:</strong> The generation skill runs locally (outside the serverless runtime), reads the queue via REST, generates at its own pace, and writes back per-email. The UI polls or refreshes to show progress.</p>
+<h3>Storing Google Tokens in Environment Variables</h3>
+<p><strong>What:</strong> Putting <code>GOOGLE_ACCESS_TOKEN</code> / <code>GOOGLE_REFRESH_TOKEN</code> in <code>.env.local</code> and reading them from server-side API routes.</p>
+<p><strong>Why it&#39;s wrong:</strong> Tokens expire (access tokens in 1 hour). A server-side route cannot refresh the token and persist the new one back to <code>.env.local</code>. The token file approach (<code>~/.heimdall/google-token.json</code>) allows the skill to read, refresh, and write back atomically without server involvement.</p>
+<p><strong>Do this instead:</strong> Token file convention matching <code>~/.heimdall/api-token</code>. Skills handle token refresh inline. If Gmail API integration ever needs a web UI trigger, build a <code>/api/oauth/google/callback</code> route that writes to a <code>google_oauth_tokens</code> DB table — but that is not needed for v1.2 skill-only interactions.</p>
+<h3>N+1 Contact Fetches in Campaign Email List</h3>
+<p><strong>What:</strong> Fetching each contact separately in the campaign review page: <code>emails.forEach(e =&gt; fetch(/api/contacts/${e.contactId}))</code>.</p>
+<p><strong>Why it&#39;s wrong:</strong> 50 contacts = 50 round trips. The contacts table already has 1500+ rows and the PROJECT.md flags N+1 patterns as a performance concern.</p>
+<p><strong>Do this instead:</strong> The <code>GET /api/outreach-campaigns/[id]/emails</code> route does a single Drizzle JOIN or <code>inArray</code> fetch: <code>db.select().from(outreachEmails).leftJoin(contacts, eq(outreachEmails.contactId, contacts.id)).where(eq(outreachEmails.campaignId, id))</code>. The RSC page passes the joined data directly to the review component.</p>
+<h3>Skipping <code>logTimeline()</code> on Skill Write-Backs</h3>
+<p><strong>What:</strong> The skill write-back routes (<code>/generation</code>, <code>/draft</code>, <code>/recipient</code>) omit <code>logTimeline()</code> because &quot;the skill already knows what happened.&quot;</p>
+<p><strong>Why it&#39;s wrong:</strong> <code>logTimeline()</code> is an unconditional invariant in this codebase — every write operation emits a timeline row. Skipping it breaks the activity feed for the owner and violates the pattern that the test suite (Phase 2) enforces.</p>
+<p><strong>Do this instead:</strong> Every write-back route calls <code>logTimeline({ eventType: &#39;...&#39;, title: &#39;...&#39;, contactId, metadata: { campaignId, outreachEmailId } })</code> before returning the success response.</p>
+<hr>
+<h2>Confidence Assessment</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Confidence</th>
+<th>Basis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Table schemas</td>
+<td>HIGH</td>
+<td>Derived directly from existing schema patterns (<code>job_leads.ts</code>, <code>contacts.ts</code>, <code>enums.ts</code>)</td>
+</tr>
+<tr>
+<td>State machine</td>
+<td>HIGH</td>
+<td>Direct copy of <code>pipeline.ts</code> pattern with domain-appropriate states</td>
+</tr>
+<tr>
+<td>REST route structure</td>
+<td>HIGH</td>
+<td>Follows existing route patterns (Zod → Drizzle → logTimeline → envelope) without ambiguity</td>
+</tr>
+<tr>
+<td>Skill read/write-back pattern</td>
+<td>HIGH</td>
+<td><code>scrape-linkedin-connections</code> SKILL.md provides the exact template; no guessing</td>
+</tr>
+<tr>
+<td>Google OAuth token management</td>
+<td>MEDIUM</td>
+<td>Single-user file-based approach is straightforward; token refresh logic is standard OAuth2 but not yet in this codebase</td>
+</tr>
+<tr>
+<td>Gmail MIME construction</td>
+<td>MEDIUM</td>
+<td>Well-documented API; no library ambiguity; but not yet implemented anywhere in the codebase</td>
+</tr>
+<tr>
+<td>Google People API discovery quality</td>
+<td>MEDIUM</td>
+<td>Depends on how many contacts are in the owner&#39;s Google Contacts — may find fewer emails than expected</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Sources</h2>
+<ul>
+<li><code>drizzle/schema/contacts.ts</code> — existing contact fields available for personalization</li>
+<li><code>drizzle/schema/enums.ts</code> — existing enum patterns; new enums follow the same <code>pgEnum</code> shape</li>
+<li><code>drizzle/schema/job-leads.ts</code> — <code>lastError</code> + <code>lastErrorAt</code> column pattern for skill-driven failure tracking</li>
+<li><code>src/lib/domain/pipeline.ts</code> — <code>canTransition()</code> state machine to mirror for email status</li>
+<li><code>src/lib/db/timeline.ts</code> — <code>logTimeline()</code> signature; <code>metadata</code> field for non-FK entity references</li>
+<li><code>src/app/api/contacts/route.ts</code> — existing filter params (closeness, outreachStatus, warmth, relationship, search already present); missing <code>howMet</code> and date-range params</li>
+<li><code>src/app/dashboard/contacts/triage/page.tsx</code> — RSC structure showing how to add <code>searchParams</code> predicates to the Drizzle query</li>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — skill architecture template: queue read → act → write-back via REST, <code>~/.heimdall/api-token</code> auth convention, error categories, per-item failure isolation with batch continuation</li>
+<li><code>.planning/PROJECT.md</code> — constraints (no server actions, REST-only mutations, soft deletes, Zod on all routes), Key Decisions table (fire-and-forget IIFE anti-pattern documented)</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> — existing component responsibility map and layer descriptions</li>
+</ul>
+<hr>
+<p><em>Architecture research for: v1.2 Networking Outreach Campaigns (Heimdall)</em>
+<em>Researched: 2026-06-20</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/research/ARCHITECTURE.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

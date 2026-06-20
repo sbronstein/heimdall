@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STACK</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/research/STACK.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Stack Research</h1>
+<p><strong>Domain:</strong> Networking outreach email campaigns — AI email generation, Gmail drafting, contact email discovery
+<strong>Researched:</strong> 2026-06-20
+<strong>Confidence:</strong> HIGH for Gmail/People MCP tools (verified from official Google developer docs); MEDIUM for MCP tool naming convention (verified via multiple sources but exact names depend on how <code>claude mcp add</code> is invoked)</p>
+<h2>Context: Fixed Stack</h2>
+<p>The core stack is fixed and must not change. This document covers only what is new or different for v1.2.</p>
+<p>Fixed and already present: Next.js 16 (App Router, RSC), Neon Postgres, Drizzle ORM v0.45.1, shadcn/ui, Tailwind v4, Clerk, Recharts, Zod v4, react-hook-form v7, zustand v5, vitest.</p>
+<hr>
+<h2>What is Actually New for v1.2</h2>
+<h3>New App-Side Requirements (no new npm packages)</h3>
+<p>The campaign and email tables, API routes, and UI components are all built with existing dependencies. Nothing new is needed server-side.</p>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Handled By</th>
+<th>Already Present</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New Drizzle schema (<code>outreach_campaigns</code>, <code>outreach_emails</code>)</td>
+<td><code>drizzle-orm</code> v0.45.1 + <code>drizzle-kit</code> v0.31.9</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>New enum types (<code>email_status</code>: generated/edited/approved/drafted)</td>
+<td>Drizzle <code>pgEnum</code> in <code>drizzle/schema/enums.ts</code></td>
+<td>Pattern exists</td>
+</tr>
+<tr>
+<td>API route validation</td>
+<td><code>zod</code> v4</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Campaign creation / contact filter UI</td>
+<td>shadcn/ui + react-hook-form v7</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Checkbox multi-select contact table</td>
+<td><code>@tanstack/react-table</code> v8 (row selection already in data-table)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Inline email editor (review/approve)</td>
+<td>shadcn/ui <code>Textarea</code> + react-hook-form</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Optimistic status transitions</td>
+<td><code>zustand</code> v5</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Timeline logging on every write</td>
+<td><code>logTimeline()</code> in <code>src/lib/db/timeline.ts</code></td>
+<td>Yes</td>
+</tr>
+</tbody></table>
+<p><strong>Conclusion: zero new npm packages required for the app layer.</strong></p>
+<hr>
+<h2>New: Google Gmail MCP Server</h2>
+<p><strong>Purpose:</strong> Create Gmail drafts from approved outreach emails inside a Claude Code skill.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server URL</td>
+<td><code>https://gmailmcp.googleapis.com/mcp/v1</code></td>
+</tr>
+<tr>
+<td>Type</td>
+<td>Official Google remote MCP server (not local/npm)</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>OAuth 2.0 — configured once via <code>claude mcp add</code></td>
+</tr>
+<tr>
+<td>Required OAuth scopes</td>
+<td><code>https://www.googleapis.com/auth/gmail.readonly</code> + <code>https://www.googleapis.com/auth/gmail.compose</code></td>
+</tr>
+</tbody></table>
+<h3>Gmail MCP Tools Available</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Purpose</th>
+<th>Key Parameters</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>create_draft</code></td>
+<td>Create a Gmail draft</td>
+<td><code>to[]</code> (required), <code>subject</code>, <code>body</code>, <code>htmlBody</code>, <code>cc[]</code>, <code>bcc[]</code>, <code>replyToMessageId</code></td>
+<td><code>{ id, subject, threadId, toRecipients[], date }</code> — <strong><code>id</code> is the Gmail draft ID to store back in Heimdall</strong></td>
+</tr>
+<tr>
+<td><code>search_threads</code></td>
+<td>Search Gmail threads</td>
+<td><code>query</code> (Gmail search syntax)</td>
+<td>Array of thread summaries with participants</td>
+</tr>
+<tr>
+<td><code>get_thread</code></td>
+<td>Retrieve full thread</td>
+<td><code>threadId</code></td>
+<td>Full thread with all messages and headers</td>
+</tr>
+<tr>
+<td><code>list_drafts</code></td>
+<td>List existing drafts</td>
+<td>—</td>
+<td>Draft list</td>
+</tr>
+</tbody></table>
+<h3>create_draft: Critical Details</h3>
+<ul>
+<li><code>body</code> accepts a plain text string directly — <strong>no MIME encoding, no base64, no RFC 2822 formatting needed</strong></li>
+<li><code>to[]</code> is the only required parameter; <code>subject</code> and <code>body</code> are optional but practically required for usable drafts</li>
+<li>The returned <code>id</code> is the Gmail draft resource ID (e.g., <code>&quot;r1234567890&quot;</code>), distinct from the message ID — this is what gets stored as <code>gmailDraftId</code> on the <code>outreach_emails</code> row</li>
+<li><code>create_draft</code> never sends — it only creates a draft in the user&#39;s Drafts folder, fulfilling the &quot;never sends&quot; constraint exactly</li>
+</ul>
+<h3>MCP Configuration (one-time setup per Google account)</h3>
+<pre><code class="language-bash"># Add Gmail MCP server (name &quot;gmail&quot; determines the tool prefix mcp__gmail__*)
+claude mcp add --transport http gmail https://gmailmcp.googleapis.com/mcp/v1
+
+# Add People API MCP server (name &quot;people&quot; determines the tool prefix mcp__people__*)
+claude mcp add --transport http people https://people.googleapis.com/mcp/v1
+</code></pre>
+<p>Each <code>claude mcp add</code> triggers an OAuth flow once. Tokens are stored by Claude Code and refreshed automatically.</p>
+<p><strong>Google Cloud Project prerequisites</strong> (one-time):</p>
+<ol>
+<li>Enable Gmail API + People API in the project</li>
+<li>Create an OAuth 2.0 client (Web application type)</li>
+<li>Add redirect URI: <code>https://claude.ai/api/mcp/auth_callback</code></li>
+<li>Configure OAuth consent screen with the required scopes</li>
+</ol>
+<hr>
+<h2>New: Google People API MCP Server</h2>
+<p><strong>Purpose:</strong> Look up email addresses for contacts not stored in Heimdall&#39;s <code>email</code> column.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server URL</td>
+<td><code>https://people.googleapis.com/mcp/v1</code></td>
+</tr>
+<tr>
+<td>Type</td>
+<td>Official Google remote MCP server</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>OAuth 2.0 (same Google Cloud project as Gmail MCP)</td>
+</tr>
+<tr>
+<td>Required OAuth scopes</td>
+<td><code>https://www.googleapis.com/auth/contacts.readonly</code> + <code>https://www.googleapis.com/auth/directory.readonly</code> + <code>https://www.googleapis.com/auth/userinfo.profile</code></td>
+</tr>
+</tbody></table>
+<h3>People API MCP Tools Available</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Purpose</th>
+<th>Parameters</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>search_contacts</code></td>
+<td>Search the user&#39;s Google Contacts by name/email/company</td>
+<td><code>query</code> (string), <code>maxResults</code> (int, default 10, max 30)</td>
+<td>Array of <code>{ name, email }</code></td>
+</tr>
+<tr>
+<td><code>get_user_profile</code></td>
+<td>Retrieve the authenticated user&#39;s own profile</td>
+<td>—</td>
+<td>Profile info</td>
+</tr>
+<tr>
+<td><code>search_directory_people</code></td>
+<td>Search Google Workspace directory (org-wide)</td>
+<td><code>query</code></td>
+<td>Directory entries</td>
+</tr>
+</tbody></table>
+<h3>search_contacts: Critical Details</h3>
+<ul>
+<li>Returns the contact&#39;s primary email address in the <code>email</code> field — one email per result entry</li>
+<li>If a person has multiple email addresses, only the primary is returned</li>
+<li><code>maxResults</code> caps at 30 — sufficient for name-based disambiguation</li>
+<li>Does NOT search contacts by LinkedIn URL — queries match against name, email, org, and phone</li>
+</ul>
+<h3>Email Discovery Logic (in the skill)</h3>
+<p>For contacts without a stored <code>email</code> in Heimdall, the skill executes this lookup chain:</p>
+<ol>
+<li><strong>People API first</strong>: <code>search_contacts</code> with query <code>&quot;${firstName} ${lastName}&quot;</code> → if <code>results[0].email</code> matches expected domain/company context, use it</li>
+<li><strong>Gmail thread search fallback</strong>: <code>search_threads</code> with query <code>from:&quot;${firstName} ${lastName}&quot; OR to:&quot;${firstName} ${lastName}&quot;</code> → extract sender/recipient email from thread participants</li>
+<li><strong>No email found</strong>: flag the <code>outreach_emails</code> row with <code>status = &#39;needs_linkedin_message&#39;</code> so the UI surfaces it distinctly — the contact gets a LinkedIn message instead of a Gmail draft</li>
+</ol>
+<p>This chain stays entirely within the skill — no server-side integration with Google APIs, no OAuth tokens in <code>.env.local</code>, no googleapis npm package.</p>
+<hr>
+<h2>New: Two Claude Code Skills</h2>
+<h3>Skill 1: <code>generate-outreach-emails</code></h3>
+<p>Reads a campaign from Heimdall, generates one email per contact using Claude&#39;s own text generation (following the voice + LLM-tell conventions from <code>tailor-application-materials</code>), and writes generated emails back to Heimdall via REST.</p>
+<pre><code class="language-yaml">allowed-tools:
+  - Read
+  - Bash
+</code></pre>
+<p>No MCP tools needed — email generation is Claude reasoning over contact data, not a tool call. Writes back via <code>curl</code> to Heimdall REST API.</p>
+<h3>Skill 2: <code>draft-outreach-emails</code></h3>
+<p>Reads approved emails from Heimdall, discovers missing email addresses, creates Gmail drafts, and writes draft IDs + status transitions back.</p>
+<pre><code class="language-yaml">allowed-tools:
+  - Read
+  - Bash
+  - mcp__gmail__create_draft
+  - mcp__gmail__search_threads
+  - mcp__gmail__get_thread
+  - mcp__people__search_contacts
+</code></pre>
+<p><strong>Note on tool names</strong>: The prefix <code>mcp__gmail__</code> and <code>mcp__people__</code> assumes the MCP servers were added with names <code>gmail</code> and <code>people</code> respectively (via <code>claude mcp add --transport http gmail ...</code> and <code>claude mcp add --transport http people ...</code>). If different names are used at setup time, the <code>allowed-tools</code> entries must match.</p>
+<h3>Skill Pattern: Same as Existing Skills</h3>
+<p>Both new skills follow the established pattern:</p>
+<ul>
+<li><code>~/.heimdall/api-token</code> for Heimdall REST auth</li>
+<li><code>curl</code> in Bash for all Heimdall reads/writes</li>
+<li>Check prerequisites at start; surface gaps and stop rather than proceeding broken</li>
+<li>Per-contact error isolation — log and continue, never abort the batch</li>
+<li>End with a summary count</li>
+</ul>
+<hr>
+<h2>Alternatives Considered</h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Recommended</th>
+<th>Alternative</th>
+<th>Why Not</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Gmail draft creation</td>
+<td>Google Gmail MCP (<code>create_draft</code> tool)</td>
+<td><code>googleapis</code> npm package in a server-side route</td>
+<td>Adding a Node.js server-side integration introduces OAuth token management in <code>.env.local</code>, a new npm dep, and violates the skill pattern — skills already own external integrations</td>
+</tr>
+<tr>
+<td>Gmail draft creation</td>
+<td>Google Gmail MCP</td>
+<td>Direct <code>curl</code> to Gmail REST API with stored token</td>
+<td>Requires maintaining refresh tokens in <code>~/.heimdall/</code>, a custom token-refresh script, and base64-encoded MIME bodies — more fragile than the MCP approach</td>
+</tr>
+<tr>
+<td>Email discovery</td>
+<td>People API MCP <code>search_contacts</code> → Gmail MCP <code>search_threads</code></td>
+<td>Google Contacts CSV export + manual lookup</td>
+<td>Not automated; breaks the skill loop</td>
+</tr>
+<tr>
+<td>Email body composition</td>
+<td>Plain text string passed to <code>create_draft.body</code></td>
+<td><code>mjml</code> or Handlebars templating</td>
+<td>Outreach emails are plain-text conversational emails, not HTML marketing emails; templating is unnecessary complexity</td>
+</tr>
+<tr>
+<td>Email composition</td>
+<td>Plain text</td>
+<td><code>nodemailer</code></td>
+<td><code>nodemailer</code> is for sending via SMTP — completely wrong tool for creating drafts via Gmail API</td>
+</tr>
+<tr>
+<td>MIME encoding</td>
+<td>None needed (<code>create_draft</code> accepts strings)</td>
+<td><code>mailcomposer</code> or hand-crafted base64 RFC 2822</td>
+<td>The Gmail MCP <code>create_draft</code> tool handles encoding internally; passing <code>body</code> + <code>to[]</code> + <code>subject</code> is sufficient</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>What NOT to Add</h2>
+<table>
+<thead>
+<tr>
+<th>Avoid</th>
+<th>Why</th>
+<th>Use Instead</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>googleapis</code> npm package</td>
+<td>Server-side Gmail API integration violates the skill pattern; OAuth token management in <code>.env.local</code> is fragile</td>
+<td>Gmail MCP <code>create_draft</code> tool in the skill</td>
+</tr>
+<tr>
+<td><code>google-auth-library</code> npm package</td>
+<td>Same reason — Google auth belongs at MCP config level, not in the Next.js app</td>
+<td>MCP server OAuth flow (one-time setup)</td>
+</tr>
+<tr>
+<td><code>nodemailer</code></td>
+<td>Built for SMTP sending; irrelevant for Gmail API draft creation</td>
+<td>Gmail MCP <code>create_draft</code></td>
+</tr>
+<tr>
+<td><code>mjml</code> or any HTML email templating library</td>
+<td>Networking outreach emails are plain text; HTML email templates are for marketing blasts</td>
+<td>Claude generates plain text <code>body</code> string</td>
+</tr>
+<tr>
+<td>Any MIME encoding library (<code>mailparser</code>, <code>mime</code>, <code>mailcomposer</code>)</td>
+<td><code>create_draft</code> accepts <code>body</code> as a plain string; MIME encoding is handled by Google&#39;s API internally</td>
+<td>Pass <code>body</code> directly</td>
+</tr>
+<tr>
+<td><code>bull</code> / <code>bullmq</code> / any background job queue</td>
+<td>Email generation and drafting are synchronous skill runs, not server-initiated async jobs</td>
+<td>Skill-driven workflow (user invokes, skill loops per contact)</td>
+</tr>
+<tr>
+<td>Server-side Google OAuth in <code>.env.local</code></td>
+<td>Auth lives at the MCP layer; putting Google credentials in the Next.js app would duplicate auth responsibility</td>
+<td><code>claude mcp add</code> OAuth configuration</td>
+</tr>
+<tr>
+<td><code>@sendgrid/mail</code> or any ESP SDK</td>
+<td>This is a personal outreach tool, not a bulk email platform</td>
+<td>Gmail MCP</td>
+</tr>
+<tr>
+<td>Any additional &quot;send&quot; capability beyond draft creation</td>
+<td>The requirement is explicit — only create drafts, never send</td>
+<td>Keep <code>create_draft</code> as the terminal action; user sends manually from Gmail</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>MCP Configuration Not Yet Present</h2>
+<p>Verified: <code>~/.claude/settings.json</code> has no <code>mcpServers</code> key. Neither Gmail nor People API MCP is currently configured. Both must be added before the <code>draft-outreach-emails</code> skill can run.</p>
+<p>This is a one-time setup step that lives outside the codebase — it runs against the user&#39;s Google account and stores OAuth tokens in Claude Code&#39;s credential store. No app code change is needed to support it.</p>
+<p><strong>Required setup (before Phase implementing the drafting skill):</strong></p>
+<ol>
+<li>Google Cloud Project: enable Gmail API + People API, create OAuth 2.0 client, add <code>https://claude.ai/api/mcp/auth_callback</code> as redirect URI</li>
+<li><code>claude mcp add --transport http gmail https://gmailmcp.googleapis.com/mcp/v1</code></li>
+<li><code>claude mcp add --transport http people https://people.googleapis.com/mcp/v1</code></li>
+<li>Complete the OAuth consent flows for each server</li>
+</ol>
+<hr>
+<h2>No New Environment Variables</h2>
+<p>The Heimdall <code>.env.local</code> does not need any Google credentials. MCP auth is handled entirely at the Claude Code session layer. The new env vars needed by the app for v1.2 are none — all new functionality uses existing <code>DATABASE_URL</code>, <code>CLERK_*</code>, and the existing <code>~/.heimdall/api-token</code> pattern.</p>
+<hr>
+<h2>Sources</h2>
+<ul>
+<li><code>https://developers.google.com/workspace/guides/configure-mcp-servers</code> — confirmed Gmail MCP URL, People API MCP URL, and full tool lists for both servers (HIGH confidence)</li>
+<li><code>https://developers.google.com/workspace/gmail/api/reference/mcp/tools_list/create_draft</code> — exact <code>create_draft</code> input schema (<code>to[]</code>, <code>subject</code>, <code>body</code>, <code>htmlBody</code>, <code>replyToMessageId</code>) and return schema (<code>id</code>, <code>subject</code>, <code>threadId</code>, etc.) (HIGH confidence)</li>
+<li><code>https://developers.google.com/people/api/mcp/tools_list/search_contacts</code> — <code>search_contacts</code> parameters (<code>query</code>, <code>maxResults</code>) and return shape (<code>{ name, email }</code>) (HIGH confidence)</li>
+<li><code>https://developers.google.com/workspace/gmail/api/guides/configure-mcp-server</code> — OAuth scopes for Gmail MCP: <code>gmail.readonly</code> + <code>gmail.compose</code> (HIGH confidence)</li>
+<li><code>https://developers.google.com/people/v1/configure-mcp-server</code> — OAuth scopes for People API MCP: <code>contacts.readonly</code>, <code>directory.readonly</code>, <code>userinfo.profile</code> (HIGH confidence)</li>
+<li>GitHub issue anthropics/claude-code#45775 (<code>create_draft</code> missing <code>threadId</code> parameter bug) — confirmed <code>create_draft</code> is the right tool but has a known regression for reply threading; plain new-draft creation is unaffected (MEDIUM confidence — issue page inaccessible, inferred from search result summaries)</li>
+<li>MCP tool naming convention <code>mcp__&lt;server-name&gt;__&lt;tool-name&gt;</code> — verified via multiple Claude Code documentation sources (MEDIUM confidence — exact names depend on the <code>--name</code> argument to <code>claude mcp add</code>)</li>
+<li><code>~/.claude/settings.json</code> inspection — confirmed no MCP servers currently configured (HIGH confidence — direct file read)</li>
+</ul>
+<hr>
+<p><em>Stack research for: Heimdall v1.2 Networking Outreach Campaigns</em>
+<em>Researched: 2026-06-20</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/research/STACK.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
