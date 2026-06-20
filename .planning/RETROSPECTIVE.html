@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RETROSPECTIVE</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/RETROSPECTIVE.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Project Retrospective</h1>
+<p><em>A living document updated after each milestone. Lessons feed forward into future planning.</em></p>
+<h2>Milestone: v1.1 — LinkedIn Scraping by Company</h2>
+<p><strong>Shipped:</strong> 2026-05-20 (archived 2026-06-20)
+<strong>Phases:</strong> 4 (7–10) | <strong>Plans:</strong> 11 | <strong>Timeline:</strong> ~2 days (2026-05-19 → 2026-05-20)</p>
+<h3>What Was Built</h3>
+<ul>
+<li>Company-scope LinkedIn scraping: the <code>scrape-linkedin-connections</code> skill now accepts a company URL or bare name, creating synthetic <code>job_leads</code> (<code>linkedinJobUrl = null</code>) that reuse the entire existing queue → prospects → recommendations pipeline (Phases 7–9).</li>
+<li>A 5-branch skill argument parser + three-path <code>linkedin-navigation.md</code> + drain-mode branching on <code>linkedinJobUrl</code> — both lead types drain from one <code>?status=queued</code> queue (Phase 8).</li>
+<li>At-connection company/role enrichment for triage: schema + enum (migration 0010), <code>PATCH /api/contacts/[id]/enrichment</code> + <code>GET /api/contacts/enrichment-queue</code> + CSV seeding, triage card render + just-in-time enrichment, and a paced agent-browser batch-sweep with documented anti-bot pacing (Phase 10).</li>
+</ul>
+<h3>What Worked</h3>
+<ul>
+<li><strong>Schema-first phase ordering</strong> (Phase 7 nullable columns + API before skill/UI) meant Phases 8 and 9 never had to renegotiate the data shape — the discriminated-union <code>POST</code> and null-URL state machine held.</li>
+<li><strong>Reusing the synthetic-lead pattern</strong> instead of introducing a new entity kept the blast radius tiny: no new table, route, or status value; the state machine was proven input-shape agnostic with pure regression tests (D-17).</li>
+<li><strong>TDD on the UI branches</strong> (failing SSR-structural test → implement) for JL-C8/JL-C9 caught the company-scope rendering contract cleanly.</li>
+<li><strong>Worktree-isolated executors</strong> (per the merge commits) let Phase 10&#39;s four plans land without stepping on each other.</li>
+</ul>
+<h3>What Was Inefficient</h3>
+<ul>
+<li><strong>Phase 10&#39;s requirements (ENR-01..ENR-06) were never added to REQUIREMENTS.md</strong> — they lived only in the ROADMAP phase detail, so the traceability table drifted out of sync and had to be reconciled at archive time.</li>
+<li><strong>Verification/UAT sign-offs lagged the code</strong> — Phases 1, 6, 8, 9 carried open verification/UAT items into the milestone close (acknowledged as deferred). The automated suite was green, but human UAT wasn&#39;t kept current.</li>
+<li><strong>The milestone close itself was deferred</strong> — v1.0 was declared complete in PROJECT.md but never archived or tagged, so the first real <code>complete-milestone</code> run had to reconcile two milestones&#39; worth of drift (stale &quot;Pending&quot; traceability rows, no <code>milestones/</code> dir, no tags).</li>
+</ul>
+<h3>Patterns Established</h3>
+<ul>
+<li><strong>Synthetic-row reuse over new entities</strong> — extend an existing table with nullable columns + a discriminated input union rather than adding a parallel pipeline.</li>
+<li><strong>Out-of-app scraping via a Claude Code skill</strong> (continued from v1.0 Phase 5) — keep Playwright/agent-browser entirely out of the serverless runtime; the app owns only the queue and results.</li>
+<li><strong>Human-paced agent-browser sweeps</strong> with randomized delays + session caps for any bulk LinkedIn operation, documented in the skill references.</li>
+<li><strong>Close milestones promptly</strong> — archive + tag at the boundary so traceability and <code>milestones/</code> don&#39;t drift.</li>
+</ul>
+<h3>Key Lessons</h3>
+<ol>
+<li>When a phase is inserted mid-milestone (Phase 10), add its requirements to REQUIREMENTS.md immediately — don&#39;t leave them only in the ROADMAP, or the traceability table silently rots.</li>
+<li>Keep human UAT/verification sign-offs flowing with the code; a green automated suite is necessary but not the same as milestone-level verification.</li>
+<li>Run <code>/gsd:complete-milestone</code> at each boundary — a deferred close compounds drift (untagged releases, unarchived requirements, stale statuses).</li>
+</ol>
+<h3>Cost Observations</h3>
+<ul>
+<li>Model mix / session count: not tracked for this milestone.</li>
+<li>Notable: 11 plans across ~2 calendar days with worktree-parallel executors; docs-heavy phases (8, 10) were largely skill/reference rewrites rather than app code.</li>
+</ul>
+<hr>
+<h2>Cross-Milestone Trends</h2>
+<h3>Process Evolution</h3>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Phases</th>
+<th>Plans</th>
+<th>Key Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>v1.0</td>
+<td>1–6</td>
+<td>20</td>
+<td>Brownfield hardening; moved LinkedIn scraping out of the app into a Claude Code skill (Phase 5 reshape)</td>
+</tr>
+<tr>
+<td>v1.1</td>
+<td>7–10</td>
+<td>11</td>
+<td>Company-scope scraping via synthetic leads; at-connection enrichment; worktree-parallel execution</td>
+</tr>
+</tbody></table>
+<h3>Cumulative Quality</h3>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Test Harness</th>
+<th>Migrations (cumulative)</th>
+<th>Notable</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>v1.0</td>
+<td>Vitest + PGlite, 79 tests</td>
+<td>through 0008</td>
+<td>All <code>/api/*</code> authenticated; N+1 eliminated; starter residue removed</td>
+</tr>
+<tr>
+<td>v1.1</td>
+<td>extended with company-scope + D-17 route tests</td>
+<td>through 0010</td>
+<td>State machine proven input-shape agnostic; SSR-structural UI tests</td>
+</tr>
+</tbody></table>
+<h3>Top Lessons (Verified Across Milestones)</h3>
+<ol>
+<li>Reuse existing tables/routes/state machines via nullable columns + discriminated inputs before reaching for a new entity — held for both the scrape-skill reshape (v1.0) and company-scope leads (v1.1).</li>
+<li>Keep planning artifacts (REQUIREMENTS traceability, milestone archives, git tags) in lockstep with shipped code; deferring that bookkeeping compounds into reconciliation work.</li>
+</ol>
+
+
+
+<footer>
+Source of truth: <code>.planning/RETROSPECTIVE.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -54,17 +54,18 @@
 <div class="wrap">
 
 <h1>Heimdall <span class="codename">— Job Search Command Center</span></h1>
-<div class="meta">Last updated 2026-05-19 · milestone v1.1 (LinkedIn Scraping by Company) started · v1.0 complete (Phases 1–6) · <code>steve@bronstein.org</code> single-user lock</div>
+<div class="meta">Last updated 2026-06-20 · v1.1 (LinkedIn Scraping by Company, Phases 7–10) shipped &amp; archived · v1.0 (Phases 1–6) shipped · between milestones · <code>steve@bronstein.org</code> single-user lock</div>
 
-<div class="card what-this-is" style="border-left-color: #c97a4a;">
-<strong>Current Milestone — v1.1 LinkedIn Scraping by Company:</strong> Extend the <code>scrape-linkedin-connections</code> skill to accept a company name or LinkedIn company URL as input (in addition to the existing job ID / URL inputs), so 2nd-degree connections at any target company can be scraped without first needing a specific job posting.
-<ul class="req-list active" style="margin-top: 10px;">
-  <li>Skill accepts a LinkedIn company URL (<code>https://linkedin.com/company/...</code>) and navigates directly to the employees page, skipping the job → company step</li>
-  <li>Skill accepts a bare company name, runs a LinkedIn company search, and disambiguates inline when multiple matches exist (top 3–5 by employee count + industry)</li>
-  <li>Synthetic job-lead row created for company-scope scrapes (<code>linkedinJobUrl = null</code>, <code>roleTitle = null</code> or "Company-wide scrape") — reuses existing <code>prospects</code> table and <code>/api/job-leads/[id]/{status,prospects}</code> routes; no new entity</li>
-  <li>Drain mode processes company-scope leads from the same queue as job-URL leads — skill nav branches on whether <code>linkedinJobUrl</code> is null</li>
-  <li>Job-lead detail and list-view UI render company-only leads cleanly (no broken "View job posting" link; clear "Company scrape" label)</li>
-  <li>All 2nd-degree connections at the company are returned — no role filter</li>
+<div class="card what-this-is" style="border-left-color: #6b8e6b;">
+<strong>Current State — v1.1 LinkedIn Scraping by Company (shipped 2026-05-20):</strong> The <code>scrape-linkedin-connections</code> skill now accepts a LinkedIn company URL or bare company name in addition to job IDs/URLs, creating synthetic <code>job_leads</code> (<code>linkedinJobUrl = null</code>) that flow through the existing queue, prospects, and recommendation pipeline. Triage also surfaces each connection's company and role <em>at the time of connection</em>, backfilled by a paced agent-browser sweep and just-in-time enrichment during company-scope triage.
+<p style="margin: 10px 0 0;">Prior: <strong>v1.0 MVP / Brownfield Hardening</strong> (Phases 1–6, 2026-05-14) — hydration-crash fix, Vitest + PGlite harness, <code>/api/*</code> auth, starter-template removal, out-of-app LinkedIn scrape skill, N+1 elimination + indexes. See <code>.planning/MILESTONES.md</code> and <code>.planning/milestones/</code>.</p>
+<p style="margin: 10px 0 0;"><strong>Next milestone (v1.2 — scope via <code>/gsd:new-milestone</code>):</strong></p>
+<ul class="req-list active" style="margin-top: 6px;">
+  <li>Production-grade scraping — decouple worker from API route / remote browser reachable from Vercel (JL2-01), <code>playwright</code> → devDependencies (JL2-02), captcha/rate-limit backoff (JL2-03), pagination (JL2-04)</li>
+  <li>Drain the legacy enrichment backlog (<code>backfill-enrichment-reset.mjs</code>; ~1500 contacts)</li>
+  <li>pgvector semantic search over notes/interactions/JDs (VEC-01/02)</li>
+  <li>Structured logging / error reporting (OBS-01); background-job dashboard for scrape status (OBS-02)</li>
+  <li>Close the open UAT + verification sign-offs deferred from v1.0/v1.1 (Phases 1, 6, 8, 9 — see STATE.md → Deferred Items)</li>
 </ul>
 </div>
 
@@ -104,21 +105,27 @@
   <li><span class="reqid">CLI-V1</span> · All mutations routed through REST API — no server actions — so the Claude Code CLI has full parity with the web UI</li>
 </ul>
 
-<h3>Active <span class="reason">— current scope; hypotheses until shipped and validated</span></h3>
-<ul class="req-list active">
-  <li><span class="reqid">BUG-01</span> · Fix React hydration crash in sidebar — remove <code>{user &amp;&amp; ...}</code> guard around <code>UserAvatarProfile</code> in <code>src/components/layout/app-sidebar.tsx</code>; kills all sidebar navigation after LinkedIn import</li>
-  <li><span class="reqid">JL-A1</span> · Finish Job Leads scraper — parameterize hardcoded <code>'point'</code> company name, tune Playwright timeouts, surface scrape errors to UI, strip debug <code>console.log</code> flood + leaked-browser pattern</li>
-  <li><span class="reqid">JL-A2</span> · Add timeout bound to fire-and-forget search IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code> so leads can't get stuck in <code>searching</code> indefinitely</li>
-  <li><span class="reqid">SEC-A1</span> · Add Clerk auth check to all <code>/api/*</code> routes — currently 0 of 34 routes call <code>auth()</code>; only the <code>/dashboard</code> middleware lock prevents access</li>
-  <li><span class="reqid">DEBT-A1</span> · Strip Next.js starter-template residue — <code>src/features/products/</code>, several <code>/dashboard/*</code> stubs, the 805-line unused <code>infobar.tsx</code>, the no-op GitHub auth button, the external <code>api.github.com/repos/...</code> fetch, and the <code>__CLEANUP__/</code> directory</li>
+<h3>Validated — v1.0 Hardening <span class="reason">(Phases 1–6) · shipped 2026-05-14</span></h3>
+<ul class="req-list shipped">
+  <li><span class="reqid">BUG-01 / BUG-02</span> · React hydration crash in <code>app-sidebar.tsx</code> eliminated (removed the <code>{user &amp;&amp; ...}</code> guard, guarded <code>emailAddresses[0]</code>); sidebar nav survives large LinkedIn imports. (Phase 1)</li>
+  <li><span class="reqid">SEC-A1 / SEC-A2</span> · Every <code>/api/*</code> route requires a valid Clerk session via <code>middleware.ts</code>; the no-op "Continue with GitHub" button + external star fetch removed. (Phase 3)</li>
+  <li><span class="reqid">DEBT-A1..A5</span> · Starter-template residue gone — <code>features/products</code>, starter routes, the 805-line <code>infobar.tsx</code>, the kanban route, <code>__CLEANUP__/</code>, dead <code>computeBridgeScore</code> import; pinned by <code>__cleanup__.test.ts</code>. (Phase 4)</li>
+  <li><span class="reqid">JL-B1..B5</span> · LinkedIn scraping moved out of the app into the <code>scrape-linkedin-connections</code> skill driving <code>vercel-labs/agent-browser</code>; app holds the queue + categorized failures; in-app fire-and-forget Playwright IIFE deleted. (Phase 5)</li>
+  <li><span class="reqid">PERF-A1..A5</span> · N+1 patterns eliminated + hot-path indexes; transactional bulk writes, DB-side dedup; migration 0008 adds 5 indexes; pinned by <code>__phase6_indexes__.test.ts</code>. (Phase 6)</li>
+  <li><span class="reqid">TEST-A1..A3</span> · Vitest + PGlite harness; 79 tests covering the envelope, <code>canTransition()</code>, <code>logTimeline()</code>, CSV parse, <code>computeBridgeScore</code> + the BUG-01 regression; pre-push gate. (Phase 2)</li>
 </ul>
 
-<h3>Active — Shipped This Cycle</h3>
+<h3>Validated — v1.1 LinkedIn Scraping by Company <span class="reason">(Phases 7–10) · shipped 2026-05-20</span></h3>
 <ul class="req-list shipped">
-  <li><span class="reqid">PERF-A1..A5</span> · N+1 patterns eliminated and hot-path indexes shipped in Phase 6. Bulk inserts via <code>onConflictDoNothing</code>, transactional prospect writes, bulk UPDATE with <code>VALUES</code>, narrowed contacts SELECT. Migration 0008 adds 5 indexes (partial UNIQUE on <code>linkedin_url</code> scoped to active rows + 4 hot-column indexes). Pinned by <code>__phase6_indexes__.test.ts</code> against <code>pg_indexes</code>. <em>completed 2026-05-14</em></li>
-  <li><span class="reqid">TEST-A1</span> · Vitest harness with PGlite-backed Drizzle DB — <code>npm run test:run</code> exits 0 in ~6s. Pre-push hook runs build + tests. <em>completed 2026-05-12</em></li>
-  <li><span class="reqid">TEST-A2</span> · Load-bearing logic coverage — API envelope, <code>canTransition()</code>, <code>logTimeline()</code> verified via PGlite, LinkedIn CSV parsing, <code>computeBridgeScore</code>. 79 tests passing across 10 files. <em>completed 2026-05-12</em></li>
-  <li><span class="reqid">TEST-A3</span> · BUG-01 regression pinned via SSR structural test + hydration mount test. <em>completed 2026-05-12</em></li>
+  <li><span class="reqid">JL-C3 / JL-C4</span> · <code>job_leads.linkedinJobUrl</code>/<code>roleTitle</code> nullable (migration 0009); <code>POST /api/job-leads</code> company-scope branch (discriminated Zod union, auto-create/dedup company); state machine input-shape agnostic (D-17 pins). (Phase 7)</li>
+  <li><span class="reqid">JL-C1 / C2 / C5 / C6 / C7</span> · Skill accepts a company URL or bare name, navigates direct to <code>/company/&lt;slug&gt;/people/</code> when no job URL, disambiguates multi-match inline, drains company-scope leads from the same <code>?status=queued</code> queue; <code>GET /api/job-leads</code> projects <code>companyLinkedinUrl</code>. (Phase 8)</li>
+  <li><span class="reqid">JL-C8 / JL-C9</span> · Detail + list render company-scope leads cleanly — "View job posting" hidden, "Company scrape" badge, distinct list icon; SSR-structural tests. (Phase 9)</li>
+  <li><span class="reqid">ENR-01..ENR-06</span> · At-connection enrichment — <code>contacts</code> columns + <code>contact_enrichment_status</code> enum (migration 0010), CSV seeding, <code>PATCH /enrichment</code> + <code>GET /enrichment-queue</code>, triage card render + just-in-time enrichment, skill per-profile + paced batch-sweep modes with anti-bot pacing docs. (Phase 10)</li>
+</ul>
+
+<h3>Active <span class="reason">— no open requirements; scope v1.2 via <code>/gsd:new-milestone</code></span></h3>
+<ul class="req-list active">
+  <li><em>(none — between milestones)</em></li>
 </ul>
 
 <h3>Out of Scope</h3>
@@ -126,7 +133,7 @@
   <li><strong>Multi-tenant / multi-user</strong> <span class="reason">— explicitly single-user; Clerk middleware hardcodes <code>steve@bronstein.org</code>. Not a v1 goal.</span></li>
   <li><strong>Mobile / native app</strong> <span class="reason">— web-first; not a goal during the active search</span></li>
   <li><strong>Real-time chat or messaging</strong> <span class="reason">— outside the CRM scope</span></li>
-  <li><strong>OAuth providers beyond Clerk's own</strong> <span class="reason">— Clerk handles auth; the residual "Continue with GitHub" starter button will be deleted, not implemented</span></li>
+  <li><strong>OAuth providers beyond Clerk's own</strong> <span class="reason">— Clerk handles auth; the residual "Continue with GitHub" starter button was deleted in Phase 3, not implemented</span></li>
   <li><strong>Server-side LinkedIn scraping on Vercel</strong> <span class="reason">— Playwright + Chromium cannot run on Vercel serverless (250MB bundle, no persistent FS). Scraping stays local-dev/Docker via CDP.</span></li>
   <li><strong>Video/voice posts or content</strong> <span class="reason">— not a CRM concern</span></li>
   <li><strong>Database-backed Kanban</strong> <span class="reason">— starter-template residue; removed in Phase 4</span></li>
@@ -139,11 +146,11 @@
 
 <p><strong>Dual-interface design.</strong> Every data mutation goes through <code>/app/api/*</code> so the Claude Code CLI has full parity with the browser UI. This is a load-bearing constraint, not a stylistic choice.</p>
 
-<p><strong>Existing codebase.</strong> ~95 feature component files, 34 API routes, 13 database tables, 17 enums, 7 migrations. Built on the Next.js Shadcn dashboard starter — substantial starter residue still in the tree (<code>__CLEANUP__/</code>, <code>src/features/products/</code>, etc.).</p>
+<p><strong>Existing codebase.</strong> Built on the Next.js Shadcn dashboard starter, now substantially hardened — starter residue removed (Phase 4), all <code>/api/*</code> routes authenticated (Phase 3), Vitest + PGlite test harness in place (Phase 2). As of v1.1: 10 Drizzle migrations (through 0010 — enrichment columns). LinkedIn scraping lives entirely in the <code>scrape-linkedin-connections</code> skill driving <code>vercel-labs/agent-browser</code>; the app holds the queue, results, and categorized failures.</p>
 
-<p><strong>Active development.</strong> Job Leads (LinkedIn scrape → prioritized intro paths) was the most recent feature and still has documented rough edges in <code>docs/summary.md</code>.</p>
+<p><strong>Most recent work.</strong> v1.1 (Phases 7–10) added company-scope scraping (synthetic <code>job_leads</code>) and at-connection company/role enrichment for triage. The legacy enrichment backlog (~1500 contacts) is paced-sweep-backfillable but not yet drained.</p>
 
-<p><strong>Codebase analysis.</strong> <code>.planning/codebase/</code> was generated 2026-05-12 by <code>/gsd-map-codebase</code> and is the up-to-date reference for stack, architecture, conventions, integrations, structure, testing posture, and concerns.</p>
+<p><strong>Codebase analysis.</strong> <code>.planning/codebase/</code> was generated 2026-05-12 by <code>/gsd-map-codebase</code>; predates Phases 5–10, so re-run <code>/gsd-map-codebase</code> before the next milestone if a fresh reference is needed.</p>
 </div>
 
 <h2>Constraints</h2>
@@ -173,9 +180,13 @@
     <tr><td>Soft deletes via <code>archived_at</code></td><td>Never lose history during an active search; preserves timeline integrity</td><td><span class="badge badge-good">Good</span></td></tr>
     <tr><td>Timeline events emitted from every write</td><td>Denormalized activity feed; one cheap row per mutation</td><td><span class="badge badge-good">Good</span></td></tr>
     <tr><td>Cursor pagination on <code>updated_at</code></td><td>Stable under inserts; offsets would shift under writes</td><td><span class="badge badge-good">Good</span></td></tr>
-    <tr><td>Job Leads scraping via Playwright + CDP</td><td>Only reliable way to drive LinkedIn's heavily-obfuscated UI; accept Vercel incompatibility</td><td><span class="badge badge-revisit">Revisit</span> — scraper brittle; hardcoded <code>'point'</code> debug artifact still present</td></tr>
+    <tr><td>Job Leads scraping via a Claude Code skill (<code>vercel-labs/agent-browser</code>), not in-app Playwright</td><td>The in-app fire-and-forget Playwright IIFE was brittle (hardcoded <code>'point'</code>, leaked browsers); moving scraping out-of-band removed it from the serverless runtime</td><td><span class="badge badge-good">Good</span> — reshaped in Phase 5; the <code>'point'</code> artifact and IIFE are deleted</td></tr>
     <tr><td>Pipeline state machine via <code>canTransition()</code></td><td>Prevents invalid stage moves at the API boundary</td><td><span class="badge badge-good">Good</span></td></tr>
     <tr><td>8-tier closeness orthogonal to warmth</td><td>Closeness measures underlying relationship strength; warmth measures recent engagement — they decouple cleanly</td><td><span class="badge badge-good">Good</span></td></tr>
+    <tr><td>Company-scope scrapes as synthetic <code>job_leads</code> (<code>linkedinJobUrl = null</code>)</td><td>Reuse the entire existing queue/prospects/recommendations pipeline rather than adding a new entity or table</td><td><span class="badge badge-good">Good</span> — v1.1, Phase 7</td></tr>
+    <tr><td>Single shared drain queue; skill nav branches on <code>linkedinJobUrl</code></td><td>No separate queue, status value, or route for company-scope vs job-URL leads — one loop drains both</td><td><span class="badge badge-good">Good</span> — v1.1, Phase 8</td></tr>
+    <tr><td>At-connection company/role captured at CSV-import + backfilled by paced agent-browser sweep</td><td>LinkedIn's CSV omits company/role <em>as of</em> connection date; a human-paced sweep avoids bot-detection across the 1000+ backlog</td><td><span class="badge badge-good">Good</span> — v1.1, Phase 10; backlog drain pending</td></tr>
+    <tr><td>JIT enrichment on the company-triage read path does no inline DB write</td><td>Keep the recommendations read pure; enrichment writes happen only via the explicit PATCH endpoint</td><td><span class="badge badge-good">Good</span> — v1.1, Phase 10</td></tr>
   </tbody>
 </table>
 

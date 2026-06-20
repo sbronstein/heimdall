@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MILESTONES</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/MILESTONES.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Milestones: Heimdall</h1>
+<p>Historical ledger of shipped versions. Newest first. Full per-milestone detail lives in <code>.planning/milestones/v[X.Y]-{ROADMAP,REQUIREMENTS}.md</code>.</p>
+<hr>
+<h2>v1.1 — LinkedIn Scraping by Company</h2>
+<p><strong>Shipped:</strong> 2026-05-20
+<strong>Phases:</strong> 7–10 (4 phases) · <strong>Plans:</strong> 11 · <strong>Tasks:</strong> ~22
+<strong>Git range:</strong> <code>d1528c6</code> feat(07-01) → <code>1e7ce3e</code> merge(10-04)
+<strong>Code delta:</strong> 30 files in <code>src/</code> + <code>drizzle/</code> + <code>.claude/skills</code>, +6,183 / −112 lines
+<strong>Archives:</strong> <a href="./milestones/v1.1-ROADMAP.md">v1.1-ROADMAP.md</a> · <a href="./milestones/v1.1-REQUIREMENTS.md">v1.1-REQUIREMENTS.md</a></p>
+<p><strong>Delivered:</strong> The <code>scrape-linkedin-connections</code> skill can now scrape 2nd-degree connections at any target company (LinkedIn company URL or bare name), not just at companies attached to a job posting — via synthetic <code>job_leads</code> rows reusing the existing pipeline. Triage also surfaces each connection&#39;s company and role <em>at the time of connection</em>, backfilled by a paced agent-browser sweep.</p>
+<p><strong>Key accomplishments:</strong></p>
+<ol>
+<li><strong>Schema + API foundation (Phase 7)</strong> — Nullable <code>linkedin_job_url</code>/<code>role_title</code> (migration 0009) + <code>POST /api/job-leads</code> company-scope branch (discriminated Zod union, auto-create/dedup company); state machine proven input-shape agnostic via D-17 regression pins.</li>
+<li><strong>Skill input parsing + drain (Phase 8)</strong> — <code>scrape-linkedin-connections</code> rewritten with a 5-branch argument parser (job URL / company URL / bare name / UUID / drain), three-path <code>linkedin-navigation.md</code>, drain-mode loop branching on <code>linkedinJobUrl</code>, and a <code>companyLinkedinUrl</code> projection on <code>GET /api/job-leads</code>.</li>
+<li><strong>UI for company-scope leads (Phase 9)</strong> — Detail page and list view render null-URL leads cleanly (hide &quot;View job posting&quot;, &quot;Company scrape&quot; badge, distinct list icon) — JL-C8/JL-C9, SSR-structural tests.</li>
+<li><strong>At-connection enrichment (Phase 10)</strong> — Schema + <code>contact_enrichment_status</code> enum (migration 0010), <code>PATCH /api/contacts/[id]/enrichment</code> + <code>GET /api/contacts/enrichment-queue</code> + CSV import seeding, triage recommendation-card render + just-in-time enrichment, and skill per-profile + paced batch-sweep modes with anti-bot pacing docs.</li>
+</ol>
+<p><strong>Requirements:</strong> JL-C1..JL-C9 + ENR-01..ENR-06 — all complete (15 requirements).</p>
+<p><strong>Known deferred items at close (acknowledged, carried forward):</strong></p>
+<ul>
+<li>Open UAT scenarios: Phase 6 (1), Phase 8 (4) — partial human UAT.</li>
+<li>Verification sign-off <code>human_needed</code>: Phases 1, 6, 8; Phase 9 verification <code>gaps_found</code>.</li>
+<li>Pending user action (quick task 260520-n3s): run <code>node scripts/backfill-enrichment-reset.mjs</code> dry-run then <code>--apply</code> to reset ~1500 legacy contacts and repopulate the enrichment queue (live Neon prod write — not yet run).</li>
+<li>See STATE.md → Deferred Items for the full table.</li>
+</ul>
+<hr>
+<h2>v1.0 — MVP / Brownfield Hardening</h2>
+<p><strong>Shipped:</strong> 2026-05-14 <em>(recorded retroactively at the v1.1 close; v1.0 was declared complete in PROJECT.md but never formally archived — Phases 1–6 detail remains in the reorganized <code>ROADMAP.md</code> and the v1.1 requirements archive)</em>
+<strong>Phases:</strong> 1–6 (6 phases) · <strong>Plans:</strong> 20</p>
+<p><strong>Delivered:</strong> Stabilized and hardened the brownfield job-search CRM — eliminated the LinkedIn-import hydration crash, stood up a Vitest + PGlite test harness, authenticated all <code>/api/*</code> routes, stripped starter-template residue, completed the LinkedIn-scrape skill (moving scraping out of the app into a Claude Code skill driving <code>vercel-labs/agent-browser</code>), and eliminated the N+1 patterns straining the 1500-contact dataset.</p>
+<p><strong>Key accomplishments:</strong></p>
+<ol>
+<li><strong>Critical bug fix (Phase 1)</strong> — Removed the <code>app-sidebar.tsx</code> hydration crash that broke navigation after large LinkedIn imports (BUG-01/BUG-02).</li>
+<li><strong>Test infrastructure (Phase 2)</strong> — Vitest + PGlite-backed Drizzle harness; 79 tests covering the API envelope, <code>canTransition()</code>, <code>logTimeline()</code>, CSV parse, bridge-score; BUG-01 regression pinned; husky pre-push gate.</li>
+<li><strong>Security hardening (Phase 3)</strong> — Every <code>/api/*</code> route requires a valid Clerk session via <code>middleware.ts</code>; removed the no-op GitHub auth button + external star fetch.</li>
+<li><strong>Starter-template cleanup (Phase 4)</strong> — Deleted <code>products</code> feature, starter routes, the 805-line <code>infobar.tsx</code>, the kanban route, and <code>__CLEANUP__/</code>.</li>
+<li><strong>Job Leads completion (Phase 5)</strong> — Scraping moved out of the app into the <code>scrape-linkedin-connections</code> skill; queue + categorized failures surface via the DB (JL-B1..JL-B5).</li>
+<li><strong>Performance (Phase 6)</strong> — Bulk inserts/updates in transactions, DB-side dedup, 5 hot-path indexes (migration 0008), N+1 patterns eliminated (PERF-A1..A5).</li>
+</ol>
+<p><strong>Requirements:</strong> BUG-01/02, TEST-A1..A3, SEC-A1/A2, DEBT-A1..A5, JL-B1..B5 (JL-A1..A5 superseded), PERF-A1..A5 — all complete.</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/MILESTONES.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

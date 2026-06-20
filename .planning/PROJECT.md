@@ -1,16 +1,21 @@
 # Heimdall — Job Search Command Center
 
-## Current Milestone: v1.1 LinkedIn Scraping by Company
+## Current State
 
-**Goal:** Let the `scrape-linkedin-connections` skill accept a company name or LinkedIn company URL as input (in addition to the existing job ID/URL inputs), so 2nd-degree connections at any target company can be scraped without first needing a specific job posting.
+**Shipped:** v1.1 LinkedIn Scraping by Company (Phases 7–10, 2026-05-20). The `scrape-linkedin-connections` skill now accepts a LinkedIn company URL or bare company name in addition to job IDs/URLs, creating synthetic `job_leads` (`linkedinJobUrl = null`) that flow through the existing queue, prospects, and recommendation pipeline. Triage also surfaces each connection's company and role *at the time of connection*, backfilled by a paced agent-browser sweep and just-in-time enrichment during company-scope triage.
 
-**Target features:**
-- Skill accepts a LinkedIn company URL (`https://linkedin.com/company/...`) and navigates directly to the employees page, skipping the job → company step
-- Skill accepts a bare company name, runs a LinkedIn company search, and disambiguates inline when multiple matches exist (top 3–5 by employee count + industry)
-- Synthetic job-lead row is created for company-scope scrapes (`linkedinJobUrl = null`, `roleTitle = null` or "Company-wide scrape") — reuses existing `prospects` table and `/api/job-leads/[id]/{status,prospects}` routes; no new entity
-- Drain mode processes company-scope leads from the same queue as job-URL leads — skill nav branches on whether `linkedinJobUrl` is null
-- Job-lead detail and list-view UI render company-only leads cleanly (no broken "View job posting" link; clear "Company scrape" label)
-- All 2nd-degree connections at the company are returned — no role filter
+Prior milestone: v1.0 MVP / Brownfield Hardening (Phases 1–6, 2026-05-14) — hydration-crash fix, Vitest + PGlite test harness, `/api/*` auth, starter-template removal, the out-of-app LinkedIn scrape skill, and N+1 elimination + indexes.
+
+See `.planning/MILESTONES.md` for the full ledger and `.planning/milestones/` for per-milestone archives.
+
+### Next Milestone Goals (v1.2 — to be scoped via `/gsd:new-milestone`)
+
+Candidate themes from the v2 backlog and deferred items:
+- Production-grade scraping — decouple the scrape worker from the API route / remote browser service reachable from Vercel (JL2-01), move `playwright` to devDependencies (JL2-02), captcha/rate-limit backoff (JL2-03), pagination beyond page 1 (JL2-04)
+- Drain the legacy enrichment backlog (run `backfill-enrichment-reset.mjs`; ~1500 contacts) and close out the paced sweep
+- pgvector semantic search over notes/interactions/JDs (VEC-01/02)
+- Structured logging / error reporting beyond `console.error` (OBS-01), background-job dashboard for scrape status (OBS-02)
+- Close the open UAT scenarios + verification sign-offs deferred from v1.0/v1.1 (Phases 1, 6, 8, 9 — see STATE.md → Deferred Items)
 
 ## What This Is
 
@@ -49,26 +54,34 @@ A personal CRM and pipeline tracker for an executive job search targeting VP Dat
 - ✓ **API-V1**: Standard response envelope `{ success, data, error, meta }` and cursor pagination on `updated_at` across 34 routes (`src/lib/api/`)
 - ✓ **CLI-V1**: All mutations routed through REST API — no server actions — so the Claude Code CLI has full parity with the web UI
 
+#### v1.0 Hardening (Phases 1–6) — shipped 2026-05-14
+
+- ✓ **BUG-01 / BUG-02**: React hydration crash in `app-sidebar.tsx` eliminated (removed the `{user && ...}` guard around `UserAvatarProfile`, guarded `emailAddresses[0]` access); sidebar navigation survives large LinkedIn imports. (Phase 1)
+- ✓ **SEC-A1 / SEC-A2**: Every `/api/*` route requires a valid Clerk session via `middleware.ts`; the no-op "Continue with GitHub" button + external `api.github.com` star fetch removed. (Phase 3)
+- ✓ **DEBT-A1..A5**: Starter-template residue gone — `features/products`, starter routes, the 805-line `infobar.tsx`, the kanban route, `__CLEANUP__/`, and the dead `computeBridgeScore` import all deleted; pinned by `src/__cleanup__.test.ts`. (Phase 4)
+- ✓ **JL-B1..B5**: LinkedIn connection scraping moved out of the app into the `scrape-linkedin-connections` Claude Code skill driving `vercel-labs/agent-browser`; the app holds the queue + categorized failures (`queued`/`failed` enum, `last_error` columns); the in-app fire-and-forget Playwright IIFE + `scrape-connections.ts` + `search-progress.tsx` deleted. (Phase 5)
+- ✓ **PERF-A1..A5**: N+1 patterns eliminated and hot-path indexes shipped. `POST /api/job-leads/[id]/prospects` wraps prospect insert + `matchConnections` + status flip in `db.transaction()`; `match-connections.ts` does a single bulk bridge insert with `onConflictDoNothing()`; `PATCH /api/contacts/import/categorize` is one bulk UPDATE; `POST /api/contacts/import` is one bulk INSERT with `onConflictDoNothing` + narrowed dedup SELECT; `GET /api/job-leads/[id]/recommendations` is now a pure read. Migration 0008 adds 5 indexes; pinned by `__phase6_indexes__.test.ts`. `pg_trgm` GIN remains a v2 item. (Phase 6)
+- ✓ **TEST-A1..A3**: Vitest harness with PGlite-backed Drizzle DB; `npm run test:run` exits 0 in ~6s; pre-push hook runs build + tests. Covers the API envelope, `canTransition()`, `logTimeline()` side-effect, LinkedIn CSV parse, `computeBridgeScore`, plus the BUG-01 SSR + hydration regression. 79 tests across 10 files. (Phase 2)
+
+#### v1.1 LinkedIn Scraping by Company (Phases 7–10) — shipped 2026-05-20
+
+- ✓ **JL-C3 / JL-C4**: `job_leads.linkedinJobUrl`/`roleTitle` nullable (migration 0009); `POST /api/job-leads` accepts a company-scope shape (`{ companyName, linkedinCompanyUrl? }`) via a discriminated Zod union, auto-creating/deduping the `companies` row; state machine input-shape agnostic (D-17 pins). (Phase 7)
+- ✓ **JL-C1 / JL-C2 / JL-C5 / JL-C6 / JL-C7**: `scrape-linkedin-connections` accepts a LinkedIn company URL or bare company name, navigates direct to `/company/<slug>/people/` when there's no job URL, disambiguates multi-match searches inline (top 3–5), and drains company-scope leads from the same `?status=queued` queue. `GET /api/job-leads` projects `companyLinkedinUrl`. (Phase 8)
+- ✓ **JL-C8 / JL-C9**: Job-lead detail + list render company-scope leads cleanly — "View job posting" hidden, "Company scrape" badge, distinct list icon; SSR-structural tests. (Phase 9)
+- ✓ **ENR-01..ENR-06**: At-connection company/role enrichment — `contacts` columns + `contact_enrichment_status` enum (migration 0010), CSV import seeding, `PATCH /api/contacts/[id]/enrichment` + `GET /api/contacts/enrichment-queue`, triage recommendation-card render + just-in-time enrichment, and skill per-profile + paced batch-sweep modes with anti-bot pacing docs. (Phase 10)
+
 ### Active
 
-<!-- Current scope being built toward. Hypotheses until shipped and validated. Derived from `bug.md`, `docs/summary.md` "Needs Debugging" section, and `.planning/codebase/CONCERNS.md`. -->
+<!-- No open requirements: v1.0 and v1.1 are shipped. Next-milestone scope is defined via `/gsd:new-milestone`. See "Next Milestone Goals" above and the v2 backlog in .planning/milestones/v1.1-REQUIREMENTS.md. -->
 
-- [ ] **BUG-01**: Fix React hydration crash in sidebar — remove `{user && ...}` guard around `UserAvatarProfile` in `src/components/layout/app-sidebar.tsx` (lines 148, 166); kills all sidebar navigation after LinkedIn import
-- [ ] **JL-A1**: Finish Job Leads scraper — parameterize hardcoded `'point'` company name in `scrape-connections.ts:62`, tune Playwright timeouts on heavy LinkedIn pages, surface scrape errors to the UI, and remove debug-mode `console.log` flood + leaked-browser pattern in `scrape-connections.ts`
-- [ ] **JL-A2**: Add timeout bound to fire-and-forget search IIFE in `src/app/api/job-leads/[id]/search/route.ts` so leads can't get stuck in `searching` status indefinitely
-- [ ] **SEC-A1**: Add Clerk auth check to all `/api/*` routes — currently 0 of 34 routes call `auth()`; only the `/dashboard` middleware lock prevents access
-- [ ] **DEBT-A1**: Strip Next.js starter-template residue — delete `src/features/products/`, `src/app/dashboard/{product,overview-old,exclusive,workspaces,billing}/`, the 805-line unused `infobar.tsx`, the no-op GitHub auth button, the external `api.github.com/repos/...` star fetch on auth pages, and the `__CLEANUP__/` directory
-- ✓ **PERF-A1..A5**: N+1 patterns eliminated and hot-path indexes shipped in Phase 6. `POST /api/job-leads/[id]/prospects` wraps prospect insert + `matchConnections` + status flip in `db.transaction()`; `match-connections.ts` does a single bulk bridge insert with `onConflictDoNothing()` against `prospect_bridge_unique` and a token-narrowed contacts SELECT; `PATCH /api/contacts/import/categorize` is one bulk UPDATE via `db.execute(sql\`UPDATE … FROM (VALUES …)\`)`; `POST /api/contacts/import` is one bulk INSERT with `onConflictDoNothing({target: contacts.linkedinUrl, where: <partial-predicate>})` + narrowed name+company dedup SELECT; `GET /api/job-leads/[id]/recommendations` is now a pure read (per-row UPDATE persistence dropped — falls back to `computeBridgeScore` on the fly per `prioritization.ts:55`). Migration 0008 adds 5 indexes (4 on contacts incl. partial UNIQUE on `linkedin_url` scoped to active rows, 1 on `companies.name`). Pinned by `src/lib/db/__phase6_indexes__.test.ts` against `pg_indexes`. `pg_trgm` GIN for cross-entity ilike search remains a v2 investigation item. (completed 2026-05-14)
-- ✓ **TEST-A1**: Vitest harness with PGlite-backed Drizzle DB shipped in Phase 2. `npm run test:run` exits 0 in ~6s. Pre-push hook runs build + tests. (`vitest.config.ts`, `src/test-utils/{pglite,call-route}.ts`, `.husky/pre-push` — completed 2026-05-12)
-- ✓ **TEST-A2**: Load-bearing logic coverage shipped in Phase 2 — API envelope shape (`types.test.ts`), `canTransition()` pipeline graph (`pipeline.test.ts`), `logTimeline()` side-effect verified via real `timeline_events` rows in PGlite (`applications/[id]/status/route.test.ts`), LinkedIn CSV parsing (`contacts/import/route.test.ts`), `computeBridgeScore` (`prioritization.test.ts`). Plus adjacent surfaces `parseCursor`/`parseLimit` (`filters.test.ts`) and `inferSeniority` (`seniority.test.ts`). 79 tests passing across 10 files. (completed 2026-05-12)
-- ✓ **TEST-A3**: BUG-01 regression pinned in Phase 2 — SSR structural test asserts no `<div>` inside `<button>` and `UserAvatarProfile` rendered unconditionally (`app-sidebar.ssr.test.tsx`); hydration mount test catches severe SSR/CSR divergences via DOM-shape comparison (`app-sidebar.hydration.test.tsx`). (completed 2026-05-12)
+- _(none — between milestones; scope v1.2 via `/gsd:new-milestone`)_
 
 ### Out of Scope
 
 - **Multi-tenant / multi-user** — explicitly single-user; Clerk middleware hardcodes `steve@bronstein.org`. Removing the lock is not a v1 goal.
 - **Mobile / native app** — web-first; not a goal during the active search.
 - **Real-time chat or messaging** — outside the CRM scope.
-- **OAuth providers beyond Clerk's own** — Clerk handles auth; the residual "Continue with GitHub" starter button will be deleted, not implemented.
+- **OAuth providers beyond Clerk's own** — Clerk handles auth; the residual "Continue with GitHub" starter button was deleted in Phase 3, not implemented.
 - **Server-side LinkedIn scraping on Vercel** — Playwright + Chromium cannot run on Vercel serverless (250MB bundle, no persistent FS). Scraping stays in local dev / Docker with a host browser via CDP. Production deployment would need a remote browser service if ever required.
 - **Video/voice posts or content** — not a CRM concern.
 - **Database-backed Kanban for the `/dashboard/kanban` route** — that page is starter-template residue and will be removed, not wired to `tasks`. (Removed in Phase 4)
@@ -77,9 +90,9 @@ A personal CRM and pipeline tracker for an executive job search targeting VP Dat
 
 - **User**: Single owner running an active executive job search (VP Data/AI, growth-stage). The product is also the user's daily driver — bugs that break navigation are show-stoppers, not annoyances.
 - **Dual-interface design**: Every data mutation goes through `/app/api/*` so the Claude Code CLI has full parity with the browser UI. This is a load-bearing constraint, not a stylistic choice.
-- **Existing codebase**: ~95 feature component files, 34 API routes, 13 database tables, 17 enums, 7 migrations. Built on the Next.js Shadcn dashboard starter — substantial starter residue still in the tree (`__CLEANUP__/`, `src/features/products/`, etc.).
-- **Active development**: Job Leads (LinkedIn scrape → prioritized intro paths) was the most recent feature and still has documented rough edges in `docs/summary.md` (the "Needs Debugging" section is the source of truth).
-- **Codebase analysis**: `.planning/codebase/` was generated 2026-05-12 by `/gsd-map-codebase` and is the up-to-date reference for stack, architecture, conventions, integrations, structure, testing posture, and concerns.
+- **Existing codebase**: built on the Next.js Shadcn dashboard starter, now substantially hardened — starter residue removed (Phase 4), all `/api/*` routes authenticated (Phase 3), Vitest + PGlite test harness in place (Phase 2). As of v1.1: 10 Drizzle migrations (through 0010 — enrichment columns). LinkedIn scraping lives entirely in the `.claude/skills/scrape-linkedin-connections` skill driving `vercel-labs/agent-browser`; the app holds the queue, results, and categorized failures.
+- **Most recent work**: v1.1 (Phases 7–10) added company-scope scraping (synthetic `job_leads`) and at-connection company/role enrichment for triage. The legacy enrichment backlog (~1500 contacts) is paced-sweep-backfillable but not yet drained.
+- **Codebase analysis**: `.planning/codebase/` was generated 2026-05-12 by `/gsd-map-codebase`; predates Phases 5–10, so re-run `/gsd-map-codebase` before the next milestone if a fresh reference is needed.
 
 ## Constraints
 
@@ -102,9 +115,13 @@ A personal CRM and pipeline tracker for an executive job search targeting VP Dat
 | Soft deletes via `archived_at` | Never lose history during an active search; preserves timeline integrity | ✓ Good |
 | Timeline events emitted from every write | Denormalized activity feed for the dashboard; one cheap row per mutation | ✓ Good |
 | Cursor pagination on `updated_at` | Stable under inserts; offsets would shift under writes | ✓ Good |
-| Job Leads scraping via Playwright + CDP | Only reliable way to drive LinkedIn's heavily-obfuscated UI; accept Vercel incompatibility | ⚠️ Revisit — scraper is brittle, hardcoded `'point'` debug artifact still present |
+| Job Leads scraping via a Claude Code skill (`vercel-labs/agent-browser`), not in-app Playwright | The in-app fire-and-forget Playwright IIFE was brittle (hardcoded `'point'`, leaked browsers); moving scraping out-of-band into a skill removed it from the serverless runtime entirely | ✓ Good — reshaped in Phase 5; the `'point'` artifact and IIFE are deleted |
 | Pipeline state machine via `canTransition()` | Prevents invalid stage moves at the API boundary | ✓ Good |
 | 8-tier closeness orthogonal to warmth | Closeness measures underlying relationship strength; warmth measures recent engagement — they decouple cleanly | ✓ Good |
+| Company-scope scrapes as synthetic `job_leads` (`linkedinJobUrl = null`) | Reuse the entire existing queue/prospects/recommendations pipeline rather than adding a new entity or table | ✓ Good (v1.1, Phase 7) |
+| Single shared drain queue; skill nav branches on `linkedinJobUrl` | No separate queue, status value, or route for company-scope vs job-URL leads — one loop drains both | ✓ Good (v1.1, Phase 8) |
+| At-connection company/role captured at CSV-import + backfilled by paced agent-browser sweep | LinkedIn's CSV export omits company/role *as of* connection date; a human-paced sweep avoids bot-detection across the 1000+ backlog | ✓ Good (v1.1, Phase 10) — backlog drain still pending |
+| JIT enrichment on the company-triage read path does no inline DB write | Keep the recommendations read pure; enrichment writes happen only via the explicit PATCH endpoint | ✓ Good (v1.1, Phase 10) |
 
 ## Evolution
 
@@ -124,4 +141,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-19 — started milestone v1.1 (LinkedIn Scraping by Company). v1.0 milestone complete (Phases 1-6).*
+*Last updated: 2026-06-20 after v1.1 milestone. v1.0 (Phases 1–6) and v1.1 (Phases 7–10, LinkedIn Scraping by Company + at-connection enrichment) both shipped and archived in `.planning/milestones/`. Next: scope v1.2 via `/gsd:new-milestone`.*

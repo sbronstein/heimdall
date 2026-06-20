@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: milestone
-status: completed
-stopped_at: Phase 9 UI-SPEC approved
-last_updated: "2026-05-20T19:52:09.453Z"
-last_activity: 2026-05-20 -- Phase 10 marked complete
+milestone_name: LinkedIn Scraping by Company
+status: shipped
+stopped_at: v1.1 milestone archived
+last_updated: "2026-06-20T00:00:00.000Z"
+last_activity: 2026-06-20 -- v1.1 milestone archived (Phases 7-10); tagged v1.1
 progress:
   total_phases: 10
   completed_phases: 10
@@ -18,19 +18,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-19)
+See: .planning/PROJECT.md (updated 2026-06-20)
 
 **Core value:** Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-**Current focus:** Phase 10 — connection-company-and-role-enrichment-for-triage
+**Current focus:** Between milestones — scope v1.2 via `/gsd:new-milestone`.
 
 ## Current Position
 
-Phase: 10 — COMPLETE
-Plan: 1 of 4
-Status: Phase 10 complete
-Last activity: 2026-06-11 -- Completed quick task 260611-l44: Clickable contact names + Override button in job-lead intro recommendations
+Milestone: v1.1 LinkedIn Scraping by Company — ✅ SHIPPED 2026-05-20, archived 2026-06-20 (tag `v1.1`)
+Phases: 7–10 complete (11 plans)
+Status: Milestone closed. No active phase.
+Last activity: 2026-06-20 -- v1.1 milestone archived to .planning/milestones/
 
-**v1.1 Progress Rail:** Phase 7 · Phase 8 · Phase 9
+**Shipped milestones:** v1.0 (Phases 1–6) · v1.1 (Phases 7–10)
 
 ## Performance Metrics
 
@@ -104,9 +104,21 @@ Items acknowledged and carried forward from v1.0:
 | Performance | pg_trgm GIN for cross-entity ilike search | Deferred to v2 | Phase 6 |
 | Playwright | Move playwright from dependencies to devDependencies | Deferred to v2 as JL2-02 | Phase 5 |
 
+Items acknowledged and deferred at v1.1 milestone close (2026-06-20):
+
+| Category | Item | Status |
+|----------|------|--------|
+| UAT | Phase 6 human UAT — 1 open scenario | partial |
+| UAT | Phase 8 human UAT — 4 open scenarios | partial |
+| Verification | Phase 1 verification sign-off | human_needed |
+| Verification | Phase 6 verification sign-off | human_needed |
+| Verification | Phase 8 verification sign-off | human_needed |
+| Verification | Phase 9 verification | gaps_found |
+| Data | Run `backfill-enrichment-reset.mjs` dry-run then `--apply` to reset ~1500 legacy contacts + repopulate enrichment queue (live Neon prod write — quick task 260520-n3s) | pending |
+
 ## Session Continuity
 
-Last session: 2026-05-20T02:46:59.276Z
-Stopped at: Phase 9 UI-SPEC approved
+Last session: 2026-06-20
+Stopped at: v1.1 milestone archived + tagged
 Resume file: None
-Next action: `/gsd:plan-phase 7`
+Next action: `/clear` then `/gsd:new-milestone` to scope v1.2

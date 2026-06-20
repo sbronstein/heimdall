@@ -51,11 +51,11 @@ img { max-width: 100%; height: auto; }
 <hr>
 <h2>gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: milestone
-status: completed
-stopped_at: Phase 9 UI-SPEC approved
-last_updated: &quot;2026-05-20T19:52:09.453Z&quot;
-last_activity: 2026-05-20 -- Phase 10 marked complete
+milestone_name: LinkedIn Scraping by Company
+status: shipped
+stopped_at: v1.1 milestone archived
+last_updated: &quot;2026-06-20T00:00:00.000Z&quot;
+last_activity: 2026-06-20 -- v1.1 milestone archived (Phases 7-10); tagged v1.1
 progress:
   total_phases: 10
   completed_phases: 10
@@ -64,15 +64,15 @@ progress:
   percent: 100</h2>
 <h1>Project State</h1>
 <h2>Project Reference</h2>
-<p>See: .planning/PROJECT.md (updated 2026-05-19)</p>
+<p>See: .planning/PROJECT.md (updated 2026-06-20)</p>
 <p><strong>Core value:</strong> Owner can run the entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths — without leaving the app.
-<strong>Current focus:</strong> Phase 10 — connection-company-and-role-enrichment-for-triage</p>
+<strong>Current focus:</strong> Between milestones — scope v1.2 via <code>/gsd:new-milestone</code>.</p>
 <h2>Current Position</h2>
-<p>Phase: 10 — COMPLETE
-Plan: 1 of 4
-Status: Phase 10 complete
-Last activity: 2026-06-11 -- Completed quick task 260611-l44: Clickable contact names + Override button in job-lead intro recommendations</p>
-<p><strong>v1.1 Progress Rail:</strong> Phase 7 · Phase 8 · Phase 9</p>
+<p>Milestone: v1.1 LinkedIn Scraping by Company — ✅ SHIPPED 2026-05-20, archived 2026-06-20 (tag <code>v1.1</code>)
+Phases: 7–10 complete (11 plans)
+Status: Milestone closed. No active phase.
+Last activity: 2026-06-20 -- v1.1 milestone archived to .planning/milestones/</p>
+<p><strong>Shipped milestones:</strong> v1.0 (Phases 1–6) · v1.1 (Phases 7–10)</p>
 <h2>Performance Metrics</h2>
 <p><strong>Velocity (v1.0 reference):</strong></p>
 <ul>
@@ -242,11 +242,56 @@ Recent decisions affecting current work:</p>
 <td>Phase 5</td>
 </tr>
 </tbody></table>
+<p>Items acknowledged and deferred at v1.1 milestone close (2026-06-20):</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Item</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>UAT</td>
+<td>Phase 6 human UAT — 1 open scenario</td>
+<td>partial</td>
+</tr>
+<tr>
+<td>UAT</td>
+<td>Phase 8 human UAT — 4 open scenarios</td>
+<td>partial</td>
+</tr>
+<tr>
+<td>Verification</td>
+<td>Phase 1 verification sign-off</td>
+<td>human_needed</td>
+</tr>
+<tr>
+<td>Verification</td>
+<td>Phase 6 verification sign-off</td>
+<td>human_needed</td>
+</tr>
+<tr>
+<td>Verification</td>
+<td>Phase 8 verification sign-off</td>
+<td>human_needed</td>
+</tr>
+<tr>
+<td>Verification</td>
+<td>Phase 9 verification</td>
+<td>gaps_found</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>Run <code>backfill-enrichment-reset.mjs</code> dry-run then <code>--apply</code> to reset ~1500 legacy contacts + repopulate enrichment queue (live Neon prod write — quick task 260520-n3s)</td>
+<td>pending</td>
+</tr>
+</tbody></table>
 <h2>Session Continuity</h2>
-<p>Last session: 2026-05-20T02:46:59.276Z
-Stopped at: Phase 9 UI-SPEC approved
+<p>Last session: 2026-06-20
+Stopped at: v1.1 milestone archived + tagged
 Resume file: None
-Next action: <code>/gsd:plan-phase 7</code></p>
+Next action: <code>/clear</code> then <code>/gsd:new-milestone</code> to scope v1.2</p>
 
 
 
