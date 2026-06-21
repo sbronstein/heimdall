@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-HUMAN-UAT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-HUMAN-UAT.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>status: partial
+phase: 14-campaign-builder-ui
+source: [14-VERIFICATION.md]
+started: 2026-06-21T11:55:00Z
+updated: 2026-06-21T11:55:00Z</h2>
+<h1>Phase 14: Campaign Builder UI — Human UAT</h1>
+<p>All 16 code-level must-haves passed automated verification (<code>14-VERIFICATION.md</code>, score 16/16).
+The 8 items below are interactive browser/DB checks that static analysis cannot confirm — they
+are the expected UAT pass for a UI-heavy phase, <strong>not</strong> implementation gaps. Run <code>npm run dev</code>
+(port 4000) and walk through each. Mark <code>[x]</code> as you confirm. Phase stays <code>pending</code> until all pass.</p>
+<h2>UAT Scenarios</h2>
+<ul>
+<li><p><input disabled="" type="checkbox"> <strong>U1 — Sidebar nav + list landing.</strong> Navigate to <code>/dashboard/outreach</code>.
+<em>Expected:</em> Sidebar shows <strong>Outreach</strong> between Job Leads and Contacts with the mail icon; clicking lands on the campaign list (or empty state).</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U2 — Four filters compose live.</strong> On <code>/dashboard/outreach/new</code>, apply each filter (howMet text, connection-year range, closeness tier, outreach status) individually and combined.
+<em>Expected:</em> Each narrows independently; all four active = intersection; changing filters does NOT clear already-checked contacts (D-03).</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U3 — Selection persists across filters.</strong> Check several contacts, change the filter so they leave the visible list.
+<em>Expected:</em> Tray still shows &quot;N selected&quot; and the now-hidden contacts remain in the tray (D-03/D-09).</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U4 — Select-all unions.</strong> Check 3 contacts, switch filter, click &quot;Select all X matching&quot;.
+<em>Expected:</em> The filtered set is ADDED to the existing 3, not replacing them (D-08).</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U5 — End-to-end save.</strong> Fill campaign name, select ≥1 contact, click Save Campaign.
+<em>Expected:</em> Two sequential POSTs (create campaign, then bulk-add emails); redirect to <code>/dashboard/outreach/[id]</code> showing the name and added contacts with <code>pending</code> badges.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U6 — Save gated.</strong> Try to save with blank name or zero contacts.
+<em>Expected:</em> Save Campaign button disabled until both conditions met (D-14/CD-01).</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U7 — Double-submit protection.</strong> Click Save Campaign twice rapidly while POSTs are in-flight.
+<em>Expected:</em> Only one campaign created; button disables during the request (CD-01).</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>U8 — 404 on missing campaign.</strong> Visit <code>/dashboard/outreach/&lt;nonexistent-uuid&gt;</code>.
+<em>Expected:</em> Next.js <code>notFound()</code> renders the standard 404 page.</p>
+</li>
+</ul>
+<h2>Sign-off</h2>
+<p>When all 8 pass, re-run <code>/gsd:execute-phase 14</code> (or <code>/gsd:verify-work 14</code>) so verification flips to <code>passed</code> and the phase closes.</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-HUMAN-UAT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

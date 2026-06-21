@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 14-campaign-builder-ui
+verified: 2026-06-21T11:50:00Z
+status: human_needed
+score: 16/16
+overrides_applied: 0
+human_verification:</p>
+<ul>
+<li>test: &quot;Navigate to /dashboard/outreach — confirm sidebar Outreach link appears and clicking it lands on the campaign list page&quot;
+expected: &quot;Sidebar shows Outreach between Job Leads and Contacts; clicking navigates to /dashboard/outreach and shows the campaign list (or empty state)&quot;
+why_human: &quot;Sidebar rendering and nav active-state are visual runtime behaviors; grep cannot confirm the icon resolves or the active highlight applies&quot;</li>
+<li>test: &quot;Navigate to /dashboard/outreach/new — apply each of the four filters (howMet text, connection year range, closeness tier, outreach status) individually and in combination; verify the contact list updates in real time&quot;
+expected: &quot;Each filter narrows the contact list independently; all four active simultaneously narrow to their intersection; changing filters does not clear previously checked contacts&quot;
+why_human: &quot;In-memory client-side filtering behavior requires running the browser; filter composition and selection-persistence across filter changes (D-03) cannot be confirmed by static analysis&quot;</li>
+<li>test: &quot;On /dashboard/outreach/new — check several contacts, change the filter so those contacts are no longer visible, verify the tray still shows &#39;N selected&#39; and the contacts remain in the tray&quot;
+expected: &quot;Selected count in tray persists after filter change; tray expands to show the previously-selected contacts that are now filtered out of the main list (D-03/D-09)&quot;
+why_human: &quot;Cross-filter selection persistence requires live React state interaction&quot;</li>
+<li>test: &quot;On /dashboard/outreach/new — use &#39;Select all X matching&#39; header checkbox; confirm it adds the filtered set to the existing selection rather than replacing it&quot;
+expected: &quot;Checking 3 contacts, then switching filter, then clicking Select All adds to the 3 already checked (D-08)&quot;
+why_human: &quot;selectAllFiltered union semantics require runtime interaction to confirm&quot;</li>
+<li>test: &quot;On /dashboard/outreach/new — fill campaign name, select &gt;=1 contact, click Save Campaign; confirm it creates the campaign and navigates to /dashboard/outreach/[id]&quot;
+expected: &quot;Two sequential POSTs fire (create campaign, then bulk-add emails); page redirects to the placeholder review showing campaign name and the added contacts with &#39;pending&#39; status badges&quot;
+why_human: &quot;End-to-end save flow requires live DB and running server&quot;</li>
+<li>test: &quot;On /dashboard/outreach/new — attempt to click Save Campaign with name blank or zero contacts selected; confirm button is disabled&quot;
+expected: &quot;Save Campaign button is grayed out / disabled until both conditions are met (D-14/CD-01)&quot;
+why_human: &quot;Button disabled state requires browser interaction&quot;</li>
+<li>test: &quot;On /dashboard/outreach/new — click Save Campaign twice rapidly while the POSTs are in-flight&quot;
+expected: &quot;Only one campaign is created; the Save button becomes disabled during the request (CD-01)&quot;
+why_human: &quot;Double-submit protection requires timing interaction in live browser&quot;</li>
+<li>test: &quot;Visit /dashboard/outreach/[nonexistent-uuid] — confirm 404 / Not Found page&quot;
+expected: &quot;Next.js notFound() is called and the standard 404 page renders&quot;
+why_human: &quot;notFound() rendering requires live Next.js server&quot;</li>
+</ul>
+<hr>
+<h1>Phase 14: Campaign Builder UI — Verification Report</h1>
+<p><strong>Phase Goal:</strong> The owner can create a named campaign with a goal by filtering contacts and multi-selecting recipients from the browser
+<strong>Verified:</strong> 2026-06-21T11:50:00Z
+<strong>Status:</strong> HUMAN_NEEDED
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<p>All 16 must-have truths are VERIFIED in the codebase. Eight items require human testing in a running browser/server to confirm interactive behaviors and end-to-end data flow.</p>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Navigating to <code>/dashboard/outreach/</code> shows the campaign list with per-campaign progress (SC #1)</td>
+<td>VERIFIED</td>
+<td><code>src/app/dashboard/outreach/page.tsx</code> is a real async RSC that queries <code>outreachCampaigns</code> + <code>outreachEmails</code> with <code>json_build_object</code> aggregate; passes <code>initialCampaigns</code> (with coerced <code>emailCounts</code>) to <code>CampaignList</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Each campaign card shows name, goal snippet, status, and per-status count badges for selected/generated/approved/drafted (D-10)</td>
+<td>VERIFIED</td>
+<td><code>CampaignList</code> maps each campaign to a <code>Card</code> with <code>CardTitle</code>, clamped goal <code>&lt;p&gt;</code>, status <code>Badge</code>, and four <code>BadgeCount</code> components sourced from <code>displayCountsFromEmailCounts</code>; 9/9 unit tests confirm behavior</td>
+</tr>
+<tr>
+<td>3</td>
+<td>An Outreach entry appears in the sidebar nav and links to <code>/dashboard/outreach</code></td>
+<td>VERIFIED</td>
+<td><code>src/config/nav-config.ts</code> line 45–51: <code>{ title: &#39;Outreach&#39;, url: &#39;/dashboard/outreach&#39;, icon: &#39;mail&#39;, shortcut: [&#39;o&#39;,&#39;u&#39;] }</code>; <code>mail</code> key maps to <code>IconMail</code> in <code>src/components/icons.tsx</code> lines 47+98</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A &#39;New Campaign&#39; action links from the list page to the builder route</td>
+<td>VERIFIED</td>
+<td><code>src/app/dashboard/outreach/page.tsx</code> <code>pageHeaderAction</code>: <code>&lt;Link href=&#39;/dashboard/outreach/new&#39;&gt;&lt;Button size=&#39;sm&#39;&gt;New Campaign&lt;/Button&gt;&lt;/Link&gt;</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Empty state copy shows when there are no campaigns yet (CD-05)</td>
+<td>VERIFIED</td>
+<td><code>CampaignList</code> calls <code>hasNoCampaigns()</code> and renders &quot;No campaigns yet — create your first from a contact cohort.&quot; with a link to <code>/dashboard/outreach/new</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>The filter bar lets the owner filter simultaneously by howMet, connection year/range, closeness tier, and outreach status (CAMP-01..CAMP-04, D-07)</td>
+<td>VERIFIED</td>
+<td><code>BuilderFilterBar</code> composes <code>ConnectionYearFilter</code> (Phase 13, owns nuqs year state), <code>ClosenessButtonBar</code> (Phase 13, calls <code>onSelect</code>), a free-text <code>Input</code> writing <code>howMet</code> to nuqs, and an outreach-status button bar over <code>outreachStatusValues</code> writing <code>outreachStatus</code> to nuqs</td>
+</tr>
+<tr>
+<td>7</td>
+<td>The outreach-status filter defaults to &#39;not_reached_out&#39; so already-contacted people are hidden by default (D-07)</td>
+<td>VERIFIED</td>
+<td><code>builder-filter-bar.tsx</code> line 51: <code>outreachStatus: parseAsString.withDefault(&#39;not_reached_out&#39;)</code>; <code>campaign-builder.tsx</code> line 37: same withDefault</td>
+</tr>
+<tr>
+<td>8</td>
+<td>The Phase 13 triage controls are reused, not re-implemented (D-07)</td>
+<td>VERIFIED</td>
+<td><code>builder-filter-bar.tsx</code> imports <code>ConnectionYearFilter</code> from <code>@/features/contacts/components/triage/connection-year-filter</code> and <code>ClosenessButtonBar</code> from <code>@/features/contacts/components/triage/closeness-button-bar</code>; both rendered in JSX</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Filter selections live in the URL via nuqs so a reload restores them</td>
+<td>VERIFIED</td>
+<td>Both <code>BuilderFilterBar</code> and <code>CampaignBuilder</code> use <code>useQueryStates</code> with named <code>closeness</code>, <code>howMet</code>, <code>outreachStatus</code> params; <code>ConnectionYearFilter</code> independently owns <code>connectionYearStart</code>/<code>connectionYearEnd</code> in nuqs</td>
+</tr>
+<tr>
+<td>10</td>
+<td>The selection list renders dense rows with a checkbox and all four D-02 field groups, plus a select-all-matching header (CAMP-05, D-02, D-08)</td>
+<td>VERIFIED</td>
+<td><code>ContactSelectionList</code> renders a select-all header Checkbox + per-row Checkboxes with four groups: (1) name + howMet + closeness Badge, (2) title/company + roleAtConnection/companyAtConnection, (3) <code>linkedinConnectionDate</code> formatted as <code>MMM yyyy</code>, (4) outreach status Badge</td>
+</tr>
+<tr>
+<td>11</td>
+<td>A pure <code>applyBuilderFilters</code> helper narrows an in-memory contact set by all four filters and orders closeness-closest-first (D-04, D-05, CD-04)</td>
+<td>VERIFIED</td>
+<td><code>builder-filters.ts</code> exports <code>applyBuilderFilters</code> (pure function, no React, no side effects); applies year range via <code>filterByConnectionYearRange</code>, closeness equality, howMet case-insensitive substring, outreachStatus equality in AND composition; sorts by <code>contactClosenessValues.indexOf</code> ascending; input array never mutated</td>
+</tr>
+<tr>
+<td>12</td>
+<td>The builder loads ALL non-archived contacts up front and filters client-side in memory (D-05, D-06)</td>
+<td>VERIFIED</td>
+<td><code>src/app/dashboard/outreach/new/page.tsx</code>: <code>db.select().from(contacts).where(isNull(contacts.archivedAt))</code> — no <code>fetch(&#39;/api/contacts&#39;)</code> call; full array passed to <code>CampaignBuilder</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>Selections persist across filter changes; a running &#39;N selected&#39; tray reflects the full set regardless of active filter (D-03)</td>
+<td>VERIFIED</td>
+<td><code>CampaignBuilder</code> holds <code>selectedIds</code> as <code>useState&lt;Set&lt;string&gt;&gt;</code>; <code>filteredContacts</code> is a <code>useMemo</code> that never touches <code>selectedIds</code>; no <code>useEffect</code> clears the set on filter change; <code>clear-all</code> fires only on explicit user button click (line 229)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Select-all adds every currently-filtered contact on top of the existing selection (D-08)</td>
+<td>VERIFIED</td>
+<td><code>selectAllFiltered</code> (lines 76–82): <code>setSelectedIds(prev =&gt; { const next = new Set(prev); filteredContacts.forEach(c =&gt; next.add(c.id)); return next; })</code> — union semantics confirmed</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Save runs the two-POST sequence (create campaign, then bulk-add emails) with double-submit protection, and navigates to <code>/dashboard/outreach/[id]</code> (D-12, CD-01)</td>
+<td>VERIFIED</td>
+<td><code>handleSave</code> (lines 107–168): guards `if (!canSave</td>
+</tr>
+<tr>
+<td>16</td>
+<td>If create succeeds but bulk-add fails, error is surfaced rather than silently ignored (CD-02)</td>
+<td>VERIFIED</td>
+<td>Lines 150–155: <code>if (bulkFailed) { toast.error(&#39;Campaign created but some contacts could not be added — open the campaign to retry.&#39;) }</code> — still navigates so campaign is accessible</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 16/16 truths verified in the codebase</p>
+<h3>Deferred Items</h3>
+<p>None — all must-haves for Phase 14 are addressed in the current codebase.</p>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/dashboard/outreach/page.tsx</code></td>
+<td>RSC list page: direct DB read of non-archived campaigns + per-status email counts, passes to CampaignList</td>
+<td>VERIFIED</td>
+<td>Exists, substantive (real <code>json_build_object</code> aggregate query), wired (imports and renders <code>CampaignList</code>)</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-list.tsx</code></td>
+<td>Campaign cards with progress badges (D-10); exports <code>CampaignList</code></td>
+<td>VERIFIED</td>
+<td>Exists, substantive (9/9 unit tests pass), named export <code>CampaignList</code> confirmed</td>
+</tr>
+<tr>
+<td><code>src/config/nav-config.ts</code></td>
+<td>Outreach sidebar nav entry</td>
+<td>VERIFIED</td>
+<td>Contains <code>/dashboard/outreach</code> entry with <code>mail</code> icon (<code>IconMail</code> registered at lines 47+98 in icons.tsx)</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/builder-filters.ts</code></td>
+<td><code>applyBuilderFilters(contacts, filters)</code> — pure in-memory filter+sort; exports <code>applyBuilderFilters</code> and <code>BuilderFilters</code></td>
+<td>VERIFIED</td>
+<td>Exists, pure function with AND-composed filters + closeness sort; no React/side-effects</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/builder-filter-bar.tsx</code></td>
+<td>Composed filter bar reusing <code>ConnectionYearFilter</code> + <code>ClosenessButtonBar</code>; exports <code>BuilderFilterBar</code></td>
+<td>VERIFIED</td>
+<td>Exists, imports both Phase 13 controls, adds howMet Input and outreachStatus button bar</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/contact-selection-list.tsx</code></td>
+<td>Dense multi-select rows + select-all header; exports <code>ContactSelectionList</code></td>
+<td>VERIFIED</td>
+<td>Exists, renders select-all header Checkbox + 4 D-02 field groups per row</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-name-panel.tsx</code></td>
+<td>Inline name (required) + goal (optional) controlled inputs; exports <code>CampaignNamePanel</code></td>
+<td>VERIFIED</td>
+<td>Exists, <code>forwardRef</code> pattern, required name Input (<code>maxLength=200</code>), optional Textarea with Phase-16 hint</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/new/page.tsx</code></td>
+<td>Builder RSC: direct DB read of all non-archived contacts → CampaignBuilder</td>
+<td>VERIFIED</td>
+<td>Exists, <code>isNull(contacts.archivedAt)</code> query, passes <code>allContacts</code> to <code>&lt;CampaignBuilder&gt;</code></td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-builder.tsx</code></td>
+<td>Builder shell: in-memory filter, persistent selection, tray, two-POST save; exports <code>CampaignBuilder</code></td>
+<td>VERIFIED</td>
+<td>Exists, substantive implementation with all D-03/D-08/D-09/D-12/CD-01/CD-02 behaviors confirmed</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/[id]/page.tsx</code></td>
+<td>Placeholder review RSC: campaign + added emails+contacts; calls <code>notFound</code> on missing</td>
+<td>VERIFIED</td>
+<td>Exists, <code>notFound()</code> called when campaign not found, emails joined to contacts via <code>leftJoin</code></td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-review-page.tsx</code></td>
+<td>Minimal placeholder review: header + pending contact list (D-13); exports <code>CampaignReviewPage</code></td>
+<td>VERIFIED</td>
+<td>Exists, shows campaign header with per-status counts and full contact list with status Badges</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/dashboard/outreach/page.tsx</code></td>
+<td><code>outreachCampaigns</code> + <code>outreachEmails</code></td>
+<td><code>json_build_object</code> aggregate <code>leftJoin</code> + <code>groupBy</code></td>
+<td>VERIFIED</td>
+<td>Lines 14–40: exact aggregate pattern matching API route</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-list.tsx</code></td>
+<td><code>/dashboard/outreach/[id]</code></td>
+<td><code>&lt;Link href={&#39;/dashboard/outreach/${campaign.id}&#39;}&gt;</code>  per card</td>
+<td>VERIFIED</td>
+<td>Line 79: each card wrapped in <code>&lt;Link href={...}&gt;</code></td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/builder-filter-bar.tsx</code></td>
+<td>Phase 13 <code>ConnectionYearFilter</code> + <code>ClosenessButtonBar</code></td>
+<td>direct import + render</td>
+<td>VERIFIED</td>
+<td>Lines 10–16 import; lines 80+84 render</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/builder-filters.ts</code></td>
+<td><code>filterByConnectionYearRange</code> from connection-year.ts</td>
+<td>import + call</td>
+<td>VERIFIED</td>
+<td>Lines 3+30: imported and called when year filters active</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-builder.tsx</code></td>
+<td><code>POST /api/outreach-campaigns</code> then <code>POST /api/outreach-campaigns/${id}/emails</code></td>
+<td>two sequential <code>fetch</code> calls in <code>handleSave</code></td>
+<td>VERIFIED</td>
+<td>Lines 115–146: create then bulk-add sequence</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-builder.tsx</code></td>
+<td><code>applyBuilderFilters</code>, <code>ContactSelectionList</code>, <code>BuilderFilterBar</code>, <code>CampaignNamePanel</code></td>
+<td>imports + composition in JSX</td>
+<td>VERIFIED</td>
+<td>Lines 10–13: all four Plan-02 leaves imported; lines 185, 212, 275: rendered</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/new/page.tsx</code></td>
+<td>Drizzle <code>contacts</code> table</td>
+<td><code>db.select().from(contacts).where(isNull(contacts.archivedAt))</code></td>
+<td>VERIFIED</td>
+<td>Line 18: confirmed</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/dashboard/outreach/page.tsx</code></td>
+<td><code>campaigns</code> (fed to <code>initialCampaigns</code>)</td>
+<td><code>db.select()...leftJoin(outreachEmails)...json_build_object</code> Postgres aggregate</td>
+<td>Yes — live DB query with grouped counts</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-list.tsx</code></td>
+<td><code>initialCampaigns</code> prop</td>
+<td>Passed from RSC parent via <code>initialCampaigns={initialCampaigns}</code></td>
+<td>Yes — prop populated by real DB result</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/new/page.tsx</code></td>
+<td><code>allContacts</code></td>
+<td><code>db.select().from(contacts).where(isNull(contacts.archivedAt))</code></td>
+<td>Yes — full non-archived contact set from DB</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-builder.tsx</code></td>
+<td><code>contacts</code> prop → <code>filteredContacts</code></td>
+<td>RSC parent, filtered in-memory via <code>applyBuilderFilters</code></td>
+<td>Yes — real contact array from DB, narrowed client-side</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/[id]/page.tsx</code></td>
+<td><code>campaign</code>, <code>emails</code></td>
+<td>Two real DB queries: campaign by id + emails leftJoin contacts</td>
+<td>Yes — live data from Neon</td>
+<td>FLOWING</td>
+</tr>
+</tbody></table>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TypeScript clean across all Phase 14 files</td>
+<td><code>npx tsc --noEmit</code></td>
+<td>Exit 0, no outreach-related errors</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>applyBuilderFilters</code> pure function exports exist</td>
+<td><code>grep &quot;export function applyBuilderFilters&quot;</code> in builder-filters.ts</td>
+<td>Found at line 19</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>CampaignList</code> named export exists</td>
+<td><code>grep &quot;export function CampaignList&quot;</code> in campaign-list.tsx</td>
+<td>Found at line 51</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>CampaignBuilder</code> named export exists</td>
+<td><code>grep &quot;export function CampaignBuilder&quot;</code> in campaign-builder.tsx</td>
+<td>Found at line 20</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Phase 13 controls imported (not re-implemented)</td>
+<td><code>grep &quot;ConnectionYearFilter|ClosenessButtonBar&quot;</code> in builder-filter-bar.tsx</td>
+<td>Imported lines 10–16, rendered lines 80+84</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>outreachStatus defaults to not_reached_out</td>
+<td><code>grep &quot;withDefault(&#39;not_reached_out&#39;)&quot;</code> in builder-filter-bar.tsx</td>
+<td>Found line 51</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>selectAllFiltered uses union semantics</td>
+<td><code>grep &quot;next.add(c.id)&quot;</code> inside <code>setSelectedIds</code> functional updater</td>
+<td>Lines 76–82: prev-accumulating Set</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No useEffect clears selectedIds on filter change</td>
+<td><code>grep &quot;useEffect&quot;</code> in campaign-builder.tsx</td>
+<td>No results — no side effects on filter state</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Unit tests pass</td>
+<td><code>npx vitest run campaign-list.test.ts</code></td>
+<td>9/9 passed</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>isNull(contacts.archivedAt) in builder RSC</td>
+<td><code>grep &quot;isNull(contacts.archivedAt)&quot;</code> in outreach/new/page.tsx</td>
+<td>Found line 18</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>notFound() in review RSC</td>
+<td><code>grep &quot;notFound&quot;</code> in outreach/[id]/page.tsx</td>
+<td>Found lines 9+26</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<p>No <code>scripts/*/tests/probe-*.sh</code> probes declared or discoverable for this phase. Step 7c: SKIPPED (no probe files).</p>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CAMP-01</td>
+<td>14-02, 14-03</td>
+<td>Filter contacts by howMet</td>
+<td>SATISFIED</td>
+<td><code>BuilderFilterBar</code> howMet Input + <code>applyBuilderFilters</code> case-insensitive substring</td>
+</tr>
+<tr>
+<td>CAMP-02</td>
+<td>14-02, 14-03</td>
+<td>Filter contacts by connection year / date range</td>
+<td>SATISFIED</td>
+<td><code>ConnectionYearFilter</code> reused in <code>BuilderFilterBar</code>; <code>filterByConnectionYearRange</code> in <code>applyBuilderFilters</code></td>
+</tr>
+<tr>
+<td>CAMP-03</td>
+<td>14-02, 14-03</td>
+<td>Filter contacts by closeness tier</td>
+<td>SATISFIED</td>
+<td><code>ClosenessButtonBar</code> reused in <code>BuilderFilterBar</code>; closeness equality in <code>applyBuilderFilters</code></td>
+</tr>
+<tr>
+<td>CAMP-04</td>
+<td>14-02, 14-03</td>
+<td>Filter contacts by outreach status</td>
+<td>SATISFIED</td>
+<td>Outreach status button bar in <code>BuilderFilterBar</code>; outreachStatus equality in <code>applyBuilderFilters</code>; defaults to <code>not_reached_out</code></td>
+</tr>
+<tr>
+<td>CAMP-05</td>
+<td>14-02, 14-03</td>
+<td>Checkbox multi-select including select-all within current filter</td>
+<td>SATISFIED</td>
+<td><code>ContactSelectionList</code> Checkbox rows + select-all header; <code>selectAllFiltered</code> union semantics in <code>CampaignBuilder</code></td>
+</tr>
+<tr>
+<td>CAMP-08</td>
+<td>14-01 (consume)</td>
+<td>Campaign list with per-campaign progress counts</td>
+<td>SATISFIED</td>
+<td><code>outreach/page.tsx</code> reads counts via <code>json_build_object</code> aggregate; <code>CampaignList</code> displays four status badges</td>
+</tr>
+</tbody></table>
+<p>All five Phase 14 requirements (CAMP-01..CAMP-05) are satisfied. CAMP-08 was delivered in Phase 12 and is consumed (not re-implemented) by Plan 01.</p>
+<p>Note: Plan 01 frontmatter declared <code>requirements: [CAMP-08]</code> but REQUIREMENTS.md marks CAMP-08 as already Complete in Phase 12. Plan 01 consumes CAMP-08 output correctly — this is not a gap.</p>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>campaign-review-page.tsx</code></td>
+<td>15</td>
+<td><code>&quot;Minimal placeholder&quot;</code> in JSDoc comment</td>
+<td>Info</td>
+<td>Intentional per D-13 — Phase 15 enriches this route; no stub behavior, real data rendered</td>
+</tr>
+<tr>
+<td><code>campaign-name-panel.tsx</code></td>
+<td>46, 64</td>
+<td><code>placeholder=</code> attribute on <code>&lt;Input&gt;</code>/<code>&lt;Textarea&gt;</code></td>
+<td>Info</td>
+<td>HTML placeholder text, not a stub implementation</td>
+</tr>
+<tr>
+<td><code>builder-filter-bar.tsx</code></td>
+<td>111</td>
+<td><code>placeholder=</code> attribute on <code>&lt;Input&gt;</code></td>
+<td>Info</td>
+<td>HTML placeholder text, not a stub implementation</td>
+</tr>
+<tr>
+<td><code>campaign-builder.tsx</code></td>
+<td>173</td>
+<td><code>return []</code></td>
+<td>Info</td>
+<td>Early return when <code>selectedIds.size === 0</code> — correct empty-set guard, not a stub</td>
+</tr>
+</tbody></table>
+<p>No debt markers (TBD, FIXME, XXX) found in any Phase 14 file. No unreferenced follow-up gaps.</p>
+<h3>Human Verification Required</h3>
+<p>All 16 truths are verified at the code level. The following behaviors require a running browser + server to confirm:</p>
+<h4>1. Sidebar nav rendering</h4>
+<p><strong>Test:</strong> Navigate to any <code>/dashboard/*</code> page and inspect the sidebar.
+<strong>Expected:</strong> An &quot;Outreach&quot; item with a mail icon appears between Job Leads and Contacts; clicking it navigates to <code>/dashboard/outreach</code>.
+<strong>Why human:</strong> Icon resolution (<code>mail</code> → <code>IconMail</code>) and active-state highlighting are visual runtime behaviors.</p>
+<h4>2. Four-filter simultaneous narrowing</h4>
+<p><strong>Test:</strong> Go to <code>/dashboard/outreach/new</code>. Apply each filter one at a time (howMet text, a connection year, a closeness tier, an outreach status), then combine all four.
+<strong>Expected:</strong> Each filter narrows the contact list in real time; all four active simultaneously show only contacts matching every condition.
+<strong>Why human:</strong> In-memory filter composition requires live React state interaction.</p>
+<h4>3. Selection persistence across filter changes (D-03)</h4>
+<p><strong>Test:</strong> Check 2–3 contacts; change the filter so those contacts are hidden; observe the tray.
+<strong>Expected:</strong> Tray still shows &quot;N selected&quot;; expanding the tray shows the previously-checked contacts even though they are not in the current filtered view.
+<strong>Why human:</strong> Cross-filter persistence requires live React state with multiple interactions.</p>
+<h4>4. Select-all union semantics (D-08)</h4>
+<p><strong>Test:</strong> Check 3 contacts, change the filter to a different cohort, click &quot;Select all X matching.&quot;
+<strong>Expected:</strong> The 3 previously-checked contacts remain in the selection; the new cohort&#39;s contacts are added on top.
+<strong>Why human:</strong> Set union semantics require interactive confirmation.</p>
+<h4>5. End-to-end save flow (D-12)</h4>
+<p><strong>Test:</strong> Fill campaign name, optionally add a goal, select &gt;=1 contact, click Save Campaign.
+<strong>Expected:</strong> Two network requests fire (POST create, POST bulk-add); browser navigates to <code>/dashboard/outreach/[id]</code> showing a placeholder review page with the campaign header and the added contacts at &quot;pending&quot; status.
+<strong>Why human:</strong> Requires live DB, live API routes, and Next.js router navigation.</p>
+<h4>6. Save gate disabled state (D-14/CD-01)</h4>
+<p><strong>Test:</strong> Try to click Save Campaign with blank name, then with name but zero contacts, then with both.
+<strong>Expected:</strong> Button is disabled in the first two cases; enabled only when name is non-empty AND &gt;=1 contact is selected.
+<strong>Why human:</strong> Button disabled state requires browser interaction.</p>
+<h4>7. Double-submit protection (CD-01)</h4>
+<p><strong>Test:</strong> Click Save Campaign twice in rapid succession while the network requests are in flight.
+<strong>Expected:</strong> Only one campaign is created; the button is visually disabled/shows &quot;Saving...&quot; during the request.
+<strong>Why human:</strong> Timing-dependent behavior requires live network interaction.</p>
+<h4>8. notFound for missing campaign id</h4>
+<p><strong>Test:</strong> Visit <code>/dashboard/outreach/00000000-0000-0000-0000-000000000000</code> (a valid UUID format but non-existent campaign).
+<strong>Expected:</strong> Next.js 404 / Not Found page renders (not a server error).
+<strong>Why human:</strong> <code>notFound()</code> rendering requires a running Next.js server.</p>
+<h3>Gaps Summary</h3>
+<p>No gaps. All 16 must-have truths are verified in the codebase. No artifacts are missing, stubbed, or orphaned. No debt markers found. The 8 human verification items above are standard interactive/visual checks that cannot be confirmed by static analysis — they are not blockers, they are the expected human UAT pass for a UI phase.</p>
+<hr>
+<p><em>Verified: 2026-06-21T11:50:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
