@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-adf032d09e97de1d2/.planning/phases/14-campaign-builder-ui/14-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 14-campaign-builder-ui
+plan: &quot;03&quot;
+subsystem: outreach/campaign-builder
+tags: [campaign-builder, rsc-page, in-memory-filter, persistent-selection, two-post-save, review-page]
+dependency_graph:
+  requires: [14-02-builder-leaf-primitives]
+  provides: [NewCampaignPage, CampaignBuilder, OutreachCampaignPage, CampaignReviewPage]
+  affects: [15-email-review-ui]
+tech_stack:
+  added: []
+  patterns: [rsc-db-read, in-memory-filter-shell, nuqs-url-state, two-post-save, batch-chunking, partial-failure-toast]
+key_files:
+  created:
+    - src/app/dashboard/outreach/new/page.tsx
+    - src/features/outreach/components/campaign-builder.tsx
+    - src/app/dashboard/outreach/[id]/page.tsx
+    - src/features/outreach/components/campaign-review-page.tsx
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;goalInstruction API min(1) satisfied by falling back to trimmed campaignName when goal textarea is blank — no API change required (D-14 optional goal + API constraint resolved in client)&quot;</li>
+<li>&quot;Batch chunking for contactIds &gt; 500: sequential POSTs of &lt;=500 each to same endpoint; bulk failure surfaces toast then still navigates to the (partially-populated) campaign (CD-02)&quot;</li>
+<li>&quot;Tray resolves selected ids against the full contacts prop (not filtered slice) so out-of-filter selections are always visible (D-09)&quot;</li>
+<li>&quot;CampaignReviewPage is a pure server component — no interactivity needed for the D-13 placeholder scope&quot;
+metrics:
+  duration: &quot;25 minutes&quot;
+  completed: &quot;2026-06-21&quot;
+  tasks_completed: 3
+  tasks_total: 3
+  files_created: 4
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 14 Plan 03: Campaign Builder Shell Summary</h1>
+<p><strong>One-liner:</strong> RSC route loading all ~1500 non-archived contacts server-side + CampaignBuilder shell composing Plan-02 leaf primitives with cross-filter-persistent selection, reviewable tray, and double-submit-safe two-POST save to a real placeholder review destination.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Builder RSC route</td>
+<td>8231422</td>
+<td>src/app/dashboard/outreach/new/page.tsx</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CampaignBuilder shell</td>
+<td>f404f53</td>
+<td>src/features/outreach/components/campaign-builder.tsx</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Placeholder review route + CampaignReviewPage</td>
+<td>a8fb6d3</td>
+<td>src/app/dashboard/outreach/[id]/page.tsx, src/features/outreach/components/campaign-review-page.tsx</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1 — <code>NewCampaignPage</code> (outreach/new/page.tsx)</h3>
+<p>Default async RSC at <code>/dashboard/outreach/new</code>. Reads ALL non-archived contacts directly via <code>db.select().from(contacts).where(isNull(contacts.archivedAt))</code> — bypassing <code>GET /api/contacts</code> which caps at 100 rows. Passes the full array to <code>&lt;CampaignBuilder contacts={allContacts} /&gt;</code> inside <code>&lt;PageContainer scrollable={false}&gt;</code>. Exports <code>metadata = { title: &#39;Dashboard: New Campaign&#39; }</code>.</p>
+<h3>Task 2 — <code>CampaignBuilder</code> (campaign-builder.tsx)</h3>
+<p><code>&#39;use client&#39;</code> shell composing the four Plan-02 leaves. Core behaviors:</p>
+<ul>
+<li><strong>In-memory filter (D-05):</strong> reads same nuqs params as <code>BuilderFilterBar</code>; derives <code>filteredContacts</code> via <code>applyBuilderFilters</code> in <code>useMemo</code> — selection state is never touched by the filter memo.</li>
+<li><strong>Persistent selection (D-03):</strong> <code>useState&lt;Set&lt;string&gt;&gt;</code> keyed by contact id. <code>toggleContact</code> add/remove; <code>selectAllFiltered</code> unions all currently-filtered ids ON TOP of the existing set (D-08) — no replace.</li>
+<li><strong>Reviewable tray (D-09):</strong> collapsible panel showing the count + all selected contacts resolved against the FULL contacts array (not the filtered slice), with per-contact remove and clear-all.</li>
+<li><strong>Save gate (D-14):</strong> <code>canSave = campaignName.trim().length &gt; 0 &amp;&amp; selectedIds.size &gt; 0</code>.</li>
+<li><strong>Double-submit protection (CD-01):</strong> <code>isSaving</code> guard in <code>handleSave</code> + <code>disabled={!canSave || isSaving}</code> on the button.</li>
+<li><strong>Two-POST save (D-12):</strong> <code>POST /api/outreach-campaigns { name, goalInstruction }</code> → take <code>data.id</code> → <code>POST /api/outreach-campaigns/${id}/emails { contactIds }</code> in &lt;=500-id batches → <code>router.push</code>.</li>
+<li><strong>API goalInstruction constraint:</strong> when the goal textarea is blank, sends <code>campaignName.trim()</code> as <code>goalInstruction</code> to satisfy the API&#39;s <code>z.string().min(1)</code> while honoring D-14&#39;s optional goal.</li>
+<li><strong>CD-02 partial failure:</strong> bulk-add failure surfaces a <code>toast.error</code> and still navigates to the campaign so the owner can recover.</li>
+<li><strong>Empty-filter state (CD-05):</strong> when <code>filteredContacts.length === 0</code>, shows &quot;No contacts match the current filters&quot; copy instead of the list.</li>
+</ul>
+<h3>Task 3a — <code>OutreachCampaignPage</code> (outreach/[id]/page.tsx)</h3>
+<p>Default async RSC for <code>/dashboard/outreach/[id]</code>. Types <code>params</code> as <code>Promise&lt;{ id: string }&gt;</code>, awaits it. Selects campaign by id with <code>.limit(1)</code>; calls <code>notFound()</code> from <code>&#39;next/navigation&#39;</code> when empty. Joins emails to contacts via <code>leftJoin</code> (same shape as the emails GET route). Renders <code>&lt;CampaignReviewPage campaign={...} emails={...} /&gt;</code> inside <code>&lt;PageContainer scrollable&gt;</code>.</p>
+<h3>Task 3b — <code>CampaignReviewPage</code> (campaign-review-page.tsx)</h3>
+<p>Pure server component (no <code>&#39;use client&#39;</code> — no interactivity needed). Minimal placeholder per D-13:</p>
+<ul>
+<li><strong>Header Card:</strong> campaign name, goal, total contacts added, per-status count badges derived by reducing the emails array.</li>
+<li><strong>Contact list:</strong> all added contacts showing name, current company, and status Badge; gracefully renders &quot;Contact removed&quot; for null joins.</li>
+<li><strong>Phase 15 seam note:</strong> &quot;Email review &amp; approval arrives in the next update (Phase 15)&quot; — no edit/approve/regenerate UI present.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written. The <code>goalInstruction</code> fallback (send campaignName when blank) was called out in the plan&#39;s interfaces block as the required resolution; implemented as specified.</p>
+<h2>Requirements Coverage</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Delivered by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CAMP-01 howMet filter</td>
+<td>BuilderFilterBar (Plan 02) + applyBuilderFilters wired in CampaignBuilder</td>
+</tr>
+<tr>
+<td>CAMP-02 connection year filter</td>
+<td>ConnectionYearFilter in BuilderFilterBar; nuqs params read in CampaignBuilder</td>
+</tr>
+<tr>
+<td>CAMP-03 closeness filter</td>
+<td>ClosenessButtonBar in BuilderFilterBar; closeness param read in CampaignBuilder</td>
+</tr>
+<tr>
+<td>CAMP-04 outreach status filter</td>
+<td>outreachStatus button bar in BuilderFilterBar; param read in CampaignBuilder</td>
+</tr>
+<tr>
+<td>CAMP-05 checkbox multi-select + select-all</td>
+<td>ContactSelectionList (Plan 02) composed with selectAllFiltered (adds, not replaces)</td>
+</tr>
+<tr>
+<td>D-03 persistent selection</td>
+<td>selectedIds Set never reset by filter memo</td>
+</tr>
+<tr>
+<td>D-08 select-all semantics</td>
+<td>selectAllFiltered: prev ∪ filteredContacts ids</td>
+</tr>
+<tr>
+<td>D-09 tray</td>
+<td>Collapsible tray resolves full contacts array; per-contact remove + clear-all</td>
+</tr>
+<tr>
+<td>D-12 two-POST save sequence</td>
+<td>handleSave: create → bulk-add → navigate</td>
+</tr>
+<tr>
+<td>D-13 placeholder review page</td>
+<td>OutreachCampaignPage + CampaignReviewPage</td>
+</tr>
+<tr>
+<td>D-14 save gate</td>
+<td>canSave = name.trim() &amp;&amp; size &gt; 0</td>
+</tr>
+<tr>
+<td>CD-01 double-submit protection</td>
+<td>isSaving guard + disabled={!canSave || isSaving}</td>
+</tr>
+<tr>
+<td>CD-02 partial-failure surfacing</td>
+<td>toast.error on bulk-add failure + still navigates</td>
+</tr>
+<tr>
+<td>CD-05 empty-filter state</td>
+<td>&quot;No contacts match&quot; message when filteredContacts.length === 0</td>
+</tr>
+</tbody></table>
+<h2>Known Stubs</h2>
+<p>None — all routes and components are fully wired end-to-end. The <code>CampaignReviewPage</code> intentionally shows a &quot;Phase 15&quot; placeholder note rather than review UI, but the contact list is real data, not a stub.</p>
+<h2>Threat Surface Scan</h2>
+<p>Two surfaces introduced; both covered by the threat model:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-14-05 (mitigated)</td>
+<td>campaign-builder.tsx</td>
+<td>Partial failure (create success + bulk-add fail) — CD-02 toast + navigate implemented</td>
+</tr>
+<tr>
+<td>T-14-06 (mitigated)</td>
+<td>campaign-builder.tsx</td>
+<td>Double-submit — <code>if (!canSave || isSaving) return</code> + <code>disabled</code> button</td>
+</tr>
+<tr>
+<td>T-14-07 (accepted)</td>
+<td>[id]/emails API</td>
+<td>client-supplied contactIds — server validates UUID + dedup via onConflictDoNothing (Phase 12)</td>
+</tr>
+<tr>
+<td>T-14-08 (accepted)</td>
+<td>outreach/[id]/page.tsx</td>
+<td>Reads campaign by id — single-user, Clerk-locked dashboard</td>
+</tr>
+</tbody></table>
+<p>No new threat surface beyond what the plan&#39;s threat model covers.</p>
+<h2>Self-Check: PASSED</h2>
+<p>Files exist:</p>
+<ul>
+<li>src/app/dashboard/outreach/new/page.tsx: FOUND</li>
+<li>src/features/outreach/components/campaign-builder.tsx: FOUND</li>
+<li>src/app/dashboard/outreach/[id]/page.tsx: FOUND</li>
+<li>src/features/outreach/components/campaign-review-page.tsx: FOUND</li>
+</ul>
+<p>Commits exist:</p>
+<ul>
+<li>8231422: feat(14-03): add builder RSC route — load all non-archived contacts (D-05/D-06)</li>
+<li>f404f53: feat(14-03): add CampaignBuilder shell — filter, persistent selection, tray, two-POST save</li>
+<li>a8fb6d3: feat(14-03): add placeholder review route + CampaignReviewPage (D-13)</li>
+</ul>
+<p>TypeScript: <code>npx tsc --noEmit</code> clean for all four files.</p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-adf032d09e97de1d2/.planning/phases/14-campaign-builder-ui/14-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
