@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+reviewed: 2026-06-20T00:00:00Z
+depth: standard
+files_reviewed: 10
+files_reviewed_list:</p>
+<ul>
+<li>src/app/api/contacts/route.ts</li>
+<li>src/app/api/outreach-campaigns/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/generation-context/route.ts
+findings:
+  critical: 2
+  warning: 10
+  info: 2
+  total: 14
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 12: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-06-20
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 10
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Ten route files were reviewed: the existing contacts list/create route, four new outreach-campaigns routes (list, detail, email list/bulk-add, email detail), and five narrow-purpose sub-routes (status, recipient, draft, generation write-back, generation-context). The bulk of the logic is sound — IDOR guards via compound <code>AND campaignId = :id</code> WHERE clauses are consistently applied, <code>updatedAt</code> is always stamped manually, <code>logTimeline</code> is called after every write, and the email state machine in <code>email-status.ts</code> is correctly consulted before status transitions.</p>
+<p>Two blockers were found. The more serious one is that the generation write-back route applies to emails in any status, which means AI-generated content can overwrite the stored <code>generatedSubject</code>/<code>generatedBody</code> on an already-approved or already-drafted email — silently invalidating a user approval. The second blocker is that the inline-edit PATCH (<code>[emailId]/route.ts</code>) accepts a <code>recipientEmail</code> field and writes it straight to the database without enforcing the channel constraint that the dedicated <code>/recipient</code> sub-route enforces: a <code>linkedin_message</code>-channel email must never carry a recipient email address.</p>
+<p>Ten warnings cover: a null-vs-undefined logic error that triggers spurious &quot;edited&quot; state transitions when clearing a field, JSON parse errors returning 500 across all POST/PATCH routes, archived-campaign mutability gaps, invalid UUID route params causing Postgres cast errors, a TypeScript type annotation mismatch on the aggregated <code>emailCounts</code> field, FK-violation-on-bulk-insert, a missing content guard for the <code>pending → generated</code> transition, and two routes (draft, recipient) that accept writes regardless of the current email status.</p>
+<hr>
+<h2>Critical Issues</h2>
+<h3>CR-01: <code>recipientEmail</code> business-rule bypass via inline-edit PATCH</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts:9-13, 46</code></p>
+<p><strong>Issue:</strong> <code>inlineEditSchema</code> includes <code>recipientEmail: z.string().email().optional().nullable()</code>. This field is spread directly into the Drizzle <code>.set()</code> call with no channel check. The dedicated <code>/recipient</code> sub-route enforces the invariant that <code>linkedin_message</code>-channel emails must have <code>recipientEmail = null</code>; the inline-edit PATCH bypasses that enforcement entirely. A caller can issue:</p>
+<pre><code class="language-http">PATCH /api/outreach-campaigns/:id/emails/:emailId
+{ &quot;recipientEmail&quot;: &quot;someone@domain.com&quot; }
+</code></pre>
+<p>against a LinkedIn-message-channel email and the database will store a non-null recipient, corrupting the channel semantics that downstream draft-creation code depends on.</p>
+<p><strong>Fix:</strong> Remove <code>recipientEmail</code> from <code>inlineEditSchema</code>. Recipient management belongs exclusively to the <code>/recipient</code> sub-route, which already has the channel-aware gate. If a one-shot update of both content and recipient is ever needed, that logic should live in <code>/recipient</code> with the channel guard, not in the generic edit endpoint.</p>
+<pre><code class="language-typescript">// inlineEditSchema — remove recipientEmail
+const inlineEditSchema = z.object({
+  editedSubject: z.string().max(500).optional().nullable(),
+  editedBody: z.string().optional().nullable()
+  // recipientEmail removed — use /recipient sub-route
+});
+</code></pre>
+<hr>
+<h3>CR-02: Generation write-back unguarded by email status — approved/drafted content silently overwritten</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts:14-52</code></p>
+<p><strong>Issue:</strong> The PATCH handler writes <code>generatedSubject</code>, <code>generatedBody</code>, and <code>generatedAt</code> with no precondition on the current email status. In the normal happy path this is fine (generation runs while status is <code>pending</code>). But the final effective content the system uses is <code>editedSubject ?? generatedSubject</code> (used in the approval guard in <code>status/route.ts:46-50</code>). If an email was approved with <code>editedSubject = null</code> (user accepted the generated content without editing), overwriting <code>generatedSubject</code> silently changes what was approved. The same applies to a <code>drafted</code> email that has already had a Gmail draft created. There is no guard to prevent a re-run of the generation pipeline from clobbering an approved record.</p>
+<p><strong>Fix:</strong> Add a status pre-check. Only allow generation write-back when the email is in <code>pending</code> or <code>failed</code> state (both of which indicate the email has not yet been reviewed).</p>
+<pre><code class="language-typescript">// After the IDOR existence check (existing row already fetched for the IDOR guard)
+// — but generation/route.ts currently does NOT fetch first. Pattern: fetch, then
+// conditional update, similar to status/route.ts.
+
+const [existing] = await db
+  .select({ status: outreachEmails.status })
+  .from(outreachEmails)
+  .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+  .limit(1);
+
+if (!existing) return notFound(&#39;Email&#39;);
+
+if (existing.status !== &#39;pending&#39; &amp;&amp; existing.status !== &#39;failed&#39;) {
+  return validationError(
+    `Cannot write generated content: email is already ${existing.status}`
+  );
+}
+</code></pre>
+<hr>
+<h2>Warnings</h2>
+<h3>WR-01: <code>isEdit</code> triggers on <code>null</code> — spurious &quot;edited&quot; state transition when clearing a field</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts:36-41</code></p>
+<p><strong>Issue:</strong> The edit-detection guard is:</p>
+<pre><code class="language-typescript">const isEdit =
+  validated.editedSubject !== undefined ||
+  validated.editedBody !== undefined;
+</code></pre>
+<p><code>inlineEditSchema</code> marks these fields <code>.optional().nullable()</code>. When the caller sends <code>{ &quot;editedSubject&quot;: null }</code>, Zod parses it as <code>null</code>, not <code>undefined</code>. Because <code>null !== undefined</code> is <code>true</code>, <code>isEdit</code> becomes <code>true</code> and the route transitions a <code>generated</code> or <code>approved</code> email to <code>edited</code> — even though the caller was clearing (not setting) the edit field. An email can therefore end up in <code>edited</code> state with <code>editedSubject = null</code>, which is semantically incorrect and will mislead UI components that use the <code>edited</code> status to indicate user-authored content is present.</p>
+<p><strong>Fix:</strong> Use a non-nullish check:</p>
+<pre><code class="language-typescript">const isEdit =
+  (validated.editedSubject != null) ||
+  (validated.editedBody != null);
+</code></pre>
+<p><code>!= null</code> in JavaScript is true for any value that is neither <code>null</code> nor <code>undefined</code>, correctly distinguishing &quot;caller explicitly set a string&quot; from &quot;caller cleared the field&quot;.</p>
+<hr>
+<h3>WR-02: JSON parse errors return HTTP 500 instead of 400 across all POST/PATCH routes</h3>
+<p><strong>File:</strong> Affects all POST and PATCH handlers across all 10 reviewed files (e.g., <code>src/app/api/outreach-campaigns/route.ts:79</code>, <code>[id]/route.ts:68</code>, <code>[emailId]/route.ts:20</code>, etc.)</p>
+<p><strong>Issue:</strong> Every handler calls <code>await request.json()</code> inside a <code>try/catch</code> that routes to <code>serverError()</code>. A <code>SyntaxError</code> from malformed JSON is not a <code>z.ZodError</code>, so the Zod-branch catch is skipped and <code>serverError()</code> fires — returning HTTP 500 (&quot;Internal server error&quot;). Callers (including the Claude Code CLI) receive a 500 with no diagnostic when they send a bad payload, making debugging needlessly difficult.</p>
+<p><strong>Fix:</strong> Wrap <code>request.json()</code> separately and return a 400:</p>
+<pre><code class="language-typescript">let body: unknown;
+try {
+  body = await request.json();
+} catch {
+  return validationError(&#39;Request body must be valid JSON&#39;);
+}
+const validated = createCampaignSchema.parse(body);
+</code></pre>
+<p>Or use a shared helper and apply the pattern once across all routes.</p>
+<hr>
+<h3>WR-03: Archived campaign mutable via PATCH — no <code>isNull(archivedAt)</code> guard</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/route.ts:71-77</code></p>
+<p><strong>Issue:</strong> The PATCH handler updates with <code>.where(eq(outreachCampaigns.id, id))</code> — no <code>isNull(outreachCampaigns.archivedAt)</code> filter. An archived campaign can be renamed, have its goal instruction changed, or have its status flipped back to <code>active</code> via PATCH. This contradicts the soft-delete semantics: the GET list route explicitly filters <code>isNull(archivedAt)</code>, yet the PATCH ignores the same field.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-typescript">.where(
+  and(
+    eq(outreachCampaigns.id, id),
+    isNull(outreachCampaigns.archivedAt)
+  )
+)
+</code></pre>
+<p>Return 404 if no row is returned (which covers both non-existent and archived IDs).</p>
+<hr>
+<h3>WR-04: Archived campaign can receive new emails</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/route.ts:86-92</code></p>
+<p><strong>Issue:</strong> The POST handler verifies the campaign exists with <code>.where(eq(outreachCampaigns.id, id))</code> but does not check <code>archivedAt</code>. Contacts can therefore be bulk-added to an archived campaign. Given that the campaign list never shows archived campaigns, the emails inserted would be orphaned from the user&#39;s perspective.</p>
+<p><strong>Fix:</strong> Add <code>isNull(outreachCampaigns.archivedAt)</code> to the existence check query:</p>
+<pre><code class="language-typescript">const [campaign] = await db
+  .select()
+  .from(outreachCampaigns)
+  .where(
+    and(
+      eq(outreachCampaigns.id, id),
+      isNull(outreachCampaigns.archivedAt)
+    )
+  )
+  .limit(1);
+</code></pre>
+<hr>
+<h3>WR-05: Non-UUID route params cause Postgres cast error → HTTP 500</h3>
+<p><strong>File:</strong> All <code>[id]</code> and <code>[emailId]</code> route handlers (e.g., <code>src/app/api/outreach-campaigns/[id]/route.ts:23-24</code>, <code>[emailId]/route.ts:17-18</code>)</p>
+<p><strong>Issue:</strong> <code>id</code> and <code>emailId</code> are extracted from params as plain strings and passed directly to Drizzle <code>.where(eq(...id, id))</code>. The schema column is a <code>uuid</code>, so if a caller sends a non-UUID string (e.g., <code>/api/outreach-campaigns/not-a-uuid</code>), Postgres throws <code>invalid input syntax for type uuid</code>, which is caught by the outer try/catch and returned as a 500. The correct response is 400 or 404.</p>
+<p><strong>Fix:</strong> Validate before querying. Either add a lightweight UUID regex check or use <code>z.string().uuid()</code>:</p>
+<pre><code class="language-typescript">const { id } = await params;
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+  return notFound(&#39;Campaign&#39;);
+}
+</code></pre>
+<p>Returning 404 (rather than 400) is conventional for route params; either is defensible.</p>
+<hr>
+<h3>WR-06: <code>emailCounts</code> annotated as <code>sql&lt;string&gt;</code> but Neon driver returns a JSON object at runtime</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/route.ts:45</code>, <code>src/app/api/outreach-campaigns/[id]/route.ts:36</code></p>
+<p><strong>Issue:</strong> The aggregated email counts are expressed as:</p>
+<pre><code class="language-typescript">emailCounts: sql&lt;string&gt;`json_build_object(...)`
+</code></pre>
+<p>PostgreSQL&#39;s <code>json_build_object</code> function returns the <code>json</code> data type. The <code>@neondatabase/serverless</code> HTTP driver deserializes <code>json</code>/<code>jsonb</code> columns into JavaScript objects before returning them. At runtime, <code>emailCounts</code> will be an object like <code>{ pending: &quot;3&quot;, generated: &quot;0&quot;, ... }</code> (with string-typed count values from Postgres <code>BIGINT</code>), not a <code>string</code>. TypeScript consumers that rely on <code>sql&lt;string&gt;</code> for typing will get the wrong type.</p>
+<p><strong>Fix:</strong> Use a more accurate type annotation:</p>
+<pre><code class="language-typescript">emailCounts: sql&lt;{
+  pending: string;
+  generated: string;
+  edited: string;
+  approved: string;
+  drafted: string;
+  failed: string;
+}&gt;`json_build_object(...)`
+</code></pre>
+<p>Note: Postgres <code>count(*)</code> returns <code>bigint</code> which arrives as a string in most drivers — hence <code>string</code> values within the object.</p>
+<hr>
+<h3>WR-07: Invalid <code>contactId</code> in bulk-add causes FK violation → HTTP 500 instead of 400</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/route.ts:100-104</code></p>
+<p><strong>Issue:</strong> The bulk insert uses <code>onConflictDoNothing()</code> to handle the <code>(campaign_id, contact_id)</code> uniqueness constraint. However, if any element of <code>contactIds</code> does not correspond to a real contact row, Postgres throws a foreign-key constraint violation (<code>contacts(id)</code> FK). This exception is not a <code>z.ZodError</code>, so it falls through to <code>serverError()</code> and returns HTTP 500. The entire batch fails with no indication of which contact ID was invalid.</p>
+<p><strong>Fix:</strong> Either pre-validate the contact IDs with an <code>inArray</code> existence check before the insert, or catch the FK violation specifically and return a 400:</p>
+<pre><code class="language-typescript">// Option A: pre-validate
+const existing = await db
+  .select({ id: contacts.id })
+  .from(contacts)
+  .where(inArray(contacts.id, validated.contactIds));
+
+const existingIds = new Set(existing.map((r) =&gt; r.id));
+const invalid = validated.contactIds.filter((cid) =&gt; !existingIds.has(cid));
+if (invalid.length &gt; 0) {
+  return validationError(`Unknown contact IDs: ${invalid.join(&#39;, &#39;)}`);
+}
+</code></pre>
+<hr>
+<h3>WR-08: No content guard for <code>pending → generated</code> status transition</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts:38-42</code></p>
+<p><strong>Issue:</strong> The <code>approved</code> status correctly checks that <code>generatedSubject ?? editedSubject</code> and <code>generatedBody ?? editedBody</code> are non-null before allowing the transition (lines 44-51). No equivalent guard exists for <code>pending → generated</code>. A client can manually set an email to <code>generated</code> via PATCH <code>/status</code> even when <code>generatedSubject</code> and <code>generatedBody</code> are both null, leaving the record in a state that implies it has AI-generated content when it does not. Downstream UI components that skip generation for <code>generated</code>-status emails would display empty content.</p>
+<p><strong>Fix:</strong> Add a content check parallel to the <code>approved</code> guard:</p>
+<pre><code class="language-typescript">if (newStatus === &#39;generated&#39;) {
+  if (!email.generatedSubject || !email.generatedBody) {
+    return validationError(&#39;Cannot transition to generated: no generated content present&#39;);
+  }
+}
+</code></pre>
+<hr>
+<h3>WR-09: Draft write-back (<code>/draft</code> PATCH) accepted on any email status</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts:22-33</code></p>
+<p><strong>Issue:</strong> The <code>/draft</code> PATCH stores <code>gmailDraftId</code> and stamps <code>draftedAt</code> without checking the current email status. Calling it on a <code>pending</code> or <code>failed</code> email sets a <code>draftedAt</code> timestamp before the email has been approved, creating a misleading lifecycle timestamp. More concretely, calling it on an already-<code>drafted</code> email with a different <code>gmailDraftId</code> silently replaces the stored draft reference, with no record of the previous draft ID.</p>
+<p><strong>Fix:</strong> Pre-fetch the email and restrict writes to emails in <code>approved</code> status (the only state from which a Gmail draft should legitimately be created):</p>
+<pre><code class="language-typescript">if (existing.status !== &#39;approved&#39;) {
+  return validationError(
+    `Cannot record a draft: email status is ${existing.status}, expected approved`
+  );
+}
+</code></pre>
+<hr>
+<h3>WR-10: Recipient write-back (<code>/recipient</code> PATCH) accepted on any email status</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts:31-39</code></p>
+<p><strong>Issue:</strong> The <code>/recipient</code> PATCH updates <code>channel</code> and <code>recipientEmail</code> without checking the current email status. Changing the recipient on a <code>drafted</code> email (one for which a Gmail draft has already been created with the previous recipient) leaves the stored Gmail draft stale — the draft in Gmail will still address the old recipient while the database stores the new one. There is no mechanism to propagate the change to the existing Gmail draft.</p>
+<p><strong>Fix:</strong> For <code>drafted</code> emails, either reject the change with an error (&quot;Draft already created — delete it first before changing the recipient&quot;) or automatically clear <code>gmailDraftId</code> and <code>draftedAt</code> and revert status to <code>approved</code> to signal that re-drafting is required. At minimum, document the behavior explicitly.</p>
+<hr>
+<h2>Info</h2>
+<h3>IN-01: Non-null assertion on nullable <code>contactId</code> in generation-context</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/generation-context/route.ts:56</code></p>
+<p><strong>Issue:</strong></p>
+<pre><code class="language-typescript">if (!acc[i.contactId!]) acc[i.contactId!] = [];
+</code></pre>
+<p><code>interactions.contactId</code> is declared nullable in the schema (it&#39;s a polymorphic link — interactions can belong to companies or applications too). The <code>!</code> non-null assertion suppresses the TypeScript error. At runtime, if an interaction has <code>contactId = null</code>, <code>acc[&quot;null&quot;]</code> is used as the grouping key (JavaScript object key coercion). The null-keyed entry is never retrieved by <code>interactionsByContact[contact.id]</code>, so the practical impact is that null-linked interactions are silently dropped. No crash, but the assertion is wrong and masks the real behavior.</p>
+<p><strong>Fix:</strong> Add an explicit null guard and use the non-null assertion only inside the guarded branch:</p>
+<pre><code class="language-typescript">if (!i.contactId) return acc;
+if (!acc[i.contactId]) acc[i.contactId] = [];
+acc[i.contactId].push(i);
+return acc;
+</code></pre>
+<hr>
+<h3>IN-02: All interactions for a batch fetched without any server-side limit</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/generation-context/route.ts:47-50</code></p>
+<p><strong>Issue:</strong></p>
+<pre><code class="language-typescript">const allInteractions = await db
+  .select()
+  .from(interactions)
+  .where(inArray(interactions.contactId, contactIds))
+  .orderBy(desc(interactions.occurredAt));
+</code></pre>
+<p>With up to 500 contact IDs (the bulk-add cap) and an unbounded number of interactions per contact, this query can return a very large result set entirely into memory before <code>.slice(0, 3)</code> discards most of it at line 65. Only 3 interactions per contact are used in the response. Adding <code>.limit(contactIds.length * 3)</code> as a rough safety cap, or using a <code>RANK() OVER (PARTITION BY contact_id)</code> subquery approach, would bound the fetch size. (Performance is out of scope for v1 per project conventions — flagged for awareness only.)</p>
+<hr>
+<p><em>Reviewed: 2026-06-20</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
