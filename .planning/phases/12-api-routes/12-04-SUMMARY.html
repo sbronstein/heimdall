@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-04-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a7089a60b3f22c362/.planning/phases/12-api-routes/12-04-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+plan: &quot;04&quot;
+subsystem: outreach-campaigns
+tags: [api, outreach, generation, context, write-back, no-n+1]
+dependency_graph:
+  requires:
+    - drizzle/schema/outreach-campaigns.ts
+    - drizzle/schema/outreach-emails.ts
+    - drizzle/schema/contacts.ts
+    - drizzle/schema/interactions.ts
+    - src/lib/api/types.ts
+    - src/lib/api/errors.ts
+    - src/lib/db/timeline.ts
+  provides:
+    - GET /api/outreach-campaigns/[id]/generation-context
+    - PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation
+  affects:
+    - Phase 16 generate-outreach-emails skill (primary consumer)
+tech_stack:
+  added: []
+  patterns:
+    - inArray-batch-then-reduce for N+1 avoidance
+    - campaign-scoped WHERE clause (CD-06) for IDOR mitigation
+key_files:
+  created:
+    - src/app/api/outreach-campaigns/[id]/generation-context/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;Used i.content (not i.notes) — interactions schema has content/subject, no notes column; confirmed by reading drizzle/schema/interactions.ts&quot;</li>
+<li>&quot;Single inArray(interactions.contactId, contactIds) batch fetch + reduce group avoids N+1 regardless of campaign size (D-01)&quot;</li>
+<li>&quot;lowContext flag computed as recentInteractions.length &lt; 2 (D-02/GEN-02) to let skill flag sparse-context contacts without a second query&quot;</li>
+<li>&quot;PATCH generation does not change email status — skill must call /status separately to transition to generated (GEN-05 design boundary)&quot;
+metrics:
+  duration: &quot;~10 minutes&quot;
+  completed: &quot;2026-06-21T02:00:36Z&quot;
+  tasks_completed: 2
+  files_created: 2
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 12 Plan 04: Generation Context + Write-Back Routes Summary</h1>
+<p><strong>One-liner:</strong> Bulk generation-context read (campaign goal + pending-email briefs + batched interactions + lowContext flag) and generation write-back (generatedSubject/Body/generatedAt) via two anti-N+1, no-logic route handlers.</p>
+<h2>What Was Built</h2>
+<h3>Task 1: <code>GET /api/outreach-campaigns/[id]/generation-context</code> (commit 599f525)</h3>
+<p>Returns everything the Phase 16 <code>generate-outreach-emails</code> skill needs in one round-trip:</p>
+<ul>
+<li>Verifies campaign exists (404 on unknown id)</li>
+<li>Fetches all <code>status=&#39;pending&#39;</code> emails with contact join — <strong>one query</strong> (no N+1)</li>
+<li>Batches interaction fetches: one <code>inArray(interactions.contactId, contactIds)</code> call + JS <code>reduce</code> group — <strong>constant query count</strong> regardless of campaign size (D-01)</li>
+<li>Returns per-email payload: <code>emailId, contactId, contact (brief fields), interactions (≤3 recent, summary=content), lowContext (true when &lt;2 interactions)</code></li>
+<li>Empty campaigns return <code>{ goalInstruction, emails: [] }</code> (200, no error)</li>
+</ul>
+<p>Column name correction applied: <code>summary: i.content</code> (NOT <code>i.notes</code> — interactions table has <code>content</code>/<code>subject</code>, no <code>notes</code> column). Confirmed against <code>drizzle/schema/interactions.ts</code>.</p>
+<h3>Task 2: <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation</code> (commit 2de7970)</h3>
+<p>Generation write-back for the skill&#39;s output:</p>
+<ul>
+<li>Zod validates <code>{ generatedSubject: string.min(1).max(500), generatedBody: string.min(1) }</code> — empty strings return 400</li>
+<li>Campaign-scoped <code>WHERE</code> clause (CD-06): <code>and(eq(id, emailId), eq(campaignId, id))</code> — foreign email returns 404</li>
+<li>Writes <code>generatedSubject + generatedBody + generatedAt + updatedAt</code> — <strong>no status change</strong> (skill calls <code>/status</code> to transition separately)</li>
+<li>Logs <code>outreach_email_generated</code> timeline event (D-03/D-04)</li>
+<li>No generation logic in the route (GEN-05 boundary)</li>
+</ul>
+<h2>Acceptance Criteria Verification</h2>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npx tsc --noEmit</code> passes</td>
+<td>PASS (clean)</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;i.notes|\.notes&quot; ...generation-context/route.ts</code> = 0</td>
+<td>PASS (0)</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;inArray&quot; ...generation-context/route.ts</code> = 1 (query usage, plus import)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;outreach_email_generated&quot; ...generation/route.ts</code> = 1</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No generation logic in either route</td>
+<td>PASS (verified by grep for openai/anthropic/llm)</td>
+</tr>
+</tbody></table>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<p>The PATTERNS.md excerpt contained <code>summary: i.notes</code> but the correction note in the plan and the <code>&lt;important_grounding&gt;</code> pre-read correctly flagged this. Implementation uses <code>summary: i.content</code> per schema verification.</p>
+<h2>Threat Mitigations Applied</h2>
+<table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-12-15 (DoS — large campaign)</td>
+<td>Constant query count: campaign verify + one join + one batched inArray</td>
+</tr>
+<tr>
+<td>T-12-16 (Info disclosure — contact brief)</td>
+<td>Payload limited to D-02 whitelist; campaign-scoped 404 on unknown id</td>
+</tr>
+<tr>
+<td>T-12-17 (IDOR — generation write-back)</td>
+<td>CD-06: <code>and(eq(id,emailId), eq(campaignId,id))</code> — foreign email returns 404</td>
+</tr>
+<tr>
+<td>T-12-18 (Tampering — generated content)</td>
+<td>Zod min(1) on both fields; only generatedSubject/Body/generatedAt written — no mass-assignment</td>
+</tr>
+</tbody></table>
+<h2>Known Stubs</h2>
+<p>None — both routes are fully functional implementations with no placeholders.</p>
+<h2>Threat Flags</h2>
+<p>None — no new network endpoints, auth paths, or trust boundaries beyond what the plan&#39;s threat model covers.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a7089a60b3f22c362/src/app/api/outreach-campaigns/[id]/generation-context/route.ts</code> — FOUND (commit 599f525)</li>
+<li><code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a7089a60b3f22c362/src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code> — FOUND (commit 2de7970)</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a7089a60b3f22c362/.planning/phases/12-api-routes/12-04-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
