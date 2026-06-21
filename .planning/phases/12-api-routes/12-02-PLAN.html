@@ -68,7 +68,8 @@ must_haves:
 <li>&quot;User (CLI) can GET /api/outreach-campaigns/[id]/emails (cursor-paginated, contact joined, optional ?status= filter)&quot;</li>
 <li>&quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId] saves editedSubject/editedBody/recipientEmail and auto-transitions generated→edited (CD-02); rejects an email not belonging to the campaign with 404 (CD-06)&quot;</li>
 <li>&quot;DELETE /api/outreach-campaigns/[id]/emails/[emailId] hard-deletes the row (CD-04) so a later re-add works under the UNIQUE constraint&quot;</li>
-<li>&quot;GET /api/contacts accepts howMet (ilike), connectionYearStart (gte), connectionYearEnd (lte) filters (D-07)&quot;
+<li>&quot;GET /api/contacts accepts howMet (ilike), connectionYearStart (gte), connectionYearEnd (lte) filters (D-07)&quot;</li>
+<li>&quot;Every email write logs a timeline_events row (D-03): bulk-add is ONE aggregate event carrying the inserted count, inline edit and delete are their own events, each with a distinct event_type (D-04)&quot;
 artifacts:</li>
 <li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/route.ts&quot;
 provides: &quot;GET email list (joined, ?status filter) + POST bulk dedup add&quot;

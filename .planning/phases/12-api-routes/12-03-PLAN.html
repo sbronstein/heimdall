@@ -68,7 +68,7 @@ must_haves:
 <li>&quot;Transitioning → pending (regenerate) clears editedSubject/editedBody + lastError/lastErrorAt + nulls generatedAt, but KEEPS generatedSubject/generatedBody (D-05)&quot;</li>
 <li>&quot;PATCH .../recipient sets recipientEmail + channel; channel=&#39;linkedin_message&#39; forces recipientEmail=null (CD-06 / Phase 11 D-08)&quot;</li>
 <li>&quot;PATCH .../draft writes gmailDraftId + draftedAt&quot;</li>
-<li>&quot;Every write-back/transition is campaign-scoped (404 if the email is not in the campaign) and logs a distinct timeline event (D-04)&quot;
+<li>&quot;Every write-back/transition is campaign-scoped (404 if the email is not in the campaign) and logs a timeline_events row — every transition and write-back is recorded (D-03) — with a distinct event_type per kind (D-04)&quot;
 artifacts:</li>
 <li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts&quot;
 provides: &quot;state-machine-guarded status transition with D-05 reset + CD-03 approve guard&quot;

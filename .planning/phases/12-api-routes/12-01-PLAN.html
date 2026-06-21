@@ -66,7 +66,8 @@ must_haves:
 <li>&quot;User (CLI) can GET /api/outreach-campaigns and see each campaign with per-status email counts (pending/generated/edited/approved/drafted/failed) computed in ONE grouped query (no N+1)&quot;</li>
 <li>&quot;User (CLI) can GET /api/outreach-campaigns/[id] and receive the campaign plus the same emailCounts object&quot;</li>
 <li>&quot;PATCH /api/outreach-campaigns/[id] updates name/goalInstruction/status freely (no campaign state machine — D-10) and stamps updatedAt&quot;</li>
-<li>&quot;DELETE /api/outreach-campaigns/[id] soft-deletes via archivedAt and is excluded from the list&quot;
+<li>&quot;DELETE /api/outreach-campaigns/[id] soft-deletes via archivedAt and is excluded from the list&quot;</li>
+<li>&quot;Every campaign write (create/update/archive) logs a timeline_events row via logTimeline() — the timeline is the system of record (D-03) — with a distinct event_type per kind (D-04)&quot;
 artifacts:</li>
 <li>path: &quot;src/app/api/outreach-campaigns/route.ts&quot;
 provides: &quot;GET list (cursor-paginated, grouped counts) + POST create&quot;

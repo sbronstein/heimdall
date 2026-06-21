@@ -66,7 +66,8 @@ must_haves:
 <li>&quot;Each pending-email entry carries a lowContext boolean (true when fewer than 2 logged interactions) so the skill can flag low-context contacts without a second query (D-02 / GEN-02)&quot;</li>
 <li>&quot;The endpoint issues at most a small constant number of queries regardless of campaign size (verify campaign, one emails+contact join, one inArray interactions fetch) — never one-query-per-contact&quot;</li>
 <li>&quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation writes generatedSubject + generatedBody + generatedAt (the skill write-back half of GEN-05); campaign-scoped (404 otherwise)&quot;</li>
-<li>&quot;No generation/personalization logic runs in either route — the API only assembles context and accepts written-back content (GEN-05)&quot;
+<li>&quot;No generation/personalization logic runs in either route — the API only assembles context and accepts written-back content (GEN-05)&quot;</li>
+<li>&quot;The generation write-back logs a timeline_events row (D-03) with event_type outreach_email_generated (D-04); the read-only generation-context route performs no write and logs nothing&quot;
 artifacts:</li>
 <li>path: &quot;src/app/api/outreach-campaigns/[id]/generation-context/route.ts&quot;
 provides: &quot;bulk embedded generation context (goalInstruction + pending emails + briefs + interactions + lowContext)&quot;
