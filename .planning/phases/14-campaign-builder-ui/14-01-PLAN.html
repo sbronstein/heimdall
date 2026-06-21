@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 14-campaign-builder-ui
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/config/nav-config.ts</li>
+<li>src/app/dashboard/outreach/page.tsx</li>
+<li>src/features/outreach/components/campaign-list.tsx
+autonomous: true
+requirements: [CAMP-08]
+must_haves:
+  truths:<ul>
+<li>&quot;Navigating to /dashboard/outreach shows the campaign list (ROADMAP criterion #1)&quot;</li>
+<li>&quot;Each campaign card shows name, goal snippet, status, and per-status count badges for selected/generated/approved/drafted (D-10)&quot;</li>
+<li>&quot;An Outreach entry appears in the sidebar nav and links to /dashboard/outreach&quot;</li>
+<li>&quot;A &#39;New Campaign&#39; action links from the list page to the builder route&quot;</li>
+<li>&quot;Empty state copy shows when there are no campaigns yet (CD-05)&quot;
+artifacts:</li>
+<li>path: &quot;src/app/dashboard/outreach/page.tsx&quot;
+provides: &quot;RSC list page: direct DB read of non-archived campaigns + per-status email counts, passes to CampaignList&quot;
+contains: &quot;export default async function&quot;</li>
+<li>path: &quot;src/features/outreach/components/campaign-list.tsx&quot;
+provides: &quot;Campaign cards with progress badges (D-10)&quot;
+exports: [&quot;CampaignList&quot;]</li>
+<li>path: &quot;src/config/nav-config.ts&quot;
+provides: &quot;Outreach sidebar nav entry&quot;
+contains: &quot;/dashboard/outreach&quot;
+key_links:</li>
+<li>from: &quot;src/app/dashboard/outreach/page.tsx&quot;
+to: &quot;drizzle outreachCampaigns + outreachEmails&quot;
+via: &quot;db.select with leftJoin + groupBy emailCounts (mirrors GET /api/outreach-campaigns)&quot;
+pattern: &quot;json_build_object|emailCounts&quot;</li>
+<li>from: &quot;src/features/outreach/components/campaign-list.tsx&quot;
+to: &quot;/dashboard/outreach/[id]&quot;
+via: &quot;next/link href per card&quot;
+pattern: &quot;/dashboard/outreach/&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Ship the read-only campaign list surface: the `/dashboard/outreach/` route, its RSC data read, the `CampaignList` card component with per-status progress badges (D-10), and the sidebar nav entry. This satisfies ROADMAP success criterion #1 and consumes the already-shipped Phase 12 campaign-counts shape (CAMP-08). Pure UI over existing data — no new API, mutation, or schema.<p>Purpose: Give the owner a place to see all campaigns with at-a-glance progress, and a &quot;New Campaign&quot; jump-off to the builder (built in Plan 03).
+Output: Sidebar entry + list route + card component.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/14-campaign-builder-ui/14-CONTEXT.md
+@.planning/phases/14-campaign-builder-ui/14-PATTERNS.md<interfaces>
+<!-- Types and shapes the executor needs — extracted from codebase, use directly. --><p>From src/lib/domain/types.ts:</p>
+<ul>
+<li><code>export type OutreachCampaign = typeof outreachCampaigns.$inferSelect</code>
+(fields: id, name, goalInstruction, status, createdAt, updatedAt, archivedAt)</li>
+</ul>
+<p>The RSC page must reproduce the <code>GET /api/outreach-campaigns</code> SELECT shape (already in
+<code>src/app/api/outreach-campaigns/route.ts</code> GET handler): select campaign columns +
+<code>emailCounts</code> as a <code>json_build_object(...)</code> over a <code>leftJoin(outreachEmails)</code> grouped by
+<code>outreachCampaigns.id</code>. The <code>emailCounts</code> value is a JSON object:
+<code>{ pending, generated, edited, approved, drafted, failed }</code> — counts as numbers.
+Filter <code>isNull(outreachCampaigns.archivedAt)</code>, order <code>desc(updatedAt)</code>.</p>
+<p>Note: <code>emailCounts</code> arrives as a JSON string/object from Postgres <code>json_build_object</code>.
+Type the card prop as <code>OutreachCampaign &amp; { emailCounts: Record&lt;string, number&gt; }</code>.</p>
+<p>shadcn primitives available (do not create): Card/CardHeader/CardTitle/CardContent
+(<code>@/components/ui/card</code>), Badge (<code>@/components/ui/badge</code>), Progress (<code>@/components/ui/progress</code>).
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Add Outreach sidebar nav entry</name>
+  <files>src/config/nav-config.ts</files>
+  <read_first>
+    - src/config/nav-config.ts (the file being modified — note existing entry shape and shortcut conflicts: Contacts uses ['o','o'])
+    - src/types (NavItem type — confirm `icon` accepts the chosen key)
+  </read_first>
+  <action>
+    Add a new `NavItem` to `navItems` titled `'Outreach'`, `url: '/dashboard/outreach'`,
+    placed after the 'Job Leads' entry and before 'Contacts'. Use an existing icon key
+    (`'mail'` if present in the icon map, else reuse a sensible existing key such as `'send'`
+    or `'teams'` — confirm the key exists in the NavItem icon map before choosing). Set
+    `isActive: false`, `items: []`, and a `shortcut` that does NOT collide with existing
+    shortcuts (Contacts is `['o','o']`, Notes is `['n','n']`, Networking is `['n','w']`) —
+    use `['o','u']` (outreach) after confirming no other entry claims it.
+  </action>
+  <verify>
+    <automated>grep -c "/dashboard/outreach'" src/config/nav-config.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/config/nav-config.ts` contains a NavItem with `url: '/dashboard/outreach'`
+    - The chosen `icon` value is a key that exists in the project's NavItem icon map (no runtime "icon not found")
+    - The chosen `shortcut` pair does not duplicate any existing entry's shortcut
+  </acceptance_criteria>
+  <done>Outreach appears in the sidebar between Job Leads and Contacts and links to /dashboard/outreach.</done>
+</task><task type="auto">
+  <name>Task 2: Campaign list RSC page</name>
+  <files>src/app/dashboard/outreach/page.tsx</files>
+  <read_first>
+    - src/app/dashboard/job-leads/page.tsx (closest analog — exact RSC→PageContainer→client shape, metadata export, pageHeaderAction)
+    - src/app/api/outreach-campaigns/route.ts (GET handler — copy the emailCounts json_build_object + leftJoin + groupBy SELECT verbatim into the RSC; do NOT fetch() from an RSC)
+    - src/components/layout/page-container.tsx (PageContainer prop names: scrollable, pageTitle, pageDescription, pageHeaderAction)
+    - 14-PATTERNS.md §"src/app/dashboard/outreach/page.tsx" (the assigned pattern)
+  </read_first>
+  <action>
+    Create `OutreachPage` as the default async RSC. Export `metadata = { title: 'Dashboard: Outreach' }`.
+    Read campaigns directly from the DB (NOT via fetch) using the same SELECT shape as the
+    `GET /api/outreach-campaigns` handler: select campaign columns plus `emailCounts` as a
+    `json_build_object(...)` over `leftJoin(outreachEmails, eq(outreachEmails.campaignId, outreachCampaigns.id))`,
+    `where(isNull(outreachCampaigns.archivedAt))`, `groupBy(outreachCampaigns.id)`,
+    `orderBy(desc(outreachCampaigns.updatedAt))`. Render inside `<PageContainer scrollable
+    pageTitle='Outreach' pageDescription='...' pageHeaderAction={<Link href="/dashboard/outreach/new"> "New Campaign" button</Link>}>`
+    and pass `initialCampaigns` to `<CampaignList />`. Coerce each row's `emailCounts` to
+    `Record<string, number>` before passing down. Import schema via the relative path
+    `'../../../../drizzle/schema'` matching the analog.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -v '^#' | grep -c "outreach/page.tsx" | grep -q '^0$' && echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/app/dashboard/outreach/page.tsx` exports `default async function` and `metadata`
+    - The page reads campaigns via `db.select(...)` with the `emailCounts` json_build_object grouped aggregate — NOT via `fetch()`
+    - `pageHeaderAction` renders a link/button to `/dashboard/outreach/new`
+    - `npx tsc --noEmit` reports no errors in this file
+  </acceptance_criteria>
+  <done>Visiting /dashboard/outreach renders the page chrome, a New Campaign action, and the CampaignList fed with campaigns + per-status counts.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 3: CampaignList card component with progress badges</name>
+  <files>src/features/outreach/components/campaign-list.tsx</files>
+  <behavior>
+    - Renders one card per campaign with name and (when present) a clamped goal snippet
+    - Each card shows count badges for selected(=pending) / generated / approved / drafted from emailCounts (D-10)
+    - Each card is a Link to /dashboard/outreach/[id]
+    - When initialCampaigns is empty, renders empty-state copy instead of an empty grid (CD-05)
+  </behavior>
+  <read_first>
+    - src/features/contacts/components/contact-listing.tsx (thin client-wrapper analog)
+    - src/components/ui/card.tsx, src/components/ui/badge.tsx, src/components/ui/progress.tsx (primitive APIs)
+    - 14-PATTERNS.md §"src/features/outreach/components/campaign-list.tsx" (card markup pattern)
+  </read_first>
+  <action>
+    Create `'use client'` component `CampaignList` with `interface CampaignListProps {
+    initialCampaigns: (OutreachCampaign & { emailCounts: Record<string, number> })[] }`.
+    Map each campaign to a `<Link href={`/dashboard/outreach/${campaign.id}`}>` wrapping a
+    `<Card>` with `CardHeader`/`CardTitle` (name), a `line-clamp-2` goal paragraph when
+    `goalInstruction` is set, and a `CardContent` row of count badges. Label the `pending`
+    count as "selected" per D-10 wording (selected · generated · approved · drafted). Use a
+    `Progress` bar or segmented badges — segmented `Badge`s are sufficient. When
+    `initialCampaigns.length === 0`, render a centered empty-state: "No campaigns yet —
+    create your first from a contact cohort." Use named export `CampaignList`; PascalCase;
+    `interface CampaignListProps`.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -v '^#' | grep -c "campaign-list.tsx" | grep -q '^0$' && grep -q "export function CampaignList" src/features/outreach/components/campaign-list.tsx && echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `campaign-list.tsx` exports `CampaignList` (named export, no default)
+    - Each card links to `/dashboard/outreach/${campaign.id}`
+    - Cards display the four D-10 counts (selected/generated/approved/drafted) sourced from `emailCounts`
+    - Empty `initialCampaigns` renders empty-state copy, not a bare grid
+    - `npx tsc --noEmit` clean for this file
+  </acceptance_criteria>
+  <done>The list route shows a card per campaign with name, goal snippet, and selected/generated/approved/drafted badges; empty state shows when there are none.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>browser → existing authed API/RSC</td>
+<td>All reads go through Clerk-locked RSC/<code>/api/*</code>; no new surface added</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-14-01</td>
+<td>Information Disclosure</td>
+<td>campaign list RSC read</td>
+<td>accept</td>
+<td>RSC runs inside the Clerk-locked <code>/dashboard</code> tree (<code>src/proxy.ts</code> single-user lock); no new endpoint, no PII beyond what the owner already owns</td>
+</tr>
+<tr>
+<td>T-14-02</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>mitigate</td>
+<td>No new dependencies introduced by this plan; all primitives (Card/Badge/Progress/Link) already vendored. If an install is proposed, stop and require a blocking human checkpoint for <code>[ASSUMED]</code>/<code>[SUS]</code> packages</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` clean for all three files.
+- Sidebar shows Outreach; clicking it lands on /dashboard/outreach.
+- /dashboard/outreach renders campaign cards (or empty state) with the four D-10 counts and a New Campaign action.
+</verification><success_criteria>
+ROADMAP criterion #1 ("Navigating to /dashboard/outreach shows the campaign list with per-campaign progress") is met. CAMP-08 counts are consumed and displayed (D-10).
+</success_criteria><output>
+Create `.planning/phases/14-campaign-builder-ui/14-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

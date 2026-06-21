@@ -101,7 +101,10 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   3. The owner can checkbox-select individual contacts or use select-all within the current filter
   4. Providing a campaign name and goal/instruction and saving creates the campaign and navigates to its review page
   5. Selecting the same contact twice across separate saves does not create a duplicate email row
-**Plans**: TBD
+**Plans**: 3 plans (Wave 1: 14-01 + 14-02 parallel; Wave 2: 14-03)
+- [ ] 14-01-PLAN.md — Campaign list route + sidebar nav + CampaignList progress cards (D-10, CAMP-08-consume) (Wave 1)
+- [ ] 14-02-PLAN.md — Builder leaf primitives: pure filter helper + reused-triage filter bar + dense multi-select list + name/goal panel (CAMP-01..05, D-01/02/04/07/11) (Wave 1)
+- [ ] 14-03-PLAN.md — Builder shell (load-all, persistent selection, tray, two-POST save) + builder route + placeholder review page (D-03/05/06/08/09/12/13/14, CD-01/02/05) (Wave 2)
 **UI hint**: yes
 
 ### Phase 15: Review and Approval UI
@@ -161,10 +164,10 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 11. Schema, Enums, and State Machine | v1.2 | 3/3 | Complete    | 2026-06-20 |
 | 12. API Routes | v1.2 | 4/4 | Complete    | 2026-06-21 |
 | 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete    | 2026-06-21 |
-| 14. Campaign Builder UI | v1.2 | 0/TBD | Not started | - |
+| 14. Campaign Builder UI | v1.2 | 0/3 | Planned | - |
 | 15. Review and Approval UI | v1.2 | 0/TBD | Not started | - |
 | 16. Email Generation Skill | v1.2 | 0/TBD | Not started | - |
 | 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-06-21 — Phase 13 planned (2 plans: implementation + human-verify). v1.2 Networking Outreach Campaigns in progress (Phases 11–12 complete).*
+*Last updated: 2026-06-21 — Phase 14 planned (3 plans: list+nav, builder leaves, builder shell+save+placeholder; Wave 1 = 14-01∥14-02, Wave 2 = 14-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–13 complete).*

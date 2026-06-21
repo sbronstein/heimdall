@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 14-campaign-builder-ui
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/features/outreach/lib/builder-filters.ts</li>
+<li>src/features/outreach/components/builder-filter-bar.tsx</li>
+<li>src/features/outreach/components/contact-selection-list.tsx</li>
+<li>src/features/outreach/components/campaign-name-panel.tsx
+autonomous: true
+requirements: [CAMP-01, CAMP-02, CAMP-03, CAMP-04, CAMP-05]
+must_haves:
+  truths:<ul>
+<li>&quot;The filter bar lets the owner filter simultaneously by howMet, connection year/range, closeness tier, and outreach status (CAMP-01..CAMP-04, D-07)&quot;</li>
+<li>&quot;The outreach-status filter defaults to &#39;not_reached_out&#39; so already-contacted people are hidden by default (D-07)&quot;</li>
+<li>&quot;The connection-year and closeness controls are the reused Phase 13 triage controls, not re-implementations (D-07)&quot;</li>
+<li>&quot;Filter selections live in the URL via nuqs so a reload restores them&quot;</li>
+<li>&quot;The selection list renders dense rows with a checkbox and all four D-02 field groups, plus a select-all-matching header (CAMP-05, D-02, D-08)&quot;</li>
+<li>&quot;A pure applyBuilderFilters helper narrows an in-memory contact set by all four filters and orders closeness-closest-first (D-04, D-05, CD-04)&quot;
+artifacts:</li>
+<li>path: &quot;src/features/outreach/lib/builder-filters.ts&quot;
+provides: &quot;applyBuilderFilters(contacts, filters) — pure in-memory filter+sort (D-04/D-05/CD-04)&quot;
+exports: [&quot;applyBuilderFilters&quot;, &quot;BuilderFilters&quot;]</li>
+<li>path: &quot;src/features/outreach/components/builder-filter-bar.tsx&quot;
+provides: &quot;Composed filter bar: reused ConnectionYearFilter + ClosenessButtonBar + new howMet + outreach-status button bars (D-07)&quot;
+exports: [&quot;BuilderFilterBar&quot;]</li>
+<li>path: &quot;src/features/outreach/components/contact-selection-list.tsx&quot;
+provides: &quot;Dense multi-select rows (D-01/D-02) + select-all-matching header (D-08)&quot;
+exports: [&quot;ContactSelectionList&quot;]</li>
+<li>path: &quot;src/features/outreach/components/campaign-name-panel.tsx&quot;
+provides: &quot;Inline name (required) + goal/instruction (optional) controlled inputs (D-11/D-14/CD-06)&quot;
+exports: [&quot;CampaignNamePanel&quot;]
+key_links:</li>
+<li>from: &quot;src/features/outreach/components/builder-filter-bar.tsx&quot;
+to: &quot;src/features/contacts/components/triage/connection-year-filter.tsx + closeness-button-bar.tsx&quot;
+via: &quot;direct import of the reusable triage controls (D-07)&quot;
+pattern: &quot;connection-year-filter|closeness-button-bar&quot;</li>
+<li>from: &quot;src/features/outreach/lib/builder-filters.ts&quot;
+to: &quot;src/features/contacts/lib/connection-year.ts&quot;
+via: &quot;filterByConnectionYearRange import (reuse year predicate)&quot;
+pattern: &quot;filterByConnectionYearRange&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Build the leaf primitives of the campaign builder — independent of the shell that wires them
+(Plan 03). Three `'use client'` components (the composed filter bar reusing the Phase 13
+triage controls, the dense multi-select contact list, the inline name/goal panel) plus one
+pure helper module that does the in-memory filtering and closeness ordering. Delivers the
+filter and multi-select capability behind CAMP-01..CAMP-05.<p>Purpose: Isolate the reusable/leaf pieces so they can be built and type-checked on their own,
+then composed by the builder shell in Plan 03.
+Output: 1 helper + 3 components, all self-contained and prop-driven.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/phases/14-campaign-builder-ui/14-CONTEXT.md
+@.planning/phases/14-campaign-builder-ui/14-PATTERNS.md<interfaces>
+<!-- Extracted from codebase — use directly, no exploration needed. --><p>From src/lib/domain/types.ts:</p>
+<ul>
+<li><code>export type Contact = typeof contacts.$inferSelect</code>
+relevant fields: firstName, lastName, title, currentCompany, closeness (enum|null),
+outreachStatus (enum|null), linkedinConnectionDate (Date|null), companyAtConnection,
+roleAtConnection, howMet (string|null), archivedAt</li>
+<li><code>export const contactClosenessValues</code> =
+[&#39;close_friend&#39;,&#39;close_colleague&#39;,&#39;friend&#39;,&#39;colleague&#39;,&#39;close_career&#39;,&#39;career&#39;,&#39;acquaintance&#39;,&#39;linkedin_only&#39;,&#39;never_met&#39;] as const
+(index order IS the closest-first order for D-04)</li>
+<li><code>export const outreachStatusValues</code> =
+[&#39;not_reached_out&#39;,&#39;reached_out&#39;,&#39;meeting_scheduled&#39;,&#39;meeting_completed&#39;,&#39;ongoing&#39;] as const</li>
+</ul>
+<p>From src/features/contacts/lib/connection-year.ts:</p>
+<ul>
+<li><code>deriveConnectionYears&lt;T extends { linkedinConnectionDate: Date|null }&gt;(contacts: T[]): number[]</code>  (desc-sorted distinct years)</li>
+<li><code>filterByConnectionYearRange&lt;T&gt;(contacts: T[], start: number|null, end: number|null): T[]</code></li>
+<li><code>clampConnectionYear(value): number|null</code></li>
+</ul>
+<p>From src/features/contacts/components/triage/connection-year-filter.tsx:</p>
+<ul>
+<li><code>export const ConnectionYearFilter = forwardRef&lt;ConnectionYearFilterHandle, { years: number[] }&gt;</code>
+— internally owns nuqs <code>connectionYearStart</code>/<code>connectionYearEnd</code> (parseAsInteger). Reuse as-is.</li>
+<li><code>export interface ConnectionYearFilterHandle { focus(): void }</code></li>
+</ul>
+<p>From src/features/contacts/components/triage/closeness-button-bar.tsx:</p>
+<ul>
+<li><code>export const ClosenessButtonBar = forwardRef&lt;ClosenessButtonBarHandle, { onSelect(value:string): void; disabled?: boolean }&gt;</code>
+NOTE: this control CALLS onSelect with a closeness value; it does NOT own URL state.
+The builder filter bar must hold the selected closeness in nuqs and pass onSelect that
+toggles it (click same tier again → clear).</li>
+<li><code>export interface ClosenessButtonBarHandle { focus(): void }</code></li>
+</ul>
+<p>From src/features/contacts/lib/closeness-colors.ts:</p>
+<ul>
+<li><code>export const closenessColors: Record&lt;string, string&gt;</code></li>
+<li><code>export const outreachStatusColors: Record&lt;string, string&gt;</code></li>
+</ul>
+<p>shadcn primitives: Checkbox (<code>@/components/ui/checkbox</code>), Badge (<code>@/components/ui/badge</code>),
+Input (<code>@/components/ui/input</code>), Textarea (<code>@/components/ui/textarea</code>), Button.
+nuqs: <code>import { parseAsInteger, parseAsString, useQueryStates } from &#39;nuqs&#39;</code>.
+</interfaces>
+</context></p>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Pure builder-filters helper (filter + closeness ordering)</name>
+  <files>src/features/outreach/lib/builder-filters.ts</files>
+  <behavior>
+    - applyBuilderFilters(contacts, {}) returns all contacts, ordered closeness-closest-first (D-04)
+    - filters.closeness narrows to contacts whose closeness === value
+    - filters.howMet narrows case-insensitively (substring match on contact.howMet) (CAMP-01)
+    - filters.outreachStatus narrows to contacts whose outreachStatus === value (CAMP-04); default applied by caller
+    - filters.connectionYearStart/End narrows via filterByConnectionYearRange (CAMP-02)
+    - All active filters compose (AND); a contact missing the filtered field is excluded
+    - Ordering: index in contactClosenessValues ascending (close_friend first); null closeness treated as 'never_met' (last)
+  </behavior>
+  <read_first>
+    - src/features/contacts/lib/connection-year.ts (filterByConnectionYearRange signature to reuse)
+    - src/lib/domain/types.ts (Contact type + contactClosenessValues order — the D-04 order is the array index order)
+    - 14-PATTERNS.md §"Client-side in-memory filter (D-05/D-06)" (the applyBuilderFilters reference shape and sort)
+  </read_first>
+  <action>
+    Create `builder-filters.ts` exporting `interface BuilderFilters { connectionYearStart: number|null;
+    connectionYearEnd: number|null; closeness: string|null; howMet: string|null; outreachStatus: string|null }`
+    and `applyBuilderFilters(contacts: Contact[], filters: BuilderFilters): Contact[]`. Apply, in order:
+    connection-year range (reuse `filterByConnectionYearRange`), closeness equality, howMet
+    case-insensitive substring, outreachStatus equality — skipping any filter whose value is
+    null/empty. Finally sort a copy by `contactClosenessValues.indexOf(c.closeness ?? 'never_met')`
+    ascending (D-04, closest first). Do NOT mutate the input array. Pure module, no React, no
+    'use client'. This is the unit-testable core — keep it dependency-free beyond the year helper.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -v '^#' | grep -c "builder-filters.ts" | grep -q '^0$' && grep -q "export function applyBuilderFilters" src/features/outreach/lib/builder-filters.ts && echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `builder-filters.ts` exports `applyBuilderFilters` and `BuilderFilters` (named exports)
+    - The function returns a NEW array (input not mutated) ordered close_friend→never_met
+    - All four filters compose with AND semantics; null/empty filter values are no-ops
+    - `npx tsc --noEmit` clean for this file
+  </acceptance_criteria>
+  <done>applyBuilderFilters narrows an in-memory Contact[] by all four filters and returns it ordered closeness-closest-first (D-04/D-05/CD-04).</done>
+</task><task type="auto">
+  <name>Task 2: BuilderFilterBar — reuse triage controls + new howMet/outreach-status bars</name>
+  <files>src/features/outreach/components/builder-filter-bar.tsx</files>
+  <read_first>
+    - src/features/contacts/components/triage/connection-year-filter.tsx (reused as-is — note it OWNS its own nuqs year state)
+    - src/features/contacts/components/triage/closeness-button-bar.tsx (reused — note it does NOT own state; calls onSelect; pattern for the new button bars)
+    - src/features/contacts/components/triage/how-met-input.tsx (pattern for the howMet control)
+    - 14-PATTERNS.md §"builder-filter-bar.tsx" and §"Button-bar filter control style"
+    - src/features/contacts/lib/closeness-colors.ts (outreachStatusColors for the status bar)
+  </read_first>
+  <action>
+    Create `'use client'` `BuilderFilterBar` with `interface BuilderFilterBarProps { years: number[] }`.
+    Hold the builder's filter selection in nuqs via `useQueryStates({ closeness: parseAsString,
+    howMet: parseAsString, outreachStatus: parseAsString.withDefault('not_reached_out') })` —
+    NOTE: `connectionYearStart`/`connectionYearEnd` are owned by the reused `ConnectionYearFilter`
+    itself, so do NOT redeclare them here. Compose: (a) `<ConnectionYearFilter years={years} />`
+    reused directly (CAMP-02); (b) `<ClosenessButtonBar onSelect={(v) => setFilters({ closeness:
+    closeness === v ? null : v })} />` — toggling the same tier clears it (CAMP-03); (c) a new
+    howMet button bar built from the distinct howMet values (pass them in or derive — prefer a
+    text Input matching how-met-input.tsx for free-text howMet substring, since howMet is
+    free-text) writing `howMet` to nuqs (CAMP-01); (d) a new outreach-status button bar over
+    `outreachStatusValues` writing `outreachStatus` to nuqs, defaulting to 'not_reached_out'
+    (CAMP-04, D-07) with an "All" option to clear. Follow the button-bar style from
+    closeness-button-bar.tsx (container `tabIndex={0}` + arrow-key onKeyDown; buttons
+    `type='button' tabIndex={-1}` with the `cn()` selected/unselected toggle). Export named
+    `BuilderFilterBar`; use the forwardRef + `BuilderFilterBarHandle { focus(): void }` pattern
+    if a focus handle is useful, else a plain named function component is acceptable.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -v '^#' | grep -c "builder-filter-bar.tsx" | grep -q '^0$' && grep -q "ConnectionYearFilter" src/features/outreach/components/builder-filter-bar.tsx && grep -q "ClosenessButtonBar" src/features/outreach/components/builder-filter-bar.tsx && echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `builder-filter-bar.tsx` imports and renders the reused `ConnectionYearFilter` and `ClosenessButtonBar` (not re-implementations) — D-07
+    - `outreachStatus` nuqs param uses `.withDefault('not_reached_out')` (D-07)
+    - howMet and outreach-status controls write their selection to nuqs URL state
+    - The bar exposes controls for all four filters (year, closeness, howMet, outreach status) on one row/panel
+    - `npx tsc --noEmit` clean for this file
+  </acceptance_criteria>
+  <done>One filter bar drives all four filters via nuqs URL state, reusing the Phase 13 triage controls and defaulting outreach status to not-yet-contacted (CAMP-01..CAMP-04, D-07).</done>
+</task><task type="auto">
+  <name>Task 3: ContactSelectionList (dense multi-select rows) + CampaignNamePanel</name>
+  <files>src/features/outreach/components/contact-selection-list.tsx, src/features/outreach/components/campaign-name-panel.tsx</files>
+  <read_first>
+    - src/features/contacts/components/contact-table/columns.tsx (D-02 field groups — name/howMet/closeness/company/role/connection date/outreach status rendering)
+    - src/features/contacts/lib/closeness-colors.ts (closenessColors, outreachStatusColors for badges)
+    - src/features/contacts/components/triage/how-met-input.tsx (controlled input + forwardRef pattern for the name panel)
+    - 14-PATTERNS.md §"contact-selection-list.tsx" and §"campaign-name-panel.tsx"
+    - src/components/ui/checkbox.tsx, src/components/ui/input.tsx, src/components/ui/textarea.tsx (primitive APIs)
+  </read_first>
+  <action>
+    (a) Create `'use client'` `ContactSelectionList` with `interface ContactSelectionListProps {
+    contacts: Contact[]; selectedIds: Set<string>; onToggle: (id: string) => void; onSelectAll: () => void }`.
+    Render a select-all header row (`<Checkbox checked={contacts.length>0 && contacts.every(c =>
+    selectedIds.has(c.id))} onCheckedChange={onSelectAll} />` + "Select all {contacts.length}
+    matching") satisfying D-08/CAMP-05, then one dense row per contact: a `Checkbox`
+    (`checked={selectedIds.has(c.id)}`, `onCheckedChange={() => onToggle(c.id)}`) plus the four
+    D-02 field groups — (1) name + howMet + closeness `Badge` (color via `closenessColors`),
+    (2) current company/title and/or companyAtConnection/roleAtConnection, (3) the
+    linkedinConnectionDate (formatted), (4) outreach status `Badge` (color via
+    `outreachStatusColors`) + last-contacted if available. This component is presentational —
+    it receives the already-filtered, already-sorted slice and the selection set; it does NOT
+    filter or sort.
+    (b) Create `'use client'` `CampaignNamePanel` per the pattern map: controlled `Input` for
+    name (required, `maxLength={200}`, label "Campaign Name *") and `Textarea` for
+    goal/instruction (label noting "(optional — used by AI generation in Phase 16)" per
+    CD-06/D-14). Props `{ name, onNameChange, goalInstruction, onGoalChange }`; use the
+    forwardRef + `CampaignNamePanelHandle { focus(): void }` pattern focusing the name input.
+    Both components: named exports, PascalCase, `interface [Name]Props`.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -v '^#' | grep -Ec "contact-selection-list.tsx|campaign-name-panel.tsx" | grep -q '^0$' && grep -q "export function ContactSelectionList\|export const ContactSelectionList" src/features/outreach/components/contact-selection-list.tsx && grep -q "CampaignNamePanel" src/features/outreach/components/campaign-name-panel.tsx && echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `ContactSelectionList` renders a per-row Checkbox bound to `selectedIds`/`onToggle` and a select-all header bound to `onSelectAll` (CAMP-05, D-08)
+    - Each row shows all four D-02 field groups (name+howMet+closeness, company/role, connection date, outreach status)
+    - `ContactSelectionList` does NOT filter or sort internally (receives pre-processed slice)
+    - `CampaignNamePanel` exposes a required name Input and an optional goal Textarea with the Phase-16 hint (CD-06/D-14)
+    - `npx tsc --noEmit` clean for both files
+  </acceptance_criteria>
+  <done>A dense checkbox selection list (four D-02 field groups + select-all header) and an inline name/goal panel exist as prop-driven leaf components ready for the builder shell.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>browser → in-memory contact set</td>
+<td>Contacts already loaded by the Clerk-locked RSC (Plan 03); these are presentational components over owner-owned data — no network surface</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-14-03</td>
+<td>Tampering</td>
+<td>client-supplied contactIds (selection set)</td>
+<td>accept</td>
+<td>The selection set is consumed by Plan 03&#39;s bulk-add POST; the Phase 12 route validates <code>contactIds</code> as UUIDs and dedups via <code>onConflictDoNothing</code> + the <code>(campaign_id, contact_id)</code> unique constraint — server-side validation backstops the client (criterion #5 already guaranteed)</td>
+</tr>
+<tr>
+<td>T-14-04</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>mitigate</td>
+<td>No new dependencies; all controls reuse existing components/primitives. Any proposed install requires a blocking human checkpoint for <code>[ASSUMED]</code>/<code>[SUS]</code> packages</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` clean for all four files.
+- `applyBuilderFilters` is pure and returns a new closeness-ordered array.
+- BuilderFilterBar reuses ConnectionYearFilter + ClosenessButtonBar (grep confirms imports) and defaults outreach status to not_reached_out.
+- ContactSelectionList renders checkboxes + four D-02 groups + select-all header.
+</verification><success_criteria>
+CAMP-01..CAMP-05 capability exists at the component level: simultaneous filtering by howMet/year/closeness/outreach-status (D-07), checkbox multi-select + select-all-within-filter (D-08), and an inline name/goal panel (D-11/D-14). Wiring is Plan 03.
+</success_criteria><output>
+Create `.planning/phases/14-campaign-builder-ui/14-02-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
