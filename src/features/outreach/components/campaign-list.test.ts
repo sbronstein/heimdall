@@ -86,7 +86,7 @@ describe('hasNoCampaigns (CD-05)', () => {
     const base = {
       id: '1',
       name: 'Test',
-      goalInstruction: null,
+      goalInstruction: '',
       status: 'draft' as const,
       createdAt: new Date(),
       updatedAt: new Date(),
