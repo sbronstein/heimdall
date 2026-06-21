@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { contacts } from '../../../../drizzle/schema';
-import { desc, isNull, inArray, ilike, lt, sql } from 'drizzle-orm';
+import { desc, gte, isNull, inArray, ilike, lt, lte, sql } from 'drizzle-orm';
 import { created, paginated } from '@/lib/api/types';
 import { serverError, validationError } from '@/lib/api/errors';
 import { parseArrayParam, parseCursor, parseLimit } from '@/lib/api/filters';
@@ -26,15 +26,27 @@ const createContactSchema = z.object({
   warmth: z.enum(contactWarmthValues).optional(),
   closeness: z.enum(contactClosenessValues).optional(),
   outreachStatus: z.enum(outreachStatusValues).optional(),
-  outreachDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
+  outreachDate: z
+    .union([z.string().date(), z.string().datetime()])
+    .optional()
+    .nullable(),
   introducedBy: z.string().uuid().optional().nullable(),
-  linkedinConnectionDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
+  linkedinConnectionDate: z
+    .union([z.string().date(), z.string().datetime()])
+    .optional()
+    .nullable(),
   importSource: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
   howMet: z.string().optional().nullable(),
-  metDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
-  nextFollowUpDate: z.union([z.string().date(), z.string().datetime()]).optional().nullable(),
+  metDate: z
+    .union([z.string().date(), z.string().datetime()])
+    .optional()
+    .nullable(),
+  nextFollowUpDate: z
+    .union([z.string().date(), z.string().datetime()])
+    .optional()
+    .nullable(),
   followUpNotes: z.string().optional().nullable(),
   doNotUseForIntros: z.boolean().optional()
 });
@@ -47,22 +59,66 @@ export async function GET(request: Request) {
     const warmths = parseArrayParam(searchParams.get('warmth'));
     const relationships = parseArrayParam(searchParams.get('relationship'));
     const closenessFilter = parseArrayParam(searchParams.get('closeness'));
-    const outreachStatusFilter = parseArrayParam(searchParams.get('outreachStatus'));
+    const outreachStatusFilter = parseArrayParam(
+      searchParams.get('outreachStatus')
+    );
     const search = searchParams.get('search');
+    const howMet = searchParams.get('howMet');
+    const connectionYearStart = searchParams.get('connectionYearStart');
+    const connectionYearEnd = searchParams.get('connectionYearEnd');
 
     const conditions = [isNull(contacts.archivedAt)];
 
     if (warmths) {
-      conditions.push(inArray(contacts.warmth, warmths as typeof contactWarmthValues[number][]));
+      conditions.push(
+        inArray(
+          contacts.warmth,
+          warmths as (typeof contactWarmthValues)[number][]
+        )
+      );
     }
     if (relationships) {
-      conditions.push(inArray(contacts.relationship, relationships as typeof contactRelationshipValues[number][]));
+      conditions.push(
+        inArray(
+          contacts.relationship,
+          relationships as (typeof contactRelationshipValues)[number][]
+        )
+      );
     }
     if (closenessFilter) {
-      conditions.push(inArray(contacts.closeness, closenessFilter as typeof contactClosenessValues[number][]));
+      conditions.push(
+        inArray(
+          contacts.closeness,
+          closenessFilter as (typeof contactClosenessValues)[number][]
+        )
+      );
     }
     if (outreachStatusFilter) {
-      conditions.push(inArray(contacts.outreachStatus, outreachStatusFilter as typeof outreachStatusValues[number][]));
+      conditions.push(
+        inArray(
+          contacts.outreachStatus,
+          outreachStatusFilter as (typeof outreachStatusValues)[number][]
+        )
+      );
+    }
+    if (howMet) {
+      conditions.push(ilike(contacts.howMet, `%${howMet}%`));
+    }
+    if (connectionYearStart) {
+      conditions.push(
+        gte(
+          contacts.linkedinConnectionDate,
+          new Date(`${connectionYearStart}-01-01`)
+        )
+      );
+    }
+    if (connectionYearEnd) {
+      conditions.push(
+        lte(
+          contacts.linkedinConnectionDate,
+          new Date(`${connectionYearEnd}-12-31T23:59:59`)
+        )
+      );
     }
     if (search) {
       conditions.push(
@@ -75,7 +131,10 @@ export async function GET(request: Request) {
 
     const where =
       conditions.length > 1
-        ? sql`${sql.join(conditions.map((c) => sql`(${c})`), sql` AND `)}`
+        ? sql`${sql.join(
+            conditions.map((c) => sql`(${c})`),
+            sql` AND `
+          )}`
         : conditions[0];
 
     const results = await db
@@ -89,7 +148,8 @@ export async function GET(request: Request) {
     const data = hasMore ? results.slice(0, limit) : results;
 
     return paginated(data, {
-      cursor: data.length > 0 ? data[data.length - 1].updatedAt.toISOString() : null,
+      cursor:
+        data.length > 0 ? data[data.length - 1].updatedAt.toISOString() : null,
       hasMore
     });
   } catch (err) {
@@ -113,9 +173,7 @@ export async function POST(request: Request) {
       linkedinConnectionDate: validated.linkedinConnectionDate
         ? new Date(validated.linkedinConnectionDate)
         : null,
-      metDate: validated.metDate
-        ? new Date(validated.metDate)
-        : null,
+      metDate: validated.metDate ? new Date(validated.metDate) : null,
       importedAt: validated.importSource ? new Date() : null
     };
 
