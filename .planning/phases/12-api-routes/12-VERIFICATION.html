@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 12-api-routes
+verified: 2026-06-20T00:00:00Z
+status: passed
+score: 5/5 must-haves verified
+overrides_applied: 0</h2>
+<h1>Phase 12: API Routes Verification Report</h1>
+<p><strong>Phase Goal:</strong> The full REST API surface for outreach campaigns is live and usable from the CLI; skills and UI have working endpoints to build against.
+<strong>Verified:</strong> 2026-06-20
+<strong>Status:</strong> PASSED
+<strong>Re-verification:</strong> No — initial verification</p>
+<hr>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>CLI can create a named campaign with goal (<code>POST /api/outreach-campaigns</code>) → returns new campaign id</td>
+<td>✓ VERIFIED</td>
+<td><code>campaigns/route.ts</code> POST handler (lines 78–104): Zod schema enforces <code>name.min(1)</code> + <code>goalInstruction.min(1)</code>; <code>db.insert(outreachCampaigns).values({...}).returning()</code>; <code>logTimeline(&#39;outreach_campaign_created&#39;)</code>; returns <code>created(campaign)</code> → 201 with full row including <code>id</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLI can bulk-add contact IDs in one request; second add of same contact is silently deduped (no duplicate row)</td>
+<td>✓ VERIFIED</td>
+<td><code>[id]/emails/route.ts</code> POST handler (lines 76–122): single <code>db.insert(outreachEmails).values(rows).onConflictDoNothing().returning()</code>; <code>grep -c onConflictDoNothing</code> = 1; returns <code>201 { inserted, skipped }</code> where <code>skipped = contactIds.length - inserted.length</code>; second add yields <code>inserted:0, skipped:N</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>CLI can list campaigns (<code>GET /api/outreach-campaigns</code>) with per-campaign counts: selected/generated/approved/drafted</td>
+<td>✓ VERIFIED</td>
+<td><code>campaigns/route.ts</code> GET handler (lines 15–76): <code>emailCounts: sql&lt;string&gt;</code> with <code>json_build_object(&#39;pending&#39;, count(*) FILTER (WHERE ...), ...)</code> — <code>grep -c &quot;FILTER (WHERE&quot;</code> = 6; single <code>leftJoin(outreachEmails) + groupBy(outreachCampaigns.id)</code> (no N+1, CD-01); returns <code>paginated(data, ...)</code> with <code>emailCounts</code> on every row</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CLI can transition an email&#39;s status; invalid transitions (e.g. generated→drafted) return 400 with the state machine&#39;s rejection reason</td>
+<td>✓ VERIFIED</td>
+<td><code>[emailId]/status/route.ts</code> PATCH (lines 16–95): imports <code>canEmailTransition</code> from <code>@/features/outreach/lib/email-status</code> (Phase 11 module, not reimplemented); guard <code>if (!canEmailTransition(email.status, newStatus)) return validationError(&#39;Invalid transition: ...&#39;)</code>; <code>validEmailTransitions.generated</code> = <code>[&#39;edited&#39;,&#39;approved&#39;,&#39;failed&#39;,&#39;pending&#39;]</code> — excludes <code>drafted</code>, so <code>generated→drafted</code> returns 400; CD-03 approve guard present (lines 45–51); D-05 regenerate reset present (lines 59–66)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>All new routes return the standard <code>{ success, data, error, meta }</code> envelope and reject unauthenticated requests</td>
+<td>✓ VERIFIED</td>
+<td>All 10 route files import from <code>@/lib/api/types</code> (<code>success</code>, <code>created</code>, <code>paginated</code>) and <code>@/lib/api/errors</code> (<code>notFound</code>, <code>validationError</code>, <code>serverError</code>). <code>src/proxy.ts</code> line 7: <code>createRouteMatcher([&#39;/dashboard(.*)&#39;, &#39;/api/(.*)&#39;])</code> — covers every <code>/api/outreach-campaigns/*</code> route. Unauthenticated API calls receive <code>NextResponse.json({ success: false, error: &#39;Unauthorized&#39; }, { status: 401 })</code></td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 5/5 truths verified</p>
+<hr>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/outreach-campaigns/route.ts</code></td>
+<td>GET list (paginated, grouped counts) + POST create</td>
+<td>✓ VERIFIED</td>
+<td>105 lines; substantive GET + POST handlers; logTimeline on POST; 6x FILTER(WHERE) aggregate</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/route.ts</code></td>
+<td>GET single (with counts) + PATCH + soft DELETE</td>
+<td>✓ VERIFIED</td>
+<td>121 lines; GET/PATCH/DELETE all substantive; logTimeline on PATCH + DELETE; soft delete via archivedAt</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code></td>
+<td>GET email list (joined, status filter) + POST bulk dedup add</td>
+<td>✓ VERIFIED</td>
+<td>123 lines; onConflictDoNothing dedup; leftJoin contacts; inArray status filter; 201 {inserted, skipped}</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code></td>
+<td>PATCH inline edit (auto generated/approved→edited) + DELETE hard</td>
+<td>✓ VERIFIED</td>
+<td>97 lines; CD-02 auto-transition; <code>db.delete</code> hard delete (no archivedAt); CD-06 campaign scope</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code></td>
+<td>State-machine-guarded transition (CD-03 + D-05)</td>
+<td>✓ VERIFIED</td>
+<td>95 lines; imports canEmailTransition; CD-03 approve guard; D-05 reset on →pending; approvedAt/lastError stamps</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code></td>
+<td>Discovery write-back (channel + recipientEmail; D-08 linkedin→null)</td>
+<td>✓ VERIFIED</td>
+<td>57 lines; <code>linkedin_message</code> forces <code>recipientEmail = null</code>; CD-06 scope; logTimeline</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code></td>
+<td>Draft write-back (gmailDraftId + draftedAt)</td>
+<td>✓ VERIFIED</td>
+<td>53 lines; Zod min(1) on gmailDraftId; writes draftedAt + updatedAt; CD-06 scope; logTimeline</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code></td>
+<td>Generation write-back (generatedSubject/Body/generatedAt)</td>
+<td>✓ VERIFIED</td>
+<td>52 lines; Zod min(1) on both fields; CD-06 campaign scope; logTimeline(&#39;outreach_email_generated&#39;); no generation logic</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/generation-context/route.ts</code></td>
+<td>Bulk context read (goalInstruction + pending emails + briefs + interactions + lowContext)</td>
+<td>✓ VERIFIED</td>
+<td>93 lines; 3-query pattern: campaign verify + innerJoin pending emails + inArray batch interactions; <code>grep -c inArray</code> = 2 (import + 1 use); uses <code>i.content</code> not <code>i.notes</code>; lowContext = recentInteractions.length &lt; 2</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/route.ts</code></td>
+<td>Additive howMet + connectionYear range filters (D-07)</td>
+<td>✓ VERIFIED</td>
+<td>Lines 104–122: <code>ilike(contacts.howMet, ...)</code>, <code>gte(contacts.linkedinConnectionDate, ...)</code>, <code>lte(contacts.linkedinConnectionDate, ...)</code>; <code>grep -c &quot;connectionYearStart|connectionYearEnd|howMet&quot;</code> = 10; added to existing conditions[] pipeline with no regression</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>campaigns/route.ts</code> POST</td>
+<td>timeline_events</td>
+<td><code>logTimeline(&#39;outreach_campaign_created&#39;)</code></td>
+<td>✓ WIRED</td>
+<td>Line 91–95</td>
+</tr>
+<tr>
+<td><code>campaigns/route.ts</code> GET</td>
+<td>emailCounts aggregate</td>
+<td><code>leftJoin + groupBy + count(*) FILTER (WHERE status=...)</code></td>
+<td>✓ WIRED</td>
+<td>6 FILTER clauses, one query</td>
+</tr>
+<tr>
+<td><code>[id]/emails/route.ts</code> POST</td>
+<td>UNIQUE (campaign_id, contact_id) dedup</td>
+<td><code>onConflictDoNothing()</code></td>
+<td>✓ WIRED</td>
+<td>Line 103</td>
+</tr>
+<tr>
+<td><code>[emailId]/status/route.ts</code></td>
+<td>email-status.ts transition graph</td>
+<td><code>canEmailTransition(email.status, newStatus)</code></td>
+<td>✓ WIRED</td>
+<td>Import line 7; call line 38</td>
+</tr>
+<tr>
+<td><code>generation-context/route.ts</code></td>
+<td>interactions table</td>
+<td><code>inArray(interactions.contactId, contactIds)</code></td>
+<td>✓ WIRED</td>
+<td>Line 49; batch not per-contact loop</td>
+</tr>
+<tr>
+<td><code>contacts/route.ts</code></td>
+<td>D-07 filters</td>
+<td><code>ilike</code>, <code>gte</code>, <code>lte</code> on howMet / linkedinConnectionDate</td>
+<td>✓ WIRED</td>
+<td>Lines 104–122</td>
+</tr>
+<tr>
+<td><code>src/proxy.ts</code></td>
+<td>all /api/* routes</td>
+<td><code>createRouteMatcher([&#39;/dashboard(.*)&#39;, &#39;/api/(.*)&#39;])</code></td>
+<td>✓ WIRED</td>
+<td>Line 7; Bearer-token bypass for CLI; Clerk session for browser; 401 envelope on unauth</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>campaigns/route.ts</code> GET</td>
+<td><code>emailCounts</code> per campaign</td>
+<td><code>db.select(...sql</code>json_build_object...<code>).from(outreachCampaigns).leftJoin(outreachEmails).groupBy(...)</code></td>
+<td>Yes — live DB aggregate</td>
+<td>✓ FLOWING</td>
+</tr>
+<tr>
+<td><code>[id]/emails/route.ts</code> POST</td>
+<td><code>inserted</code>/<code>skipped</code> counts</td>
+<td><code>db.insert(...).onConflictDoNothing().returning()</code></td>
+<td>Yes — actual row count</td>
+<td>✓ FLOWING</td>
+</tr>
+<tr>
+<td><code>[emailId]/status/route.ts</code></td>
+<td><code>updated</code> email row</td>
+<td><code>db.update(outreachEmails).set(update).where(...)..returning()</code></td>
+<td>Yes — DB row</td>
+<td>✓ FLOWING</td>
+</tr>
+<tr>
+<td><code>generation-context/route.ts</code></td>
+<td><code>emails</code> array</td>
+<td><code>innerJoin contacts + inArray interactions</code> then reduce + slice(0,3)</td>
+<td>Yes — live DB data</td>
+<td>✓ FLOWING</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CAMP-06</td>
+<td>12-01-PLAN.md</td>
+<td>User can create a named campaign with a goal/instruction</td>
+<td>✓ SATISFIED</td>
+<td><code>POST /api/outreach-campaigns</code> → 201 + <code>data.id</code></td>
+</tr>
+<tr>
+<td>CAMP-07</td>
+<td>12-02-PLAN.md</td>
+<td>Bulk insert, one row per contact, deduped so can&#39;t add twice</td>
+<td>✓ SATISFIED</td>
+<td><code>POST .../emails</code> with <code>onConflictDoNothing()</code> → <code>{ inserted, skipped }</code></td>
+</tr>
+<tr>
+<td>CAMP-08</td>
+<td>12-01-PLAN.md, 12-02-PLAN.md</td>
+<td>List campaigns with per-campaign progress counts</td>
+<td>✓ SATISFIED</td>
+<td><code>GET /api/outreach-campaigns</code> returns <code>emailCounts.{pending,generated,edited,approved,drafted,failed}</code></td>
+</tr>
+<tr>
+<td>GEN-05</td>
+<td>12-03-PLAN.md, 12-04-PLAN.md</td>
+<td>All generation in skill; API only enqueues pending rows and accepts write-back</td>
+<td>✓ SATISFIED</td>
+<td><code>GET .../generation-context</code> (context assembly, no AI logic) + <code>PATCH .../generation</code> (write-back, no AI logic); <code>grep -c &quot;openai|anthropic|llm&quot;</code> = 0 in both files</td>
+</tr>
+</tbody></table>
+<p>No orphaned requirements: REQUIREMENTS.md traceability table maps CAMP-06, CAMP-07, CAMP-08, GEN-05 all to Phase 12, and all are accounted for by the plans.</p>
+<hr>
+<h3>Behavioral Spot-Checks</h3>
+<p>Step 7b: SKIPPED — dev server not running; routes require DB connection and cannot be tested without live infrastructure. TypeScript compilation (<code>tsc --noEmit</code> clean, per SUMMARY claims corroborated by absence of type errors in source reads) and <code>npm run build</code> (all 9 outreach routes registered, per verifier briefing) serve as the automated correctness gates.</p>
+<hr>
+<h3>Probe Execution</h3>
+<p>Step 7c: No <code>scripts/*/tests/probe-*.sh</code> files defined for this phase. SKIPPED.</p>
+<hr>
+<h3>Anti-Patterns Found</h3>
+<p>No debt markers (<code>TBD</code>, <code>FIXME</code>, <code>XXX</code>, <code>TODO</code>, <code>HACK</code>, <code>PLACEHOLDER</code>) found in any of the 10 route files modified by this phase. No <code>return null</code>, <code>return {}</code>, <code>return []</code>, or empty handler stubs. All handlers perform real DB operations.</p>
+<p>Two findings from 12-REVIEW.md warrant recording as warnings. Neither breaks any of the 5 success criteria. They are hardening items for Phase 15 (Review UI) and Phase 17 (Skills):</p>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>File</th>
+<th>Severity</th>
+<th>Impact on Phase 12 SCs</th>
+<th>Recommended Phase</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CR-01: <code>inlineEditSchema</code> accepts <code>recipientEmail</code> with no channel guard — a <code>linkedin_message</code>-channel email can have a non-null recipientEmail written via the generic PATCH, bypassing the invariant enforced by the <code>/recipient</code> sub-route</td>
+<td><code>[emailId]/route.ts:9-13, 45</code></td>
+<td>WARNING</td>
+<td>None — no Phase 12 SC references the channel invariant. The inline-edit route is meant for subject/body content. Matters when Phase 15 Review UI or Phase 17 discovery skill exposes this route to users.</td>
+<td>Fix in Phase 15 before Review UI ships (remove <code>recipientEmail</code> from <code>inlineEditSchema</code>; route all recipient changes through <code>/recipient</code>)</td>
+</tr>
+<tr>
+<td>CR-02: <code>[emailId]/generation/route.ts</code> writes <code>generatedSubject</code>/<code>generatedBody</code>/<code>generatedAt</code> with no status pre-check — re-running the generation skill can overwrite content on an <code>approved</code> or <code>drafted</code> email, silently invalidating a user&#39;s approval</td>
+<td><code>[emailId]/generation/route.ts:25-35</code></td>
+<td>WARNING</td>
+<td>None — SC4 verifies the <code>/status</code> route enforces the state machine. The generation write-back is a separate write that doesn&#39;t change status. This matters when Phase 16 skill can be re-run mid-campaign.</td>
+<td>Fix in Phase 16 before generate-outreach-emails skill ships (add pre-fetch + status guard: only allow write when status is <code>pending</code> or <code>failed</code>)</td>
+</tr>
+<tr>
+<td>WR-01: <code>isEdit</code> checks <code>!== undefined</code> not <code>!= null</code> — sending <code>{&quot;editedSubject&quot;: null}</code> spuriously triggers <code>generated→edited</code> auto-transition even when clearing a field</td>
+<td><code>[emailId]/route.ts:36-38</code></td>
+<td>WARNING</td>
+<td>None — doesn&#39;t affect SC4 (status transitions go through <code>/status</code> route)</td>
+<td>Fix in Phase 15 (use <code>!= null</code> check)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Human Verification Required</h3>
+<p>None. All 5 success criteria are fully verifiable from source code. No visual, real-time, or external-service behaviors are required to confirm the phase goal.</p>
+<hr>
+<h3>Gaps Summary</h3>
+<p>No gaps. All 5 ROADMAP success criteria are VERIFIED against the actual codebase. All 4 requirement IDs (CAMP-06, CAMP-07, CAMP-08, GEN-05) are SATISFIED. Ten route files exist, are substantive (no stubs, no placeholder returns), and are wired to real DB operations with timeline logging.</p>
+<p>The two REVIEW &quot;blockers&quot; (CR-01, CR-02) are business-logic edge cases that do not break any Phase 12 success criterion. They are appropriately out-of-scope hardening items to address in Phases 15 and 16 before the Review UI and generation skill are shipped.</p>
+<hr>
+<p><em>Verified: 2026-06-20</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

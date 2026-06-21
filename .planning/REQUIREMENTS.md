@@ -16,9 +16,9 @@ Requirements for this milestone. Each maps to exactly one roadmap phase (see Tra
 - [ ] **CAMP-03**: User can filter contacts by closeness tier when building a campaign
 - [ ] **CAMP-04**: User can filter contacts by outreach status when building a campaign
 - [ ] **CAMP-05**: User can checkbox-multi-select contacts (including select-all within the current filter) to choose recipients
-- [ ] **CAMP-06**: User can create a named campaign with a goal/instruction that drives generation
-- [ ] **CAMP-07**: Saving a campaign persists the selected contacts as one `outreach_email` row per contact in a single bulk insert, deduped so a contact can't be added twice
-- [ ] **CAMP-08**: User can view a list of campaigns with per-campaign progress (selected / generated / approved / drafted counts)
+- [x] **CAMP-06**: User can create a named campaign with a goal/instruction that drives generation
+- [x] **CAMP-07**: Saving a campaign persists the selected contacts as one `outreach_email` row per contact in a single bulk insert, deduped so a contact can't be added twice
+- [x] **CAMP-08**: User can view a list of campaigns with per-campaign progress (selected / generated / approved / drafted counts)
 
 ### Triage (TRGE) — connection-date filter
 
@@ -30,7 +30,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase (see Tra
 - [ ] **GEN-02**: Generated emails are personalized from CRM context (`howMet`, company/role, closeness, prior interactions) plus the campaign goal
 - [ ] **GEN-03**: Generation calibrates tone to closeness tier and follows the owner's voice conventions, including an LLM-tell scan (reusing `tailor-application-materials` style references)
 - [ ] **GEN-04**: Generation references only history present in the provided contact context (no hallucinated shared history); low-context contacts are flagged for extra review
-- [ ] **GEN-05**: All generation runs in the skill (never in an API route); the API only enqueues `pending` rows and accepts write-back
+- [x] **GEN-05**: All generation runs in the skill (never in an API route); the API only enqueues `pending` rows and accepts write-back
 
 ### Review & Approval (REV)
 
@@ -99,15 +99,15 @@ Which phases cover which requirements. Updated during roadmap creation (2026-06-
 | CAMP-03 | Phase 14 | Pending |
 | CAMP-04 | Phase 14 | Pending |
 | CAMP-05 | Phase 14 | Pending |
-| CAMP-06 | Phase 12 | Pending |
-| CAMP-07 | Phase 12 | Pending |
-| CAMP-08 | Phase 12 | Pending |
+| CAMP-06 | Phase 12 | Complete |
+| CAMP-07 | Phase 12 | Complete |
+| CAMP-08 | Phase 12 | Complete |
 | TRGE-01 | Phase 13 | Pending |
 | GEN-01 | Phase 16 | Pending |
 | GEN-02 | Phase 16 | Pending |
 | GEN-03 | Phase 16 | Pending |
 | GEN-04 | Phase 16 | Pending |
-| GEN-05 | Phase 12 | Pending |
+| GEN-05 | Phase 12 | Complete |
 | REV-01 | Phase 15 | Pending |
 | REV-02 | Phase 15 | Pending |
 | REV-03 | Phase 15 | Pending |
