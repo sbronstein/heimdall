@@ -87,7 +87,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   3. The year filter survives a page reload (URL-driven via nuqs query params)
   4. Clearing the filter restores the full triage queue
 **Plans**: 2 plans
-- [ ] 13-01-PLAN.md — Pure year helpers (+Vitest) + reusable `ConnectionYearFilter` control (nuqs click-to-range) + in-memory triage queue narrowing (Wave 1)
+- [x] 13-01-PLAN.md — Pure year helpers (+Vitest) + reusable `ConnectionYearFilter` control (nuqs click-to-range) + in-memory triage queue narrowing (Wave 1)
 - [ ] 13-02-PLAN.md — Human-verify the four interactive success criteria in the running triage UI (Wave 2)
 **UI hint**: yes
 
@@ -160,7 +160,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 10. Connection Company + Role Enrichment for Triage | v1.1 | 4/4 | Complete | 2026-05-20 |
 | 11. Schema, Enums, and State Machine | v1.2 | 3/3 | Complete    | 2026-06-20 |
 | 12. API Routes | v1.2 | 4/4 | Complete    | 2026-06-21 |
-| 13. Triage Connection-Date Filter | v1.2 | 0/2 | Not started | - |
+| 13. Triage Connection-Date Filter | v1.2 | 1/2 | In Progress|  |
 | 14. Campaign Builder UI | v1.2 | 0/TBD | Not started | - |
 | 15. Review and Approval UI | v1.2 | 0/TBD | Not started | - |
 | 16. Email Generation Skill | v1.2 | 0/TBD | Not started | - |
