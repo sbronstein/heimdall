@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a7c92e03966bc21dc/.planning/phases/12-api-routes/12-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+plan: &quot;03&quot;
+subsystem: outreach-emails-api
+tags: [api-routes, state-machine, outreach, email-lifecycle, write-backs]
+dependency_graph:
+  requires:
+    - &quot;Phase 11: outreach-emails schema (drizzle/schema/outreach-emails.ts)&quot;
+    - &quot;Phase 11: canEmailTransition (src/features/outreach/lib/email-status.ts)&quot;
+    - &quot;Phase 11: outreachEmailStatusValues, outreachChannelValues (src/lib/domain/types.ts)&quot;
+  provides:
+    - &quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status — state-machine-guarded transition (phase criterion 4)&quot;
+    - &quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId]/recipient — discovery write-back (GEN-05)&quot;
+    - &quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId]/draft — draft write-back (GEN-05)&quot;
+  affects:
+    - &quot;Phase 17 skills (generation, discovery, drafting): consume all three PATCH endpoints&quot;
+tech_stack:
+  added: []
+  patterns:
+    - &quot;State-machine guard via canEmailTransition() before any status DB write&quot;
+    - &quot;CD-03 approve guard: rejects → approved when editedX ?? generatedX is null&quot;
+    - &quot;D-05 regenerate reset: pending clears edited*/lastError*/generatedAt, keeps generated*&quot;
+    - &quot;CD-06 campaign scope: all writes use and(eq(id, emailId), eq(campaignId, id))&quot;
+    - &quot;D-03/D-04 timeline logging: distinct eventType per route&quot;
+    - &quot;8-level relative import for drizzle/schema (../../../../../../../../drizzle/schema)&quot;
+key_files:
+  created:
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;Variable named emailBody (not body) inside the CD-03 approve guard to avoid shadowing the outer body = request.json() assignment&quot;</li>
+<li>&quot;status route selects the full row before updating (not update-and-check) to enable the canEmailTransition() guard and CD-03 content check before any write&quot;</li>
+<li>&quot;All three routes return the full updated row from .returning() rather than a projection — consistent with the existing codebase pattern&quot;
+metrics:
+  duration: &quot;~10 minutes&quot;
+  completed: &quot;2026-06-20&quot;
+  tasks_completed: 3
+  files_created: 3
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 12 Plan 03: Email Status Lifecycle and Skill Write-Back Routes Summary</h1>
+<p><strong>One-liner:</strong> Three PATCH routes delivering state-machine-guarded email transitions (CD-03 approve guard + D-05 regenerate reset) and two campaign-scoped skill write-backs for recipient discovery and Gmail draft linkage.</p>
+<h2>What Was Built</h2>
+<h3>Task 1: Status transition route (cc12ef6)</h3>
+<p><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code></p>
+<p>The only transition-guarded write in the outreach system. Enforces:</p>
+<ul>
+<li><strong><code>canEmailTransition(from, to)</code></strong> — any move not in the valid transition graph returns <code>400 &quot;Invalid transition: &lt;from&gt; -&gt; &lt;to&gt;&quot;</code> (phase criterion 4)</li>
+<li><strong>CD-03 approve guard</strong> — when <code>newStatus === &#39;approved&#39;</code>, checks <code>editedSubject ?? generatedSubject</code> and <code>editedBody ?? generatedBody</code>; if either is null/empty, returns <code>400 &quot;Cannot approve: email has no content&quot;</code> before the DB write</li>
+<li><strong>D-05 regenerate reset</strong> — when <code>newStatus === &#39;pending&#39;</code>: clears <code>editedSubject</code>, <code>editedBody</code>, <code>lastError</code>, <code>lastErrorAt</code>, <code>generatedAt</code>; intentionally keeps <code>generatedSubject</code>/<code>generatedBody</code> (shown greyed-out in UI)</li>
+<li><strong>Side-effect stamps</strong> — <code>approvedAt: new Date()</code> on <code>→ approved</code>; <code>lastError + lastErrorAt</code> on <code>→ failed</code></li>
+<li><strong>CD-06 campaign scope</strong> — <code>and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id))</code> on both the SELECT and UPDATE; 404 if no row matches</li>
+<li><strong>Timeline log</strong> — <code>outreach_email_status_changed</code> with <code>{ from, to, campaignId, emailId }</code> per D-03/D-04</li>
+</ul>
+<h3>Task 2: Recipient write-back route (abdc06c)</h3>
+<p><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code></p>
+<p>Discovery skill write-back (Phase 17, GEN-05). No state-machine check. Writes channel + recipientEmail:</p>
+<ul>
+<li><strong>D-08 linkedin_message rule</strong> — <code>channel === &#39;linkedin_message&#39;</code> forces <code>recipientEmail = null</code> server-side, regardless of body; client cannot smuggle an address</li>
+<li><strong>CD-06 campaign scope</strong> — update scoped by both <code>emailId</code> and <code>campaignId</code>; 404 if email not in campaign</li>
+<li><strong>Timeline log</strong> — <code>outreach_email_recipient_set</code> with <code>{ channel, campaignId, emailId }</code> per D-03/D-04</li>
+</ul>
+<h3>Task 3: Draft write-back route (702f5ad)</h3>
+<p><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code></p>
+<p>Drafting skill write-back (Phase 17, GEN-05). Writes <code>gmailDraftId + draftedAt</code> without touching status (drafting skill calls <code>/status</code> separately to move <code>→ drafted</code>):</p>
+<ul>
+<li><strong>CD-06 campaign scope</strong> — update scoped by both <code>emailId</code> and <code>campaignId</code>; 404 if email not in campaign</li>
+<li><strong>Timeline log</strong> — <code>outreach_email_drafted</code> with <code>{ gmailDraftId, campaignId, emailId }</code> per D-03/D-04</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written. The variable naming choice (<code>emailBody</code> instead of <code>body</code> in CD-03 guard) was to avoid variable shadowing but follows naturally from the plan&#39;s instruction to &quot;compute subject = ... and body = ...&quot;; this is logged as a decision, not a deviation.</p>
+<h2>Known Stubs</h2>
+<p>None. All three routes are fully wired to the database. No hardcoded values or placeholder responses.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new trust boundaries beyond what the plan&#39;s threat model captures:</p>
+<ul>
+<li>All three routes sit behind <code>src/proxy.ts</code> Clerk auth (no change)</li>
+<li>T-12-10 mitigated: <code>canEmailTransition()</code> called before every status write</li>
+<li>T-12-11 mitigated: CD-03 guard rejects approve on empty content</li>
+<li>T-12-12 mitigated: CD-06 campaign scope on all three routes</li>
+<li>T-12-13 mitigated: <code>z.enum(outreachEmailStatusValues)</code> / <code>z.enum(outreachChannelValues)</code> / <code>z.string().min(1)</code> on gmailDraftId</li>
+<li>T-12-14 mitigated: server forces <code>recipientEmail = null</code> when <code>channel = &#39;linkedin_message&#39;</code></li>
+</ul>
+<h2>Self-Check</h2>
+<h3>Files exist</h3>
+<ul>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code> — FOUND</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code> — FOUND</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code> — FOUND</li>
+</ul>
+<h3>Commits exist</h3>
+<ul>
+<li>cc12ef6: feat(12-03): add state-machine-guarded email status route — FOUND</li>
+<li>abdc06c: feat(12-03): add recipient write-back route (discovery skill) — FOUND</li>
+<li>702f5ad: feat(12-03): add draft write-back route (drafting skill) — FOUND</li>
+</ul>
+<h3>TypeScript</h3>
+<p><code>npx tsc --noEmit</code> — PASSED (no errors, all three tasks)</p>
+<h2>Self-Check: PASSED</h2>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a7c92e03966bc21dc/.planning/phases/12-api-routes/12-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
