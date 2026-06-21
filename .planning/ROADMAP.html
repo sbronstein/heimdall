@@ -81,7 +81,7 @@ img { max-width: 100%; height: auto; }
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 12: API Routes</strong> — Full <code>/api/outreach-campaigns/</code> route tree (campaign CRUD, bulk email add, status transitions, skill write-back endpoints, generation-context bulk fetch) so skills and UI have a stable REST surface to build against (completed 2026-06-21)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 13: Triage Connection-Date Filter</strong> — Additive year-range filter on the existing triage workflow; independent of the campaign route tree (completed 2026-06-21)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Phase 14: Campaign Builder UI</strong> — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner&#39;s ability to name and save a campaign from the browser (completed 2026-06-21)</li>
-<li><input disabled="" type="checkbox"> <strong>Phase 15: Review and Approval UI</strong> — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Phase 15: Review and Approval UI</strong> — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header (completed 2026-06-21)</li>
 <li><input disabled="" type="checkbox"> <strong>Phase 16: Email Generation Skill</strong> — <code>generate-outreach-emails</code> Claude Code skill: drains the pending queue, personalizes emails from CRM context with closeness-tier tone and LLM-tell guardrails, writes back via REST</li>
 <li><input disabled="" type="checkbox"> <strong>Phase 17: Gmail Drafting and Email Discovery Skill</strong> — <code>draft-outreach-emails</code> Claude Code skill: discovers emails via Gmail thread search, creates Gmail drafts (never sends), idempotent on retry, logs timeline events, flags LinkedIn-only contacts</li>
 </ul>
@@ -171,9 +171,9 @@ img { max-width: 100%; height: auto; }
 <strong>Plans</strong>: 3 plans (Wave 1: 15-01 + 15-02 parallel; Wave 2: 15-03)</li>
 </ol>
 <ul>
-<li><input disabled="" type="checkbox"> 15-01-PLAN.md — Review helpers (+Vitest) + EmailReviewCard: display, inline edit, approve gate, regenerate, badges (REV-01..04, REV-06) (Wave 1)</li>
-<li><input disabled="" type="checkbox"> 15-02-PLAN.md — Server-side archived approve gate + bounded editedBody Zod (REV-04, REV-06 defense in depth) (Wave 1)</li>
-<li><input disabled="" type="checkbox"> 15-03-PLAN.md — Client review-page container: approved/total progress header + EmailReviewCard list + optimistic state (REV-01, REV-04, REV-06) (Wave 2)
+<li><input checked="" disabled="" type="checkbox"> 15-01-PLAN.md — Review helpers (+Vitest) + EmailReviewCard: display, inline edit, approve gate, regenerate, badges (REV-01..04, REV-06) (Wave 1)</li>
+<li><input checked="" disabled="" type="checkbox"> 15-02-PLAN.md — Server-side archived approve gate + bounded editedBody Zod (REV-04, REV-06 defense in depth) (Wave 1)</li>
+<li><input checked="" disabled="" type="checkbox"> 15-03-PLAN.md — Client review-page container: approved/total progress header + EmailReviewCard list + optimistic state (REV-01, REV-04, REV-06) (Wave 2)
 <strong>UI hint</strong>: yes</li>
 </ul>
 <h3>Phase 16: Email Generation Skill</h3>
@@ -316,9 +316,9 @@ img { max-width: 100%; height: auto; }
 <tr>
 <td>15. Review and Approval UI</td>
 <td>v1.2</td>
-<td>0/3</td>
-<td>Planned</td>
-<td>-</td>
+<td>3/3</td>
+<td>Complete</td>
+<td>2026-06-21</td>
 </tr>
 <tr>
 <td>16. Email Generation Skill</td>

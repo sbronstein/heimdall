@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/15-review-and-approval-ui/15-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 15-review-and-approval-ui
+verified: 2026-06-21T15:45:00Z
+status: human_needed
+score: 5/5 must-haves verified
+overrides_applied: 0
+human_verification:</p>
+<ul>
+<li>test: &quot;Navigate to /dashboard/outreach/[id] for a campaign that has emails in mixed statuses&quot;
+expected: &quot;Each email renders as a card showing contact name, status badge, and (when generated) subject and body; pending emails show &#39;Awaiting generation&#39;&quot;
+why_human: &quot;Visual rendering of the card list cannot be verified by grep or tsc&quot;</li>
+<li>test: &quot;Click Edit on a generated email, change subject and body, click Save&quot;
+expected: &quot;Save issues a PATCH to /api/outreach-campaigns/[id]/emails/[emailId], card updates to show new content, status badge advances to &#39;edited&#39;, header progress re-renders&quot;
+why_human: &quot;Interactive state transitions and live fetch behavior require a running browser&quot;</li>
+<li>test: &quot;Inspect a campaign with an archived contact; observe the Approve button on that contact&#39;s card&quot;
+expected: &quot;Button renders as disabled; clicking it has no effect; an &#39;archived&#39; destructive badge appears on the card&quot;
+why_human: &quot;Disabled-button rendering and archived-badge appearance require visual inspection&quot;</li>
+<li>test: &quot;Click Approve on a generated email with content and a non-archived contact&quot;
+expected: &quot;Status advances to &#39;approved&#39;, header counter increments (e.g. 1 / 5 approved), no page reload&quot;
+why_human: &quot;Optimistic state update and header counter change require live browser interaction&quot;</li>
+<li>test: &quot;Click Regenerate on a generated or edited email and confirm the dialog&quot;
+expected: &quot;window.confirm appears warning that edits will be cleared; on confirm, status resets to &#39;pending&#39;, card shows &#39;Awaiting generation&#39;&quot;
+why_human: &quot;window.confirm and subsequent card state reset require browser execution&quot;</li>
+<li>test: &quot;Inspect a contact card whose contact has no stored email and channel is &#39;email&#39;&quot;
+expected: &quot;Card shows a &#39;needs LinkedIn message&#39; secondary badge&quot;
+why_human: &quot;Badge rendering for the no-email case requires visual inspection with real data&quot;</li>
+</ul>
+<hr>
+<h1>Phase 15: Review and Approval UI — Verification Report</h1>
+<p><strong>Phase Goal:</strong> The owner can review generated email content for each contact in a campaign, edit it inline, and approve or regenerate individual emails from the browser
+<strong>Verified:</strong> 2026-06-21T15:45:00Z
+<strong>Status:</strong> human_needed (all automated checks pass; UI interactions require browser verification)
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Campaign review page lists every email with status and (when generated) subject + body</td>
+<td>VERIFIED</td>
+<td><code>campaign-review-page.tsx</code> maps <code>rows</code> to <code>&lt;EmailReviewCard&gt;</code> list; RSC page.tsx leftJoins emails+contacts in one query and passes to component</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Owner can edit a generated email&#39;s subject and body inline; save advances status to <code>edited</code></td>
+<td>VERIFIED</td>
+<td><code>email-review-card.tsx</code> PATCH <code>/emails/${email.id}</code> with <code>editedSubject</code>/<code>editedBody</code>; server <code>route.ts</code> auto-transitions `generated</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Approve button is disabled for archived contacts; approval is also blocked server-side</td>
+<td>VERIFIED</td>
+<td><code>disabled={isSaving || !canApproveEmail(email, contact)}</code>; <code>canApproveEmail</code> checks <code>isArchived</code>; <code>status/route.ts</code> performs separate SELECT on <code>contacts.archivedAt</code> and returns <code>validationError(&#39;Cannot approve: contact is archived&#39;)</code> before <code>db.update</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Owner can regenerate a single email, resetting it to <code>pending</code></td>
+<td>VERIFIED</td>
+<td>Regenerate button disabled when <code>!canRegenerate(email)</code>; on confirm: PATCH <code>/status</code> <code>{ status: &#39;pending&#39; }</code>; server clears <code>editedSubject/editedBody/lastError/generatedAt</code> on <code>→ pending</code> transition</td>
+</tr>
+<tr>
+<td>5</td>
+<td>No-email contacts show &quot;needs LinkedIn message&quot; badge; header shows approved/total progress</td>
+<td>VERIFIED</td>
+<td><code>needsLinkedinMessage</code> badge rendered for <code>linkedin_message</code> channel OR no <code>recipientEmail</code> AND no <code>contact.email</code>; <code>approvedCount</code> (tallies <code>approved + drafted</code>) drives <code>{approved} / {total} approved</code> in header</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 5/5 truths verified</p>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/outreach/lib/review-helpers.ts</code></td>
+<td>Pure helpers: finalSubject, finalBody, hasContent, needsLinkedinMessage, isArchived, canApproveEmail, canRegenerate, approvedCount</td>
+<td>VERIFIED</td>
+<td>All 8 functions exported; imports <code>canEmailTransition</code> from <code>email-status.ts</code> — no duplicate transition table</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/lib/review-helpers.test.ts</code></td>
+<td>Vitest coverage for pure helpers</td>
+<td>VERIFIED</td>
+<td>27 tests, all passing; covers edited-over-generated precedence, needsLinkedinMessage all trigger cases, canApproveEmail archived/no-content/status gates, approvedCount approved+drafted tally</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/email-review-card.tsx</code></td>
+<td>Interactive per-email card: <code>&#39;use client&#39;</code>, edit/approve/regenerate, badges</td>
+<td>VERIFIED</td>
+<td>Exports <code>EmailReviewCard</code>; <code>&#39;use client&#39;</code> at top; full edit mode with Input/Textarea; Approve disabled via <code>canApproveEmail</code>; both badge types rendered conditionally</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code></td>
+<td>Server-side archived approve gate</td>
+<td>VERIFIED</td>
+<td>SELECT <code>{ archivedAt }</code> from contacts WHERE <code>contacts.id = email.contactId</code>; returns <code>validationError(&#39;Cannot approve: contact is archived&#39;)</code> when <code>archivedAt != null</code>; runs after content guard, before <code>db.update</code></td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code></td>
+<td>editedBody max(50000) bound</td>
+<td>VERIFIED</td>
+<td><code>inlineEditSchema</code>: <code>editedBody: z.string().max(50000).optional().nullable()</code>; editedSubject max(500) and recipientEmail email() unchanged</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-review-page.tsx</code></td>
+<td><code>&#39;use client&#39;</code> container: progress header + EmailReviewCard list + optimistic state</td>
+<td>VERIFIED</td>
+<td><code>useState</code> seeded from <code>initialEmails</code> prop; <code>useCallback onEmailUpdated</code> replaces matching row on <code>updated.id</code>; <code>approvedCount</code> over live rows drives <code>{approved} / {total}</code> header</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>email-review-card.tsx</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]</code></td>
+<td><code>fetch PATCH</code> (inline edit)</td>
+<td>WIRED</td>
+<td>Line 63: <code>fetch(\</code>/api/outreach-campaigns/${campaignId}/emails/${email.id}`, { method: &#39;PATCH&#39;, ... })`</td>
+</tr>
+<tr>
+<td><code>email-review-card.tsx</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]/status</code></td>
+<td><code>fetch PATCH</code> (approve + regenerate)</td>
+<td>WIRED</td>
+<td>Lines 94-101 (approve), 125-132 (regenerate): both PATCH to <code>.../status</code></td>
+</tr>
+<tr>
+<td><code>email-review-card.tsx</code></td>
+<td><code>review-helpers.ts</code></td>
+<td>import <code>canApproveEmail</code>, <code>canRegenerate</code>, <code>finalSubject</code>, <code>finalBody</code>, <code>isArchived</code>, <code>needsLinkedinMessage</code></td>
+<td>WIRED</td>
+<td>Lines 12-18: explicit named imports; all 6 functions actively used in render</td>
+</tr>
+<tr>
+<td><code>campaign-review-page.tsx</code></td>
+<td><code>email-review-card.tsx</code></td>
+<td>renders <code>&lt;EmailReviewCard&gt;</code> per row, passes <code>onEmailUpdated</code></td>
+<td>WIRED</td>
+<td>Lines 87-93: <code>rows.map(row =&gt; &lt;EmailReviewCard ... onEmailUpdated={onEmailUpdated} /&gt;)</code></td>
+</tr>
+<tr>
+<td><code>campaign-review-page.tsx</code></td>
+<td><code>review-helpers.ts</code></td>
+<td><code>approvedCount</code> for progress header</td>
+<td>WIRED</td>
+<td>Line 49: <code>const approved = approvedCount(rows.map((r) =&gt; r.email))</code></td>
+</tr>
+<tr>
+<td><code>status/route.ts</code></td>
+<td><code>contacts.archivedAt</code></td>
+<td>join/lookup of email&#39;s contact in approve branch</td>
+<td>WIRED</td>
+<td>Lines 56-64: <code>db.select({ archivedAt: contacts.archivedAt }).from(contacts).where(eq(contacts.id, email.contactId)).limit(1)</code></td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/[id]/page.tsx</code></td>
+<td><code>CampaignReviewPage</code></td>
+<td>RSC passes <code>campaign</code> + <code>emails</code> (leftJoin)</td>
+<td>WIRED</td>
+<td>Line 10: imports <code>CampaignReviewPage</code>; line 29-33: <code>leftJoin(contacts, ...)</code> fetches joined rows; line 37: passes <code>emails={emails}</code></td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>campaign-review-page.tsx</code></td>
+<td><code>rows</code> (email+contact state)</td>
+<td>RSC <code>page.tsx</code> leftJoin <code>outreachEmails → contacts</code></td>
+<td>Yes — <code>db.select({ email: outreachEmails, contact: contacts }).from(outreachEmails).leftJoin(...)</code></td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>email-review-card.tsx</code></td>
+<td><code>subject</code>, <code>body</code></td>
+<td><code>finalSubject(email)</code> / <code>finalBody(email)</code> from <code>OutreachEmail</code> prop</td>
+<td>Yes — derives from <code>editedX ?? generatedX</code> on the actual DB row</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>campaign-review-page.tsx</code> <code>approved</code> counter</td>
+<td><code>approvedCount(rows.map(r =&gt; r.email))</code></td>
+<td>Server-returned <code>OutreachEmail.status</code> after API mutations</td>
+<td>Yes — <code>onEmailUpdated</code> stores only the server-returned row; state never fabricated client-side</td>
+<td>FLOWING</td>
+</tr>
+</tbody></table>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>27 pure helper tests pass</td>
+<td><code>npx vitest run src/features/outreach/lib/review-helpers.test.ts</code></td>
+<td>27 passed, 0 failed, exit 0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>TypeScript clean across all phase 15 files</td>
+<td><code>npx tsc --noEmit</code></td>
+<td>No errors (npm config warning only)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Commit hashes from summaries exist in git</td>
+<td><code>git log --oneline d48b3c9 78c0cb0 1695a3f 4a633a8 0890f46 2aba3fd</code></td>
+<td>All 6 commits present and match summary descriptions</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REV-01</td>
+<td>15-01, 15-03</td>
+<td>User can review each generated email (subject + body) in the UI</td>
+<td>MET</td>
+<td><code>campaign-review-page.tsx</code> renders one <code>EmailReviewCard</code> per email; card shows <code>finalSubject</code>/<code>finalBody</code> or &quot;Awaiting generation&quot; for pending</td>
+</tr>
+<tr>
+<td>REV-02</td>
+<td>15-01</td>
+<td>User can edit a generated email inline (subject and body)</td>
+<td>MET</td>
+<td>Edit button toggles edit mode with Input/Textarea; PATCH to inline-edit route; auto-transition to <code>edited</code> server-side</td>
+</tr>
+<tr>
+<td>REV-03</td>
+<td>15-01</td>
+<td>User can regenerate a single email (resets to <code>pending</code>)</td>
+<td>MET</td>
+<td>Regenerate button (disabled when <code>!canRegenerate</code>); confirm dialog; PATCH <code>/status { status: &#39;pending&#39; }</code></td>
+</tr>
+<tr>
+<td>REV-04</td>
+<td>15-01, 15-02</td>
+<td>User can approve an email; approve gate enforced</td>
+<td>MET</td>
+<td>UI: <code>disabled={!canApproveEmail(email, contact)}</code>; server: content guard + archived check before <code>db.update</code></td>
+</tr>
+<tr>
+<td>REV-06</td>
+<td>15-01, 15-02</td>
+<td>No-email badge; archived badge blocks approval</td>
+<td>MET</td>
+<td><code>needsLinkedinMessage</code> badge (secondary); <code>isArchived</code> badge (destructive); server rejects approve on archived contact</td>
+</tr>
+</tbody></table>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>None found</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>No TBD/FIXME/XXX markers; no return null/return []/return {} in any phase 15 file; no hardcoded empty state flows to rendering</td>
+</tr>
+</tbody></table>
+<h3>Human Verification Required</h3>
+<p>The automated checks (TypeScript, Vitest, wiring grep) are fully passing. The following require a running browser because they involve visual rendering and live interaction:</p>
+<h4>1. Email Card List Rendering</h4>
+<p><strong>Test:</strong> Navigate to <code>/dashboard/outreach/[id]</code> for a campaign that has emails in multiple statuses (pending, generated, edited, approved)
+<strong>Expected:</strong> Each email renders as a Card showing contact name + company, status badge, and — when generated — subject and body. Pending cards show &quot;Awaiting generation&quot; placeholder. No crashes.
+<strong>Why human:</strong> Visual rendering of the card list and placeholder text cannot be verified by grep or tsc.</p>
+<h4>2. Inline Edit Full Round-Trip</h4>
+<p><strong>Test:</strong> Click Edit on a generated email, modify the subject and body, click Save
+<strong>Expected:</strong> Inputs are pre-seeded with current content; Save issues a PATCH; card updates to show the new text; status badge changes from &quot;generated&quot; to &quot;edited&quot;; no page reload; header approved counter is unaffected
+<strong>Why human:</strong> Interactive state transitions, fetch call in flight, and optimistic state update require a live browser</p>
+<h4>3. Archived Contact Approve Gate (Visual)</h4>
+<p><strong>Test:</strong> Find a campaign with a contact whose <code>archivedAt</code> is set; observe that contact&#39;s EmailReviewCard
+<strong>Expected:</strong> Approve button renders visibly disabled; an &quot;archived&quot; destructive badge appears next to the status badge; clicking the button has no effect
+<strong>Why human:</strong> Button visual disabled state and badge appearance require visual inspection</p>
+<h4>4. Approve Action + Progress Counter Update</h4>
+<p><strong>Test:</strong> Click Approve on a generated email with content and a non-archived contact
+<strong>Expected:</strong> Status badge changes to &quot;approved&quot;; the header <code>X / Y approved</code> counter increments immediately (no reload); the Approve button becomes disabled
+<strong>Why human:</strong> Optimistic local state update driving the progress counter cannot be verified without running the component</p>
+<h4>5. Regenerate with Confirmation Dialog</h4>
+<p><strong>Test:</strong> Click Regenerate on an edited email, observe the confirm dialog, accept it
+<strong>Expected:</strong> <code>window.confirm</code> appears warning that edits will be cleared; on accept, status resets to &quot;pending&quot;, subject/body disappear and &quot;Awaiting generation&quot; placeholder appears; header counter unchanged
+<strong>Why human:</strong> <code>window.confirm</code> interaction and subsequent card state reset require browser execution</p>
+<h4>6. Needs-LinkedIn-Message Badge</h4>
+<p><strong>Test:</strong> View a card for a contact with no stored email address and <code>channel = &#39;email&#39;</code>
+<strong>Expected:</strong> A &quot;needs LinkedIn message&quot; secondary badge appears alongside the status badge
+<strong>Why human:</strong> Badge conditional rendering requires real data with no email to verify visually</p>
+<h3>Gaps Summary</h3>
+<p>None. All automated must-haves pass. No stubs, missing artifacts, or broken links detected. The phase is ready for browser UAT.</p>
+<hr>
+<p><em>Verified: 2026-06-21T15:45:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/15-review-and-approval-ui/15-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
