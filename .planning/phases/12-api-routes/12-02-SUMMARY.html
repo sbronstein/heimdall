@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aaa79f33a1595ec8c/.planning/phases/12-api-routes/12-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+plan: &quot;02&quot;
+subsystem: api
+tags: [outreach, campaigns, emails, contacts, bulk-insert, dedup, filters]
+dependency_graph:
+  requires:
+    - drizzle/schema/outreach-emails.ts
+    - drizzle/schema/outreach-campaigns.ts
+    - drizzle/schema/contacts.ts
+    - src/lib/api/types.ts
+    - src/lib/api/errors.ts
+    - src/lib/api/filters.ts
+    - src/lib/db/timeline.ts
+    - src/lib/domain/types.ts
+  provides:
+    - src/app/api/outreach-campaigns/[id]/emails/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts
+    - src/app/api/contacts/route.ts (modified)
+  affects:
+    - Phase 14 builder UI (bulk-add + contacts filters)
+    - Phase 15 review UI (email list + inline edit)
+    - Phase 16 generation skill (pending email queue)
+tech_stack:
+  added: []
+  patterns:
+    - onConflictDoNothing dedup for bulk insert (CAMP-07)
+    - conditions[] + sql.join filter accumulation (D-07)
+    - campaign-scoped writes via and(eq(id), eq(campaignId)) (CD-06)
+    - auto status transition generated/approved→edited on edit (CD-02)
+    - hard delete returning 204 (CD-04)
+key_files:
+  created:
+    - src/app/api/outreach-campaigns/[id]/emails/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts
+  modified:
+    - src/app/api/contacts/route.ts
+decisions:</p>
+<ul>
+<li>&quot;onConflictDoNothing() on UNIQUE(campaign_id, contact_id) — no target spec needed because the table has one unique constraint&quot;</li>
+<li>&quot;Single aggregate timeline event for bulk-add (outreach_emails_added) — not one per contact (D-04)&quot;</li>
+<li>&quot;CD-02 auto-transition: isEdit checks editedSubject/editedBody undefined (not null) so a nulling write still triggers the guard&quot;
+metrics:
+  duration: &quot;~20 minutes&quot;
+  completed: &quot;2026-06-21T02:00:48Z&quot;
+  tasks_completed: 3
+  files_changed: 3</li>
+</ul>
+<hr>
+<h1>Phase 12 Plan 02: Email Collection Surface + Contact Filters Summary</h1>
+<p><strong>One-liner:</strong> Bulk-dedup email add via <code>onConflictDoNothing</code>, campaign-scoped email list/edit/hard-delete, and three additive contact filters (howMet ilike, connectionYearStart/End gte/lte).</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Task</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Email list + bulk-dedup-add route</td>
+<td><code>561a793</code></td>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code> (created)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Email inline-edit + hard-delete route</td>
+<td><code>a7a8806</code></td>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code> (created)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>howMet + connection-year filters on GET /api/contacts</td>
+<td><code>69c6b7f</code></td>
+<td><code>src/app/api/contacts/route.ts</code> (modified)</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1 — GET + POST <code>/api/outreach-campaigns/[id]/emails</code></h3>
+<ul>
+<li><strong>GET</strong>: cursor-paginated list scoped to <code>campaignId</code>, with <code>leftJoin contacts</code>, optional <code>?status=</code> filter via <code>inArray</code>+<code>parseArrayParam</code>, uses <code>sql.join</code> conditions idiom, returns <code>{ email, contact }</code> shaped rows.</li>
+<li><strong>POST</strong>: Zod <code>bulkAddEmailsSchema</code> (<code>z.array(z.string().uuid()).min(1).max(500)</code>), verifies campaign exists (404 on unknown), inserts one <code>pending</code> row per contactId in a single bulk insert with <code>onConflictDoNothing()</code>, returns <code>201 { inserted, skipped }</code>. Logs ONE aggregate <code>outreach_emails_added</code> timeline event (not one per contact — D-04). Second POST of the same contactIds yields <code>{ inserted:0, skipped:N }</code> (CAMP-07 idempotency).</li>
+</ul>
+<h3>Task 2 — PATCH + DELETE <code>/api/outreach-campaigns/[id]/emails/[emailId]</code></h3>
+<ul>
+<li><strong>PATCH</strong>: Whitelist-only edit — <code>inlineEditSchema</code> accepts <code>editedSubject</code>, <code>editedBody</code>, <code>recipientEmail</code> (no status, timestamps, or contactId can be mass-assigned — T-12-07). Selects existing row with <code>and(eq(id, emailId), eq(campaignId, id))</code> for CD-06 scoping. Auto-transitions <code>generated→edited</code> and <code>approved→edited</code> when edit fields are written (CD-02). Logs <code>outreach_email_edited</code>.</li>
+<li><strong>DELETE</strong>: Hard delete (<code>db.delete</code>; no <code>archivedAt</code> on <code>outreach_emails</code>), returns 204, logs <code>outreach_email_deleted</code>. Freeing the row means a later <code>POST .../emails</code> with the same <code>contactId</code> succeeds with <code>inserted:1</code> (CD-04 UNIQUE slot freed).</li>
+</ul>
+<h3>Task 3 — howMet + connection-year filters on GET /api/contacts</h3>
+<p>Three additive AND-composed predicates inserted into the existing <code>conditions[]</code> pipeline:</p>
+<ul>
+<li><code>?howMet=conference</code> → <code>ilike(contacts.howMet, &#39;%conference%&#39;)</code> (case-insensitive)</li>
+<li><code>?connectionYearStart=2021</code> → <code>gte(contacts.linkedinConnectionDate, new Date(&#39;2021-01-01&#39;))</code></li>
+<li><code>?connectionYearEnd=2022</code> → <code>lte(contacts.linkedinConnectionDate, new Date(&#39;2022-12-31T23:59:59&#39;))</code></li>
+</ul>
+<p>Added <code>gte, lte</code> to the drizzle-orm import. No other changes — existing <code>closeness</code>/<code>outreachStatus</code>/<code>warmth</code>/<code>relationship</code>/<code>search</code> filters unchanged.</p>
+<h2>Verification Results</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> passes on all three tasks (no errors, only npm config warning)</li>
+<li><code>onConflictDoNothing</code> count in emails route: 1 (single dedup call)</li>
+<li><code>outreach_emails_added</code> count in emails route: 1 (single aggregate event)</li>
+<li>D-07 filter term count in contacts route: 10 (&gt;= 3 required)</li>
+<li><code>grep &quot;.delete&quot; emailId/route.ts</code> returns 1 (hard delete confirmed — prettier split <code>db</code> + <code>.delete</code> across two lines, so <code>grep &quot;db.delete&quot;</code> returns 0; this is a formatting artifact not a functional issue)</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Minor: <code>db.delete</code> split across lines by prettier</h3>
+<ul>
+<li><strong>Found during:</strong> Task 2 post-commit verification</li>
+<li><strong>Issue:</strong> Plan acceptance criteria says <code>grep -c &quot;db.delete&quot; ...</code> returns 1; prettier reformatted <code>db</code> on one line and <code>.delete(outreachEmails)</code> on the next, so the grep returns 0</li>
+<li><strong>Impact:</strong> Zero — the hard delete is correctly implemented; only the grep pattern doesn&#39;t match the formatted output</li>
+<li><strong>Fix:</strong> None needed; acceptance criteria intent (confirm hard delete, no <code>archivedAt</code>) is satisfied by <code>grep &quot;.delete&quot;</code> returning 1</li>
+</ul>
+<h3>Minor: <code>and</code> imported but not used in Task 1 emails/route.ts</h3>
+<ul>
+<li><strong>Found during:</strong> Task 1 implementation</li>
+<li><strong>Issue:</strong> <code>and</code> was in the import but the GET/POST handlers use the <code>conditions[]</code> + <code>sql.join</code> idiom instead — <code>and</code> is unused</li>
+<li><strong>Impact:</strong> <code>@typescript-eslint/no-unused-vars</code> is <code>warn</code> not <code>error</code>; TypeScript compile passes; lint-staged passed</li>
+<li><strong>Fix:</strong> None needed at this stage; removing it would not change behavior</li>
+</ul>
+<h2>Threat Model Compliance</h2>
+<p>All T-12-05 through T-12-09 mitigations applied:</p>
+<ul>
+<li><strong>T-12-05</strong>: <code>z.array(z.string().uuid()).min(1).max(500)</code> validates contactIds before insert; FK rejects unknown contacts at DB level</li>
+<li><strong>T-12-06</strong>: All writes guarded by <code>and(eq(id, emailId), eq(campaignId, id))</code> — cross-campaign access returns 404</li>
+<li><strong>T-12-07</strong>: <code>inlineEditSchema</code> whitelist prevents mass assignment; status derived server-side only</li>
+<li><strong>T-12-08</strong>: <code>z.string().email()</code> validates <code>recipientEmail</code> format</li>
+<li><strong>T-12-09</strong>: <code>ilike</code> value parameterized by Drizzle; year params used in <code>new Date()</code> constructor only</li>
+</ul>
+<h2>Known Stubs</h2>
+<p>None — all routes wire to real DB operations with no placeholder data.</p>
+<h2>Threat Flags</h2>
+<p>None — no new network endpoints, auth paths, or schema changes beyond what the plan&#39;s threat model covers.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code> — FOUND</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code> — FOUND</li>
+<li><code>src/app/api/contacts/route.ts</code> — FOUND (modified)</li>
+<li>Commits <code>561a793</code>, <code>a7a8806</code>, <code>69c6b7f</code> — FOUND in git log</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-aaa79f33a1595ec8c/.planning/phases/12-api-routes/12-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
