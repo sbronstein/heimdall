@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 14: Campaign Builder UI - Context</h1>
+<p><strong>Gathered:</strong> 2026-06-21
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>The browser UI for the v1.2 outreach flow — <strong>pure UI over the API surface already shipped in Phase 12</strong>. Two things ship:</p>
+<ol>
+<li><strong>Campaign list</strong> at <code>/dashboard/outreach/</code> — cards showing each campaign with per-status progress.</li>
+<li><strong>Campaign builder</strong> — a single screen where the owner loads their contacts, filters them (howMet, connection year/range, closeness, outreach status), checkbox-multi-selects recipients into a persistent &quot;selected&quot; tray, names the campaign + writes a goal/instruction, and saves — which creates the campaign, bulk-adds the selected contacts as <code>outreach_email</code> rows, and navigates to a placeholder review page.</li>
+</ol>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>New <code>/dashboard/outreach/</code> route (campaign list) + new sidebar nav entry.</li>
+<li>A new <strong>purpose-built selection list</strong> component for the builder (not the contact data-table, not the triage card flow).</li>
+<li>A filter bar reusing the triage button-bar controls (<code>ConnectionYearFilter</code>, <code>ClosenessButtonBar</code>) plus howMet + outreach-status controls.</li>
+<li>An inline name + goal/instruction panel on the builder.</li>
+<li>The save sequence: <code>POST /api/outreach-campaigns</code> → <code>POST .../[id]/emails</code> (bulk add) → navigate.</li>
+<li>A <strong>minimal placeholder</strong> <code>/dashboard/outreach/[id]</code> review page (campaign header + added-contacts list at <code>pending</code>) so save has a real destination. Phase 15 enriches it.</li>
+</ul>
+<p><strong>Out of scope (other phases — do NOT build here):</strong></p>
+<ul>
+<li>Any new API route, mutation, or schema change — the entire campaign/email REST surface and <code>GET /api/contacts</code> filters shipped in Phase 12. Phase 14 only <strong>calls</strong> them.</li>
+<li>Email review/edit/approve/regenerate UI, status badges per email, progress header with approve gate — <strong>Phase 15</strong> (this phase ships only the thin placeholder review page).</li>
+<li>Email generation / personalization — Phase 16 skill.</li>
+<li>Gmail draft creation / recipient discovery — Phase 17 skill.</li>
+<li>Triage&#39;s own connection-year filter — already shipped in Phase 13.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Contact selection surface (Area 1)</h3>
+<ul>
+<li><strong>D-01:</strong> <strong>Purpose-built selection list</strong> — a new component tuned for multi-select, NOT the existing contact data-table and NOT the triage one-at-a-time card flow. Dense, scannable rows with checkboxes.</li>
+<li><strong>D-02:</strong> <strong>Each row shows all four field groups:</strong> (a) name + howMet + closeness tier badge, (b) current company / role (and/or company/role at-connection), (c) LinkedIn connection date, (d) outreach status + last-contacted date. Enough signal to decide inclusion at a glance and to avoid re-adding someone recently contacted.</li>
+<li><strong>D-03:</strong> <strong>Selections persist across filter changes.</strong> Filtering to one cohort, checking some, then re-filtering to a different cohort <em>adds</em> to the set — a running &quot;<strong>N selected</strong>&quot; tray reflects the full selection regardless of the active filter. This enables building one campaign from multiple cohorts. (Explicitly NOT &quot;reset on filter change&quot; and NOT &quot;drop selections filtered out of view.&quot;)</li>
+<li><strong>D-04:</strong> <strong>Default ordering = closeness, closest first</strong> (tier 1–2 at top). Prioritizes the strongest relationships when scanning.</li>
+</ul>
+<h3>Filter bar + data flow (Area 2)</h3>
+<ul>
+<li><strong>D-05:</strong> <strong>Load all non-archived contacts up front, filter client-side in memory.</strong> This <strong>deliberately OVERRIDES the Phase 13 D-08 plan</strong>, which assumed the builder would drive server-side <code>GET /api/contacts</code> query params. The owner chose load-all client-side filtering instead. Consequence: it makes D-03 (persist-across-filters) and the select-all semantics (D-08) trivial because every matching contact is already in memory.</li>
+<li><strong>D-06:</strong> <strong>Load set = all contacts where <code>archived_at IS NULL</code></strong> (~1500 today). Not scoped to triaged-only. The four filters then narrow this in-memory set.</li>
+<li><strong>D-07:</strong> <strong>Reuse the triage button-bar filter controls</strong> — <code>ConnectionYearFilter</code> (built reusable in Phase 13) and <code>ClosenessButtonBar</code> — and add howMet + outreach-status controls in the same button-bar style. The <strong>outreach-status filter defaults to showing only &quot;not yet contacted&quot;</strong> so the owner doesn&#39;t re-target people mid-sequence; the DB dedup (CAMP-07, <code>onConflictDoNothing</code>) still backstops at save.</li>
+</ul>
+<h3>Select-all semantics (Area 3)</h3>
+<ul>
+<li><strong>D-08:</strong> <strong>&quot;Select all&quot; selects every row matching the current filter</strong>, added on top of (not replacing) anything already in the tray. Per-cohort select-all is the intended way to build up a large recipient set. This satisfies CAMP-05 &quot;select-all within the current filter.&quot; (NOT &quot;select all 1500 ignoring the filter.&quot;)</li>
+<li><strong>D-09:</strong> <strong>The selected tray supports review + remove individuals + clear-all.</strong> The owner can expand the tray to see everyone selected, remove people one at a time, and reset entirely — so a cross-cohort set can be pruned before committing.</li>
+</ul>
+<h3>Campaign list + save flow (Area 4)</h3>
+<ul>
+<li><strong>D-10:</strong> <strong><code>/dashboard/outreach/</code> renders campaigns as cards</strong> with name, goal snippet, status, and a segmented <strong>progress bar / count badges</strong> for selected · generated · approved · drafted (the per-status counts <code>GET /api/outreach-campaigns</code> already returns). Satisfies success criterion #1.</li>
+<li><strong>D-11:</strong> <strong>Name + goal/instruction are entered in an inline panel on the builder</strong> (side or top), on the same screen as the selection list — one screen to filter, select, name, and save. NOT a save-time dialog and NOT a separate first step.</li>
+<li><strong>D-12:</strong> <strong>Save sequence:</strong> <code>POST /api/outreach-campaigns { name, goalInstruction }</code> → take returned id → <code>POST /api/outreach-campaigns/[id]/emails { contactIds }</code> (bulk add, deduped server-side) → navigate to <code>/dashboard/outreach/[id]</code>.</li>
+<li><strong>D-13:</strong> <strong>Save navigates to a minimal placeholder review page</strong> at <code>/dashboard/outreach/[id]</code>: campaign header (name, goal, per-status counts) + a list of the added contacts showing <code>pending</code> status. Phase 15 enriches this same route with edit/approve/regenerate. This gives criterion #4 (&quot;navigates to its review page&quot;) a real destination without building Phase 15&#39;s scope.</li>
+<li><strong>D-14:</strong> <strong>Hard save gate = campaign name present AND ≥1 contact selected.</strong> Goal/instruction is <strong>optional</strong> at creation time (the owner did not require it; it can be added/edited before Phase 16 generation runs).</li>
+</ul>
+<h3>Claude&#39;s Discretion (planner decides; recommendation given)</h3>
+<ul>
+<li><strong>CD-01:</strong> <strong>Disable the Save button while the two POSTs are in flight</strong> so a double-click cannot create two campaigns. Standard correctness — recommended, not user-mandated.</li>
+<li><strong>CD-02:</strong> <strong>Handle the partial-failure path</strong> where campaign-create succeeds but bulk-add fails — surface an error rather than silently landing on an empty campaign. Two sequential POSTs need a defined failure path. Recommended.</li>
+<li><strong>CD-03:</strong> <strong>Where the new selection-list + filter-bar components live</strong> (e.g. <code>src/features/outreach/components/</code>) and how the reused triage controls are imported/shared — planner&#39;s call following the established feature-folder convention. The reusable piece from Phase 13 is the control + nuqs URL state, not a data-fetch path (the builder fetches differently per D-05).</li>
+<li><strong>CD-04:</strong> <strong>Closeness ordering (D-04) implemented client-side</strong> over the loaded set (consistent with D-05 load-all), rather than relying on an API sort param. Recommended.</li>
+<li><strong>CD-05:</strong> <strong>Empty/loading states</strong> — skeleton while the ~1500-contact load resolves; clear empty-state copy when a filter matches nothing (mirror Phase 13 D-07&#39;s live-count + empty-message pattern). Planner specifies copy.</li>
+<li><strong>CD-06:</strong> <strong>Goal/instruction field UX</strong> (placeholder/help text hinting it drives Phase 16 generation) — planner&#39;s call.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.2 milestone trail</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;CAMP-01&quot;–&quot;CAMP-05&quot; — the five requirements this phase delivers (filter by howMet / connection year / closeness / outreach status; checkbox multi-select incl. select-all-within-filter). Note CAMP-06/07/08 (create, dedup bulk insert, list counts) are already <strong>Complete</strong> in Phase 12 — this phase consumes them.</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 14: Campaign Builder UI&quot; — goal + 5 success criteria (the <code>/dashboard/outreach/</code> list, simultaneous filtering, checkbox + select-all, name+goal save→navigate, no-duplicate-on-double-save).</li>
+</ul>
+<h3>Phase 12 — the API this UI consumes (read before planning)</h3>
+<ul>
+<li><code>.planning/phases/12-api-routes/12-CONTEXT.md</code> — the locked REST surface. Key endpoints this phase calls: <code>POST /api/outreach-campaigns</code> (create <code>{ name, goalInstruction }</code>), <code>POST .../[id]/emails</code> (bulk add <code>{ contactIds }</code>, deduped via <code>onConflictDoNothing</code> → CAMP-07/criterion #5), <code>GET /api/outreach-campaigns</code> (list + per-status <code>emailCounts</code> for the progress cards → D-10), and the extended <code>GET /api/contacts</code> filters.</li>
+<li><code>src/app/api/outreach-campaigns/route.ts</code> and <code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code> — exact request/response shapes the builder posts to and the bulk-add <code>{ inserted, skipped }</code>-style response (CD-05 in 12-CONTEXT).</li>
+<li><code>src/app/api/contacts/route.ts</code> — the <code>GET /api/contacts</code> route; even though D-05 filters client-side, this is the source for the contact list payload and confirms the available fields (howMet, closeness, outreach status, <code>linkedinConnectionDate</code>, company/role).</li>
+</ul>
+<h3>Phase 13 — reusable filter control (read before building the filter bar)</h3>
+<ul>
+<li><code>.planning/phases/13-triage-connection-date-filter/13-CONTEXT.md</code> — D-08 explicitly flags this phase as the reuse target and warns the <strong>filtering path differs</strong> (triage = in-memory; builder originally planned server-side — now ALSO in-memory per D-05). The reusable piece is the control + nuqs state.</li>
+<li><code>src/features/contacts/components/triage/connection-year-filter.tsx</code> — the <code>ConnectionYearFilter</code> reusable button-bar control (data-derived year set, click-to-range, keyboard nav, forwardRef handle) to reuse in the builder&#39;s filter bar (D-07).</li>
+<li><code>src/features/contacts/components/triage/closeness-button-bar.tsx</code> — the <code>ClosenessButtonBar</code> control (<code>onSelect</code>, forwardRef handle) to reuse for the closeness filter (D-07).</li>
+<li><code>src/features/contacts/components/triage/how-met-input.tsx</code>, <code>last-contact-year.tsx</code> — patterns for the howMet and additional button-bar style controls.</li>
+</ul>
+<h3>UI patterns to mirror (read before writing components)</h3>
+<ul>
+<li><code>src/app/dashboard/contacts/page.tsx</code> — the RSC page pattern: server-side DB read for initial data → <code>&lt;PageContainer&gt;</code> → client feature component. Template for the new <code>src/app/dashboard/outreach/page.tsx</code> (and <code>[id]/page.tsx</code>).</li>
+<li><code>src/components/layout/page-container.tsx</code> (<code>PageContainer</code>) — page chrome wrapper used by every dashboard page.</li>
+<li><code>src/features/contacts/components/triage/triage-workflow.tsx</code> — closest analog for a <code>&#39;use client&#39;</code> component that holds a loaded contact set + filter controls and narrows it in memory (the D-05/D-06 pattern).</li>
+<li><code>src/config/nav-config.ts</code> — sidebar nav config; add the new Outreach entry here.</li>
+<li><code>src/components/ui/*</code> — shadcn primitives (Card, Checkbox, Progress, Badge, Button, Input/Textarea) for the cards (D-10), selection rows (D-02), and inline name/goal panel (D-11).</li>
+<li><code>src/hooks/use-data-table.ts</code> / <code>src/features/contacts/components/contact-table/index.tsx</code> — nuqs <code>useQueryState</code> URL-state pattern (for filter persistence) and an example of the data-table infra we are <strong>not</strong> using for selection (D-01) but whose nuqs pattern still applies.</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> / <code>.planning/PROJECT.md</code> — REST-only (no server actions — the builder mutates via <code>fetch</code> to the API routes), <code>{ success, data, error, meta }</code> envelope on reads, TypeScript strict, named exports, <code>&#39;use client&#39;</code> only where needed, soft delete via <code>archived_at</code>.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> / <code>.planning/codebase/STRUCTURE.md</code> — kebab-case files, <code>src/features/&lt;domain&gt;/components/</code> layout, PascalCase component named exports, <code>interface [Name]Props</code>.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>ConnectionYearFilter</code></strong> (<code>triage/connection-year-filter.tsx</code>) — reuse directly in the builder filter bar (D-07); built reusable in Phase 13 for exactly this.</li>
+<li><strong><code>ClosenessButtonBar</code></strong> (<code>triage/closeness-button-bar.tsx</code>) — reuse for the closeness filter (D-07).</li>
+<li><strong>shadcn primitives</strong> (<code>src/components/ui/</code>) — Card / Progress / Badge for the campaign list cards (D-10); Checkbox for selection rows; Input/Textarea for the inline name+goal panel (D-11).</li>
+<li><strong>Phase 12 API routes</strong> — all create/bulk-add/list endpoints already exist; the builder only issues <code>fetch</code> calls (D-12).</li>
+<li><strong>nuqs <code>useQueryState</code></strong> — established for URL-persisted filter state (use for the builder&#39;s filters so a reload restores them).</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>RSC page → client feature component</strong> — <code>dashboard/**/page.tsx</code> does the initial DB read and passes typed props to a <code>&#39;use client&#39;</code> component. The outreach list page and the builder follow this (CD-03).</li>
+<li><strong>Triage loads the full set + a client component filters in memory</strong> — the exact shape D-05/D-06 adopt (load all non-archived contacts, narrow client-side). <code>triage-workflow.tsx</code> is the closest template.</li>
+<li><strong>Filter controls are button-bars, not dropdowns</strong> — the app convention; the new howMet + outreach-status controls follow it (D-07).</li>
+<li><strong>All mutations via <code>fetch</code> to <code>/api/*</code></strong> — no server actions (CLAUDE.md). Save = two sequential POSTs (D-12).</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Sidebar</strong> — new Outreach entry in <code>src/config/nav-config.ts</code>.</li>
+<li><strong><code>GET /api/outreach-campaigns</code></strong> — feeds the campaign list cards + per-status counts (D-10).</li>
+<li><strong><code>POST /api/outreach-campaigns</code> + <code>POST .../[id]/emails</code></strong> — the save path (D-12); dedup is server-side (criterion #5 already guaranteed by Phase 12).</li>
+<li><strong><code>/dashboard/outreach/[id]</code></strong> — the placeholder review page (D-13) is the seam Phase 15 builds onto.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><strong>Concrete use case:</strong> build a campaign from a cohort like &quot;ID.me colleagues 2021–2022&quot; (the same cohort framing Phase 13&#39;s year filter was built for), then add a second cohort to the same campaign before saving — which is why selections persist across filter changes (D-03).</li>
+<li><strong>Tray as the source of truth for &quot;who&#39;s in&quot;:</strong> the running &quot;N selected&quot; tray (D-03/D-09) is the owner&#39;s working set; the filtered list is just the discovery surface.</li>
+<li><strong>Progress cards</strong> (D-10) reuse the four counts the API already groups (selected/generated/approved/drafted) — no new aggregation needed.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Rich review/edit/approve UI</strong> — per-email edit, approve gate, regenerate, status badges, approve/total header — <strong>Phase 15</strong>. Phase 14 ships only the thin placeholder review page (D-13).</li>
+<li><strong>Free-text name search within the selection list</strong> — the &quot;hybrid server+client&quot; filter option was not chosen; the four structured filters are the scope. Revisit if scanning by name becomes painful.</li>
+<li><strong>Server-side paginated contact loading for the builder</strong> — explicitly rejected in favor of load-all client-side (D-05). Revisit only if the contact count grows enough that loading all non-archived rows becomes a real perf problem (note: project flags full-table contact scans as already noticeable at 1500+ — keep an eye on the payload size).</li>
+<li><strong>Re-adding already-contacted contacts as a first-class flow</strong> — the outreach-status filter defaults to hiding them (D-07); a deliberate &quot;re-target&quot; mode is a later concern.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos matched this phase.</p>
+</deferred><hr>
+<p><em>Phase: 14-Campaign Builder UI</em>
+<em>Context gathered: 2026-06-21</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

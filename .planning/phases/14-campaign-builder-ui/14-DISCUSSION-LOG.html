@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 14: Campaign Builder UI - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-06-21
+<strong>Phase:</strong> 14-campaign-builder-ui
+<strong>Areas discussed:</strong> Selection surface, Filter bar + data flow, Select-all at scale, List + save flow</p>
+<hr>
+<h2>Selection surface</h2>
+<h3>Surface type</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reuse data-table + checkbox column</td>
+<td>Add selection column to existing contact data-table (@tanstack supports row selection); least new code</td>
+<td></td>
+</tr>
+<tr>
+<td>Purpose-built selection list</td>
+<td>Custom dense list tuned for selection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Triage-style one-at-a-time</td>
+<td>Card-by-card include/skip flow</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Purpose-built selection list.</p>
+<h3>Row fields</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name + howMet + closeness</td>
+<td>Core identity + relationship signals</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Company / role</td>
+<td>Current company + title / at-connection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Connection date</td>
+<td>LinkedIn connection date</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Outreach status + last contact</td>
+<td>Already-in-campaign / outreach state + last-contacted</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> All four field groups.</p>
+<h3>Selection persistence on filter change</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Persist across filter changes</td>
+<td>Selections accumulate; running &quot;N selected&quot; tray shows full set</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Reset on filter change</td>
+<td>Changing filter clears selection</td>
+<td></td>
+</tr>
+<tr>
+<td>Persist but only within results</td>
+<td>Survive but drop contacts filtered out of view</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Persist across filter changes.</p>
+<h3>Default ordering</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Connection date (newest first)</td>
+<td>Pairs with year filter</td>
+<td></td>
+</tr>
+<tr>
+<td>Closeness (closest first)</td>
+<td>Tier 1–2 at top; prioritizes strongest relationships</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Last contact (most stale first)</td>
+<td>Re-engagement framing</td>
+<td></td>
+</tr>
+<tr>
+<td>Name (A–Z)</td>
+<td>Predictable, no prioritization</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Closeness (closest first).</p>
+<hr>
+<h2>Filter bar + data flow</h2>
+<h3>Data flow</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server-side refetch via GET /api/contacts</td>
+<td>Each filter change refetches; authoritative; matches Phase 13 D-08</td>
+<td></td>
+</tr>
+<tr>
+<td>Load-all then filter client-side</td>
+<td>Fetch full set once, filter in memory like triage</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Hybrid — server filter, client refine</td>
+<td>Server structured filters + client text search</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Load-all then filter client-side.
+<strong>Notes:</strong> Deliberately overrides the Phase 13 D-08 plan (server-side params). Also makes persist-across-filters and select-all trivial since all matching contacts are in memory.</p>
+<h3>Load scope</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All non-archived contacts</td>
+<td>Every contact where archived_at is null (~1500)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Non-archived, excluding triage-pending</td>
+<td>Only triaged contacts</td>
+<td></td>
+</tr>
+<tr>
+<td>Non-archived, paginated lazy-load</td>
+<td>Chunked load</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> All non-archived contacts.</p>
+<h3>Filter controls + outreach-status default</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reuse button-bars; default-hide already-contacted</td>
+<td>Reuse ConnectionYearFilter + ClosenessButtonBar + howMet + outreach-status; default to &quot;not yet contacted&quot;</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Reuse button-bars; show all statuses by default</td>
+<td>Same controls, no default status filter</td>
+<td></td>
+</tr>
+<tr>
+<td>Build fresh filter controls</td>
+<td>Purpose-built bar, duplicate working controls</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Reuse button-bars; default-hide already-contacted.</p>
+<hr>
+<h2>Select-all at scale</h2>
+<h3>Select-all semantics</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All rows matching the current filter</td>
+<td>Adds every contact in active filtered view to tray, additive</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>All loaded contacts (ignore filter)</td>
+<td>Selects entire ~1500 set regardless of filter</td>
+<td></td>
+</tr>
+<tr>
+<td>All matching + a clear-all toggle</td>
+<td>Matching current filter, toggles to deselect-all-in-filter</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> All rows matching the current filter.</p>
+<h3>Tray management</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Review list + remove individuals + clear-all</td>
+<td>Expand tray, remove people, reset</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Count + clear-all only</td>
+<td>Running count + clear-all; re-find to remove one</td>
+<td></td>
+</tr>
+<tr>
+<td>Count only</td>
+<td>Just a live number</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Review list + remove individuals + clear-all.</p>
+<hr>
+<h2>List + save flow</h2>
+<h3>Campaign list layout</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cards with progress bar + count badges</td>
+<td>Per-campaign card with segmented progress for selected·generated·approved·drafted</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Data-table rows</td>
+<td>Reuse data-table, counts as columns</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact list rows</td>
+<td>Stacked rows + inline count chips</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Cards with progress bar + count badges.</p>
+<h3>Create-form placement</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Inline panel on the builder</td>
+<td>Name + goal on the same builder screen; one screen to filter/select/name/save</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Dialog on Save</td>
+<td>Modal asks name + goal at save time</td>
+<td></td>
+</tr>
+<tr>
+<td>Separate first step</td>
+<td>Name + goal on a dedicated screen first</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Inline panel on the builder.</p>
+<h3>Save target (review page is Phase 15)</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Minimal placeholder review page</td>
+<td>Thin /dashboard/outreach/[id]: header + pending contacts list</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Navigate back to the campaign list</td>
+<td>Return to /dashboard/outreach/</td>
+<td></td>
+</tr>
+<tr>
+<td>Toast + stay on builder</td>
+<td>Confirm + reset builder</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Minimal placeholder review page.</p>
+<h3>Save guards</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Require name + at least 1 contact</td>
+<td>Disable Save until name + ≥1 contact</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Require goal/instruction too</td>
+<td>Also require goal field</td>
+<td></td>
+</tr>
+<tr>
+<td>Handle partial-failure on bulk-add</td>
+<td>Surface error if create succeeds but bulk-add fails</td>
+<td></td>
+</tr>
+<tr>
+<td>Disable double-submit</td>
+<td>Disable Save while POSTs in flight</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Require name + at least 1 contact (goal optional).
+<strong>Notes:</strong> Partial-failure handling and double-submit disabling were not user-mandated but captured as planner-discretion correctness items (CD-01, CD-02 in CONTEXT.md).</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<ul>
+<li>Disable Save during in-flight POSTs (anti double-submit) — CD-01.</li>
+<li>Partial-failure path when create succeeds but bulk-add fails — CD-02.</li>
+<li>Component file locations under <code>src/features/outreach/components/</code> — CD-03.</li>
+<li>Closeness ordering implemented client-side over loaded set — CD-04.</li>
+<li>Empty/loading states (skeleton + empty-match copy) — CD-05.</li>
+<li>Goal/instruction field placeholder/help text — CD-06.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Rich review/edit/approve UI — Phase 15.</li>
+<li>Free-text name search within the selection list — not chosen (hybrid option declined).</li>
+<li>Server-side paginated contact loading for the builder — rejected for load-all client-side; revisit if payload grows.</li>
+<li>First-class &quot;re-target already-contacted&quot; mode — default-hidden for now.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
