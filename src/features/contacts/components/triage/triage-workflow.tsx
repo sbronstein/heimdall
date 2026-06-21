@@ -1,16 +1,41 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { parseAsInteger, useQueryStates } from 'nuqs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Contact } from '@/lib/domain/types';
+import {
+  clampConnectionYear,
+  deriveConnectionYears,
+  filterByConnectionYearRange
+} from '@/features/contacts/lib/connection-year';
 import { TriageCard } from './triage-card';
-import { ClosenessButtonBar, type ClosenessButtonBarHandle } from './closeness-button-bar';
-import { HowMetInput, type HowMetInputHandle, type HowMetSuggestion } from './how-met-input';
-import { LastContactYear, type LastContactYearHandle } from './last-contact-year';
+import {
+  ClosenessButtonBar,
+  type ClosenessButtonBarHandle
+} from './closeness-button-bar';
+import {
+  ConnectionYearFilter,
+  type ConnectionYearFilterHandle
+} from './connection-year-filter';
+import {
+  HowMetInput,
+  type HowMetInputHandle,
+  type HowMetSuggestion
+} from './how-met-input';
+import {
+  LastContactYear,
+  type LastContactYearHandle
+} from './last-contact-year';
 import { TriageProgress } from './triage-progress';
-import { IconArrowRight, IconArrowBackUp, IconX, IconCheck } from '@tabler/icons-react';
+import {
+  IconArrowRight,
+  IconArrowBackUp,
+  IconX,
+  IconCheck
+} from '@tabler/icons-react';
 
 interface HistoryEntry {
   contactId: string;
@@ -27,11 +52,17 @@ interface TriageWorkflowProps {
   exitUrl?: string;
 }
 
-export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageWorkflowProps) {
+export function TriageWorkflow({
+  contacts,
+  howMetSuggestions,
+  exitUrl
+}: TriageWorkflowProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [howMet, setHowMet] = useState('');
-  const [lastContactYear, setLastContactYear] = useState(new Date().getFullYear());
+  const [lastContactYear, setLastContactYear] = useState(
+    new Date().getFullYear()
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [skipped, setSkipped] = useState(0);
@@ -41,9 +72,36 @@ export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageW
   const howMetInputRef = useRef<HowMetInputHandle>(null);
   const yearButtonsRef = useRef<LastContactYearHandle>(null);
   const closenessRef = useRef<ClosenessButtonBarHandle>(null);
+  const connectionYearFilterRef = useRef<ConnectionYearFilterHandle>(null);
 
-  const total = contacts.length;
-  const current = contacts[currentIndex] as Contact | undefined;
+  // Connection-year filter — read the same URL keys the control writes
+  const [{ connectionYearStart, connectionYearEnd }] = useQueryStates({
+    connectionYearStart: parseAsInteger,
+    connectionYearEnd: parseAsInteger
+  });
+
+  const connectionYears = useMemo(
+    () => deriveConnectionYears(contacts),
+    [contacts]
+  );
+
+  const filteredContacts = useMemo(
+    () =>
+      filterByConnectionYearRange(
+        contacts,
+        clampConnectionYear(connectionYearStart),
+        clampConnectionYear(connectionYearEnd)
+      ),
+    [contacts, connectionYearStart, connectionYearEnd]
+  );
+
+  const total = filteredContacts.length;
+  const current = filteredContacts[currentIndex] as Contact | undefined;
+
+  // Reset queue position when the connection-year filter changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [connectionYearStart, connectionYearEnd]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pre-snap year from existing lastContactDate
   useEffect(() => {
@@ -188,6 +246,36 @@ export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageW
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, skip, exit]);
 
+  // Empty-filter state: filter is active but no contacts match (D-07)
+  if (
+    total === 0 &&
+    (connectionYearStart != null || connectionYearEnd != null)
+  ) {
+    const rangeLabel =
+      connectionYearStart != null && connectionYearEnd != null
+        ? `${connectionYearStart}–${connectionYearEnd}`
+        : String(connectionYearStart ?? connectionYearEnd);
+
+    return (
+      <div className='mx-auto max-w-lg space-y-6 py-12 text-center'>
+        <h2 className='text-2xl font-bold'>No Results</h2>
+        <Card>
+          <CardContent className='pt-6'>
+            <p className='text-muted-foreground'>
+              No connections from {rangeLabel} — clear the filter to see all
+              contacts.
+            </p>
+          </CardContent>
+        </Card>
+        <ConnectionYearFilter
+          ref={connectionYearFilterRef}
+          years={connectionYears}
+        />
+        <Button onClick={exit}>Back to Contacts</Button>
+      </div>
+    );
+  }
+
   if (currentIndex >= total) {
     const elapsed = Math.round((Date.now() - startTime) / 1000);
     const minutes = Math.floor(elapsed / 60);
@@ -195,7 +283,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageW
 
     return (
       <div className='mx-auto max-w-lg space-y-6 py-12 text-center'>
-        <div className='bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 mx-auto flex h-16 w-16 items-center justify-center rounded-full'>
+        <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'>
           <IconCheck className='h-8 w-8' />
         </div>
         <h2 className='text-2xl font-bold'>Triage Complete!</h2>
@@ -234,6 +322,16 @@ export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageW
 
       <TriageProgress current={currentIndex} total={total} />
 
+      <div className='space-y-1'>
+        <ConnectionYearFilter
+          ref={connectionYearFilterRef}
+          years={connectionYears}
+        />
+        <p className='text-muted-foreground text-xs'>
+          {filteredContacts.length} contacts
+        </p>
+      </div>
+
       <TriageCard contact={current!} />
 
       <HowMetInput
@@ -264,8 +362,7 @@ export function TriageWorkflow({ contacts, howMetSuggestions, exitUrl }: TriageW
           onClick={undo}
           disabled={history.length === 0 || isSubmitting}
         >
-          <IconArrowBackUp className='mr-1 h-4 w-4' />
-          U Undo
+          <IconArrowBackUp className='mr-1 h-4 w-4' />U Undo
         </Button>
         <Button
           variant='outline'
