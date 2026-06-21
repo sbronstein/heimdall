@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 12: API Routes - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-06-20
+<strong>Phase:</strong> 12-API Routes
+<strong>Areas discussed:</strong> Generation-context endpoint, Timeline-event granularity, Regenerate reset semantics, Contacts-filter scope</p>
+<hr>
+<h2>Generation-Context Endpoint</h2>
+<h3>Endpoint shape</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One bulk embedded endpoint</td>
+<td><code>GET .../generation-context</code> returns goalInstruction + every pending email with full contact brief + interactions joined in; one round-trip. Overrides the research doc&#39;s per-email N+1 design.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Lean queue + per-email fetch</td>
+<td>Architecture&#39;s original: lean <code>?status=pending</code> ids, skill calls <code>GET /contacts/[id]</code> + <code>GET /interactions</code> per email. N+1.</td>
+<td></td>
+</tr>
+<tr>
+<td>Bulk ids + one batch contacts call</td>
+<td>Queue returns email+contactId pairs; skill makes one <code>GET /contacts?ids=...</code> batch. Two round-trips.</td>
+<td></td>
+</tr>
+</tbody></table>
+<h3>Contact context bundled</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Full brief + recent interactions</td>
+<td>Name, howMet, companyAtConnection, roleAtConnection, current company/title, closeness, recipientEmail + ~3 recent interactions + <code>lowContext</code> flag.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Brief only, no interactions</td>
+<td>Identity/closeness fields only; skill fetches interactions separately.</td>
+<td></td>
+</tr>
+<tr>
+<td>Everything on the contact row</td>
+<td>Full contact record + all interactions. Risks over-referencing stale facts.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> One bulk embedded endpoint; full brief + recent interactions.
+<strong>Notes:</strong> This is the one place Phase 12 deliberately diverges from <code>ARCHITECTURE.md</code> — the ROADMAP goal explicitly adds a &quot;generation-context bulk fetch,&quot; and the project&#39;s anti-N+1 constraint (1500+ contacts) makes the per-email design a non-starter.</p>
+<hr>
+<h2>Timeline-Event Granularity</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Milestones + content writes</td>
+<td>Campaign created/archived + bulk-add (one event) + per-email generation/draft; skip edits/approve/regenerate/recipient.</td>
+<td></td>
+</tr>
+<tr>
+<td>Campaign-level only</td>
+<td>Only campaign created/archived + bulk-add count; no per-email rows.</td>
+<td></td>
+</tr>
+<tr>
+<td>Every write (full audit)</td>
+<td>Every campaign write, edit, and status flip logs a row; distinct event_type per kind.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Every write (full audit). <em>(Initial framing questioned the premise via free-text — see Notes.)</em>
+<strong>Notes:</strong> User pushed back: &quot;What&#39;s the issue with dumping 200 events into the dashboard feed? Obv not a huge amount of data for Postgres.&quot; Correct — it&#39;s not a DB-volume concern. Clarified that the only real cost is feed <em>readability</em> (a campaign run can interleave 200 status-flip rows ahead of higher-signal events like a recruiter reply), and that this is solvable at the render/display layer while un-logged events are unrecoverable. Given that, user chose the complete audit trail — consistent with the project&#39;s &quot;timeline is the system of record&quot; core value. Distinct <code>event_type</code> per kind enables later render-time filtering/grouping.</p>
+<hr>
+<h2>Regenerate Reset Semantics</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clear to clean pending</td>
+<td>Null generated*, edited*, lastError*, generatedAt — pristine pending, identical to a fresh contact. (Phase 11 D-09 recommendation.)</td>
+<td></td>
+</tr>
+<tr>
+<td>Clear edited*, keep generated* stale</td>
+<td>Null edited* + failure fields, leave old generated* until the skill overwrites. UI can show the previous draft greyed while regeneration is queued.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Clear edited*, keep generated* stale.
+<strong>Notes:</strong> <code>edited*</code> clearing is forced regardless (otherwise the <code>editedX ?? generatedX</code> coalesce masks the new generation). Keeping <code>generated*</code> enables a nicer Phase 15 &quot;regenerating, previous draft greyed-out&quot; UX. Tradeoff captured as a hard downstream caveat (CONTEXT D-06): <code>status=&#39;pending&#39;</code> no longer implies &quot;no content&quot; — consumers must check content presence, not status alone.</p>
+<hr>
+<h2>Contacts-Filter Scope</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Land in Phase 12</td>
+<td>Add howMet + connectionYearStart/End filter params to <code>GET /api/contacts</code> now, alongside the outreach tree. Phase 14 stays pure UI.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Defer to Phase 14</td>
+<td>Build the filters next to the builder UI that exercises them.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Land in Phase 12.
+<strong>Notes:</strong> Phase 11 had already assigned these to Phase 12; landing them here makes Phase 12 the single &quot;all API surface&quot; phase. Additive, low-risk — they slot into the existing <code>conditions[]</code> + <code>sql.join</code> filter pattern.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>Captured in CONTEXT.md <code>&lt;decisions&gt;</code> with recommendations for the planner to confirm:</p>
+<ul>
+<li><strong>CD-01</strong> — campaign counts (CAMP-08) via a single GROUP BY query, not N+1 per campaign.</li>
+<li><strong>CD-02</strong> — inline-edit <code>PATCH .../emails/[emailId]</code> auto-transitions <code>generated → edited</code>.</li>
+<li><strong>CD-03</strong> — <code>/status</code> rejects <code>→ approved</code> when <code>editedX ?? generatedX</code> is null (can&#39;t approve an empty email).</li>
+<li><strong>CD-04</strong> — email <code>DELETE</code> is a hard delete (no <code>archivedAt</code> on <code>outreach_emails</code>); campaign <code>DELETE</code> stays soft.</li>
+<li><strong>CD-05</strong> — bulk-add response exposes the inserted count (<code>{ inserted, skipped }</code>).</li>
+<li><strong>CD-06</strong> — write-back routes verify email-belongs-to-campaign before writing; <code>/recipient</code> nulls <code>recipientEmail</code> when <code>channel=&#39;linkedin_message&#39;</code>.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Render-layer feed filtering/grouping for the high-volume outreach events (UI concern, later dashboard pass).</li>
+<li><code>?ids=</code> batch param on <code>GET /api/contacts</code> — the rejected D-01 alternative; revisit only if another consumer needs arbitrary multi-contact fetch.</li>
+<li><code>skipped</code> email status (decline-without-delete) — carried from Phase 11; Phase 12 uses hard DELETE instead.</li>
+<li>DB-side non-null-before-approved CHECK constraint — CD-03 enforces this at the app layer instead.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

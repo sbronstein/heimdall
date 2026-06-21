@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 12: API Routes - Context</h1>
+<p><strong>Gathered:</strong> 2026-06-20
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>The full <code>/api/outreach-campaigns/</code> REST surface for v1.2 Networking Outreach Campaigns, landed <strong>before any UI (Phases 14–15) or skill (Phases 16–17) consumes it</strong>, plus the additive <code>GET /api/contacts</code> filter params the campaign builder will use. Every route returns the standard <code>{ success, data, error, meta }</code> envelope, validates with Zod, logs to <code>timeline_events</code>, and is already covered by the existing auth (no <code>proxy.ts</code> change).</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li><strong>Campaign CRUD</strong> — <code>GET</code> (list, cursor-paginated) / <code>POST</code> (create <code>{ name, goalInstruction }</code>) <code>/api/outreach-campaigns</code>; <code>GET</code> (single + per-status email counts) / <code>PATCH</code> (<code>{ name?, goalInstruction?, status? }</code>) / <code>DELETE</code> (soft delete via <code>archivedAt</code>) <code>/api/outreach-campaigns/[id]</code></li>
+<li><strong>Email management</strong> — <code>GET</code> (list emails w/ contact join, <code>?status=</code> filter) / <code>POST</code> (bulk add <code>{ contactIds: string[] }</code>, deduped via <code>onConflictDoNothing</code>) <code>/api/outreach-campaigns/[id]/emails</code>; <code>PATCH</code> (inline edit) / <code>DELETE</code> (hard delete) <code>/api/outreach-campaigns/[id]/emails/[emailId]</code></li>
+<li><strong>Explicit status transition</strong> — <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status</code>, validated by <code>canEmailTransition()</code> (400 with rejection reason on invalid move)</li>
+<li><strong>Skill write-back routes</strong> — <code>PATCH .../generation</code> (gen skill → <code>generated</code>), <code>PATCH .../recipient</code> (discovery skill → <code>recipientEmail</code>/<code>channel</code>), <code>PATCH .../draft</code> (draft skill → <code>drafted</code> + <code>gmailDraftId</code>)</li>
+<li><strong>Generation-context bulk fetch</strong> — <code>GET /api/outreach-campaigns/[id]/generation-context</code> (D-01): one round-trip returning <code>goalInstruction</code> + every pending email with its embedded contact brief + recent interactions + <code>lowContext</code> flag</li>
+<li><strong><code>GET /api/contacts</code> filter additions</strong> (D-10): <code>howMet</code> (ilike), <code>connectionYearStart</code> / <code>connectionYearEnd</code> (gte/lte on <code>linkedinConnectionDate</code>)</li>
+</ul>
+<p><strong>Out of scope (later phases — do NOT build here):</strong></p>
+<ul>
+<li>Any generation/personalization logic — runs in the Phase 16 skill only (GEN-05). The API only enqueues <code>pending</code> rows and accepts write-back.</li>
+<li>Any Gmail/draft creation, email discovery, OAuth — Phase 17 skill.</li>
+<li>All UI: <code>src/features/outreach/components/*</code>, <code>src/app/dashboard/outreach/*</code>, sidebar nav — Phases 14–15.</li>
+<li>The triage connection-date filter (RSC <code>searchParams</code>, no API route) — Phase 13.</li>
+<li>Any schema migration — the full data model + state machine shipped in Phase 11 (migration 0011/0013). Phase 12 writes only.</li>
+<li>A campaign-status state machine — campaign <code>status</code> is set freely by <code>PATCH .../[id]</code> (Phase 11 D-10); only <strong>email</strong> status is guarded.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Generation-Context Endpoint (Area 1)</h3>
+<ul>
+<li><strong>D-01:</strong> <strong>One bulk embedded endpoint</strong> — <code>GET /api/outreach-campaigns/[id]/generation-context</code> returns the campaign <code>goalInstruction</code> plus an array of every <code>status=&#39;pending&#39;</code> email, each with its contact brief and recent interactions <strong>already joined in</strong>. The Phase 16 skill makes one request and loops. This <strong>overrides</strong> the ARCHITECTURE.md skill design (lines 287–288), which did per-email <code>GET /api/contacts/[id]</code> + <code>GET /api/interactions</code> — that is an N+1 pattern the project explicitly flags as already-noticeable at 1500+ contacts.</li>
+<li><strong>D-02:</strong> <strong>Payload per pending email = full brief + recent interactions.</strong> Contact fields: name, <code>howMet</code>, <code>companyAtConnection</code>, <code>roleAtConnection</code>, current company/title, closeness tier, <code>recipientEmail</code>; plus the <strong>~3 most recent interactions</strong> (type + summary); plus a precomputed <strong><code>lowContext</code> flag</strong> (true when fewer than 2 logged interactions) so the skill can mark low-context contacts per GEN-02 without a second query. Reference only these facts (GEN-02 anti-hallucination contract) — no broader contact dump.</li>
+</ul>
+<h3>Timeline-Event Granularity (Area 2)</h3>
+<ul>
+<li><strong>D-03:</strong> <strong>Every outreach write logs a <code>timeline_events</code> row</strong> — honoring CLAUDE.md verbatim (the timeline is the system of record). This includes campaign create/update/archive, bulk-add, inline edits, every <code>/status</code> transition, and the three write-backs. The owner&#39;s concern (200 events/campaign run flooding the dashboard) is a <strong>render-layer</strong> problem, not a logging one: events are recoverable only if logged, and feed readability is solved at display time.</li>
+<li><strong>D-04:</strong> <strong>Distinct <code>event_type</code> per kind</strong> so the dashboard can filter/group later — e.g. <code>outreach_campaign_created</code>, <code>outreach_campaign_updated</code>, <code>outreach_emails_added</code>, <code>outreach_email_edited</code>, <code>outreach_email_status_changed</code>, <code>outreach_email_generated</code>, <code>outreach_email_recipient_set</code>, <code>outreach_email_drafted</code> (planner finalizes exact strings; <code>event_type</code> is free-text <code>text</code>, no enum/migration needed — Phase 11 confirmed). Bulk-add is <strong>one</strong> event carrying the inserted count (<code>outreach_emails_added</code>, &quot;Added N contacts to <campaign>&quot;), not one-per-contact; write-backs are naturally per-email.</li>
+</ul>
+<h3>Regenerate Reset Semantics (Area 3)</h3>
+<ul>
+<li><strong>D-05:</strong> <strong><code>PATCH .../status</code> to <code>pending</code> clears <code>editedSubject</code>/<code>editedBody</code> + <code>lastError</code>/<code>lastErrorAt</code>, but KEEPS <code>generatedSubject</code>/<code>generatedBody</code> stale</strong> until the Phase 16 skill overwrites them on its next <code>WHERE status=&#39;pending&#39;</code> drain. Clearing <code>edited*</code> is mandatory — otherwise the <code>editedX ?? generatedX</code> coalesce would keep serving the old edit and mask the regenerated content. Keeping <code>generated*</code> lets the Phase 15 review UI show the <strong>previous draft greyed-out / &quot;regenerating&quot;</strong> while the new one is queued (the owner&#39;s chosen UX).</li>
+<li><strong>D-06 (consumer caveat — MUST propagate to Phases 15/16):</strong> Because a <code>pending</code> row can now carry stale <code>generated*</code>, <strong><code>status=&#39;pending&#39;</code> no longer implies &quot;no content.&quot;</strong> Any consumer deciding &quot;has content&quot; must check the content fields, not the status alone. The generation skill still drains purely on <code>status=&#39;pending&#39;</code> (correct — it&#39;s meant to rewrite). Resetting also nulls <code>generatedAt</code> (the new gen sets it fresh).</li>
+</ul>
+<h3>Contacts-Filter Scope (Area 4)</h3>
+<ul>
+<li><strong>D-07:</strong> <strong>Land the <code>GET /api/contacts</code> filter additions in Phase 12</strong>, not Phase 14. Phase 12 is the single &quot;all API surface&quot; phase, leaving Phase 14 as pure UI. Params: <code>howMet</code> → <code>ilike(contacts.howMet, &#39;%value%&#39;)</code>; <code>connectionYearStart</code> → <code>gte(contacts.linkedinConnectionDate, new Date(&#39;YYYY-01-01&#39;))</code>; <code>connectionYearEnd</code> → <code>lte(contacts.linkedinConnectionDate, new Date(&#39;YYYY-12-31T23:59:59&#39;))</code>. Slots into the route&#39;s existing <code>conditions[]</code> + <code>sql.join</code> pattern alongside <code>closeness</code>/<code>outreachStatus</code>/<code>warmth</code>/<code>relationship</code>/<code>search</code>. Matches Phase 11&#39;s assignment (11-CONTEXT out-of-scope §).</li>
+</ul>
+<h3>Claude&#39;s Discretion (planner decides; recommendation given)</h3>
+<ul>
+<li><strong>CD-01:</strong> <strong>Campaign-list + single-campaign counts via a single GROUP BY query</strong>, not N+1 per campaign. <code>GET /api/outreach-campaigns</code> needs per-campaign counts (selected/generated/approved/drafted — CAMP-08); <code>GET .../[id]</code> needs the same <code>emailCounts</code>. Use one grouped aggregate over <code>outreach_emails</code> (e.g. <code>count(*) FILTER (WHERE status=...)</code> or group-by-status then fold) joined to the campaigns page — honoring the project anti-N+1 constraint. Recommended.</li>
+<li><strong>CD-02:</strong> <strong>Inline-edit <code>PATCH .../emails/[emailId]</code> auto-transitions <code>generated → edited</code></strong> when an edit is saved (writes <code>editedSubject</code>/<code>editedBody</code>/<code>recipientEmail</code>). Per ARCHITECTURE.md line 188 + Phase 11 D-09. If status is already <code>edited</code> it stays <code>edited</code>; from other statuses, planner decides whether edit is even allowed (recommend: allow edit only from <code>generated</code>/<code>edited</code>/<code>approved</code>). Recommended.</li>
+<li><strong>CD-03:</strong> <strong><code>/status</code> rejects <code>→ approved</code> when <code>editedSubject ?? generatedSubject</code> (or body) is null</strong> — &quot;can&#39;t approve an empty email&quot; (Phase 11 deferred §). Returns <code>400 validationError</code>. This is an app-layer guard on top of <code>canEmailTransition()</code>, not a schema constraint. Recommended.</li>
+<li><strong>CD-04:</strong> <strong>Email <code>DELETE</code> is a hard delete</strong> — <code>outreach_emails</code> has no <code>archivedAt</code> column (Phase 11 schema), and a removed contact is just an un-generated queue row. The <code>UNIQUE (campaign_id, contact_id)</code> constraint means a delete-then-re-add works cleanly. (Campaign <code>DELETE</code> stays a <strong>soft</strong> delete — <code>outreach_campaigns</code> has <code>archivedAt</code>.) Recommended.</li>
+<li><strong>CD-05:</strong> <strong>Bulk-add response = <code>{ inserted: N, skipped: M }</code></strong> (or <code>{ inserted, rows }</code> per ARCHITECTURE.md line 187) so the caller knows how many were deduped. <code>onConflictDoNothing()</code> on the unique constraint backs the dedup (CAMP-07). Planner picks the exact shape; expose the inserted count at minimum.</li>
+<li><strong>CD-06:</strong> <strong>Write-back routes verify the email belongs to the campaign</strong> (<code>WHERE id = emailId AND campaign_id = id</code>) before writing, returning 404 otherwise — ARCHITECTURE.md line 207. The <code>/recipient</code> route sets <code>recipientEmail = null</code> when <code>channel=&#39;linkedin_message&#39;</code> (Phase 11 D-08 discovery-state model). Recommended.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.2 milestone trail</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;CAMP-06&quot; / &quot;CAMP-07&quot; / &quot;CAMP-08&quot; / &quot;GEN-05&quot; — the four requirements this phase delivers (create campaign w/ goal; bulk dedup insert; campaign list w/ progress counts; generation lives in the skill, API only enqueues + accepts write-back)</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 12: API Routes&quot; — goal + 5 success criteria (CLI create/add/list/transition; envelope + auth on all routes)</li>
+<li><code>.planning/research/ARCHITECTURE.md</code> §&quot;REST API Surface&quot; (lines 166–224) — the full proposed route table for the outreach tree + the <code>GET /api/contacts</code> filter additions. <strong>Note the corrections locked here:</strong> the per-email N+1 generation flow (lines 287–288) is replaced by the bulk <code>generation-context</code> endpoint (D-01); the regenerate edge resets to <code>pending</code> keeping <code>generated*</code> (D-05), not the doc&#39;s <code>edited → generated</code>.</li>
+<li><code>.planning/research/PITFALLS.md</code> — Pitfalls 1/2/3 are Phase 17 (drafting) concerns; Pitfall 4 (status lifecycle) was resolved in Phase 11. Skim for any route-layer gotchas only.</li>
+</ul>
+<h3>Phase 11 locks this phase consumes (read before planning)</h3>
+<ul>
+<li><code>.planning/phases/11-schema-enums-and-state-machine/11-CONTEXT.md</code> — the locked data model + state machine. Key carry-forwards: D-03/D-04 transition map (<code>canEmailTransition</code>), D-07/D-08 channel + discovery-state model, <strong>D-09 edited/generated coalesce + the regenerate-reset question this phase answers (D-05 above)</strong>, D-10 campaign status has NO state machine.</li>
+<li><code>src/features/outreach/lib/email-status.ts</code> — <code>canEmailTransition(from, to)</code> / <code>isEmailTerminalState()</code> / <code>validEmailTransitions</code> — the <code>/status</code> route imports and calls this; do NOT reimplement the graph.</li>
+<li><code>drizzle/schema/outreach-emails.ts</code> / <code>drizzle/schema/outreach-campaigns.ts</code> — exact columns the routes read/write (note: emails have NO <code>archivedAt</code> → CD-04; campaigns DO).</li>
+<li><code>src/lib/domain/types.ts</code> — <code>OutreachCampaign</code>/<code>OutreachEmail</code>/<code>New*</code> inferred types + <code>outreachEmailStatusValues</code>/<code>outreachChannelValues</code>/<code>outreachCampaignStatusValues</code> for Zod enums.</li>
+</ul>
+<h3>Patterns to mirror (read before writing routes)</h3>
+<ul>
+<li><code>src/app/api/job-leads/[id]/status/route.ts</code> — the closest analog for <code>PATCH .../emails/[emailId]/status</code>: validate transition via the domain state machine, 400 on invalid, set <code>updatedAt</code>, log timeline. Mirror its shape.</li>
+<li><code>src/app/api/job-leads/route.ts</code> — list + create envelope/pagination patterns; bulk insert + <code>onConflictDoNothing</code> precedent for CAMP-07.</li>
+<li><code>src/app/api/contacts/route.ts</code> — the <code>conditions[]</code> + <code>sql.join</code> filter-accumulation pattern to extend for D-07 (<code>howMet</code>, <code>connectionYearStart/End</code>).</li>
+<li><code>src/app/api/contacts/[id]/route.ts</code>, <code>src/app/api/contacts/[id]/interactions/route.ts</code> — shape of the contact + interactions data the <code>generation-context</code> endpoint must assemble (D-02).</li>
+<li><code>src/lib/api/types.ts</code> (<code>success</code>/<code>created</code>/<code>paginated</code>), <code>src/lib/api/errors.ts</code> (<code>notFound</code>/<code>validationError</code>/<code>serverError</code>), <code>src/lib/api/filters.ts</code> (<code>parseCursor</code>/<code>parseLimit</code>) — envelope + error + pagination helpers every route uses.</li>
+<li><code>src/lib/db/timeline.ts</code> — <code>logTimeline({ eventType, title, ...entityIds })</code> called after every write (D-03/D-04).</li>
+<li><code>src/proxy.ts</code> — confirms the Bearer-token bypass (<code>API_TOKEN_HASH</code> + <code>SINGLE_USER_EMAIL</code>) already covers new <code>/api/*</code> routes for the skills; <strong>no middleware change needed</strong> in Phase 12.</li>
+</ul>
+<h3>Skill auth contract (for the write-back routes)</h3>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> — the <code>Authorization: Bearer $TOKEN</code> (<code>~/.heimdall/api-token</code>) convention the Phase 16/17 skills reuse against the write-back routes; routes need no special handling beyond what middleware already enforces.</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> / <code>.planning/PROJECT.md</code> — REST-only (no server actions), Zod on every route, <code>{ success, data, error, meta }</code> envelope, Drizzle query builder (no raw SQL except pgvector), <code>updatedAt: new Date()</code> set manually on UPDATE, soft delete via <code>archivedAt</code>, every write logs a timeline event.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, async route handlers named after HTTP verb, <code>import type</code>, enum value arrays shared between Zod and UI.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>src/features/outreach/lib/email-status.ts</code></strong> — import <code>canEmailTransition</code> directly in the <code>/status</code> route; never reimplement the transition graph.</li>
+<li><strong><code>src/lib/api/{types,errors,filters}.ts</code></strong> — all envelope/error/pagination factories already exist; new routes compose them exactly like existing routes.</li>
+<li><strong><code>src/app/api/job-leads/[id]/status/route.ts</code></strong> — copy its structure for the email <code>/status</code> route (state-machine-guarded PATCH).</li>
+<li><strong><code>src/app/api/contacts/route.ts</code></strong> — the <code>conditions[]</code> accumulation + <code>sql.join</code> filter pattern to extend for D-07; already handles <code>closeness</code>/<code>outreachStatus</code>/<code>warmth</code>/<code>relationship</code>/<code>search</code>.</li>
+<li><strong><code>src/lib/db/timeline.ts</code></strong> — <code>logTimeline()</code> for D-03/D-04.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>State machine gates transitions only; INSERTs are unrestricted</strong> — bulk-add inserts new <code>outreach_emails</code> rows directly at <code>status=&#39;pending&#39;</code> (no transition check), exactly like job-lead inserts at <code>queued</code>. The <code>/status</code> route is the only transition-guarded write.</li>
+<li><strong><code>updatedAt: new Date()</code> set manually on every UPDATE</strong> — Drizzle does not auto-update; every PATCH route (status, edit, write-backs) must set it.</li>
+<li><strong>Cursor pagination on <code>updatedAt</code></strong> — <code>GET .../emails</code> and <code>GET /api/outreach-campaigns</code> use <code>parseCursor</code>/<code>parseLimit</code> like existing list routes.</li>
+<li><strong>Bearer-token auth already wired</strong> — no <code>proxy.ts</code> change; the skill write-back routes are protected by the existing <code>/api/(.*)</code> matcher + token bypass.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Phase 16 generation skill</strong> consumes <code>GET .../generation-context</code> (D-01/D-02), writes back via <code>PATCH .../generation</code>, and marks failures via <code>PATCH .../status { status:&#39;failed&#39; }</code>.</li>
+<li><strong>Phase 17 drafting skill</strong> consumes <code>GET .../emails?status=approved</code>, writes via <code>PATCH .../recipient</code> and <code>PATCH .../draft</code>.</li>
+<li><strong>Phase 14 builder UI</strong> consumes <code>POST /api/outreach-campaigns</code>, <code>POST .../emails</code> (bulk add), and the extended <code>GET /api/contacts</code> filters (D-07).</li>
+<li><strong>Phase 15 review UI</strong> consumes <code>GET .../emails</code>, <code>PATCH .../emails/[emailId]</code> (edit), <code>PATCH .../status</code> (approve/regenerate), and relies on D-05/D-06 (stale <code>generated*</code> on regenerate) for its &quot;regenerating&quot; UX.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><strong>Generation-context payload (D-02)</strong> — per pending email: <code>{ emailId, contactId, contact: { firstName, lastName, howMet, companyAtConnection, roleAtConnection, currentCompany, title, closeness, recipientEmail }, interactions: [{ type, summary, occurredAt } × ~3], lowContext: boolean }</code>, wrapped with the campaign <code>goalInstruction</code> at the top level. Planner finalizes exact field names against the live <code>contacts</code>/<code>interactions</code> schema.</li>
+<li><strong>Regenerate reset (D-05)</strong> — <code>/status → pending</code>: <code>SET edited_subject=NULL, edited_body=NULL, last_error=NULL, last_error_at=NULL, generated_at=NULL</code> and <strong>leave</strong> <code>generated_subject</code>/<code>generated_body</code> untouched; set <code>updated_at=now()</code>.</li>
+<li><strong><code>/recipient</code> route (CD-06)</strong> — <code>{ recipientEmail?, channel }</code>; when <code>channel=&#39;linkedin_message&#39;</code>, also <code>SET recipient_email=NULL</code>.</li>
+<li><strong>Timeline event types (D-04)</strong> — distinct strings per mutation kind; bulk-add is one aggregate event with the inserted count.</li>
+<li><strong>Contacts filter predicates (D-07)</strong> — <code>howMet</code> ilike; <code>connectionYearStart</code>/<code>End</code> → gte/lte on <code>linkedinConnectionDate</code> using <code>new Date(&#39;YYYY-01-01&#39;)</code> / <code>new Date(&#39;YYYY-12-31T23:59:59&#39;)</code>.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Render-layer feed filtering/grouping for outreach events</strong> — D-03 logs everything; making the dashboard timeline filter/collapse the high-volume <code>outreach_email_status_changed</code> events is a UI concern for a later dashboard pass, not Phase 12.</li>
+<li><strong><code>?ids=</code> batch param on <code>GET /api/contacts</code></strong> — considered as the &quot;bulk ids + one batch contacts call&quot; alternative to D-01; not adopted (the dedicated <code>generation-context</code> endpoint won). Revisit only if another consumer needs arbitrary multi-contact fetch.</li>
+<li><strong><code>skipped</code> email status</strong> (decline-a-contact-without-delete) — carried from Phase 11 deferred; Phase 12 uses hard <code>DELETE</code> (CD-04) instead. Revisit if the owner wants to exclude a contact while keeping the row.</li>
+<li><strong>DB-side non-null-before-approved constraint</strong> — CD-03 enforces &quot;can&#39;t approve empty&quot; at the app layer; a CHECK constraint was considered and left out (app-layer is sufficient and more flexible).</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos matched this phase.</p>
+</deferred><hr>
+<p><em>Phase: 12-API Routes</em>
+<em>Context gathered: 2026-06-20</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
