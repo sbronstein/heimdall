@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 14: Campaign Builder UI - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-06-21
+<strong>Files analyzed:</strong> 8 new/modified files
+<strong>Analogs found:</strong> 8 / 8</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/dashboard/outreach/page.tsx</code></td>
+<td>page (RSC)</td>
+<td>request-response</td>
+<td><code>src/app/dashboard/job-leads/page.tsx</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/outreach/[id]/page.tsx</code></td>
+<td>page (RSC)</td>
+<td>request-response</td>
+<td><code>src/app/dashboard/job-leads/[id]/page.tsx</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-list.tsx</code></td>
+<td>component</td>
+<td>request-response</td>
+<td><code>src/features/contacts/components/contact-listing.tsx</code> + <code>src/features/job-leads/components/job-leads-page</code> (inferred)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-builder.tsx</code></td>
+<td>component</td>
+<td>CRUD + event-driven</td>
+<td><code>src/features/contacts/components/triage/triage-workflow.tsx</code></td>
+<td>exact (load-set + in-memory filter shell)</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/contact-selection-list.tsx</code></td>
+<td>component</td>
+<td>transform</td>
+<td><code>src/features/contacts/components/triage/triage-workflow.tsx</code> (row rendering, filter application)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/builder-filter-bar.tsx</code></td>
+<td>component</td>
+<td>event-driven</td>
+<td><code>src/features/contacts/components/triage/connection-year-filter.tsx</code> + <code>closeness-button-bar.tsx</code></td>
+<td>exact (reuse directly)</td>
+</tr>
+<tr>
+<td><code>src/features/outreach/components/campaign-name-panel.tsx</code></td>
+<td>component</td>
+<td>request-response</td>
+<td><code>src/features/contacts/components/triage/how-met-input.tsx</code> (controlled input + forwardRef pattern)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/config/nav-config.ts</code> (modify)</td>
+<td>config</td>
+<td>—</td>
+<td><code>src/config/nav-config.ts</code> itself</td>
+<td>exact</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>src/app/dashboard/outreach/page.tsx</code> (page RSC, request-response)</h3>
+<p><strong>Analog:</strong> <code>src/app/dashboard/job-leads/page.tsx</code></p>
+<p><strong>Imports pattern</strong> (lines 1–6):</p>
+<pre><code class="language-typescript">import PageContainer from &#39;@/components/layout/page-container&#39;;
+import { db } from &#39;@/lib/db&#39;;
+import { outreachCampaigns, outreachEmails } from &#39;../../../../drizzle/schema&#39;;
+import { desc, isNull } from &#39;drizzle-orm&#39;;
+import { CampaignList } from &#39;@/features/outreach/components/campaign-list&#39;;
+</code></pre>
+<p><strong>Core RSC pattern</strong> — DB query → PageContainer → client feature component (job-leads/page.tsx lines 11–27):</p>
+<pre><code class="language-typescript">export const metadata = { title: &#39;Dashboard: Outreach&#39; };
+
+export default async function OutreachPage() {
+  // Server-side fetch of campaigns with emailCounts — same shape GET /api/outreach-campaigns returns
+  // but done directly via db for SSR; no fetch() in RSC pages
+  const campaigns = await db
+    .select({ /* id, name, goalInstruction, status, createdAt, updatedAt */ })
+    .from(outreachCampaigns)
+    .where(isNull(outreachCampaigns.archivedAt))
+    .orderBy(desc(outreachCampaigns.updatedAt));
+
+  return (
+    &lt;PageContainer
+      scrollable
+      pageTitle=&#39;Outreach&#39;
+      pageDescription=&#39;Manage email campaigns for your job search network.&#39;
+      pageHeaderAction={/* &quot;New Campaign&quot; link/button */}
+    &gt;
+      &lt;CampaignList initialCampaigns={campaigns} /&gt;
+    &lt;/PageContainer&gt;
+  );
+}
+</code></pre>
+<p><strong>PageContainer props pattern</strong> (<code>src/components/layout/page-container.tsx</code> lines 20–38):</p>
+<pre><code class="language-typescript">// All props are optional strings/nodes
+export default function PageContainer({
+  children,
+  scrollable = true,       // set false for non-scroll (builder page)
+  isloading = false,
+  pageTitle,               // e.g. &#39;Outreach&#39;
+  pageDescription,
+  pageHeaderAction         // ReactNode — rendered top-right of header
+}: { ... }) { ... }
+</code></pre>
+<hr>
+<h3><code>src/app/dashboard/outreach/[id]/page.tsx</code> (page RSC, request-response)</h3>
+<p><strong>Analog:</strong> <code>src/app/dashboard/job-leads/[id]/page.tsx</code></p>
+<p><strong>Dynamic route + notFound pattern</strong> (lines 12–26):</p>
+<pre><code class="language-typescript">export default async function OutreachCampaignPage({
+  params
+}: {
+  params: Promise&lt;{ id: string }&gt;;
+}) {
+  const { id } = await params;
+
+  const [campaign] = await db
+    .select()
+    .from(outreachCampaigns)
+    .where(eq(outreachCampaigns.id, id))
+    .limit(1);
+
+  if (!campaign) return notFound();
+
+  // Also fetch associated outreach emails with contact join for the placeholder list
+  // (mirrors job-leads/[id]/page.tsx multi-query pattern lines 28–50)
+
+  return (
+    &lt;PageContainer scrollable pageTitle={campaign.name}&gt;
+      &lt;CampaignReviewPage campaign={campaign} emails={emails} /&gt;
+    &lt;/PageContainer&gt;
+  );
+}
+</code></pre>
+<p><strong>Import additions for dynamic route:</strong></p>
+<pre><code class="language-typescript">import { notFound } from &#39;next/navigation&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+import { outreachCampaigns, outreachEmails, contacts } from &#39;../../../../../drizzle/schema&#39;;
+import { CampaignReviewPage } from &#39;@/features/outreach/components/campaign-review-page&#39;;
+</code></pre>
+<hr>
+<h3><code>src/features/outreach/components/campaign-builder.tsx</code> (component, CRUD + event-driven)</h3>
+<p><strong>Analog:</strong> <code>src/features/contacts/components/triage/triage-workflow.tsx</code></p>
+<p>This is the primary shell component implementing D-05/D-06 (load all, filter in memory) and D-12 (two-POST save sequence). Mirror the <code>triage-workflow.tsx</code> structure closely.</p>
+<p><strong>Top-of-file directive + imports pattern</strong> (triage-workflow.tsx lines 1–38):</p>
+<pre><code class="language-typescript">&#39;use client&#39;;
+
+import { useCallback, useEffect, useMemo, useRef, useState } from &#39;react&#39;;
+import { useRouter } from &#39;next/navigation&#39;;
+import { parseAsInteger, parseAsString, useQueryStates } from &#39;nuqs&#39;;
+import { Button } from &#39;@/components/ui/button&#39;;
+import type { Contact } from &#39;@/lib/domain/types&#39;;
+import {
+  clampConnectionYear,
+  deriveConnectionYears,
+  filterByConnectionYearRange
+} from &#39;@/features/contacts/lib/connection-year&#39;;
+import { ConnectionYearFilter } from &#39;@/features/contacts/components/triage/connection-year-filter&#39;;
+import { ClosenessButtonBar } from &#39;@/features/contacts/components/triage/closeness-button-bar&#39;;
+import { BuilderFilterBar } from &#39;./builder-filter-bar&#39;;
+import { ContactSelectionList } from &#39;./contact-selection-list&#39;;
+import { CampaignNamePanel } from &#39;./campaign-name-panel&#39;;
+</code></pre>
+<p><strong>Props interface pattern</strong> (triage-workflow.tsx lines 49–53):</p>
+<pre><code class="language-typescript">interface CampaignBuilderProps {
+  contacts: Contact[];  // all non-archived contacts, loaded by RSC page
+}
+
+export function CampaignBuilder({ contacts }: CampaignBuilderProps) { ... }
+</code></pre>
+<p><strong>Load-set + nuqs URL filter state pattern</strong> (triage-workflow.tsx lines 77–94):</p>
+<pre><code class="language-typescript">// Mirror triage-workflow.tsx: read URL params the filter controls write
+const [{ connectionYearStart, connectionYearEnd, closeness, howMet, outreachStatus }] =
+  useQueryStates({
+    connectionYearStart: parseAsInteger,
+    connectionYearEnd: parseAsInteger,
+    closeness: parseAsString,       // new for builder
+    howMet: parseAsString,          // new for builder
+    outreachStatus: parseAsString   // new for builder; defaults to &#39;not_reached_out&#39; in filter component
+  });
+
+// All filtering is client-side over the loaded set (D-05)
+const filteredContacts = useMemo(
+  () =&gt; applyBuilderFilters(contacts, { connectionYearStart, connectionYearEnd, closeness, howMet, outreachStatus }),
+  [contacts, connectionYearStart, connectionYearEnd, closeness, howMet, outreachStatus]
+);
+</code></pre>
+<p><strong>Selection set state</strong> (D-03 persist-across-filters — kept in a Set<string> by contact ID):</p>
+<pre><code class="language-typescript">const [selectedIds, setSelectedIds] = useState&lt;Set&lt;string&gt;&gt;(new Set());
+
+const toggleContact = useCallback((id: string) =&gt; {
+  setSelectedIds((prev) =&gt; {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+}, []);
+
+// D-08: select-all adds all currently-filtered contacts to the set
+const selectAllFiltered = useCallback(() =&gt; {
+  setSelectedIds((prev) =&gt; {
+    const next = new Set(prev);
+    filteredContacts.forEach((c) =&gt; next.add(c.id));
+    return next;
+  });
+}, [filteredContacts]);
+</code></pre>
+<p><strong>Two-POST save sequence pattern</strong> (D-12; mirrors triage-workflow.tsx fetch pattern lines 147–177):</p>
+<pre><code class="language-typescript">const [isSaving, setIsSaving] = useState(false);
+const router = useRouter();
+
+const handleSave = useCallback(async () =&gt; {
+  if (!campaignName || selectedIds.size === 0 || isSaving) return;
+  setIsSaving(true);
+  try {
+    // Step 1: create campaign
+    const res1 = await fetch(&#39;/api/outreach-campaigns&#39;, {
+      method: &#39;POST&#39;,
+      headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+      body: JSON.stringify({ name: campaignName, goalInstruction: goalInstruction ?? &#39;&#39; })
+    });
+    if (!res1.ok) throw new Error(&#39;Failed to create campaign&#39;);
+    const { data: campaign } = await res1.json();
+
+    // Step 2: bulk-add contacts (CD-02: handle partial failure explicitly)
+    const res2 = await fetch(`/api/outreach-campaigns/${campaign.id}/emails`, {
+      method: &#39;POST&#39;,
+      headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+      body: JSON.stringify({ contactIds: Array.from(selectedIds) })
+    });
+    if (!res2.ok) throw new Error(&#39;Failed to add contacts to campaign&#39;);
+
+    router.push(`/dashboard/outreach/${campaign.id}`);
+  } catch (err) {
+    console.error(&#39;Campaign save failed:&#39;, err);
+    // surface error to user (toast or inline error state)
+  } finally {
+    setIsSaving(false);
+  }
+}, [campaignName, goalInstruction, selectedIds, isSaving, router]);
+</code></pre>
+<p><strong>Empty-filter state pattern</strong> (triage-workflow.tsx lines 260–284):</p>
+<pre><code class="language-typescript">// When filter active but no contacts match (CD-05)
+if (filteredContacts.length === 0 &amp;&amp; filtersAreActive) {
+  return (
+    &lt;div className=&#39;py-12 text-center&#39;&gt;
+      &lt;p className=&#39;text-muted-foreground&#39;&gt;
+        No contacts match the current filters — adjust the filter to see contacts.
+      &lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<hr>
+<h3><code>src/features/outreach/components/contact-selection-list.tsx</code> (component, transform)</h3>
+<p><strong>Analog:</strong> <code>src/features/contacts/components/triage/triage-workflow.tsx</code> (rendered row concept) + <code>src/features/contacts/components/contact-table/columns.tsx</code> (field groups)</p>
+<p><strong>Props interface:</strong></p>
+<pre><code class="language-typescript">interface ContactSelectionListProps {
+  contacts: Contact[];          // already-filtered slice from parent
+  selectedIds: Set&lt;string&gt;;
+  onToggle: (id: string) =&gt; void;
+  onSelectAll: () =&gt; void;
+}
+
+export function ContactSelectionList({
+  contacts,
+  selectedIds,
+  onToggle,
+  onSelectAll
+}: ContactSelectionListProps) { ... }
+</code></pre>
+<p><strong>Row structure</strong> (D-02 four field groups, D-04 closeness-first order applied by parent):</p>
+<pre><code class="language-typescript">// Each row: Checkbox + name/howMet/closeness badge + company/role + connection date + outreach status
+// Checkbox from shadcn: import { Checkbox } from &#39;@/components/ui/checkbox&#39;
+// Badge from shadcn: import { Badge } from &#39;@/components/ui/badge&#39;
+// closenessColors from: import { closenessColors } from &#39;@/features/contacts/lib/closeness-colors&#39;
+</code></pre>
+<p><strong>Select-all header row:</strong></p>
+<pre><code class="language-typescript">&lt;div className=&#39;flex items-center gap-2 border-b py-2 text-sm font-medium&#39;&gt;
+  &lt;Checkbox
+    checked={contacts.every((c) =&gt; selectedIds.has(c.id))}
+    onCheckedChange={onSelectAll}
+  /&gt;
+  &lt;span&gt;Select all {contacts.length} matching&lt;/span&gt;
+&lt;/div&gt;
+</code></pre>
+<hr>
+<h3><code>src/features/outreach/components/builder-filter-bar.tsx</code> (component, event-driven)</h3>
+<p><strong>Analog:</strong> <code>src/features/contacts/components/triage/connection-year-filter.tsx</code> + <code>closeness-button-bar.tsx</code> (directly reused, not re-implemented)</p>
+<p><strong>Import + composition pattern</strong> (triage-workflow.tsx lines 13–32 show how these are composed):</p>
+<pre><code class="language-typescript">&#39;use client&#39;;
+
+import { parseAsInteger, parseAsString, useQueryStates } from &#39;nuqs&#39;;
+import {
+  ConnectionYearFilter,
+  type ConnectionYearFilterHandle
+} from &#39;@/features/contacts/components/triage/connection-year-filter&#39;;
+import {
+  ClosenessButtonBar,
+  type ClosenessButtonBarHandle
+} from &#39;@/features/contacts/components/triage/closeness-button-bar&#39;;
+// New sibling button-bar controls for howMet + outreachStatus follow the same
+// forwardRef + tabIndex={0} + onKeyDown pattern as closeness-button-bar.tsx
+</code></pre>
+<p><strong>nuqs URL state pattern</strong> (connection-year-filter.tsx lines 28–33):</p>
+<pre><code class="language-typescript">const [{ connectionYearStart, connectionYearEnd }, setRange] = useQueryStates({
+  connectionYearStart: parseAsInteger,
+  connectionYearEnd: parseAsInteger
+});
+// Similarly for closeness, howMet, outreachStatus using parseAsString
+// Default outreachStatus = &#39;not_reached_out&#39; (D-07) set via parseAsString.withDefault(&#39;not_reached_out&#39;)
+</code></pre>
+<p><strong>Button-bar button style pattern</strong> (connection-year-filter.tsx lines 122–145 / closeness-button-bar.tsx lines 64–83):</p>
+<pre><code class="language-typescript">// Every filter option: &lt;button type=&#39;button&#39; tabIndex={-1} className={cn(&#39;flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors&#39;, isSelected ? &#39;bg-primary text-primary-foreground border-primary&#39; : &#39;bg-background hover:bg-accent&#39;)} /&gt;
+// Container: tabIndex={0} + onKeyDown for arrow-key nav
+</code></pre>
+<p><strong>forwardRef handle pattern</strong> (closeness-button-bar.tsx lines 30–37):</p>
+<pre><code class="language-typescript">export interface BuilderFilterBarHandle {
+  focus: () =&gt; void;
+}
+
+export const BuilderFilterBar = forwardRef&lt;BuilderFilterBarHandle, BuilderFilterBarProps&gt;(
+  function BuilderFilterBar({ years }, ref) {
+    const containerRef = useRef&lt;HTMLDivElement&gt;(null);
+    useImperativeHandle(ref, () =&gt; ({ focus: () =&gt; containerRef.current?.focus() }));
+    ...
+  }
+);
+</code></pre>
+<hr>
+<h3><code>src/features/outreach/components/campaign-name-panel.tsx</code> (component, request-response)</h3>
+<p><strong>Analog:</strong> <code>src/features/contacts/components/triage/how-met-input.tsx</code></p>
+<p><strong>Controlled text input pattern</strong> (how-met-input.tsx lines 21–29, 118–162):</p>
+<pre><code class="language-typescript">&#39;use client&#39;;
+
+import { forwardRef, useImperativeHandle, useRef } from &#39;react&#39;;
+import { Input } from &#39;@/components/ui/input&#39;;
+import { Textarea } from &#39;@/components/ui/textarea&#39;;
+
+interface CampaignNamePanelProps {
+  name: string;
+  onNameChange: (value: string) =&gt; void;
+  goalInstruction: string;
+  onGoalChange: (value: string) =&gt; void;
+}
+
+export interface CampaignNamePanelHandle {
+  focus: () =&gt; void;
+}
+
+export const CampaignNamePanel = forwardRef&lt;CampaignNamePanelHandle, CampaignNamePanelProps&gt;(
+  function CampaignNamePanel({ name, onNameChange, goalInstruction, onGoalChange }, ref) {
+    const inputRef = useRef&lt;HTMLInputElement&gt;(null);
+    useImperativeHandle(ref, () =&gt; ({ focus: () =&gt; inputRef.current?.focus() }));
+
+    return (
+      &lt;div className=&#39;space-y-3&#39;&gt;
+        &lt;div className=&#39;space-y-1&#39;&gt;
+          &lt;label className=&#39;text-sm font-medium&#39;&gt;Campaign Name *&lt;/label&gt;
+          &lt;Input
+            ref={inputRef}
+            value={name}
+            onChange={(e) =&gt; onNameChange(e.target.value)}
+            placeholder=&#39;e.g. ID.me colleagues 2021–2022&#39;
+            maxLength={200}
+          /&gt;
+        &lt;/div&gt;
+        &lt;div className=&#39;space-y-1&#39;&gt;
+          &lt;label className=&#39;text-sm font-medium&#39;&gt;
+            Goal / Instruction
+            &lt;span className=&#39;text-muted-foreground ml-1 text-xs font-normal&#39;&gt;
+              (optional — used by AI generation in Phase 16)
+            &lt;/span&gt;
+          &lt;/label&gt;
+          &lt;Textarea
+            value={goalInstruction}
+            onChange={(e) =&gt; onGoalChange(e.target.value)}
+            placeholder=&#39;e.g. Reconnect and ask for a 20-minute intro call about their hiring plans&#39;
+            rows={3}
+          /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    );
+  }
+);
+</code></pre>
+<hr>
+<h3><code>src/features/outreach/components/campaign-list.tsx</code> (component, request-response)</h3>
+<p><strong>Analog:</strong> <code>src/features/contacts/components/contact-listing.tsx</code> (thin client wrapper) + job-leads card pattern</p>
+<p><strong>Shell pattern</strong> (contact-listing.tsx line 7 — thin async RSC or client component that renders cards):</p>
+<pre><code class="language-typescript">&#39;use client&#39;;
+
+import { Card, CardContent, CardHeader, CardTitle } from &#39;@/components/ui/card&#39;;
+import { Badge } from &#39;@/components/ui/badge&#39;;
+import { Progress } from &#39;@/components/ui/progress&#39;;
+import type { OutreachCampaign } from &#39;@/lib/domain/types&#39;;
+import Link from &#39;next/link&#39;;
+
+interface CampaignListProps {
+  initialCampaigns: OutreachCampaign[];  // passed from RSC page
+}
+
+export function CampaignList({ initialCampaigns }: CampaignListProps) {
+  // D-10: render cards with name, goal snippet, status, segmented progress counts
+  // emailCounts shape from GET /api/outreach-campaigns:
+  // { pending, generated, edited, approved, drafted, failed }
+  return (
+    &lt;div className=&#39;grid gap-4 md:grid-cols-2 lg:grid-cols-3&#39;&gt;
+      {initialCampaigns.map((campaign) =&gt; (
+        &lt;Link key={campaign.id} href={`/dashboard/outreach/${campaign.id}`}&gt;
+          &lt;Card className=&#39;hover:border-primary transition-colors&#39;&gt;
+            &lt;CardHeader&gt;
+              &lt;CardTitle className=&#39;text-base&#39;&gt;{campaign.name}&lt;/CardTitle&gt;
+              {campaign.goalInstruction &amp;&amp; (
+                &lt;p className=&#39;text-muted-foreground line-clamp-2 text-sm&#39;&gt;
+                  {campaign.goalInstruction}
+                &lt;/p&gt;
+              )}
+            &lt;/CardHeader&gt;
+            &lt;CardContent&gt;
+              {/* Per-status count badges */}
+            &lt;/CardContent&gt;
+          &lt;/Card&gt;
+        &lt;/Link&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<hr>
+<h3><code>src/config/nav-config.ts</code> (modify — add Outreach entry)</h3>
+<p><strong>Analog:</strong> itself</p>
+<p><strong>Existing entry shape</strong> (nav-config.ts lines 3–11):</p>
+<pre><code class="language-typescript">{
+  title: &#39;Outreach&#39;,
+  url: &#39;/dashboard/outreach&#39;,
+  icon: &#39;mail&#39;,          // or &#39;send&#39; — confirm available icon in tabler/lucide
+  isActive: false,
+  shortcut: [&#39;o&#39;, &#39;r&#39;],  // &#39;o&#39;,&#39;r&#39; = outreach; check for conflict with &#39;o&#39;,&#39;o&#39; (Contacts)
+  items: []
+}
+</code></pre>
+<p>Add after &#39;Job Leads&#39; (line 44) and before &#39;Contacts&#39; (line 51) — logical position in the flow.</p>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>Client-side in-memory filter (D-05/D-06)</h3>
+<p><strong>Source:</strong> <code>src/features/contacts/components/triage/triage-workflow.tsx</code> lines 77–94
+<strong>Apply to:</strong> <code>campaign-builder.tsx</code>, <code>contact-selection-list.tsx</code></p>
+<pre><code class="language-typescript">// Load full set from RSC props; derive filter inputs from nuqs URL state; filter in useMemo
+const filteredContacts = useMemo(
+  () =&gt; filterByConnectionYearRange(contacts, clampedStart, clampedEnd),
+  [contacts, clampedStart, clampedEnd]
+);
+</code></pre>
+<p>For the builder, extend with additional filters:</p>
+<pre><code class="language-typescript">function applyBuilderFilters(contacts: Contact[], filters: BuilderFilters): Contact[] {
+  let result = contacts;
+  if (filters.connectionYearStart != null || filters.connectionYearEnd != null)
+    result = filterByConnectionYearRange(result, filters.connectionYearStart, filters.connectionYearEnd);
+  if (filters.closeness)
+    result = result.filter((c) =&gt; c.closeness === filters.closeness);
+  if (filters.howMet)
+    result = result.filter((c) =&gt; c.howMet?.toLowerCase().includes(filters.howMet!.toLowerCase()));
+  if (filters.outreachStatus)
+    result = result.filter((c) =&gt; c.outreachStatus === filters.outreachStatus);
+  return result;
+}
+// D-04: default ordering = closeness closest-first (tier 1–2 at top)
+// Apply sort after filtering using contactClosenessValues index:
+result.sort((a, b) =&gt; contactClosenessValues.indexOf(a.closeness ?? &#39;never_met&#39;) - contactClosenessValues.indexOf(b.closeness ?? &#39;never_met&#39;));
+</code></pre>
+<h3>nuqs URL state for filter persistence</h3>
+<p><strong>Source:</strong> <code>src/features/contacts/components/triage/connection-year-filter.tsx</code> lines 28–33; <code>triage-workflow.tsx</code> lines 78–81
+<strong>Apply to:</strong> <code>builder-filter-bar.tsx</code>, <code>campaign-builder.tsx</code></p>
+<pre><code class="language-typescript">import { parseAsInteger, parseAsString, useQueryStates } from &#39;nuqs&#39;;
+
+const [filters, setFilters] = useQueryStates({
+  connectionYearStart: parseAsInteger,
+  connectionYearEnd: parseAsInteger,
+  closeness: parseAsString,
+  howMet: parseAsString,
+  outreachStatus: parseAsString.withDefault(&#39;not_reached_out&#39;)  // D-07 default
+});
+</code></pre>
+<h3>Button-bar filter control style</h3>
+<p><strong>Source:</strong> <code>src/features/contacts/components/triage/connection-year-filter.tsx</code> lines 114–168; <code>closeness-button-bar.tsx</code> lines 58–87
+<strong>Apply to:</strong> all new filter controls in <code>builder-filter-bar.tsx</code></p>
+<pre><code class="language-typescript">// Container: div with tabIndex={0}, onKeyDown for arrow nav, rounded-md focus ring
+// Buttons: type=&#39;button&#39;, tabIndex={-1}, cn() toggle between bg-primary and bg-background hover:bg-accent
+// Label: &lt;label className=&#39;text-sm font-medium&#39;&gt;...&lt;/label&gt; above the button group
+</code></pre>
+<h3>fetch + response envelope consumption</h3>
+<p><strong>Source:</strong> <code>src/features/contacts/components/triage/triage-workflow.tsx</code> lines 147–177 (fetch pattern), <code>src/app/api/outreach-campaigns/route.ts</code> lines 78–104 (POST shape)
+<strong>Apply to:</strong> <code>campaign-builder.tsx</code> save handler</p>
+<pre><code class="language-typescript">// POST /api/outreach-campaigns request body: { name: string, goalInstruction: string }
+// POST /api/outreach-campaigns response: { success: true, data: { id, name, goalInstruction, status, createdAt, updatedAt } }
+// POST /api/outreach-campaigns/[id]/emails request body: { contactIds: string[] }
+// POST /api/outreach-campaigns/[id]/emails response: { success: true, data: { inserted: number, skipped: number } }
+// Both use { &#39;Content-Type&#39;: &#39;application/json&#39; } and check res.ok before proceeding
+</code></pre>
+<h3>forwardRef + useImperativeHandle handle pattern</h3>
+<p><strong>Source:</strong> <code>src/features/contacts/components/triage/connection-year-filter.tsx</code> lines 21–37; <code>closeness-button-bar.tsx</code> lines 30–37
+<strong>Apply to:</strong> <code>builder-filter-bar.tsx</code>, <code>campaign-name-panel.tsx</code></p>
+<pre><code class="language-typescript">export interface [Component]Handle {
+  focus: () =&gt; void;
+}
+
+export const [Component] = forwardRef&lt;[Component]Handle, [Component]Props&gt;(
+  function [Component]({ ...props }, ref) {
+    const containerRef = useRef&lt;HTMLDivElement&gt;(null);
+    useImperativeHandle(ref, () =&gt; ({
+      focus: () =&gt; containerRef.current?.focus()
+    }));
+    ...
+  }
+);
+</code></pre>
+<h3>RSC page → PageContainer → client feature component</h3>
+<p><strong>Source:</strong> <code>src/app/dashboard/job-leads/page.tsx</code> lines 1–27
+<strong>Apply to:</strong> <code>src/app/dashboard/outreach/page.tsx</code>, <code>src/app/dashboard/outreach/[id]/page.tsx</code></p>
+<ul>
+<li>Export <code>metadata</code> object with <code>title: &#39;Dashboard: ...&#39;</code></li>
+<li>Default export is an <code>async function</code> named after the route (PascalCase + <code>Route</code> suffix)</li>
+<li><code>params</code> typed as <code>Promise&lt;{ id: string }&gt;</code> for dynamic routes; <code>await params</code> before use</li>
+<li>Call <code>notFound()</code> from <code>&#39;next/navigation&#39;</code> when DB returns empty result</li>
+<li>Pass DB result as a named prop (<code>initialLeads</code>, <code>initialCampaigns</code>, <code>campaign</code>, <code>emails</code>) to the client component</li>
+</ul>
+<hr>
+<h2>API Response Shapes (for fetch calls in campaign-builder.tsx)</h2>
+<h3>GET /api/contacts (no params — load all non-archived)</h3>
+<pre><code>Response: { success: true, data: Contact[], meta: { cursor, hasMore } }
+// Note: at ~1500 contacts this may need limit=2000 or pagination loop — confirm with page size
+// D-05 decision accepts this payload size; use limit=2000 as the practical ceiling
+</code></pre>
+<h3>POST /api/outreach-campaigns</h3>
+<pre><code>Request:  { name: string, goalInstruction: string }
+Response: { success: true, data: { id: string, name: string, goalInstruction: string, status: &#39;draft&#39;, createdAt, updatedAt } }
+</code></pre>
+<h3>POST /api/outreach-campaigns/[id]/emails</h3>
+<pre><code>Request:  { contactIds: string[] }   // max 500 per Zod schema
+Response: { success: true, data: { inserted: number, skipped: number } }
+// onConflictDoNothing guarantees idempotency (CAMP-07 / criterion #5)
+</code></pre>
+<h3>GET /api/outreach-campaigns (for campaign-list page)</h3>
+<pre><code>Response: { success: true, data: Campaign[], meta: { cursor, hasMore } }
+// Each Campaign includes emailCounts: { pending, generated, edited, approved, drafted, failed }
+// emailCounts is a JSON object from Postgres json_build_object — parse as Record&lt;string,number&gt;
+</code></pre>
+<hr>
+<h2>No Analog Found</h2>
+<p>All files have strong analogs. No gaps.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong> <code>src/features/contacts/</code>, <code>src/app/dashboard/</code>, <code>src/app/api/outreach-campaigns/</code>, <code>src/config/</code>, <code>src/components/layout/</code>
+<strong>Files scanned:</strong> 20+
+<strong>Pattern extraction date:</strong> 2026-06-21</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
