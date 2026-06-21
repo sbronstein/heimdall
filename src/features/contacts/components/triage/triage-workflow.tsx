@@ -80,28 +80,36 @@ export function TriageWorkflow({
     connectionYearEnd: parseAsInteger
   });
 
+  const clampedStart = clampConnectionYear(connectionYearStart);
+  const clampedEnd = clampConnectionYear(connectionYearEnd);
+
   const connectionYears = useMemo(
     () => deriveConnectionYears(contacts),
     [contacts]
   );
 
   const filteredContacts = useMemo(
-    () =>
-      filterByConnectionYearRange(
-        contacts,
-        clampConnectionYear(connectionYearStart),
-        clampConnectionYear(connectionYearEnd)
-      ),
-    [contacts, connectionYearStart, connectionYearEnd]
+    () => filterByConnectionYearRange(contacts, clampedStart, clampedEnd),
+    [contacts, clampedStart, clampedEnd]
   );
+
+  // Reset queue position when the (effective) filter changes. Done during render
+  // — not in a post-render effect — so a shrunk queue never momentarily flashes
+  // the "Triage Complete!" screen with a stale, out-of-range currentIndex.
+  const [appliedFilter, setAppliedFilter] = useState<{
+    start: number | null;
+    end: number | null;
+  }>({ start: clampedStart, end: clampedEnd });
+  if (
+    appliedFilter.start !== clampedStart ||
+    appliedFilter.end !== clampedEnd
+  ) {
+    setAppliedFilter({ start: clampedStart, end: clampedEnd });
+    setCurrentIndex(0);
+  }
 
   const total = filteredContacts.length;
   const current = filteredContacts[currentIndex] as Contact | undefined;
-
-  // Reset queue position when the connection-year filter changes
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [connectionYearStart, connectionYearEnd]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pre-snap year from existing lastContactDate
   useEffect(() => {
@@ -246,15 +254,14 @@ export function TriageWorkflow({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, skip, exit]);
 
-  // Empty-filter state: filter is active but no contacts match (D-07)
-  if (
-    total === 0 &&
-    (connectionYearStart != null || connectionYearEnd != null)
-  ) {
+  // Empty-filter state: filter is active but no contacts match (D-07).
+  // Key on the clamped bounds so a hostile URL value (which clamps to null and
+  // leaves the queue unfiltered) is never echoed back into the message.
+  if (total === 0 && (clampedStart != null || clampedEnd != null)) {
     const rangeLabel =
-      connectionYearStart != null && connectionYearEnd != null
-        ? `${connectionYearStart}–${connectionYearEnd}`
-        : String(connectionYearStart ?? connectionYearEnd);
+      clampedStart != null && clampedEnd != null
+        ? `${clampedStart}–${clampedEnd}`
+        : String(clampedStart ?? clampedEnd);
 
     return (
       <div className='mx-auto max-w-lg space-y-6 py-12 text-center'>

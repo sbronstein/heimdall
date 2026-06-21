@@ -96,7 +96,10 @@ export const ConnectionYearFilter = forwardRef<
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        const focused = allOptions[focusedIndex];
+        // Clamp: focusedIndex can outlive a shrunk `years` prop (Phase 14 reuse),
+        // and allOptions always has the trailing "All years" entry, so this is safe.
+        const focused =
+          allOptions[Math.min(focusedIndex, allOptions.length - 1)];
         if (focused === null) {
           setRange({ connectionYearStart: null, connectionYearEnd: null });
         } else {

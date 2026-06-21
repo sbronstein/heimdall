@@ -32,7 +32,7 @@ export function clampConnectionYear(
   value: number | null | undefined
 ): number | null {
   if (value == null) return null;
-  if (!isFinite(value) || isNaN(value)) return null;
+  if (!isFinite(value)) return null;
 
   const year = Math.trunc(value);
   const currentYear = new Date().getFullYear();

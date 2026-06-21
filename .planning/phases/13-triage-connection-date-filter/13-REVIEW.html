@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>13-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 13-triage-connection-date-filter
+reviewed: 2026-06-21T14:30:00Z
+depth: standard
+status: resolved
+findings: 4
+critical: 0
+warning: 1
+info: 3
+resolved: 4
+resolution_note: &quot;All 4 findings (WR-01, IN-01, IN-02, IN-03) fixed during execute-phase. WR-01 fixed via during-render currentIndex reset (the reviewer&#39;s Math.min clamp would have broken the verified Triage-Complete screen); IN-02 keyed empty-state on clamped bounds; IN-01 removed dead isNaN; IN-03 clamped focusedIndex. tsc clean, 20/20 unit tests green post-fix.&quot;
+files_reviewed: 4
+files_reviewed_list:</p>
+<ul>
+<li>src/features/contacts/lib/connection-year.ts</li>
+<li>src/features/contacts/lib/connection-year.test.ts</li>
+<li>src/features/contacts/components/triage/connection-year-filter.tsx</li>
+<li>src/features/contacts/components/triage/triage-workflow.tsx</li>
+</ul>
+<hr>
+<h1>Phase 13: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-06-21T14:30:00Z
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 4
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 13 adds a client-side connection-year triage filter: a pure-logic helper module
+(<code>connection-year.ts</code>), a reusable <code>ConnectionYearFilter</code> button-bar component owning the
+nuqs URL state, and wiring in <code>triage-workflow.tsx</code>. The implementation is well-structured.
+The pure helpers are correct, the click-to-range state machine is sound, the T-13-01 clamping
+mitigates hostile URL values, and D-04 is confirmed (triage <code>page.tsx</code> is untouched). The
+<code>document.activeElement</code> in className expressions is a pre-existing project-wide pattern
+(identical at <code>last-contact-year.tsx:101-102</code>) and is not flagged as a phase-13 regression.</p>
+<p>One Warning-class correctness bug is present: a single-render flash of &quot;Triage Complete!&quot;
+when switching year filters, caused by the <code>useEffect</code> reset of <code>currentIndex</code> running after
+the first render with the new (smaller) filter. Three Info items cover redundant logic,
+a display gap in the empty-filter message, and a latent prop-stability assumption.</p>
+<hr>
+<h2>Warnings</h2>
+<h3>WR-01: Stale <code>currentIndex</code> briefly renders &quot;Triage Complete!&quot; when year filter changes</h3>
+<p><strong>File:</strong> <code>src/features/contacts/components/triage/triage-workflow.tsx:279</code></p>
+<p><strong>Issue:</strong>
+The <code>useEffect</code> at line 102-104 resets <code>currentIndex</code> to 0 when <code>connectionYearStart</code> or
+<code>connectionYearEnd</code> changes, but effects run <em>after</em> the first render with the new values.
+During that first render, <code>filteredContacts</code> reflects the new year filter (new <code>total</code>) while
+<code>currentIndex</code> still holds the old queue position. If the old position exceeds the new total —
+e.g., user was at position 7 in the 2022 filter and switches to the 2021 filter which has 3
+contacts — the guard at line 279 (<code>currentIndex &gt;= total</code> → <code>7 &gt;= 3</code>) triggers and renders
+the &quot;Triage Complete!&quot; screen for one React cycle before the effect fires and resets to 0.</p>
+<p>This is an observable UX defect: the user sees the completion screen flash for a brief moment
+after every year-filter change where their previous position exceeds the new queue size.</p>
+<p><strong>Minimal fix — clamp effective index in the render, avoiding the stale-path:</strong></p>
+<pre><code class="language-tsx">// Replace lines 98-99
+const total = filteredContacts.length;
+// Clamp: prevents stale currentIndex from triggering completion or out-of-bounds current
+const effectiveIndex = total &gt; 0 ? Math.min(currentIndex, total - 1) : 0;
+const current = filteredContacts[effectiveIndex] as Contact | undefined;
+
+// Replace line 279 check (completion branch)
+if (currentIndex &gt;= total &amp;&amp; total &gt; 0) {
+  // Only show completion when the user has actively progressed past the last item.
+  // After a filter change, effectiveIndex is clamped, so this branch is not entered
+  // on the first render with new filter values.
+}
+</code></pre>
+<p>A cleaner alternative is to drive <code>current</code> from <code>effectiveIndex</code> and keep <code>currentIndex</code> as
+the raw progression counter, then check <code>currentIndex &gt;= total &amp;&amp; total &gt; 0</code>. The useEffect
+reset can remain as-is to keep the counter synchronized for the next filter activation.</p>
+<hr>
+<h2>Info</h2>
+<h3>IN-01: Redundant <code>isNaN</code> check after <code>!isFinite</code> in <code>clampConnectionYear</code></h3>
+<p><strong>File:</strong> <code>src/features/contacts/lib/connection-year.ts:35</code></p>
+<p><strong>Issue:</strong>
+<code>NaN</code> is not finite — <code>!isFinite(NaN)</code> is already <code>true</code> — so the <code>|| isNaN(value)</code> branch is
+never reached. The double check is harmless but misleading: it implies <code>isFinite</code> does not
+cover NaN, which is incorrect.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-ts">// Before
+if (!isFinite(value) || isNaN(value)) return null;
+// After
+if (!isFinite(value)) return null;  // covers NaN, Infinity, -Infinity
+</code></pre>
+<hr>
+<h3>IN-02: <code>rangeLabel</code> in the empty-filter branch uses raw (un-clamped) URL param values</h3>
+<p><strong>File:</strong> <code>src/features/contacts/components/triage/triage-workflow.tsx:254-257</code></p>
+<p><strong>Issue:</strong>
+The empty-filter display message interpolates <code>connectionYearStart</code> / <code>connectionYearEnd</code>
+directly from nuqs without applying <code>clampConnectionYear</code>. The filter itself correctly clamps
+before passing values to <code>filterByConnectionYearRange</code> (lines 90-94), so the filter logic is
+safe. However, if both conditions align — zero untriaged contacts <em>and</em> a hand-crafted URL
+with a hostile value (e.g., <code>?connectionYearStart=99999999</code>) — the message reads:
+&quot;No connections from 99999999 — clear the filter to see all contacts.&quot; This is misleading
+because <code>clampConnectionYear(99999999)</code> returns <code>null</code>, meaning no filter is actually active.</p>
+<p><strong>Fix:</strong> Display the clamped values (or derived <code>connectionYears</code> range) in the label:</p>
+<pre><code class="language-tsx">const clampedStart = clampConnectionYear(connectionYearStart);
+const clampedEnd   = clampConnectionYear(connectionYearEnd);
+const rangeLabel =
+  clampedStart != null &amp;&amp; clampedEnd != null
+    ? `${clampedStart}–${clampedEnd}`
+    : String(clampedStart ?? clampedEnd ?? connectionYearStart ?? connectionYearEnd);
+</code></pre>
+<p>This is low-impact (hostile values only reach this branch when <code>contacts</code> is empty AND the
+URL is hand-crafted), but the fix costs one line and makes the message correct by construction.</p>
+<hr>
+<h3>IN-03: <code>focusedIndex</code> not clamped/reset when <code>years</code> prop changes length</h3>
+<p><strong>File:</strong> <code>src/features/contacts/components/triage/connection-year-filter.tsx:26</code></p>
+<p><strong>Issue:</strong>
+<code>focusedIndex</code> starts at 0 and is bounded by keyboard-nav handlers, but there is no
+<code>useEffect</code> or derived clamp that resets it when the <code>years</code> prop shrinks. If <code>years</code> changes
+from N items to M &lt; N items during the component&#39;s lifetime, <code>focusedIndex</code> can exceed
+<code>years.length</code> (the &quot;All years&quot; sentinel index). On the next Enter keypress before any arrow
+key corrects the index, <code>allOptions[focusedIndex]</code> returns <code>undefined</code> — neither <code>null</code> (the
+&quot;All years&quot; sentinel) nor a valid <code>number</code>, so the <code>if (focused === null)</code> guard is bypassed
+and <code>onYearClick(undefined)</code> is called.</p>
+<p>This diverges from the analog <code>last-contact-year.tsx</code>, which uses a hardcoded year array that
+can never change. Here, <code>years</code> is a prop derived from the parent&#39;s <code>useMemo</code> over <code>contacts</code>;
+in practice <code>contacts</code> is a stable RSC prop, so <code>years</code> does not change during a session. The
+bug is latent but becomes reachable if this component is reused (D-08, Phase 14) in a context
+where the year list updates.</p>
+<p><strong>Fix:</strong> Add a useEffect (or add an <code>options.length</code> check in handleKeyDown):</p>
+<pre><code class="language-tsx">// Reset focusedIndex if years shrinks and the current index is now out of range
+useEffect(() =&gt; {
+  setFocusedIndex((prev) =&gt; Math.min(prev, years.length)); // years.length = &quot;All years&quot; index
+}, [years.length]);
+</code></pre>
+<p>Or guard in the Enter handler:</p>
+<pre><code class="language-tsx">const focused = focusedIndex &lt; allOptions.length ? allOptions[focusedIndex] : null;
+</code></pre>
+<hr>
+<h2>Structural Notes</h2>
+<ul>
+<li><strong>D-04 confirmed:</strong> <code>git diff 9c32567..HEAD -- src/app/dashboard/contacts/triage/page.tsx</code>
+produces no output. The RSC page and its DB query are unchanged.</li>
+<li><strong>Pre-existing <code>document.activeElement</code> pattern:</strong> The expression
+<code>containerRef.current === document.activeElement</code> inside a className <code>cn()</code> call
+(connection-year-filter.tsx:131, 153) is an exact copy of the analog at
+<code>last-contact-year.tsx:101-102</code>, which is already in production use. Not flagged as a
+phase-13 regression.</li>
+<li><strong>Pre-existing ESLint infrastructure failure:</strong> <code>// eslint-disable-line react-hooks/exhaustive-deps</code>
+suppressions at lines 104 and 114 of triage-workflow.tsx are present because the project-wide
+ESLint config fails with a circular JSON resolution error (documented in 13-01-SUMMARY.md).
+Not a phase-13 finding.</li>
+</ul>
+<hr>
+<p><em>Reviewed: 2026-06-21T14:30:00Z</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
