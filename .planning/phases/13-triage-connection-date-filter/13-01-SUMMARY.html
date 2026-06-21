@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>13-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a042085585fb4643d/.planning/phases/13-triage-connection-date-filter/13-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 13-triage-connection-date-filter
+plan: 01
+subsystem: contacts/triage
+tags: [filter, nuqs, triage, connection-year, tdd]
+dependency_graph:
+  requires: []
+  provides:
+    - connection-year helpers (deriveConnectionYears, filterByConnectionYearRange, clampConnectionYear)
+    - ConnectionYearFilter button-bar component with nuqs URL state
+    - triage-workflow wired for in-memory year/range narrowing
+  affects:
+    - src/features/contacts/components/triage/triage-workflow.tsx
+tech_stack:
+  added: []
+  patterns:
+    - nuqs useQueryStates with parseAsInteger for URL-persisted filter state
+    - generic constraint &lt;T extends { linkedinConnectionDate: Date | null }&gt; for reusable pure helpers
+    - forwardRef + useImperativeHandle focus handle pattern (sibling triage controls)
+    - useMemo for derived filtered list off already-fetched contacts
+key_files:
+  created:
+    - src/features/contacts/lib/connection-year.ts
+    - src/features/contacts/lib/connection-year.test.ts
+    - src/features/contacts/components/triage/connection-year-filter.tsx
+  modified:
+    - src/features/contacts/components/triage/triage-workflow.tsx
+decisions:</p>
+<ul>
+<li>D-04: Filtering is client-side over the already-fetched untriaged set; page.tsx DB query is unchanged</li>
+<li>D-05: connectionYearStart/connectionYearEnd nuqs params persist selection across reloads</li>
+<li>D-06: Clicking already-selected year deselects; &quot;All years&quot; clears both params</li>
+<li>D-08: ConnectionYearFilter is standalone and owns the URL state, ready for Phase 14 (GET /api/contacts reuse)</li>
+<li>T-13-01: clampConnectionYear bounds hostile URL values to [1990, currentYear+1] before use in filter
+metrics:
+  duration: ~8 minutes
+  completed: 2026-06-21T13:22:41Z
+  tasks_completed: 3
+  files_changed: 4</li>
+</ul>
+<hr>
+<h1>Phase 13 Plan 01: Triage Connection-Year Filter — Summary</h1>
+<p><strong>One-liner:</strong> Client-side connection-year triage filter with click-to-range button bar, nuqs URL persistence, and 20 Vitest cases covering derivation, range-filtering, and param clamping.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Key Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Pure connection-year helpers + Vitest test</td>
+<td>a2965ab</td>
+<td><code>connection-year.ts</code>, <code>connection-year.test.ts</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>ConnectionYearFilter button-bar with nuqs URL state</td>
+<td>7fb6c90</td>
+<td><code>connection-year-filter.tsx</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Wire filter into triage-workflow — derive years, narrow queue, live count + empty state</td>
+<td>450a2c6</td>
+<td><code>triage-workflow.tsx</code></td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1 — Pure helpers + 20-case Vitest suite</h3>
+<p><code>src/features/contacts/lib/connection-year.ts</code> exports:</p>
+<ul>
+<li><code>MIN_CONNECTION_YEAR = 1990</code> — lower bound constant</li>
+<li><code>deriveConnectionYears&lt;T&gt;</code>: distinct calendar years from <code>linkedinConnectionDate</code>, nulls dropped, sorted descending</li>
+<li><code>filterByConnectionYearRange&lt;T&gt;</code>: null/null passthrough (full queue); otherwise inclusive [lo, hi] window; null-date contacts excluded when any bound set</li>
+<li><code>clampConnectionYear</code>: rejects NaN, non-finite, &lt; 1990, &gt; currentYear+1 — returns null for any hostile URL value (T-13-01 mitigated)</li>
+</ul>
+<p>Generic constraint <code>&lt;T extends { linkedinConnectionDate: Date | null }&gt;</code> — no runtime import of <code>Contact</code>.</p>
+<p>Vitest suite (<code>connection-year.test.ts</code>): 20 tests, all green. Covers fixture derivation (2019/2021/2021/2022/null), single-year filter, two-year range, null passthrough, reversed-range args, adjacent-year exclusion, null-date exclusion, and all clamp edge cases.</p>
+<h3>Task 2 — ConnectionYearFilter component</h3>
+<p><code>src/features/contacts/components/triage/connection-year-filter.tsx</code>:</p>
+<ul>
+<li><code>&#39;use client&#39;</code>, named PascalCase export, no default export</li>
+<li><code>ConnectionYearFilterHandle = { focus: () =&gt; void }</code> — forwardRef interface matching three sibling controls</li>
+<li>Props: <code>{ years: number[] }</code> — data-derived from parent; no hardcoded year literals</li>
+<li>Owns <code>connectionYearStart</code> / <code>connectionYearEnd</code> URL state via <code>useQueryStates</code> + <code>parseAsInteger</code> (cross-phase contract for D-08)</li>
+<li>Click-to-range state machine: (a) no start → set single; (b) start set, no end → deselect if same, else set inclusive range; (c) range set → begin fresh selection</li>
+<li>&quot;All years&quot; clear button: sets both params to null</li>
+<li><code>isSelected(year)</code>: range-membership test for button highlight</li>
+<li>Keyboard nav: ArrowLeft/Right moves focus, Enter activates (D-02)</li>
+<li>TypeScript clean (<code>npx tsc --noEmit</code> passed)</li>
+</ul>
+<h3>Task 3 — triage-workflow wiring</h3>
+<p><code>src/features/contacts/components/triage/triage-workflow.tsx</code> changes:</p>
+<ul>
+<li>Added imports: <code>parseAsInteger</code>, <code>useQueryStates</code>, <code>useMemo</code>, <code>ConnectionYearFilter</code>, <code>deriveConnectionYears</code>, <code>filterByConnectionYearRange</code>, <code>clampConnectionYear</code></li>
+<li><code>connectionYears</code> useMemo: derived from <code>contacts</code> prop (D-03)</li>
+<li><code>filteredContacts</code> useMemo: <code>filterByConnectionYearRange(contacts, clampConnectionYear(start), clampConnectionYear(end))</code> — T-13-01 hardening applied</li>
+<li><code>total</code> and <code>current</code> now read from <code>filteredContacts</code> (not raw <code>contacts</code>)</li>
+<li><code>useEffect</code> resets <code>currentIndex</code> to 0 when either URL param changes</li>
+<li>Empty-filter render branch (before completion): when <code>total === 0 &amp;&amp; filter active</code>, shows &quot;No connections from {range} — clear the filter&quot; + <code>ConnectionYearFilter</code> for reachable Clear (D-07)</li>
+<li><code>&lt;ConnectionYearFilter ref={...} years={connectionYears} /&gt;</code> rendered above TriageCard with sibling <code>{filteredContacts.length} contacts</code> live count (D-07)</li>
+<li><code>page.tsx</code> untouched (D-04)</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Pre-existing ESLint infrastructure failure</h3>
+<p>The plan&#39;s acceptance criteria for Tasks 2 and 3 specify <code>npx eslint &lt;file&gt;</code> should report no errors. ESLint 8.48.0 fails with a <code>TypeError: Converting circular structure to JSON</code> when resolving the <code>.eslintrc.json</code> config — this is a pre-existing project-wide failure (reproduced on unmodified <code>last-contact-year.tsx</code> in the main repo). <code>npx tsc --noEmit</code> was used as the authoritative type-correctness gate and passed cleanly. The ESLint failure is not caused by this plan&#39;s changes.</p>
+<p>None other — plan executed as specified.</p>
+<h2>Known Stubs</h2>
+<p>None. All filter logic is wired to live data. No placeholder text or empty-data stubs.</p>
+<h2>Threat Flags</h2>
+<p>None beyond what the plan&#39;s threat model documents. The <code>clampConnectionYear</code> mitigation for T-13-01 is implemented: hostile URL values (<code>99999999</code>, <code>-1</code>, <code>abc</code> parsed by nuqs as null) yield null → full queue, never an exception or DB write.</p>
+<h2>Self-Check: PASSED</h2>
+<p>All key files confirmed present. All task commits confirmed in git log.</p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a042085585fb4643d/.planning/phases/13-triage-connection-date-filter/13-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
