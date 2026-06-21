@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Networking Outreach Campaigns
-status: ready_to_plan
-stopped_at: Phase 13 complete (2/2) — ready to discuss Phase 14
-last_updated: 2026-06-21T14:33:21.149Z
-last_activity: 2026-06-21 -- Phase 13 execution started
+status: planning
+stopped_at: Phase 14 context gathered
+last_updated: "2026-06-21T14:52:04.644Z"
+last_activity: 2026-06-21
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 45
-  percent: 29
+  completed_plans: 9
+  percent: 43
 ---
 
 # Project State
@@ -134,7 +134,7 @@ Items acknowledged and deferred at v1.1 milestone close (2026-06-20):
 
 ## Session Continuity
 
-Last session: 2026-06-21T02:46:15.111Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-triage-connection-date-filter/13-CONTEXT.md
+Last session: 2026-06-21T14:52:04.640Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-campaign-builder-ui/14-CONTEXT.md
 Next action: `/gsd:execute-phase 11` (resume with Plan 02 — inferred types + state machine)
