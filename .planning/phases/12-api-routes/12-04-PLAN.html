@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-04-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-04-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+plan: 04
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/[id]/generation-context/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts
+autonomous: true
+requirements: [GEN-05]
+must_haves:
+  truths:<ul>
+<li>&quot;GET /api/outreach-campaigns/[id]/generation-context returns the campaign goalInstruction plus every status=&#39;pending&#39; email, each with its contact brief and ~3 most-recent interactions ALREADY joined in — one round-trip, no N+1 (D-01)&quot;</li>
+<li>&quot;Each pending-email entry carries a lowContext boolean (true when fewer than 2 logged interactions) so the skill can flag low-context contacts without a second query (D-02 / GEN-02)&quot;</li>
+<li>&quot;The endpoint issues at most a small constant number of queries regardless of campaign size (verify campaign, one emails+contact join, one inArray interactions fetch) — never one-query-per-contact&quot;</li>
+<li>&quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation writes generatedSubject + generatedBody + generatedAt (the skill write-back half of GEN-05); campaign-scoped (404 otherwise)&quot;</li>
+<li>&quot;No generation/personalization logic runs in either route — the API only assembles context and accepts written-back content (GEN-05)&quot;
+artifacts:</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/generation-context/route.ts&quot;
+provides: &quot;bulk embedded generation context (goalInstruction + pending emails + briefs + interactions + lowContext)&quot;
+exports: [&quot;GET&quot;]</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts&quot;
+provides: &quot;generation write-back (generatedSubject/Body/generatedAt)&quot;
+exports: [&quot;PATCH&quot;]
+key_links:</li>
+<li>from: &quot;generation-context route&quot;
+to: &quot;interactions (batched)&quot;
+via: &quot;inArray(interactions.contactId, contactIds) + group reduce&quot;
+pattern: &quot;inArray&quot;</li>
+<li>from: &quot;generation-context route&quot;
+to: &quot;lowContext flag&quot;
+via: &quot;recentInteractions.length &lt; 2&quot;
+pattern: &quot;lowContext&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Deliver the two endpoints the Phase 16 `generate-outreach-emails` skill uses: a bulk read that hands the skill everything it needs to write all pending emails in one round-trip (campaign goal + per-contact brief + recent interactions + a low-context flag), and the write-back that stores the generated subject/body. This replaces the N+1 per-email design the ARCHITECTURE.md draft proposed (D-01), honoring the project's anti-N+1 constraint at 1500+ contacts.<p>Purpose: GEN-05 — all generation runs in the skill; the API only enqueues pending rows (Plan 02) and accepts write-back. The generation-context endpoint is the &quot;enqueued context&quot; read; the generation route is the write-back.
+Output: One aggregated-read route + one write-back route, envelope-compliant, with the write logged to timeline.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/12-api-routes/12-CONTEXT.md
+@.planning/phases/12-api-routes/12-PATTERNS.md
+@CLAUDE.md<interfaces>
+From drizzle/schema/outreach-emails.ts: id, campaignId, contactId, status, recipientEmail,
+  generatedSubject, generatedBody, generatedAt, updatedAt
+From drizzle/schema/outreach-campaigns.ts: id, goalInstruction<p>From drizzle/schema/contacts.ts (brief fields — confirmed column names):
+  firstName, lastName, howMet, companyAtConnection, roleAtConnection,
+  currentCompany, title, closeness</p>
+<p>From drizzle/schema/interactions.ts — IMPORTANT: there is NO <code>notes</code> column.
+  Available: type (enum), subject (text), content (text), occurredAt (timestamp), contactId (nullable uuid).
+  Map the D-02 &quot;summary&quot; field to interactions.content (fall back to subject only if you choose; content is the body).</p>
+<p>From src/lib/api/types.ts: success(data); from errors.ts: notFound, serverError
+From drizzle-orm: and, desc, eq, inArray
+</interfaces></p>
+<correction_note>
+The PATTERNS.md generation-context excerpt maps `summary: i.notes` — but the interactions table has NO `notes` column (it has `content` and `subject`). Use `summary: i.content`. The executor MUST verify against drizzle/schema/interactions.ts before filing (the read_first includes it).
+</correction_note>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: Bulk generation-context aggregated-read route (D-01/D-02, no N+1)</name>
+  <files>src/app/api/outreach-campaigns/[id]/generation-context/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/recommendations/route.ts (analog: verify parent entity → notFound early → shaped joined select → assemble response)
+    - src/app/api/contacts/[id]/interactions/route.ts (how interactions are fetched by contactId, ordered by occurredAt desc — confirm the column used for ordering and the body field)
+    - drizzle/schema/interactions.ts (CONFIRM: content/subject exist, notes does NOT — map summary→content)
+    - drizzle/schema/contacts.ts (confirm firstName/lastName/howMet/companyAtConnection/roleAtConnection/currentCompany/title/closeness)
+    - drizzle/schema/outreach-emails.ts, drizzle/schema/outreach-campaigns.ts
+    - src/lib/api/types.ts, src/lib/api/errors.ts
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/[id]/generation-context/route.ts" (full GET excerpt — but use i.content, not i.notes)
+  </read_first>
+  <behavior>
+    - GET returns { goalInstruction, emails: [...] }; emails is empty array when the campaign has no pending emails (still 200)
+    - Each email entry = { emailId, contactId, contact: { firstName, lastName, howMet, companyAtConnection, roleAtConnection, currentCompany, title, closeness, recipientEmail }, interactions: [{ type, summary, occurredAt } × up to 3], lowContext }
+    - interactions are the ~3 most recent (occurredAt desc) per contact; lowContext = recentInteractions.length < 2 (D-02 / GEN-02)
+    - Total queries are a small constant (campaign verify, one pending-emails+contact join, one batched interactions inArray) — NOT one per contact
+    - Unknown campaign id returns 404
+  </behavior>
+  <action>
+    Create the route, params `{ params: Promise<{ id: string }> }`. (1) Verify campaign: select goalInstruction by `eq(outreachCampaigns.id, id)` → `notFound('Campaign')`. (2) `const emailRows = db.select({ email: outreachEmails, contact: contacts }).from(outreachEmails).innerJoin(contacts, eq(outreachEmails.contactId, contacts.id)).where(and(eq(outreachEmails.campaignId, id), eq(outreachEmails.status, 'pending')))`. Early-return `success({ goalInstruction: campaign.goalInstruction, emails: [] })` when empty. (3) `const contactIds = emailRows.map(r => r.contact.id)`; ONE batched fetch `db.select().from(interactions).where(inArray(interactions.contactId, contactIds)).orderBy(desc(interactions.occurredAt))`. (4) Group into `interactionsByContact` via reduce keyed on `i.contactId` (contactId is nullable → use the non-null assertion as the analog patterns do). (5) Map each emailRow to the D-02 payload: take `(interactionsByContact[contact.id] ?? []).slice(0, 3)` as recentInteractions; build contact brief from the confirmed contact columns + `recipientEmail: email.recipientEmail`; map interactions to `{ type: i.type, summary: i.content, occurredAt: i.occurredAt }` (i.content — NOT i.notes); set `lowContext: recentInteractions.length < 2`. Return `success({ goalInstruction: campaign.goalInstruction, emails })`. No Zod (GET, no body); just `try/catch → serverError(err)`. Relative schema import `'../../../../../../drizzle/schema'` (6 levels — confirm by counting). This route runs NO generation logic.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes (validates contact/interaction column names against the real schema — will fail if `i.notes` is used)
+    - Against `npm run dev` (a campaign with ≥2 pending emails): `curl .../<id>/generation-context` returns 200 with `data.goalInstruction` (string) and `data.emails[].lowContext` (boolean), `data.emails[].interactions` length ≤ 3, and `data.emails[].contact.howMet` present
+    - A contact with 0–1 interactions shows `lowContext: true`; a contact with ≥2 shows `false`
+    - Unknown campaign uuid returns 404
+    - Source: `grep -c "i.notes\|\.notes" src/app/api/outreach-campaigns/[id]/generation-context/route.ts` returns 0 (uses content, not notes); `grep -c "inArray" <file>` returns 1 (single batched interactions fetch, no per-contact loop query)
+  </acceptance_criteria>
+  <done>One round-trip endpoint returns goalInstruction + pending-email briefs + ≤3 recent interactions + lowContext, using a constant number of queries (no N+1) and interactions.content for summary.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Generation write-back route</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/status/route.ts (update + logTimeline write-back shape; no state-machine check here — the skill calls /status separately to move →generated)
+    - drizzle/schema/outreach-emails.ts (generatedSubject/generatedBody/generatedAt columns)
+    - src/lib/api/types.ts, src/lib/api/errors.ts, src/lib/db/timeline.ts
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/[id]/emails/[emailId]/generation/route.ts" (full PATCH excerpt — note this route correctly uses the 8-level relative import)
+  </read_first>
+  <behavior>
+    - PATCH { generatedSubject, generatedBody } writes both + generatedAt + updatedAt
+    - Empty/missing subject or body returns 400 (z.string().min(1))
+    - Email not in the campaign returns 404 (CD-06)
+    - Does not change status (skill calls /status to move →generated)
+  </behavior>
+  <action>
+    Create the route, params `{ params: Promise<{ id: string; emailId: string }> }`. Zod `generationWriteBackSchema = z.object({ generatedSubject: z.string().min(1).max(500), generatedBody: z.string().min(1) })`. `.update(outreachEmails).set({ generatedSubject: validated.generatedSubject, generatedBody: validated.generatedBody, generatedAt: new Date(), updatedAt: new Date() }).where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id))).returning()` (campaign-scoped CD-06); `notFound('Email')` if no row. `logTimeline({ eventType: 'outreach_email_generated', title: 'Email content generated', metadata: { campaignId: id, emailId } })`. `success(email)`. Standard Zod/serverError catch. Relative schema import is the 8-level path (`'../../../../../../../../drizzle/schema'`) — this route is at the same depth as status/recipient/draft; confirm by counting.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes
+    - Against `npm run dev`: PATCH `{"generatedSubject":"Hi","generatedBody":"Body text"}` returns 200, `data.generatedSubject === 'Hi'`, `data.generatedAt` set
+    - PATCH `{"generatedSubject":"","generatedBody":"x"}` returns 400
+    - PATCH with a campaignId not owning the email returns 404 (CD-06)
+    - Source: `grep -c "outreach_email_generated" src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts` returns 1
+  </acceptance_criteria>
+  <done>Generation write-back stores subject/body/generatedAt, campaign-scoped, timeline-logged; no generation logic in the route.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill (Bearer token) → /api/.../generation-context (read) and /api/.../generation (write)</td>
+<td>Generation skill reads campaign context and writes back content; auth via existing src/proxy.ts Bearer-token bypass (no change)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-12-15</td>
+<td>Denial of Service</td>
+<td>generation-context on large campaign</td>
+<td>mitigate</td>
+<td>Constant query count (campaign verify + one join + one batched inArray) — no N+1; D-01 design caps DB round-trips regardless of contact count</td>
+</tr>
+<tr>
+<td>T-12-16</td>
+<td>Information Disclosure</td>
+<td>contact brief payload</td>
+<td>mitigate</td>
+<td>Payload limited to the D-02 whitelist (name/howMet/company/role/closeness/recipientEmail + ≤3 interactions) — no broader contact dump; campaign-scoped (404 on unknown id)</td>
+</tr>
+<tr>
+<td>T-12-17</td>
+<td>Elevation / IDOR</td>
+<td>generation write-back across campaigns</td>
+<td>mitigate</td>
+<td>CD-06: update scoped by <code>and(eq(id,emailId), eq(campaignId,id))</code>; foreign email returns 404</td>
+</tr>
+<tr>
+<td>T-12-18</td>
+<td>Tampering</td>
+<td>generated content body</td>
+<td>mitigate</td>
+<td>z.string().min(1) on both fields; only generatedSubject/Body/generatedAt written — no mass-assignment of status or other fields</td>
+</tr>
+<tr>
+<td>T-12-SC</td>
+<td>Tampering</td>
+<td>package installs</td>
+<td>accept</td>
+<td>No new npm packages installed in this plan</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` and `npm run build` clean
+- generation-context uses interactions.content (NOT notes) and a single inArray batch (no N+1) — confirmed by grep
+- generation write-back is campaign-scoped (CD-06) and changes no status
+- Both routes contain zero generation/personalization logic (GEN-05)
+</verification><success_criteria>
+- generation-context returns goalInstruction + pending briefs + ≤3 interactions + lowContext in one round-trip (D-01/D-02)
+- generation write-back accepts the skill's generated content (GEN-05 write-back half)
+- No N+1; no generation logic in any route (GEN-05)
+- All handlers return the envelope and rely on existing auth (criterion 5)
+</success_criteria><output>
+Create `.planning/phases/12-api-routes/12-04-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-04-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

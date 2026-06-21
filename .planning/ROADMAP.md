@@ -71,7 +71,11 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   3. User (via CLI) can list campaigns (`GET /api/outreach-campaigns`) and see per-campaign counts: selected / generated / approved / drafted
   4. User (via CLI) can transition an email's status through the lifecycle; invalid transitions (e.g. `generated → drafted`) return 400 with the state machine's rejection reason
   5. All new routes return the standard `{ success, data, error, meta }` envelope and reject unauthenticated requests
-**Plans**: TBD
+**Plans**: 4 plans (all Wave 1, parallel)
+- [ ] 12-01-PLAN.md — Campaign CRUD routes (list+create, single+patch+soft-delete; grouped counts) (CAMP-06, CAMP-08)
+- [ ] 12-02-PLAN.md — Email collection: list, bulk-dedup-add, inline-edit, hard-delete + contacts howMet/year filters (CAMP-07, CAMP-08, D-07)
+- [ ] 12-03-PLAN.md — Email status lifecycle (canEmailTransition + CD-03 + D-05 reset) + recipient/draft write-backs (GEN-05)
+- [ ] 12-04-PLAN.md — Generation skill surface: bulk generation-context (no N+1) + generation write-back (GEN-05)
 
 ### Phase 13: Triage Connection-Date Filter
 **Goal**: The owner can filter the existing triage queue by connection year or date range to surface cohorts of people (e.g. ID.me colleagues from 2021–2022)
@@ -153,7 +157,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 9. UI for Company-Scope Leads | v1.1 | 1/1 | Complete | 2026-05-20 |
 | 10. Connection Company + Role Enrichment for Triage | v1.1 | 4/4 | Complete | 2026-05-20 |
 | 11. Schema, Enums, and State Machine | v1.2 | 3/3 | Complete    | 2026-06-20 |
-| 12. API Routes | v1.2 | 0/TBD | Not started | - |
+| 12. API Routes | v1.2 | 0/4 | Not started | - |
 | 13. Triage Connection-Date Filter | v1.2 | 0/TBD | Not started | - |
 | 14. Campaign Builder UI | v1.2 | 0/TBD | Not started | - |
 | 15. Review and Approval UI | v1.2 | 0/TBD | Not started | - |

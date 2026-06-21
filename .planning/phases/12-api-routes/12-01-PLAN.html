@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/route.ts
+autonomous: true
+requirements: [CAMP-06, CAMP-08]
+must_haves:
+  truths:<ul>
+<li>&quot;User (CLI) can POST /api/outreach-campaigns with { name, goalInstruction } and receive 201 + new campaign id&quot;</li>
+<li>&quot;User (CLI) can GET /api/outreach-campaigns and see each campaign with per-status email counts (pending/generated/edited/approved/drafted/failed) computed in ONE grouped query (no N+1)&quot;</li>
+<li>&quot;User (CLI) can GET /api/outreach-campaigns/[id] and receive the campaign plus the same emailCounts object&quot;</li>
+<li>&quot;PATCH /api/outreach-campaigns/[id] updates name/goalInstruction/status freely (no campaign state machine — D-10) and stamps updatedAt&quot;</li>
+<li>&quot;DELETE /api/outreach-campaigns/[id] soft-deletes via archivedAt and is excluded from the list&quot;
+artifacts:</li>
+<li>path: &quot;src/app/api/outreach-campaigns/route.ts&quot;
+provides: &quot;GET list (cursor-paginated, grouped counts) + POST create&quot;
+exports: [&quot;GET&quot;, &quot;POST&quot;]</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/route.ts&quot;
+provides: &quot;GET single (with counts) + PATCH + DELETE soft&quot;
+exports: [&quot;GET&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;]
+key_links:</li>
+<li>from: &quot;src/app/api/outreach-campaigns/route.ts&quot;
+to: &quot;outreach_emails grouped aggregate&quot;
+via: &quot;leftJoin + groupBy + count(*) FILTER (WHERE status=...)&quot;
+pattern: &quot;FILTER \(WHERE&quot;</li>
+<li>from: &quot;both routes&quot;
+to: &quot;timeline_events&quot;
+via: &quot;logTimeline after every write&quot;
+pattern: &quot;logTimeline&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Deliver the campaign-lifecycle REST surface: list (with per-campaign progress counts), create, read-single, update, and soft-delete for `/api/outreach-campaigns`. This is the entry point the Phase 14 builder UI and the CLI use to create and track campaigns.<p>Purpose: CAMP-06 (create named campaign with goal → get id) and CAMP-08 (list campaigns with selected/generated/approved/drafted counts) are the user-facing &quot;I can start and monitor a campaign&quot; capability.
+Output: Two new route files, both returning the <code>{ success, data, error, meta }</code> envelope, validated with Zod, every write logged to <code>timeline_events</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/12-api-routes/12-CONTEXT.md
+@.planning/phases/12-api-routes/12-PATTERNS.md
+@CLAUDE.md<interfaces>
+<!-- All types/schema already shipped in Phase 11 — no new contracts created here. --><p>From drizzle/schema/outreach-campaigns.ts (outreachCampaigns table):
+  id (uuid pk), name (text notNull), goalInstruction (text notNull),
+  status (enum default &#39;draft&#39; notNull), createdAt, updatedAt,
+  archivedAt (timestamp, nullable — soft delete; campaigns DO have archivedAt)</p>
+<p>From drizzle/schema/outreach-emails.ts (outreachEmails table — for the grouped count join):
+  campaignId (uuid fk), status (enum: pending|generated|edited|approved|drafted|failed)</p>
+<p>From src/lib/domain/types.ts:
+  outreachCampaignStatusValues = [&#39;draft&#39;,&#39;active&#39;,&#39;completed&#39;] as const
+  type OutreachCampaign = typeof outreachCampaigns.$inferSelect</p>
+<p>From src/lib/api/types.ts: success(data)-&gt;200, created(data)-&gt;201, paginated(data,{cursor,hasMore})-&gt;200
+From src/lib/api/errors.ts: notFound(entity)-&gt;404, validationError(msg)-&gt;400, serverError(err)-&gt;500
+From src/lib/api/filters.ts: parseCursor(param)-&gt;Date|null, parseLimit(param)-&gt;number
+From src/lib/db/timeline.ts: logTimeline({ eventType, title, metadata }) — campaignId goes in metadata (no dedicated column)
+</interfaces>
+</context></p>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Campaign list + create route</name>
+  <files>src/app/api/outreach-campaigns/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/route.ts (the exact analog: GET list with conditions[] + sql.join + paginated(); POST create + logTimeline + Zod error handling)
+    - src/app/api/contacts/route.ts (conditions[] + sql.join accumulation and `where = conditions.length > 1 ? join : conditions[0]` idiom)
+    - drizzle/schema/outreach-campaigns.ts and drizzle/schema/outreach-emails.ts (column names + the status enum values for the FILTER counts)
+    - src/lib/api/types.ts, src/lib/api/errors.ts, src/lib/api/filters.ts, src/lib/db/timeline.ts (envelope/error/pagination/timeline helpers)
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/route.ts" (the full GET + POST excerpt, including the CD-01 grouped-count select)
+  </read_first>
+  <behavior>
+    - GET /api/outreach-campaigns returns 200 paginated; each row carries an emailCounts object keyed by status
+    - emailCounts is produced by ONE grouped aggregate (leftJoin outreach_emails + groupBy campaign id), never a per-campaign follow-up query (CD-01, anti-N+1)
+    - archived campaigns (archivedAt not null) are excluded from the list
+    - POST with { name, goalInstruction } returns 201 with the inserted campaign (including id); POST with empty name or missing goalInstruction returns 400
+  </behavior>
+  <action>
+    Create the route mirroring `src/app/api/job-leads/route.ts`. GET: read `limit`/`cursor` via parseLimit/parseCursor; build `conditions = [isNull(outreachCampaigns.archivedAt)]`, push `lt(outreachCampaigns.updatedAt, cursor)` when cursor present; assemble `where` with the `conditions.length > 1 ? sql.join : conditions[0]` idiom. Select campaign columns PLUS an `emailCounts` field built as a `sql<string>` `json_build_object(...)` with one `count(*) FILTER (WHERE ${outreachEmails.status} = 'pending')` (and the same for generated/edited/approved/drafted/failed) — per CD-01. `.leftJoin(outreachEmails, eq(outreachEmails.campaignId, outreachCampaigns.id))`, `.groupBy(outreachCampaigns.id)`, `.orderBy(desc(outreachCampaigns.updatedAt))`, `.limit(limit + 1)`; compute `hasMore`, slice, return `paginated(data, { cursor, hasMore })`. POST: Zod `createCampaignSchema = z.object({ name: z.string().min(1).max(200), goalInstruction: z.string().min(1) })`; insert into outreachCampaigns `.returning()`; `logTimeline({ eventType: 'outreach_campaign_created', title: \`Campaign created: ${campaign.name}\`, metadata: { campaignId: campaign.id } })`; return `created(campaign)`. Wrap both in try/catch with `if (err instanceof z.ZodError) return validationError(err.issues[0].message); return serverError(err)`. Use relative import `'../../../../drizzle/schema'` (4 levels — confirm by counting dirs to repo root). Do NOT add a campaign state machine — campaign status is unguarded (D-10).
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes (validates the Drizzle FILTER select, enum literals, and envelope return types against the real schema)
+    - Against `npm run dev`: `curl -X POST localhost:4000/api/outreach-campaigns -H 'Content-Type: application/json' -d '{"name":"Test","goalInstruction":"reconnect"}'` returns 201 with `data.id` a uuid
+    - `curl localhost:4000/api/outreach-campaigns` returns 200 with `data[].emailCounts` present and `meta.hasMore` boolean
+    - Source: GET handler contains exactly one `db.select(...).from(outreachCampaigns)` (no per-row count query) — `grep -c "FILTER (WHERE" src/app/api/outreach-campaigns/route.ts` returns 6
+    - POST with `{"name":""}` returns 400
+  </acceptance_criteria>
+  <done>GET returns paginated campaigns with grouped emailCounts; POST creates a campaign, logs timeline, returns 201 + id.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Campaign single read + update + soft-delete route</name>
+  <files>src/app/api/outreach-campaigns/[id]/route.ts</files>
+  <read_first>
+    - src/app/api/contacts/[id]/route.ts (the exact analog: GET single → notFound; PATCH with Zod + updatedAt: new Date() + logTimeline; DELETE shape)
+    - src/app/api/outreach-campaigns/route.ts (the file created in Task 1 — reuse the SAME grouped emailCounts select for the single GET)
+    - drizzle/schema/outreach-campaigns.ts (archivedAt exists → DELETE is a SOFT delete, CD-04 contrast)
+    - src/lib/api/types.ts, src/lib/api/errors.ts, src/lib/db/timeline.ts
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/[id]/route.ts"
+  </read_first>
+  <behavior>
+    - GET /api/outreach-campaigns/[id] returns 200 with the campaign + emailCounts; unknown id returns 404
+    - PATCH accepts only { name?, goalInstruction?, status? } (mass-assignment safe — whitelist), stamps updatedAt, logs timeline; unknown id returns 404
+    - PATCH sets campaign status freely to any outreachCampaignStatusValues value (no transition guard — D-10)
+    - DELETE soft-deletes (sets archivedAt + updatedAt), logs timeline, returns 204; the deleted campaign no longer appears in the Task 1 list
+  </behavior>
+  <action>
+    Create the route mirroring `src/app/api/contacts/[id]/route.ts`, params typed `{ params: Promise<{ id: string }> }` (await it). GET: select the campaign by `eq(outreachCampaigns.id, id)` AND compute the same `emailCounts` json_build_object via the grouped leftJoin/groupBy from Task 1 (one query); `notFound('Campaign')` when absent; `success(campaign)`. PATCH: Zod `updateCampaignSchema = z.object({ name: z.string().min(1).max(200).optional(), goalInstruction: z.string().min(1).optional(), status: z.enum(outreachCampaignStatusValues).optional() })`; `.update(outreachCampaigns).set({ ...validated, updatedAt: new Date() }).where(eq(...)).returning()`; `notFound('Campaign')` if no row; `logTimeline({ eventType: 'outreach_campaign_updated', title: \`Campaign updated: ${campaign.name}\`, metadata: { campaignId: id } })`; `success(campaign)`. DELETE: `.update(outreachCampaigns).set({ archivedAt: new Date(), updatedAt: new Date() }).where(eq(...)).returning()` (SOFT — campaigns have archivedAt); `notFound('Campaign')` if no row; `logTimeline({ eventType: 'outreach_campaign_archived', ... })`; return `new Response(null, { status: 204 })`. Standard Zod/serverError catch. Relative import `'../../../../../drizzle/schema'` (5 levels — confirm by counting).
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes
+    - Against `npm run dev` (using an id from Task 1's POST): `curl localhost:4000/api/outreach-campaigns/<id>` returns 200 with `data.emailCounts`; a random uuid returns 404 with `{ success:false, error:"Campaign not found" }`
+    - `curl -X PATCH .../<id> -d '{"status":"active"}'` returns 200 and `data.status === 'active'`
+    - `curl -X DELETE .../<id>` returns 204; the campaign is absent from `GET /api/outreach-campaigns`
+    - Source: `grep -c "updatedAt: new Date()" src/app/api/outreach-campaigns/[id]/route.ts` is >= 2 (PATCH + DELETE both stamp it)
+  </acceptance_criteria>
+  <done>Single GET (with counts), whitelisted PATCH (free status, stamped updatedAt), and soft DELETE all return the envelope, log timeline, and 404 on unknown id.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CLI/browser → /api/outreach-campaigns</td>
+<td>Untrusted JSON body + query params cross here; auth enforced upstream by src/proxy.ts (Clerk + Bearer token, no change in this phase)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-12-01</td>
+<td>Tampering</td>
+<td>POST/PATCH body</td>
+<td>mitigate</td>
+<td>Zod whitelists fields (name/goalInstruction/status only); never spread arbitrary body — status restricted to <code>z.enum(outreachCampaignStatusValues)</code>, preventing mass-assignment of archivedAt/timestamps</td>
+</tr>
+<tr>
+<td>T-12-02</td>
+<td>Denial of Service</td>
+<td>GET list pagination</td>
+<td>mitigate</td>
+<td>parseLimit caps page size; cursor pagination on updatedAt bounds scans; grouped count is one query (CD-01) not N+1</td>
+</tr>
+<tr>
+<td>T-12-03</td>
+<td>Information Disclosure</td>
+<td>unknown campaign id</td>
+<td>mitigate</td>
+<td>notFound(&#39;Campaign&#39;) returns a generic 404; no row contents leaked</td>
+</tr>
+<tr>
+<td>T-12-04</td>
+<td>Spoofing</td>
+<td>unauthenticated request</td>
+<td>accept</td>
+<td>Existing src/proxy.ts matcher covers all <code>/api/*</code> (Clerk + Bearer); no new middleware needed — confirmed in verification below</td>
+</tr>
+<tr>
+<td>T-12-SC</td>
+<td>Tampering</td>
+<td>package installs</td>
+<td>accept</td>
+<td>No new npm packages installed in this plan — supply chain surface unchanged</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` and `npm run build` both clean
+- Confirm src/proxy.ts auth matcher covers `/api/outreach-campaigns/*`: `grep -n "api" src/proxy.ts` shows the `/api/(.*)` (or equivalent) matcher — no edit required (criterion 5)
+- Every write path calls logTimeline (campaign_created / _updated / _archived)
+</verification><success_criteria>
+- POST creates a campaign and returns 201 + id (CAMP-06 / phase criterion 1)
+- GET list and GET single both expose per-status emailCounts via one grouped query (CAMP-08 / criterion 3)
+- PATCH/DELETE stamp updatedAt and (DELETE) soft-delete via archivedAt
+- All four handlers return the `{ success, data, error, meta }` envelope and rely on existing auth (criterion 5)
+</success_criteria><output>
+Create `.planning/phases/12-api-routes/12-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

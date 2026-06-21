@@ -140,7 +140,7 @@ details summary::-webkit-details-marker { color: var(--muted); }
 
 <div class="phase-card pending">
   <div class="phase-num">Phase 12 · v1.2</div>
-  <h4>API Routes <span class="badge badge-pending">Not started</span></h4>
+  <h4>API Routes <span class="badge badge-pending">4 plans · Wave 1</span></h4>
   <p class="goal">The full REST API surface for outreach campaigns is live and usable from the CLI; skills and UI have working endpoints to build against.</p>
   <div class="reqs">CAMP-06, CAMP-07, CAMP-08, GEN-05</div>
   <ul class="sc-list">
@@ -149,6 +149,12 @@ details summary::-webkit-details-marker { color: var(--muted); }
     <li>User (via CLI) can list campaigns and see per-campaign counts: selected / generated / approved / drafted</li>
     <li>User (via CLI) can transition an email's status through the lifecycle; invalid transitions return 400 with the state machine's rejection reason</li>
     <li>All new routes return the standard <code>{ success, data, error, meta }</code> envelope and reject unauthenticated requests</li>
+  </ul>
+  <ul class="req-list active" style="margin-top:.6rem">
+    <li>☐ 12-01 — Campaign CRUD (list+create, single+patch+soft-delete; grouped counts) · CAMP-06, CAMP-08</li>
+    <li>☐ 12-02 — Email collection: list, bulk-dedup-add, edit, hard-delete + contacts howMet/year filters · CAMP-07, D-07</li>
+    <li>☐ 12-03 — Email status lifecycle (canEmailTransition + CD-03 + D-05) + recipient/draft write-backs · GEN-05</li>
+    <li>☐ 12-04 — Generation surface: bulk generation-context (no N+1) + generation write-back · GEN-05</li>
   </ul>
 </div>
 
@@ -268,7 +274,7 @@ details summary::-webkit-details-marker { color: var(--muted); }
   <td>11. Schema, Enums, and State Machine</td><td>v1.2</td><td>1/3</td><td>In Progress</td><td>—</td>
 </tr>
 <tr>
-  <td>12. API Routes</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>
+  <td>12. API Routes</td><td>v1.2</td><td>0/4</td><td>Not started</td><td>—</td>
 </tr>
 <tr>
   <td>13. Triage Connection-Date Filter</td><td>v1.2</td><td>0/TBD</td><td>Not started</td><td>—</td>

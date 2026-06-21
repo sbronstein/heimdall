@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/12-api-routes/12-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 12-api-routes
+plan: 03
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts
+autonomous: true
+requirements: [GEN-05]
+must_haves:
+  truths:<ul>
+<li>&quot;PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status transitions an email&#39;s status only when canEmailTransition() allows it; an invalid move (e.g. generated→drafted) returns 400 with the rejection reason (phase criterion 4)&quot;</li>
+<li>&quot;Transitioning → approved is rejected with 400 when editedSubject ?? generatedSubject (or body) is null — can&#39;t approve an empty email (CD-03)&quot;</li>
+<li>&quot;Transitioning → pending (regenerate) clears editedSubject/editedBody + lastError/lastErrorAt + nulls generatedAt, but KEEPS generatedSubject/generatedBody (D-05)&quot;</li>
+<li>&quot;PATCH .../recipient sets recipientEmail + channel; channel=&#39;linkedin_message&#39; forces recipientEmail=null (CD-06 / Phase 11 D-08)&quot;</li>
+<li>&quot;PATCH .../draft writes gmailDraftId + draftedAt&quot;</li>
+<li>&quot;Every write-back/transition is campaign-scoped (404 if the email is not in the campaign) and logs a distinct timeline event (D-04)&quot;
+artifacts:</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts&quot;
+provides: &quot;state-machine-guarded status transition with D-05 reset + CD-03 approve guard&quot;
+exports: [&quot;PATCH&quot;]</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts&quot;
+provides: &quot;discovery write-back (recipientEmail + channel)&quot;
+exports: [&quot;PATCH&quot;]</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts&quot;
+provides: &quot;draft write-back (gmailDraftId + draftedAt)&quot;
+exports: [&quot;PATCH&quot;]
+key_links:</li>
+<li>from: &quot;status route&quot;
+to: &quot;src/features/outreach/lib/email-status.ts&quot;
+via: &quot;canEmailTransition(email.status, newStatus)&quot;
+pattern: &quot;canEmailTransition&quot;</li>
+<li>from: &quot;status route → pending&quot;
+to: &quot;D-05 reset&quot;
+via: &quot;null edited* + lastError* + generatedAt, keep generated*&quot;
+pattern: &quot;editedSubject&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Deliver the email status lifecycle and the two skill write-back routes that follow approval. The `/status` route is the only transition-guarded write in the system: it enforces `canEmailTransition()`, the CD-03 "can't approve empty" guard, and the D-05 regenerate-reset semantics. `/recipient` (discovery skill, Phase 17) and `/draft` (drafting skill, Phase 17) are simple campaign-scoped write-backs that share the same shape.<p>Purpose: phase criterion 4 (lifecycle transitions; invalid → 400 with reason) and the GEN-05 write-back surface (the API accepts skill write-backs; generation logic itself stays in the skill).
+Output: Three new PATCH route files, envelope-compliant, timeline-logged, campaign-scoped.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/12-api-routes/12-CONTEXT.md
+@.planning/phases/12-api-routes/12-PATTERNS.md
+@CLAUDE.md<interfaces>
+From src/features/outreach/lib/email-status.ts:
+  canEmailTransition(from: string, to: string): boolean
+  validEmailTransitions: pending→[generated,failed]; generated→[edited,approved,failed,pending];
+    edited→[approved,pending]; approved→[drafted,edited]; drafted→[edited]; failed→[pending]
+  (terminal states: none — every state recoverable)<p>From drizzle/schema/outreach-emails.ts (outreachEmails):
+  status, editedSubject, editedBody, generatedSubject, generatedBody, generatedAt,
+  approvedAt, draftedAt, lastError, lastErrorAt, channel, recipientEmail, gmailDraftId, updatedAt</p>
+<p>From src/lib/domain/types.ts:
+  outreachEmailStatusValues = [&#39;pending&#39;,&#39;generated&#39;,&#39;edited&#39;,&#39;approved&#39;,&#39;drafted&#39;,&#39;failed&#39;]
+  outreachChannelValues = [&#39;email&#39;,&#39;linkedin_message&#39;]
+</interfaces></p>
+<import_depth_warning>
+The PATTERNS.md excerpt for the /status route shows `'../../../../../../../drizzle/schema'` (7 levels) — that is OFF BY ONE. All three routes in this plan live at `.../[emailId]/{status|recipient|draft}/route.ts`, which is 8 directory levels above the repo root. Use `'../../../../../../../../drizzle/schema'` (8 levels) for ALL THREE files, and likewise 8 levels for `@/...`-aliased imports are unaffected (use the `@/` alias for lib helpers). Confirm by counting: status → [emailId] → emails → [id] → outreach-campaigns → api → app → src → root = 8. The job-leads analog uses 6 only because it is two directories shallower.
+</import_depth_warning>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: State-machine-guarded status transition route (CD-03 + D-05)</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/status/route.ts (the exact analog — copy its shape: select row → canTransition guard → 400 on invalid → build partial update → updatedAt → logTimeline)
+    - src/features/outreach/lib/email-status.ts (import canEmailTransition; DO NOT reimplement the graph)
+    - drizzle/schema/outreach-emails.ts (editedSubject/generatedSubject/editedBody/generatedBody/generatedAt/approvedAt/lastError/lastErrorAt columns for the CD-03 guard + D-05 reset)
+    - src/lib/api/types.ts, src/lib/api/errors.ts, src/lib/db/timeline.ts
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/[id]/emails/[emailId]/status/route.ts" (full PATCH excerpt — but apply the import-depth correction above)
+  </read_first>
+  <behavior>
+    - Valid transition (e.g. pending→generated, generated→approved when content exists) returns 200 with updated row
+    - Invalid transition (e.g. generated→drafted, approved→pending) returns 400 with reason "Invalid transition: <from> -> <to>"
+    - → approved with both editedSubject/generatedSubject null OR both bodies null returns 400 "Cannot approve: email has no content" (CD-03), even though canEmailTransition would otherwise allow it
+    - → pending nulls editedSubject, editedBody, lastError, lastErrorAt, generatedAt and KEEPS generatedSubject/generatedBody (D-05)
+    - → failed stamps lastError (from body) + lastErrorAt; → approved stamps approvedAt
+    - Email not in the campaign returns 404 (CD-06)
+  </behavior>
+  <action>
+    Create the route, params `{ params: Promise<{ id: string; emailId: string }> }`. Zod `statusChangeSchema = z.object({ status: z.enum(outreachEmailStatusValues), lastError: z.string().max(500).nullable().optional() })`. Select the email with `and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id))` → `notFound('Email')` (CD-06). Guard: `if (!canEmailTransition(email.status, newStatus)) return validationError(\`Invalid transition: ${email.status} -> ${newStatus}\`)`. CD-03 guard: when `newStatus === 'approved'`, compute `subject = email.editedSubject ?? email.generatedSubject` and `body = email.editedBody ?? email.generatedBody`; if either is null/empty return `validationError('Cannot approve: email has no content')`. Build `const update: Record<string, unknown> = { status: newStatus, updatedAt: new Date() }`; then branch: if `newStatus === 'pending'` (D-05) set `editedSubject=null, editedBody=null, lastError=null, lastErrorAt=null, generatedAt=null` and DO NOT touch generatedSubject/generatedBody; else if `'failed'` set `lastError = validated.lastError ?? null, lastErrorAt = new Date()`; else if `'approved'` set `approvedAt = new Date()`. `.update(outreachEmails).set(update).where(and(eq id, eq campaignId)).returning()`. `logTimeline({ eventType: 'outreach_email_status_changed', title: \`Email: ${email.status} -> ${newStatus}\`, metadata: { campaignId: id, emailId, from: email.status, to: newStatus } })`. `success(updated)`. Standard Zod/serverError catch. Import canEmailTransition from `@/features/outreach/lib/email-status`; schema import is the 8-level relative path per the import-depth warning.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes
+    - Against `npm run dev` (email currently 'pending'): PATCH `{"status":"drafted"}` returns 400 with `error` containing "Invalid transition" (phase criterion 4)
+    - PATCH an email with null content `{"status":"approved"}` returns 400 "Cannot approve: email has no content" (CD-03)
+    - PATCH a 'generated'/'edited' email `{"status":"pending"}` returns 200; re-GET the row shows editedSubject=null, generatedAt=null, but generatedSubject/generatedBody UNCHANGED (D-05)
+    - Source: `grep -c "canEmailTransition" src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts` returns >= 1; the file imports it (does not redefine validEmailTransitions)
+    - Source: the schema import uses 8 `../` segments (`grep -c "\.\./\.\./\.\./\.\./\.\./\.\./\.\./\.\./drizzle" <file>` returns 1)
+  </acceptance_criteria>
+  <done>Status route enforces canEmailTransition (400 on invalid), the CD-03 approve guard, and the D-05 regenerate reset; campaign-scoped; timeline-logged.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Recipient write-back route (discovery skill)</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/status/route.ts (update + logTimeline write-back shape — this route has NO state-machine check)
+    - drizzle/schema/outreach-emails.ts (channel + recipientEmail columns)
+    - src/lib/domain/types.ts (outreachChannelValues for the Zod enum)
+    - src/lib/api/types.ts, src/lib/api/errors.ts, src/lib/db/timeline.ts
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts" (full PATCH excerpt — apply the import-depth correction: 8 levels)
+  </read_first>
+  <behavior>
+    - PATCH { channel, recipientEmail? } updates channel + recipientEmail, stamps updatedAt
+    - channel='linkedin_message' forces recipientEmail=null regardless of body (Phase 11 D-08 discovery-state model)
+    - channel='email' with a recipientEmail stores that email
+    - Email not in the campaign returns 404 (CD-06)
+  </behavior>
+  <action>
+    Create the route, params `{ params: Promise<{ id: string; emailId: string }> }`. Zod `recipientWriteBackSchema = z.object({ channel: z.enum(outreachChannelValues), recipientEmail: z.string().email().optional().nullable() })`. Derive `const recipientEmail = validated.channel === 'linkedin_message' ? null : (validated.recipientEmail ?? null)`. `.update(outreachEmails).set({ channel: validated.channel, recipientEmail, updatedAt: new Date() }).where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id))).returning()` (campaign-scoped CD-06); `notFound('Email')` if no row. `logTimeline({ eventType: 'outreach_email_recipient_set', title: \`Email recipient set (channel: ${validated.channel})\`, metadata: { campaignId: id, emailId, channel: validated.channel } })`. `success(email)`. Standard Zod/serverError catch. 8-level relative schema import.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes
+    - Against `npm run dev`: PATCH `{"channel":"email","recipientEmail":"a@b.com"}` returns 200, `data.recipientEmail === 'a@b.com'`
+    - PATCH `{"channel":"linkedin_message","recipientEmail":"a@b.com"}` returns 200 and `data.recipientEmail === null` (forced null — D-08)
+    - PATCH `{"channel":"email","recipientEmail":"not-an-email"}` returns 400
+    - PATCH with a campaignId not owning the email returns 404 (CD-06)
+  </acceptance_criteria>
+  <done>Recipient write-back sets channel + recipientEmail with the linkedin_message→null rule, campaign-scoped, timeline-logged.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 3: Draft write-back route (drafting skill)</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</files>
+  <read_first>
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts (the sibling write-back created in Task 2 — same shape, swap fields)
+    - drizzle/schema/outreach-emails.ts (gmailDraftId + draftedAt columns)
+    - src/lib/api/types.ts, src/lib/api/errors.ts, src/lib/db/timeline.ts
+    - .planning/phases/12-api-routes/12-PATTERNS.md §"outreach-campaigns/[id]/emails/[emailId]/draft/route.ts" (full PATCH excerpt — apply the import-depth correction: 8 levels)
+  </read_first>
+  <behavior>
+    - PATCH { gmailDraftId } writes gmailDraftId + draftedAt + updatedAt
+    - Email not in the campaign returns 404 (CD-06)
+    - This route does NOT change status (the drafting skill calls /status separately to move →drafted)
+  </behavior>
+  <action>
+    Create the route, params `{ params: Promise<{ id: string; emailId: string }> }`. Zod `draftWriteBackSchema = z.object({ gmailDraftId: z.string().min(1) })`. `.update(outreachEmails).set({ gmailDraftId: validated.gmailDraftId, draftedAt: new Date(), updatedAt: new Date() }).where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id))).returning()`; `notFound('Email')` if no row. `logTimeline({ eventType: 'outreach_email_drafted', title: 'Gmail draft created', metadata: { campaignId: id, emailId, gmailDraftId: validated.gmailDraftId } })`. `success(email)`. Standard Zod/serverError catch. 8-level relative schema import.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` passes
+    - Against `npm run dev`: PATCH `{"gmailDraftId":"r-123"}` returns 200, `data.gmailDraftId === 'r-123'` and `data.draftedAt` is set
+    - PATCH `{}` (missing gmailDraftId) returns 400
+    - PATCH with a campaignId not owning the email returns 404 (CD-06)
+    - Source: `grep -c "outreach_email_drafted" src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts` returns 1
+  </acceptance_criteria>
+  <done>Draft write-back stores gmailDraftId + draftedAt without touching status, campaign-scoped, timeline-logged.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill/CLI (Bearer token) → /api/.../emails/[emailId]/{status,recipient,draft}</td>
+<td>Untrusted status/channel/draftId payloads from the Phase 16/17 skills; auth via existing src/proxy.ts Bearer-token bypass (no change)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-12-10</td>
+<td>Tampering / state-machine bypass</td>
+<td>status route</td>
+<td>mitigate</td>
+<td>Every status write passes through canEmailTransition(); invalid moves return 400 — there is no code path that writes status without the guard</td>
+</tr>
+<tr>
+<td>T-12-11</td>
+<td>Business-logic abuse</td>
+<td>approve an empty email</td>
+<td>mitigate</td>
+<td>CD-03 app-layer guard rejects → approved when editedX ?? generatedX is null (400) before the update runs</td>
+</tr>
+<tr>
+<td>T-12-12</td>
+<td>Elevation / IDOR</td>
+<td>emailId across campaigns</td>
+<td>mitigate</td>
+<td>CD-06: all three routes scope the update by <code>and(eq(id,emailId), eq(campaignId,id))</code>; foreign email returns 404, never mutated</td>
+</tr>
+<tr>
+<td>T-12-13</td>
+<td>Tampering</td>
+<td>status/channel enum values</td>
+<td>mitigate</td>
+<td>z.enum(outreachEmailStatusValues) / z.enum(outreachChannelValues) reject out-of-set values; gmailDraftId is z.string().min(1)</td>
+</tr>
+<tr>
+<td>T-12-14</td>
+<td>Tampering</td>
+<td>recipientEmail on linkedin channel</td>
+<td>mitigate</td>
+<td>Server forces recipientEmail=null when channel=&#39;linkedin_message&#39; (D-08) — client cannot smuggle an address onto a LinkedIn-only contact</td>
+</tr>
+<tr>
+<td>T-12-SC</td>
+<td>Tampering</td>
+<td>package installs</td>
+<td>accept</td>
+<td>No new npm packages installed in this plan</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` and `npm run build` clean
+- The status route imports canEmailTransition from the Phase 11 module and does not reimplement the transition graph
+- D-05 reset verified: a → pending row keeps generated* but clears edited*/lastError*/generatedAt
+- All three routes 404 on a cross-campaign emailId (CD-06)
+- Confirm the 8-level relative import compiles (the PATTERNS status excerpt's 7-level path would NOT)
+</verification><success_criteria>
+- Status transitions enforced by canEmailTransition; invalid → 400 with reason (phase criterion 4)
+- CD-03 approve guard + D-05 regenerate reset behave exactly as specified
+- recipient/draft write-backs accept skill writes (GEN-05 write-back surface); all campaign-scoped
+- All handlers return the envelope and rely on existing auth (criterion 5)
+</success_criteria><output>
+Create `.planning/phases/12-api-routes/12-03-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/12-api-routes/12-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
