@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a818e65ad7e7cc90c/.planning/phases/14-campaign-builder-ui/14-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 14-campaign-builder-ui
+plan: 01
+subsystem: outreach-ui
+tags: [outreach, campaign-list, nav, rsc, tdd]
+dependency_graph:
+  requires: [phase-12-api-outreach-campaigns]
+  provides: [/dashboard/outreach route, CampaignList component, Outreach sidebar nav]
+  affects: [src/config/nav-config.ts, src/components/icons.tsx, src/app/dashboard/outreach/, src/features/outreach/components/]
+tech_stack:
+  added: []
+  patterns: [RSC-to-client, json_build_object aggregate in RSC, TDD with vitest node environment]
+key_files:
+  created:
+    - src/app/dashboard/outreach/page.tsx
+    - src/features/outreach/components/campaign-list.tsx
+    - src/features/outreach/components/campaign-list.test.ts
+  modified:
+    - src/config/nav-config.ts
+    - src/components/icons.tsx
+decisions:</p>
+<ul>
+<li>&quot;Used IconMail (from @tabler/icons-react) for Outreach nav icon; added mail key to Icons map and imported IconMail&quot;</li>
+<li>&quot;TDD helpers (displayCountsFromEmailCounts, hasNoCampaigns) exported from component module and unit-tested in node environment without @testing-library/react&quot;</li>
+<li>&quot;emailCounts json_build_object SELECT copied verbatim from API route into RSC page (no fetch() from RSC)&quot;</li>
+<li>&quot;goalInstruction is NOT NULL in schema — empty string used as default in tests, not null&quot;
+metrics:
+  duration: &quot;~4 minutes&quot;
+  completed: &quot;2026-06-21T15:21:25Z&quot;
+  tasks_completed: 3
+  files_changed: 5
+  files_created: 3</li>
+</ul>
+<hr>
+<h1>Phase 14 Plan 01: Campaign List Surface Summary</h1>
+<p>Campaign list UI for <code>/dashboard/outreach/</code> — sidebar nav entry, RSC data page, and CampaignList card component with per-status progress badges wired to Phase 12 campaign-counts shape (CAMP-08).</p>
+<h2>What Was Built</h2>
+<h3>Task 1: Outreach sidebar nav entry (b894b39)</h3>
+<ul>
+<li>Added <code>IconMail</code> import to <code>src/components/icons.tsx</code> and registered as <code>mail</code> key in <code>Icons</code></li>
+<li>Added Outreach <code>NavItem</code> to <code>src/config/nav-config.ts</code> between Job Leads and Contacts<ul>
+<li><code>url: &#39;/dashboard/outreach&#39;</code>, <code>icon: &#39;mail&#39;</code>, <code>shortcut: [&#39;o&#39;,&#39;u&#39;]</code></li>
+<li>Shortcut <code>[&#39;o&#39;,&#39;u&#39;]</code> confirmed non-conflicting (Contacts is <code>[&#39;o&#39;,&#39;o&#39;]</code>)</li>
+</ul>
+</li>
+</ul>
+<h3>Task 2: Campaign list RSC page (7d7d27b)</h3>
+<ul>
+<li>Created <code>src/app/dashboard/outreach/page.tsx</code> as async RSC</li>
+<li>Direct DB read of non-archived campaigns with <code>emailCounts</code> via <code>json_build_object</code> (mirrors <code>GET /api/outreach-campaigns</code> exactly — no <code>fetch()</code> from RSC)</li>
+<li><code>leftJoin(outreachEmails)</code> + <code>groupBy(outreachCampaigns.id)</code> for per-status aggregates</li>
+<li><code>PageContainer</code> with <code>pageHeaderAction</code> linking to <code>/dashboard/outreach/new</code></li>
+<li>Passes <code>initialCampaigns</code> with coerced <code>emailCounts as Record&lt;string, number&gt;</code> to <code>CampaignList</code></li>
+</ul>
+<h3>Task 3: CampaignList card component (7a1c83f RED + 94c3ab2 GREEN)</h3>
+<ul>
+<li>TDD cycle: failing tests committed first (RED), full implementation passes all 9 (GREEN)</li>
+<li>Exported <code>displayCountsFromEmailCounts</code>: maps <code>pending → selected</code>, <code>generated</code>, <code>approved</code>, <code>drafted</code> (D-10 wording)</li>
+<li>Exported <code>hasNoCampaigns</code>: CD-05 empty-state gate</li>
+<li><code>CampaignList</code> renders cards in a responsive grid; each card links to <code>/dashboard/outreach/[id]</code></li>
+<li>Campaign card: name + status badge header, <code>line-clamp-2</code> goal snippet when present, per-status <code>BadgeCount</code> row</li>
+<li>Empty state: &quot;No campaigns yet — create your first from a contact cohort.&quot;</li>
+</ul>
+<h2>Verification</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> — clean (no errors in any modified/created file)</li>
+<li><code>npx vitest run</code> — 9/9 tests pass (TDD RED confirmed, GREEN confirmed)</li>
+<li><code>grep -c &quot;/dashboard/outreach&#39;&quot; src/config/nav-config.ts</code> → 1</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] Test fixture had <code>goalInstruction: null</code> but schema is NOT NULL</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 TypeScript check after implementing CampaignList</li>
+<li><strong>Issue:</strong> Test used <code>goalInstruction: null</code> but <code>outreachCampaigns.goalInstruction</code> is <code>text NOT NULL</code> — TypeScript error TS2322</li>
+<li><strong>Fix:</strong> Changed test fixture to <code>goalInstruction: &#39;&#39;</code> (empty string) to match actual schema</li>
+<li><strong>Files modified:</strong> <code>src/features/outreach/components/campaign-list.test.ts</code></li>
+<li><strong>Commit:</strong> 94c3ab2</li>
+</ul>
+<h2>Known Stubs</h2>
+<p>None. The RSC page reads real DB data; <code>CampaignList</code> renders whatever <code>initialCampaigns</code> provides; the <code>/dashboard/outreach/new</code> link destination is created in Plan 02 (builder).</p>
+<h2>Threat Flags</h2>
+<p>No new threat surface. This plan adds read-only RSC rendering inside the existing Clerk-locked <code>/dashboard</code> tree. The <code>emailCounts</code> aggregate is purely server-side. No new API endpoints introduced (T-14-01 accept disposition unchanged).</p>
+<h2>TDD Gate Compliance</h2>
+<ul>
+<li>RED gate: <code>test(14-01)</code> commit <code>7a1c83f</code> — 9 failing tests confirmed</li>
+<li>GREEN gate: <code>feat(14-01)</code> commit <code>94c3ab2</code> — all 9 tests pass</li>
+<li>REFACTOR: not required (implementation was clean after GREEN)</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>src/app/dashboard/outreach/page.tsx</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>src/features/outreach/components/campaign-list.tsx</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>src/features/outreach/components/campaign-list.test.ts</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>.planning/phases/14-campaign-builder-ui/14-01-SUMMARY.md</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit b894b39 (Task 1 - nav)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit 7d7d27b (Task 2 - RSC page)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit 7a1c83f (Task 3 - RED)</td>
+<td>FOUND</td>
+</tr>
+<tr>
+<td>Commit 94c3ab2 (Task 3 - GREEN)</td>
+<td>FOUND</td>
+</tr>
+</tbody></table>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a818e65ad7e7cc90c/.planning/phases/14-campaign-builder-ui/14-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

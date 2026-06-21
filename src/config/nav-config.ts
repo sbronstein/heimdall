@@ -42,6 +42,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Outreach',
+    url: '/dashboard/outreach',
+    icon: 'mail',
+    isActive: false,
+    shortcut: ['o', 'u'],
+    items: []
+  },
+  {
     title: 'Contacts',
     url: '/dashboard/contacts',
     icon: 'addressBook',
