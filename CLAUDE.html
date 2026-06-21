@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CLAUDE</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>CLAUDE.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Heimdall — Job Search Command Center</h1>
+<p>A personal CRM and pipeline tracker for an executive job search targeting VP Data/AI roles at growth-stage companies. Built for dual interaction: web UI and Claude Code CLI.</p>
+<h2>Stack</h2>
+<ul>
+<li><strong>Framework</strong>: Next.js 16 (App Router, Server Components by default)</li>
+<li><strong>Database</strong>: Neon Postgres with Drizzle ORM</li>
+<li><strong>UI</strong>: shadcn/ui + Tailwind CSS v4 + Recharts</li>
+<li><strong>Auth</strong>: Clerk</li>
+<li><strong>Hosting</strong>: Vercel</li>
+<li><strong>Vector search (Phase 2)</strong>: pgvector on same Neon instance</li>
+</ul>
+<h2>Project Structure</h2>
+<pre><code>/app                  → Pages, layouts, API routes (App Router)
+/app/api              → REST API routes (all data mutations go here)
+/components/ui        → shadcn/ui primitives
+/components           → Domain components (company-card, pipeline-board, etc.)
+/lib/db               → Drizzle client, queries, helpers
+/lib/actions          → Server actions (thin wrappers around db queries)
+/drizzle              → Schema definitions, migrations, seed
+/docs                 → Architecture reference (schema, API, playbook)
+</code></pre>
+<h2>Code Conventions</h2>
+<ul>
+<li>TypeScript strict mode, named exports everywhere</li>
+<li>Server Components by default; add <code>&#39;use client&#39;</code> only when needed for interactivity</li>
+<li>All data mutations must go through <code>/app/api/</code> routes — never client-only state</li>
+<li>This ensures Claude Code can do everything the web UI can via HTTP calls</li>
+<li>Use Drizzle query builder, not raw SQL (except for pgvector queries)</li>
+<li>Prefer <code>async/await</code> over <code>.then()</code> chains</li>
+<li>Error handling: return <code>{ success: boolean, data?, error? }</code> from all API routes</li>
+<li>Use <code>zod</code> for request validation on all API routes</li>
+</ul>
+<h2>Database</h2>
+<ul>
+<li>Neon Postgres, connection via <code>DATABASE_URL</code> env var</li>
+<li>Drizzle ORM with <code>drizzle-kit</code> for migrations</li>
+<li>Schema defined in <code>/drizzle/schema/</code> — one file per table</li>
+<li>UUID primary keys, <code>created_at</code>/<code>updated_at</code> on every table</li>
+<li>Soft deletes via <code>archived_at</code> timestamp (never hard delete during active search)</li>
+<li>JSONB for semi-structured data (compensation details, interview panels, funding info)</li>
+<li>Postgres text arrays for tags</li>
+</ul>
+<p>See <code>@docs/database-schema.md</code> for full schema with all tables and indexes.</p>
+<h2>API Design</h2>
+<ul>
+<li>RESTful routes under <code>/app/api/</code></li>
+<li>Standard response envelope: <code>{ success, data, error, meta }</code></li>
+<li>Pagination via cursor (not offset) using <code>updated_at</code> timestamps</li>
+<li>Filtering via query params</li>
+<li>All write operations also create a <code>timeline_events</code> record</li>
+</ul>
+<p>See <code>@docs/api-conventions.md</code> for full patterns and examples.</p>
+<h2>Key Domain Concepts</h2>
+<ul>
+<li><strong>Companies</strong>: Organizations being tracked (researching, targeting, or applied to)</li>
+<li><strong>Contacts</strong>: People linked to companies — recruiters, hiring managers, network connections</li>
+<li><strong>Applications</strong>: A specific role at a specific company progressing through pipeline stages</li>
+<li><strong>Interactions</strong>: Every communication logged (emails, calls, interviews, intros)</li>
+<li><strong>Tasks</strong>: To-dos and follow-up reminders linked to any entity</li>
+<li><strong>Notes</strong>: Research, interview prep, STAR stories, weekly reflections</li>
+<li><strong>Timeline Events</strong>: Denormalized activity feed for the dashboard</li>
+<li><strong>Search Metrics</strong>: Weekly snapshots for JSC reporting and trend tracking</li>
+</ul>
+<h2>Pipeline Stages</h2>
+<p>Researching → Applied → Recruiter Screen → Phone Interview → Onsite → Final Round → Offer → Negotiating → Accepted/Rejected/Withdrawn/Ghosted/On Hold</p>
+<h2>Commands</h2>
+<pre><code class="language-bash">npm run dev           # Start dev server (port 3000)
+npm run build         # Production build
+npm run db:generate   # Generate Drizzle migration from schema changes
+npm run db:migrate    # Run pending migrations
+npm run db:push       # Push schema directly (dev only)
+npm run db:studio     # Open Drizzle Studio (visual DB browser)
+npm run db:seed       # Seed pipeline stages and example data
+</code></pre>
+<h2>Environment Variables</h2>
+<p>Defined in <code>.env.local</code> (gitignored):</p>
+<ul>
+<li><code>DATABASE_URL</code> — Neon Postgres connection string</li>
+<li><code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> — Clerk auth</li>
+<li><code>CLERK_SECRET_KEY</code> — Clerk auth</li>
+<li><code>OPENAI_API_KEY</code> — For embeddings (Phase 2)</li>
+</ul>
+<h2>Testing</h2>
+<ul>
+<li>Validate API routes return correct envelope format</li>
+<li>Test pipeline stage transitions (valid moves only)</li>
+<li>Test that all write operations create timeline events</li>
+</ul>
+<!-- GSD:project-start source:PROJECT.md -->
+<h2>Project</h2>
+<p><strong>Heimdall — Job Search Command Center</strong></p>
+<p>A personal CRM and pipeline tracker for an executive job search targeting VP Data/AI roles at growth-stage companies. Built for dual interaction — full-featured web UI <strong>and</strong> Claude Code CLI parity through a REST API surface. Single-user by design (Clerk middleware locks <code>/dashboard</code> to <code>steve@bronstein.org</code>).</p>
+<p><strong>Core Value:</strong> <strong>The owner can run their entire executive job search from one place — track companies, log interactions, move applications through pipeline stages, and surface the highest-value introduction paths for any role — without leaving the app.</strong> If everything else fails, the pipeline state machine and the timeline activity feed must work: that is the system of record for the search.</p>
+<h3>Constraints</h3>
+<ul>
+<li><strong>Tech stack</strong>: Next.js 16 (App Router, RSC) + Neon Postgres + Drizzle ORM + shadcn/ui + Tailwind v4 + Clerk + Recharts — fixed for this project; no framework migrations.</li>
+<li><strong>Auth</strong>: Clerk only, single-user lock on <code>steve@bronstein.org</code>. No multi-tenancy.</li>
+<li><strong>No server actions</strong>: All mutations must go through REST API routes — CLI parity depends on it.</li>
+<li><strong>No raw SQL</strong> in app code except for pgvector queries (Phase 2 — not yet active). Use Drizzle query builder.</li>
+<li><strong>All API routes use Zod</strong> for request validation and return the <code>{ success, data, error, meta }</code> envelope.</li>
+<li><strong>Soft deletes</strong>: never hard-delete during the active search — set <code>archived_at</code> instead.</li>
+<li><strong>Hosting</strong>: Vercel — Playwright/Chromium incompatible with serverless; scraping is local-dev / Docker only.</li>
+<li><strong>Performance</strong>: 1500+ contacts in the table today; queries that scan the full <code>contacts</code> table or do N+1 inserts/updates are already noticeable.</li>
+</ul>
+<!-- GSD:project-end --><!-- GSD:stack-start source:codebase/STACK.md -->
+<h2>Technology Stack</h2>
+<h2>Languages</h2>
+<ul>
+<li>TypeScript 5.7.2 - All source code (<code>src/</code>, <code>drizzle/</code>, scripts)</li>
+<li>Python 3.x - Utility scripts only (<code>scripts/generate-import-data.py</code>, <code>scripts/parse-paste.py</code>)</li>
+</ul>
+<h2>Runtime</h2>
+<ul>
+<li>Node.js 22 (pinned in <code>.nvmrc</code>)</li>
+<li>npm</li>
+<li>Lockfile: <code>package-lock.json</code> present (lockfileVersion 3)</li>
+</ul>
+<h2>Frameworks</h2>
+<ul>
+<li>Next.js 16.0.10 - Full-stack framework, App Router, Server Components by default</li>
+<li>React 19.2.0 - UI layer</li>
+<li>shadcn/ui (style: &quot;new-york&quot;) - Component library via <code>components.json</code>; primitives in <code>src/components/ui/</code></li>
+<li>Radix UI primitives - ~20 packages (<code>@radix-ui/react-*</code>), all via shadcn/ui</li>
+<li>Tailwind CSS v4 (<code>tailwindcss: ^4.0.0</code>) - Utility-first CSS</li>
+<li><code>@tailwindcss/postcss</code> v4 - PostCSS integration (<code>postcss.config.js</code>)</li>
+<li><code>tailwind-merge</code> v3 - Class merging (<code>src/lib/utils.ts</code>)</li>
+<li><code>tailwindcss-animate</code> + <code>tw-animate-css</code> - Animation utilities</li>
+<li><code>next-themes</code> v0.4.6 - Theme switching; active theme stored in cookie, default is &quot;vercel&quot; (<code>src/components/themes/theme.config.ts</code>)</li>
+<li><code>@tanstack/react-table</code> v8 - Headless table primitives (<code>src/lib/data-table.ts</code>)</li>
+<li>Recharts v2 - Data visualization</li>
+<li><code>react-hook-form</code> v7</li>
+<li><code>@hookform/resolvers</code> v5</li>
+<li><code>zod</code> v4 - Schema validation; used on all API routes</li>
+<li><code>@dnd-kit/core</code>, <code>@dnd-kit/sortable</code>, <code>@dnd-kit/modifiers</code>, <code>@dnd-kit/utilities</code> v6-8</li>
+<li><code>nuqs</code> v2 - URL search params state management; adapter in <code>src/app/layout.tsx</code></li>
+<li><code>motion</code> v11 (Framer Motion)</li>
+<li><code>playwright</code> v1.58.2 - Chromium browser automation for LinkedIn scraping (<code>src/features/job-leads/lib/linkedin-browser.ts</code>, <code>src/features/job-leads/lib/scrape-connections.ts</code>)</li>
+<li><code>cheerio</code> v1.2 - HTML parsing for job page scraping (<code>src/features/job-leads/lib/scrape-job-page.ts</code>)</li>
+<li><code>date-fns</code> v4 - Date formatting</li>
+<li><code>papaparse</code> v5 - CSV parsing (LinkedIn import)</li>
+<li><code>uuid</code> v11 - UUID generation</li>
+<li><code>zustand</code> v5 - Client-side state management</li>
+<li><code>kbar</code> v0.1.0-beta.45 - Command palette (<code>src/components/kbar/</code>)</li>
+<li><code>sonner</code> v1 - Toast notifications</li>
+<li><code>lucide-react</code> v0.476, <code>@tabler/icons-react</code> v3, <code>@radix-ui/react-icons</code> v1 - Icon libraries</li>
+<li>Not configured; no jest.config.<em>, vitest.config.</em>, or test files detected</li>
+<li><code>drizzle-kit</code> v0.31.9 - Schema migration tooling (<code>drizzle.config.ts</code>)</li>
+<li><code>husky</code> v9 + <code>lint-staged</code> v15 - Pre-commit hooks</li>
+<li><code>eslint</code> 8.48.0 + <code>eslint-config-next</code> v16 + <code>@typescript-eslint/eslint-plugin</code> v6</li>
+<li><code>prettier</code> 3.4.2 + <code>prettier-plugin-tailwindcss</code> v0.6.11</li>
+</ul>
+<h2>Key Dependencies</h2>
+<ul>
+<li><code>drizzle-orm</code> v0.45.1 - ORM for all database queries; used throughout <code>src/lib/db/</code>, <code>src/app/api/</code></li>
+<li><code>@neondatabase/serverless</code> v1.0.2 - Neon Postgres HTTP driver; initialized in <code>src/lib/db/index.ts</code></li>
+<li><code>@clerk/nextjs</code> v6 - Authentication and session management; middleware in <code>src/proxy.ts</code></li>
+<li><code>zod</code> v4 - Request validation; used in every API route</li>
+<li><code>sharp</code> v0.33.5 - Image optimization (Next.js image processing)</li>
+<li><code>nextjs-toploader</code> v3 - Page load progress indicator</li>
+</ul>
+<h2>Configuration</h2>
+<ul>
+<li>Configured via <code>.env.local</code> (gitignored; <code>.env.local</code> file present)</li>
+<li>Template with all variable names documented in <code>env.example.txt</code></li>
+<li>Key variables:</li>
+<li><code>tsconfig.json</code>: strict mode, target es5, path aliases <code>@/*</code> → <code>./src/*</code> and <code>~/*</code> → <code>./public/*</code></li>
+<li><code>next.config.ts</code> - Minimal config; remote image patterns for <code>img.clerk.com</code>, <code>clerk.com</code>, <code>api.slingacademy.com</code>; transpiles <code>geist</code></li>
+<li><code>postcss.config.js</code> - Tailwind v4 PostCSS plugin only</li>
+<li><code>drizzle.config.ts</code> - PostgreSQL dialect, schema at <code>./drizzle/schema/index.ts</code>, migrations at <code>./drizzle/migrations</code></li>
+</ul>
+<h2>Platform Requirements</h2>
+<ul>
+<li>Node.js 22 (<code>.nvmrc</code>)</li>
+<li>Dev server runs on port 4000 (<code>npm run dev</code> uses <code>-p 4000 -H 0.0.0.0</code>)</li>
+<li>LinkedIn scraping requires either: local Chromium install (Playwright), a headed Chrome with CDP (<code>BROWSER_CDP_ENDPOINT</code>), or a Playwright remote server (<code>BROWSER_WS_ENDPOINT</code>)</li>
+<li>Vercel (inferred from <code>eslint-config-next</code>, <code>@neondatabase/serverless</code> HTTP driver, App Router patterns)</li>
+<li>Neon Postgres (serverless HTTP driver required for Vercel edge/serverless compatibility)</li>
+</ul>
+<!-- GSD:stack-end --><!-- GSD:conventions-start source:CONVENTIONS.md -->
+<h2>Conventions</h2>
+<h2>Naming Patterns</h2>
+<ul>
+<li>kebab-case for all files: <code>company-form.tsx</code>, <code>scrape-job-page.ts</code>, <code>pipeline-board.tsx</code></li>
+<li>Schema files use kebab-case in <code>drizzle/schema/</code>: <code>job-leads.ts</code>, <code>timeline-events.ts</code></li>
+<li>API routes follow Next.js convention: <code>route.ts</code> in directory-per-endpoint layout</li>
+<li>camelCase for all functions: <code>scrapeJobPage</code>, <code>logTimeline</code>, <code>canTransition</code>, <code>buildRecommendations</code></li>
+<li>Event handlers prefixed with <code>on</code>: <code>onSubmit</code>, <code>onDragStart</code>, <code>onCardClick</code></li>
+<li>Handler callbacks passed as props prefixed with <code>handle</code>: <code>handleCreate</code></li>
+<li>Async route handlers named after HTTP verb: <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code></li>
+<li>camelCase: <code>companyId</code>, <code>newStatus</code>, <code>hasMore</code>, <code>searchParams</code></li>
+<li>Boolean variables prefixed with <code>is</code>/<code>has</code>: <code>isMounted</code>, <code>hasMore</code>, <code>isOverlay</code>, <code>isDragging</code></li>
+<li>Constants (enum value arrays) use camelCase with <code>Values</code> suffix: <code>applicationStatusValues</code>, <code>companyStageValues</code></li>
+<li>PascalCase for types and interfaces: <code>Company</code>, <code>PipelineApplication</code>, <code>ScrapedJobData</code></li>
+<li>Props interfaces named <code>[ComponentName]Props</code>: <code>PipelineBoardProps</code>, <code>ApplicationCardProps</code></li>
+<li>Inferred Drizzle types use simple entity names: <code>Company</code>, <code>Contact</code>, <code>Application</code> (defined in <code>src/lib/domain/types.ts</code>)</li>
+<li>Insert variants prefixed <code>New</code>: <code>NewCompany</code>, <code>NewContact</code>, <code>NewApplication</code></li>
+<li>Type-only imports use <code>import type</code>: <code>import type { PipelineStage } from &#39;@/lib/domain/types&#39;</code></li>
+<li>PascalCase named exports for all React components: <code>PipelineBoard</code>, <code>ApplicationCard</code>, <code>JobLeadsPage</code></li>
+<li>No default exports for components — Next.js page files (<code>page.tsx</code>, <code>layout.tsx</code>) are the only exception</li>
+<li>Custom hooks prefixed <code>use</code>: <code>usePipelineStore</code>, <code>useDataTable</code>, <code>useDebounce</code></li>
+</ul>
+<h2>Code Style</h2>
+<ul>
+<li>Single quotes for strings: <code>&#39;use client&#39;</code>, <code>import ... from &#39;...&#39;</code></li>
+<li>No trailing commas</li>
+<li>2-space indentation</li>
+<li>No semicolons omitted (semi: true)</li>
+<li>Arrow functions always parenthesized: <code>(s) =&gt; s.applications</code></li>
+<li>LF line endings</li>
+<li>Tailwind class sorting via <code>prettier-plugin-tailwindcss</code></li>
+<li><code>@typescript-eslint/no-unused-vars</code> — warn (not error)</li>
+<li><code>no-console</code> — warn (allows <code>console.error</code> in API error paths)</li>
+<li><code>react-hooks/exhaustive-deps</code> — warn</li>
+<li><code>import/no-unresolved</code> — off (path aliases handled by TS)</li>
+<li>Strict mode enabled (<code>&quot;strict&quot;: true</code> in <code>tsconfig.json</code>)</li>
+<li><code>satisfies</code> operator used to validate response shapes: <code>{ success: true, data } satisfies ApiResponse&lt;T&gt;</code></li>
+<li>Type assertions used for Drizzle enum arrays: <code>statuses as (typeof applicationStatusValues)[number][]</code></li>
+<li>Non-null assertion (<code>!</code>) used for env vars: <code>process.env.DATABASE_URL!</code></li>
+</ul>
+<h2>Import Organization</h2>
+<ul>
+<li><code>@/*</code> → <code>./src/*</code> (primary alias for all src imports)</li>
+<li><code>~/*</code> → <code>./public/*</code> (public assets)</li>
+<li>Drizzle schema imported as relative paths from API routes: <code>&#39;../../../../drizzle/schema&#39;</code></li>
+<li>Use <code>import type</code> for types that are not needed at runtime:</li>
+</ul>
+<h2>Error Handling</h2>
+<ul>
+<li><code>notFound(entity)</code> → 404 <code>{ success: false, error: &quot;[entity] not found&quot; }</code></li>
+<li><code>validationError(message)</code> → 400 <code>{ success: false, error: message }</code></li>
+<li><code>serverError(err)</code> → 500, logs <code>console.error(&#39;API Error:&#39;, err)</code></li>
+<li><code>success(data)</code> → 200 <code>{ success: true, data }</code></li>
+<li><code>created(data)</code> → 201 <code>{ success: true, data }</code></li>
+<li><code>paginated(data, meta)</code> → 200 <code>{ success: true, data, meta }</code></li>
+</ul>
+<h2>Logging</h2>
+<ul>
+<li>Server errors logged in <code>serverError()</code> in <code>src/lib/api/errors.ts</code> — centralized</li>
+<li>Scrape/search failures logged inline with <code>console.error(&#39;Job page scrape failed:&#39;, err)</code></li>
+<li><code>no-console</code> ESLint rule is <code>warn</code> — <code>console.log</code> is discouraged but <code>console.error</code> is accepted</li>
+<li>No structured logging or log levels beyond error</li>
+</ul>
+<h2>Comments</h2>
+<ul>
+<li>Section headers in long files: <code>// Core info</code>, <code>// Verify company exists</code></li>
+<li>Non-obvious algorithmic decisions: <code>// Overall contact score = max of their bridge scores</code></li>
+<li>Intentional suppressions: <code>// ignore malformed JSON-LD</code>, <code>// Leave browser open for now (debug mode)</code></li>
+<li>TODO/workaround notes are present but rare</li>
+</ul>
+<h2>Function Design</h2>
+<ul>
+<li>Route handlers receive <code>(request: Request, { params })</code> where params is <code>Promise&lt;{ id: string }&gt;</code></li>
+<li>Utility functions use named parameters or options objects for multiple args</li>
+<li>Component props defined as <code>interface [Name]Props</code> and destructured in the signature</li>
+<li>API routes always return a <code>Response</code> via the helper functions in <code>src/lib/api/types.ts</code> and <code>src/lib/api/errors.ts</code></li>
+<li>Business logic returns typed values or throws — never returns error objects</li>
+<li>Async functions always use <code>async/await</code>, never <code>.then()</code> chains</li>
+</ul>
+<h2>Module Design</h2>
+<ul>
+<li>Named exports everywhere: <code>export function</code>, <code>export const</code>, <code>export type</code></li>
+<li>Default exports only for Next.js page/layout files (<code>page.tsx</code>, <code>layout.tsx</code>) and middleware</li>
+<li>Used selectively at <code>drizzle/schema/index.ts</code> (re-exports all schema tables)</li>
+<li>Feature-level barrel files exist only for data-table components: <code>src/features/tasks/components/task-table/index.tsx</code></li>
+<li>No <code>src/features/*/index.ts</code> barrel pattern</li>
+<li><code>&#39;use client&#39;</code> directive placed at the very top of files requiring interactivity</li>
+<li>Server Components (no directive) used for all page-level data fetching</li>
+<li>Zustand stores (<code>src/features/pipeline/utils/store.ts</code>) used for client-side state shared across components</li>
+<li>No React Context for global state — Zustand is the pattern</li>
+</ul>
+<h2>Zod Schema Conventions</h2>
+<ul>
+<li>Required fields: <code>z.string().min(1)</code> with max bounds</li>
+<li>Optional nullable fields: <code>.optional().nullable()</code></li>
+<li>Enum fields use <code>z.enum(domainValues)</code> referencing arrays from <code>src/lib/domain/types.ts</code></li>
+<li>Date fields accept both date strings and datetime strings: <code>z.union([z.string().date(), z.string().datetime()])</code></li>
+</ul>
+<h2>Drizzle ORM Conventions</h2>
+<ul>
+<li>Query builder only — no raw SQL except for <code>sql</code> template tag in complex <code>WHERE</code> conditions</li>
+<li>Column names in snake_case in DB, camelCase in TypeScript (Drizzle maps automatically)</li>
+<li>Multi-condition WHERE built by accumulating into <code>conditions[]</code> array then <code>sql.join</code>:</li>
+<li>Soft deletes via <code>archivedAt</code> timestamp; never hard delete</li>
+<li><code>updatedAt: new Date()</code> always set manually on updates (Drizzle does not auto-update)</li>
+</ul>
+<!-- GSD:conventions-end --><!-- GSD:architecture-start source:ARCHITECTURE.md -->
+<h2>Architecture</h2>
+<h2>System Overview</h2>
+<pre><code class="language-text">
+</code></pre>
+<h2>Component Responsibilities</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Responsibility</th>
+<th>File(s)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Root Layout</td>
+<td>Theme, providers, auth shell</td>
+<td><code>src/app/layout.tsx</code></td>
+</tr>
+<tr>
+<td>Dashboard Layout</td>
+<td>Sidebar, header, KBar, search overlay</td>
+<td><code>src/app/dashboard/layout.tsx</code></td>
+</tr>
+<tr>
+<td>Clerk Middleware</td>
+<td>Auth guard, single-user email lock</td>
+<td><code>src/proxy.ts</code></td>
+</tr>
+<tr>
+<td>API Routes</td>
+<td>All data mutations, REST endpoints</td>
+<td><code>src/app/api/**/route.ts</code></td>
+</tr>
+<tr>
+<td>Feature Listing Pages</td>
+<td>Async RSC: DB query → pass data to feature component</td>
+<td><code>src/app/dashboard/**/page.tsx</code></td>
+</tr>
+<tr>
+<td>Feature Components</td>
+<td><code>&#39;use client&#39;</code> interactive UI</td>
+<td><code>src/features/**/components/*.tsx</code></td>
+</tr>
+<tr>
+<td>Drizzle Client</td>
+<td>Singleton DB connection</td>
+<td><code>src/lib/db/index.ts</code></td>
+</tr>
+<tr>
+<td>Timeline Logger</td>
+<td>Side-effect: record every write as activity event</td>
+<td><code>src/lib/db/timeline.ts</code></td>
+</tr>
+<tr>
+<td>API Helpers</td>
+<td>Response envelopes, error factories, filter parsers</td>
+<td><code>src/lib/api/</code></td>
+</tr>
+<tr>
+<td>Domain Types</td>
+<td>Drizzle-inferred TS types + enum value arrays</td>
+<td><code>src/lib/domain/types.ts</code></td>
+</tr>
+<tr>
+<td>Pipeline Logic</td>
+<td>Valid transition graph + terminal state list</td>
+<td><code>src/lib/domain/pipeline.ts</code></td>
+</tr>
+<tr>
+<td>Job Lead Scrapers</td>
+<td>Playwright browser automation (LinkedIn) + Cheerio (job page)</td>
+<td><code>src/features/job-leads/lib/</code></td>
+</tr>
+<tr>
+<td>Prioritization</td>
+<td>Bridge score algorithm for intro recommendations</td>
+<td><code>src/features/job-leads/lib/prioritization.ts</code></td>
+</tr>
+<tr>
+<td>Zustand Stores</td>
+<td>Client-side optimistic state for drag-and-drop boards</td>
+<td><code>src/features/pipeline/utils/store.ts</code>, <code>src/features/kanban/utils/store.ts</code></td>
+</tr>
+</tbody></table>
+<h2>Pattern Overview</h2>
+<ul>
+<li>Server Components (RSC) perform the initial DB query and pass typed props down to <code>&#39;use client&#39;</code> feature components</li>
+<li>All mutations go through <code>/app/api/</code> REST routes — never from client components directly to the database</li>
+<li>Every write operation calls <code>logTimeline()</code> as a side-effect to populate the activity feed</li>
+<li>Domain types are inferred from Drizzle schema (<code>$inferSelect</code>/<code>$inferInsert</code>) — no separate DTO layer</li>
+<li>Enum value arrays in <code>src/lib/domain/types.ts</code> are shared between Zod schemas in API routes and UI option lists</li>
+</ul>
+<h2>Layers</h2>
+<ul>
+<li>Purpose: Entry points for each dashboard section; perform server-side DB queries for initial data</li>
+<li>Location: <code>src/app/dashboard/**/page.tsx</code></li>
+<li>Contains: <code>async function</code> RSCs importing directly from <code>drizzle/schema</code> via <code>src/lib/db</code></li>
+<li>Depends on: <code>src/lib/db</code>, <code>drizzle/schema</code>, feature components</li>
+<li>Used by: Next.js router</li>
+<li>Purpose: All create/update/delete operations; also read endpoints consumed by the CLI</li>
+<li>Location: <code>src/app/api/**/route.ts</code></li>
+<li>Contains: Zod validation → Drizzle query → <code>logTimeline()</code> → response envelope helpers</li>
+<li>Depends on: <code>src/lib/db</code>, <code>src/lib/api/</code>, <code>src/lib/domain/</code>, <code>src/lib/db/timeline.ts</code></li>
+<li>Used by: client components (fetch), Claude Code CLI (HTTP)</li>
+<li>Purpose: Domain-specific UI components</li>
+<li>Location: <code>src/features/&lt;domain&gt;/components/</code></li>
+<li>Contains: <code>&#39;use client&#39;</code> interactive components; server-listing components that call DB directly</li>
+<li>Depends on: <code>src/lib/domain/types.ts</code>, <code>src/components/ui/</code>, Zustand stores where needed</li>
+<li>Used by: page RSCs</li>
+<li>Purpose: Non-UI domain logic specific to a feature</li>
+<li>Location: <code>src/features/&lt;domain&gt;/lib/</code></li>
+<li>Contains: scrapers, matchers, scoring algorithms (e.g., job-leads scrapers, prioritization)</li>
+<li>Depends on: external packages (Playwright, cheerio), <code>src/lib/domain/types.ts</code></li>
+<li>Used by: API routes, feature components</li>
+<li>Purpose: App-wide utilities</li>
+<li>Location: <code>src/lib/</code></li>
+<li>Contains: DB client, API helpers, domain types, pipeline rules, format/parse utilities</li>
+<li>Depends on: Drizzle, Neon, Zod</li>
+<li>Used by: all other layers</li>
+<li>Purpose: Single source of truth for database structure and TypeScript types</li>
+<li>Location: <code>drizzle/schema/</code> (one file per table, barrel at <code>drizzle/schema/index.ts</code>)</li>
+<li>Contains: <code>pgTable</code> definitions; enums in <code>drizzle/schema/enums.ts</code></li>
+<li>Depends on: <code>drizzle-orm/pg-core</code></li>
+<li>Used by: <code>src/lib/db/index.ts</code> (passed to <code>drizzle()</code> as schema), API routes, page RSCs</li>
+<li>Purpose: shadcn/ui components, shared forms, layout chrome</li>
+<li>Location: <code>src/components/</code></li>
+<li>Contains: <code>src/components/ui/</code> (shadcn primitives), <code>src/components/layout/</code> (sidebar, header), <code>src/components/forms/</code> (controlled form inputs)</li>
+<li>Depends on: Radix UI, Tailwind CSS</li>
+<li>Used by: feature components, page layouts</li>
+</ul>
+<h2>Data Flow</h2>
+<h3>Standard Read (Page Load)</h3>
+<h3>Standard Write (API Mutation)</h3>
+<h3>Pipeline Status Transition</h3>
+<h3>Job Lead Search Flow (Async)</h3>
+<ul>
+<li>Server state: Neon Postgres via Drizzle, queried fresh on each RSC render</li>
+<li>Client drag-and-drop state: Zustand (<code>src/features/pipeline/utils/store.ts</code>) — optimistic, synced to API on drop</li>
+<li>URL state: <code>nuqs</code> for data table filters (search params as state)</li>
+<li>Theme/sidebar: cookie-persisted (<code>active_theme</code>, <code>sidebar_state</code> cookies read in layouts)</li>
+</ul>
+<h2>Key Abstractions</h2>
+<ul>
+<li>Purpose: Consistent API response shape across all routes</li>
+<li>Pattern: <code>{ success: boolean, data?, error?, meta? }</code> — factories in <code>src/lib/api/types.ts</code></li>
+<li>Functions: <code>success()</code>, <code>created()</code>, <code>paginated()</code>, <code>error()</code>, and error variants in <code>src/lib/api/errors.ts</code></li>
+<li>Purpose: Denormalized activity feed entry created on every write</li>
+<li>Pattern: <code>await logTimeline({ eventType, title, ...entityIds })</code> called after every DB mutation in API routes</li>
+<li>Location: <code>src/lib/db/timeline.ts</code></li>
+<li>Purpose: Stable pagination using <code>updatedAt</code> timestamps (not offset)</li>
+<li>Pattern: <code>cursor</code> query param = ISO timestamp of last record&#39;s <code>updatedAt</code>; next page filters <code>WHERE updated_at &lt; cursor</code></li>
+<li>Helpers: <code>parseCursor()</code>, <code>parseLimit()</code> in <code>src/lib/api/filters.ts</code></li>
+<li>Purpose: TypeScript types inferred directly from Drizzle schema — single source of truth</li>
+<li>Pattern: <code>export type Company = typeof companies.$inferSelect</code> in <code>src/lib/domain/types.ts</code></li>
+<li>Also exports enum value <code>as const</code> arrays reused in Zod schemas and UI select options</li>
+<li>Purpose: Numeric score (0–100) for how valuable a contact-prospect introduction would be</li>
+<li>Formula: <code>0.4 * seniorityWeight + 0.35 * closenessWeight + 0.25 * recencyWeight</code></li>
+<li>Location: <code>src/features/job-leads/lib/prioritization.ts</code></li>
+</ul>
+<h2>Entry Points</h2>
+<ul>
+<li>Location: <code>src/app/page.tsx</code></li>
+<li>Triggers: All traffic to <code>/</code></li>
+<li>Responsibilities: Clerk auth check → redirect to <code>/dashboard/overview</code> or <code>/auth/sign-in</code></li>
+<li>Location: <code>src/app/dashboard/layout.tsx</code></li>
+<li>Triggers: All <code>/dashboard/*</code> routes</li>
+<li>Responsibilities: Renders sidebar, header, KBar command palette, search overlay</li>
+<li>Location: <code>src/proxy.ts</code> (used as <code>middleware.ts</code> via <code>next.config.ts</code> or conventional routing)</li>
+<li>Triggers: All requests matching <code>/(dashboard.*)</code></li>
+<li>Responsibilities: Clerk auth check + single-user email restriction (<code>steve@bronstein.org</code>)</li>
+<li>Location: <code>src/app/api/**/route.ts</code></li>
+<li>Triggers: HTTP requests (browser fetch or CLI HTTP calls)</li>
+<li>Responsibilities: Validate, mutate, log timeline, return envelope</li>
+</ul>
+<h2>Architectural Constraints</h2>
+<ul>
+<li><strong>Auth lock:</strong> Middleware in <code>src/proxy.ts</code> restricts <code>/dashboard</code> to a single hardcoded email address — the app is single-tenant by design</li>
+<li><strong>No server actions:</strong> Mutations use REST API routes only — this ensures Claude Code CLI can perform all operations via HTTP without needing the browser</li>
+<li><strong>DB queries in RSC pages:</strong> Page-level RSCs directly import <code>drizzle/schema</code> and call <code>db.*</code> — there is no separate repository/service layer between pages and the database</li>
+<li><strong>Async fire-and-forget:</strong> <code>src/app/api/job-leads/[id]/search/route.ts</code> spawns an unawaited IIFE for the Playwright scrape — errors in the async path are caught internally but cannot propagate to the HTTP response</li>
+<li><strong>Global DB singleton:</strong> <code>src/lib/db/index.ts</code> exports a single <code>db</code> instance via module-level <code>neon()</code> + <code>drizzle()</code> — safe for serverless (neon/serverless uses HTTP transport, not connection pooling)</li>
+<li><strong>Playwright in server runtime:</strong> <code>src/features/job-leads/lib/linkedin-browser.ts</code> launches or connects to Chromium from a Next.js API route — requires <code>BROWSER_CDP_ENDPOINT</code> or <code>BROWSER_WS_ENDPOINT</code> env vars in production (Docker/Vercel); falls back to local Chromium in dev</li>
+</ul>
+<h2>Anti-Patterns</h2>
+<h3>Raw SQL fragments in Drizzle multi-condition WHERE</h3>
+<h3>Kanban store uses client-side <code>localStorage</code> persistence</h3>
+<h2>Error Handling</h2>
+<ul>
+<li>Zod validation errors → <code>validationError(err.issues[0].message)</code> (400)</li>
+<li>Not found → <code>notFound(&#39;EntityName&#39;)</code> (404)</li>
+<li>Unexpected errors → <code>serverError(err)</code> (500) + <code>console.error(&#39;API Error:&#39;, err)</code></li>
+<li>All helpers in <code>src/lib/api/errors.ts</code></li>
+</ul>
+<h2>Cross-Cutting Concerns</h2>
+<!-- GSD:architecture-end --><!-- GSD:skills-start source:skills/ -->
+<h2>Project Skills</h2>
+<p>No project skills found. Add skills to any of: <code>.claude/skills/</code>, <code>.agents/skills/</code>, <code>.cursor/skills/</code>, <code>.github/skills/</code>, or <code>.codex/skills/</code> with a <code>SKILL.md</code> index file.</p>
+<!-- GSD:skills-end --><!-- GSD:workflow-start source:GSD defaults -->
+<h2>GSD Workflow Enforcement</h2>
+<p>Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.</p>
+<p>Use these entry points:</p>
+<ul>
+<li><code>/gsd-quick</code> for small fixes, doc updates, and ad-hoc tasks</li>
+<li><code>/gsd-debug</code> for investigation and bug fixing</li>
+<li><code>/gsd-execute-phase</code> for planned phase work</li>
+</ul>
+<p>Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.</p>
+<!-- GSD:workflow-end --><!-- GSD:profile-start -->
+<h2>Developer Profile</h2>
+<blockquote>
+<p>Profile not yet configured. Run <code>/gsd-profile-user</code> to generate your developer profile.
+This section is managed by <code>generate-claude-profile</code> -- do not edit manually.</p>
+</blockquote>
+<!-- GSD:profile-end -->
+
+
+
+<footer>
+Source of truth: <code>CLAUDE.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

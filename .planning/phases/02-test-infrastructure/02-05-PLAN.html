@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-05-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-05-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 05
+type: execute
+wave: 3
+depends_on:</p>
+<ul>
+<li>02-02</li>
+<li>02-03</li>
+<li>02-04
+files_modified:</li>
+<li>.husky/pre-push
+autonomous: false
+requirements:</li>
+<li>TEST-A1
+tags:</li>
+<li>husky</li>
+<li>pre-push</li>
+<li>ci-local
+must_haves:
+  truths:<ul>
+<li>&quot;Running <code>git push</code> (which fires <code>.husky/pre-push</code>) executes both <code>bun run build</code> AND <code>npm run test:run</code>, in that order&quot;</li>
+<li>&quot;If any test fails, the push is blocked (exit code propagates)&quot;</li>
+<li>&quot;If the test suite takes longer than ~10s, the executor leaves the hook unchanged and documents the decision in the summary (per CD-01)&quot;
+artifacts:</li>
+<li>path: &quot;.husky/pre-push&quot;
+provides: &quot;Local-only quality gate running both build and test:run before every push&quot;
+contains: &quot;npm run test:run&quot;
+key_links:</li>
+<li>from: &quot;.husky/pre-push&quot;
+to: &quot;package.json test:run script&quot;
+via: &quot;npm run test:run invocation appended after the existing bun run build&quot;
+pattern: &quot;npm run test:run&quot;
+decisions_honored:</li>
+<li>&quot;D-01: pre-push hook invokes Vitest (npm run test:run)&quot;</li>
+<li>&quot;D-10: single npm run test:run command for the whole suite&quot;</li>
+<li>&quot;CD-01: husky integration gated on &lt;10s runtime; checkpoint:decision surfaces measured runtime&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Per CD-01, integrate `npm run test:run` into the existing Husky pre-push hook IF AND ONLY IF the full Phase 2 test suite executes in under ~10 seconds on the developer's machine. Per CD-01 the recommended default is yes; the executor's first task is to measure, then decide.<p>Purpose: Closes the CI-side half of TEST-A1&#39;s success criterion (&quot;<code>npm test</code> runs a Vitest suite ... and exits 0 on a clean checkout&quot;). The hook ensures the suite actually runs before every push, not just when the developer remembers.</p>
+<p>Output: Either an updated <code>.husky/pre-push</code> containing both build and test invocations, OR an unchanged hook plus a summary note explaining why integration was skipped.
+</objective></p>
+<decisions_honored>
+This plan honors the following CONTEXT.md decisions:
+- **D-01:** Pre-push hook invokes Vitest (`npm run test:run`), not an alternative runner.
+- **D-10:** Single `npm run test:run` invocation runs the entire suite (no per-environment split commands).
+- **CD-01:** Husky pre-push integration is gated on the <10s runtime threshold. Task 1's `checkpoint:decision` surfaces the measured runtime to the user; if >10s, integration is skipped and the hook remains build-only.
+</decisions_honored><execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/02-test-infrastructure/02-CONTEXT.md
+@.planning/codebase/TESTING.md
+@.husky/pre-push
+@package.json<interfaces>
+<!-- Current state of the pre-push hook --><p>From .husky/pre-push (single line, full file):</p>
+<pre><code>bun run build
+</code></pre>
+<p>From package.json scripts (after 02-01):</p>
+<pre><code>&quot;test&quot;: &quot;vitest&quot;
+&quot;test:run&quot;: &quot;vitest run&quot;
+&quot;build&quot;: &quot;next build&quot;
+</code></pre>
+<p>Husky v9 convention: <code>.husky/pre-push</code> is a plain shell script. The shebang <code>#!/usr/bin/env sh</code> is NOT required in v9 (Husky now wraps execution itself). Multi-line commands are just newline-separated shell statements; if any line exits non-zero, the hook fails (default <code>sh</code> behavior with <code>set -e</code> semantics applied by Husky&#39;s wrapper).
+</interfaces>
+</context></p>
+<tasks><task type="checkpoint:decision" gate="blocking">
+  <name>Task 1: Measure suite runtime and decide on hook integration</name>
+  <read_first>
+    - .husky/pre-push (full file, 1 line)
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (CD-01 — "recommended default: yes, but only if the full suite stays under ~10s")
+  </read_first>
+  <action>
+    Run `npm run test:run` from the repo root, time it with `time` or by reading Vitest's reporter footer (`Duration: Xs`).<pre><code>Record the actual duration. Then decide based on this threshold:
+- **Suite runs in ≤ 10 seconds (wall-clock):** Proceed to Task 2 — integrate `npm run test:run` into the pre-push hook.
+- **Suite runs in &gt; 10 seconds:** Skip Task 2. Document the timing and decision in the SUMMARY. The hook stays as `bun run build` only.
+
+This is a checkpoint:decision rather than a checkpoint:human-action because the rule is mechanical — if the timing is under 10s, integrate; otherwise don&#39;t. The executor reports the timing and the chosen path; the user can override if they want CI-only enforcement regardless.
+</code></pre>
+  </action>
+  <decision>
+    Should the pre-push hook run `npm run test:run` in addition to `bun run build`?
+  </decision>
+  <context>
+    Trade-off: faster pre-push feedback at the cost of slower push command. Heimdall is a solo developer's personal CRM; per CLAUDE.md the user values catching regressions fast. The 10s ceiling is a developer-flow heuristic — beyond that, friction starts to dominate value.
+  </context>
+  <options>
+    <option id="integrate">
+      <name>Integrate (suite is fast)</name>
+      <pros>Every push runs the full test suite. BUG-01 regression cannot slip past local. TEST-A1's "exits 0 on a clean checkout" is enforced automatically.</pros>
+      <cons>Adds ~suite-runtime seconds to every `git push`.</cons>
+    </option>
+    <option id="skip">
+      <name>Skip (suite is slow)</name>
+      <pros>Push remains fast. Tests still runnable via `npm test`.</pros>
+      <cons>Developer must remember to run tests before pushing. CI catches it later, but feedback loop is longer.</cons>
+    </option>
+  </options>
+  <resume-signal>Report timing + chosen path; if 'integrate', proceed to Task 2; if 'skip', emit a brief summary and finish.</resume-signal>
+</task><task type="auto">
+  <name>Task 2: Append npm run test:run to .husky/pre-push (only if Task 1 decided 'integrate')</name>
+  <files>.husky/pre-push</files>
+  <read_first>
+    - .husky/pre-push (current contents — single line `bun run build`)
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (CD-01)
+    - .planning/phases/02-test-infrastructure/02-01-SUMMARY.md (confirm `test:run` script exists in package.json)
+  </read_first>
+  <action>
+    Skip this task entirely if Task 1's decision was 'skip' — record the skip in the summary and finish.<pre><code>Otherwise, edit `.husky/pre-push` to add `npm run test:run` on its own line AFTER the existing `bun run build` line. Final file content:
+```
+bun run build
+npm run test:run
+```
+
+Do NOT add a shebang (Husky v9 doesn&#39;t need it — confirm by checking that `.husky/pre-commit` also has no shebang). Do NOT add `set -e` — Husky&#39;s wrapper handles failure propagation. Do NOT add comments. Two lines, exactly.
+
+Order matters: `bun run build` runs first because it&#39;s the existing gate and its failure mode (type errors) is cheaper to surface than test failures. If the build is broken, tests would also fail in a noisier way.
+
+File permissions: Husky manages the executable bit. Use `chmod +x .husky/pre-push` after editing if needed (Husky v9 doesn&#39;t strictly require the executable bit when invoked via its wrapper, but it&#39;s harmless to set).
+</code></pre>
+  </action>
+  <verify>
+    <automated>cat .husky/pre-push | grep -c "npm run test:run" | grep -q '^1$' && cat .husky/pre-push | grep -c "bun run build" | grep -q '^1$' && echo OK</automated>
+  </verify>
+  <done>
+    `.husky/pre-push` contains both `bun run build` (line 1) and `npm run test:run` (line 2). No shebang, no comments, no extra commands. A manual `bash .husky/pre-push` invocation from the repo root succeeds when the suite is green and fails when a test is broken.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>local-git → remote</td>
+<td>The pre-push hook is local-machine-only. It runs in the developer&#39;s shell, has access to the working tree, and gates the push.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-02-12</td>
+<td>Denial of service</td>
+<td><code>.husky/pre-push</code></td>
+<td>accept</td>
+<td>A slow test suite would slow pushes. Task 1 explicitly measures and gates on a 10s ceiling per CD-01. Low risk — solo developer can bypass with <code>git push --no-verify</code> if ever needed.</td>
+</tr>
+<tr>
+<td>T-02-13</td>
+<td>Information disclosure</td>
+<td>Test run during pre-push</td>
+<td>mitigate</td>
+<td><code>npm run test:run</code> invokes <code>vitest run</code> which uses PGlite — no network, no real DB. Confirmed by 02-01 / 02-03 threat models.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. (If integrated) `bash .husky/pre-push` exits 0 when the working tree is clean — both build and tests pass.
+2. (If integrated) Intentional test break sanity-check: temporarily edit a passing test to `expect(true).toBe(false)`, run `bash .husky/pre-push`, observe non-zero exit, revert. Document in summary.
+3. (If skipped) The .husky/pre-push file is unchanged (`bun run build` only) and the summary explains the timing measurement.
+</verification><success_criteria>
+- [ ] Task 1 records the measured suite runtime in the summary.
+- [ ] If suite ≤ 10s: `.husky/pre-push` contains both `bun run build` and `npm run test:run`, and the manual run + intentional-break sanity check both pass.
+- [ ] If suite > 10s: `.husky/pre-push` is unchanged and the summary explains the decision.
+- [ ] No new dependencies added. No package.json changes (the `test:run` script was added in 02-01).
+</success_criteria><output>
+After completion, create `.planning/phases/02-test-infrastructure/02-05-SUMMARY.md` capturing:
+- The measured runtime of `npm run test:run` (wall-clock)
+- The decision (integrated or skipped)
+- If integrated: the intentional-break sanity check result
+- If skipped: the rationale and a one-line note for future re-evaluation when the suite grows / shrinks
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-05-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

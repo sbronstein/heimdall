@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+reviewed: 2026-05-12T00:00:00Z
+depth: deep
+files_reviewed: 17
+files_reviewed_list:</p>
+<ul>
+<li>vitest.config.ts</li>
+<li>src/test-utils/pglite.ts</li>
+<li>src/test-utils/call-route.ts</li>
+<li>.husky/pre-push</li>
+<li>src/lib/domain/pipeline.test.ts</li>
+<li>src/lib/api/types.test.ts</li>
+<li>src/lib/api/filters.test.ts</li>
+<li>src/features/job-leads/lib/prioritization.test.ts</li>
+<li>src/features/job-leads/lib/seniority.test.ts</li>
+<li>src/app/api/applications/[id]/status/route.test.ts</li>
+<li>src/app/api/contacts/import/route.test.ts</li>
+<li>src/app/api/contacts/route.test.ts</li>
+<li>src/components/layout/app-sidebar.ssr.test.tsx</li>
+<li>src/components/layout/app-sidebar.hydration.test.tsx</li>
+<li>package.json</li>
+<li>tsconfig.json</li>
+<li>src/app/api/contacts/import/<strong>fixtures</strong>/linkedin-connections.csv
+findings:
+  critical: 2
+  warning: 3
+  info: 2
+  total: 7
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 02: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-05-12
+<strong>Depth:</strong> deep
+<strong>Files Reviewed:</strong> 17
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 2 added a complete Vitest + PGlite test harness with 79 tests across 10 files. The
+infrastructure choices are sound: PGlite in-memory DB with migration replay, a Proxy-based
+db mock that survives per-test DB swapping via <code>vi.hoisted</code>, and a <code>callRoute()</code> helper that
+exercises real route handlers without HTTP. Most tests are correct and the math in the
+prioritization tests was verified against the actual production formula.</p>
+<p>Two blockers emerged. The pre-push hook hardcodes <code>bun</code> which is not the project&#39;s package
+manager and will break on any machine without bun installed. More significantly, the React 19
+hydration regression test is structurally inert — React 19 no longer routes hydration
+mismatch errors through <code>console.error</code>, so the spy-based assertion will always pass whether
+or not there is a real hydration mismatch.</p>
+<h2>Critical Issues</h2>
+<h3>CR-01: Pre-push hook requires <code>bun</code> but project uses <code>npm</code></h3>
+<p><strong>File:</strong> <code>.husky/pre-push:1</code>
+<strong>Issue:</strong> Line 1 is <code>bun run build</code>. The project&#39;s package manager is npm (lockfile is
+<code>package-lock.json</code>, CLAUDE.md stack section says &quot;npm&quot;, the pre-commit hook uses
+<code>npx lint-staged</code>). On any machine where bun is not installed, every <code>git push</code> will
+immediately fail with <code>bun: command not found</code>, blocking the developer.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-sh">npm run build
+npm run test:run
+</code></pre>
+<hr>
+<h3>CR-02: Hydration test spy cannot intercept React 19 hydration errors — always passes silently</h3>
+<p><strong>File:</strong> <code>src/components/layout/app-sidebar.hydration.test.tsx:113-128</code>
+<strong>Issue:</strong> The test spies on <code>console.error</code> and filters for calls matching <code>/hydrat/i</code> or
+<code>/did not match/i</code>. In React 19, hydration mismatch errors are no longer dispatched through
+<code>console.error</code>. They pass through <code>defaultOnRecoverableError</code> → <code>reportGlobalError</code>, which
+in a jsdom environment fires a DOM <code>error</code> event on <code>window</code>, not a <code>console.error</code> call.
+Searching <code>react-dom-client.development.js</code> (v19.2) reveals zero <code>console.error</code> calls
+containing &quot;hydrat&quot; or &quot;did not match&quot;.</p>
+<p>As a result this test will always pass regardless of whether BUG-01 is actually fixed. The
+regression it was built to guard is not guarded.</p>
+<p><strong>Fix:</strong> Use React&#39;s <code>act()</code> to flush all updates and check that no error was thrown, or
+listen on the <code>window</code> error event, or use <code>onRecoverableError</code> on the <code>hydrateRoot</code> call:</p>
+<pre><code class="language-tsx">it(&#39;hydrates without React hydration warnings&#39;, async () =&gt; {
+  const html = renderToString(React.createElement(AppSidebar));
+  const container = document.createElement(&#39;div&#39;);
+  container.innerHTML = html;
+  document.body.appendChild(container);
+
+  const caughtErrors: Error[] = [];
+
+  await act(async () =&gt; {
+    hydrateRoot(container, React.createElement(AppSidebar), {
+      onRecoverableError: (err) =&gt; {
+        // React 19 routes hydration mismatches here
+        if (/hydrat/i.test(err.message) || /did not match/i.test(err.message)) {
+          caughtErrors.push(err as Error);
+        }
+      }
+    });
+  });
+
+  expect(
+    caughtErrors,
+    `Hydration errors:\n${caughtErrors.map((e) =&gt; e.message).join(&#39;\n&#39;)}`
+  ).toHaveLength(0);
+});
+</code></pre>
+<p><code>act</code> from <code>@testing-library/react</code> or <code>react</code> must be imported. This requires adding
+<code>@testing-library/react</code> as a devDependency or using the built-in <code>import { act } from &#39;react&#39;</code>.</p>
+<hr>
+<h2>Warnings</h2>
+<h3>WR-01: Proxy db mock does not bind <code>this</code> — latent type error if Drizzle methods rely on receiver</h3>
+<p><strong>File:</strong> <code>src/app/api/applications/[id]/status/route.test.ts:9</code>, <code>src/app/api/contacts/import/route.test.ts:10</code>, <code>src/app/api/contacts/route.test.ts:10</code>
+<strong>Issue:</strong> The Proxy handler returns <code>dbRef.current[prop]</code> directly without binding <code>this</code>:</p>
+<pre><code class="language-ts">get: (_, prop) =&gt; (dbRef.current as ...)[prop]
+</code></pre>
+<p>When <code>db.select()</code> is called on the Proxy, <code>this</code> inside <code>select</code> is the Proxy, not
+<code>dbRef.current</code>. Drizzle&#39;s <code>PgDatabase</code> class methods capture <code>this.session</code> (the Neon/PGlite
+session). If a method accesses instance state via <code>this</code>, it will read from the Proxy, which
+re-dispatches to <code>dbRef.current</code>. This works only because the Proxy&#39;s <code>get</code> trap acts as
+infinite-depth delegation. The tests pass in practice, but this is a fragile implicit
+invariant — any Drizzle upgrade that adds a method using <code>this</code> in a way not delegated
+through property access could silently break.</p>
+<p><strong>Fix:</strong> Bind the return value:</p>
+<pre><code class="language-ts">get: (_, prop: string | symbol) =&gt; {
+  const val = (dbRef.current as Record&lt;string | symbol, unknown&gt;)[prop];
+  return typeof val === &#39;function&#39; ? val.bind(dbRef.current) : val;
+}
+</code></pre>
+<hr>
+<h3>WR-02: Hydration test <code>setTimeout(resolve, 0)</code> flush is not guaranteed to drain all React work</h3>
+<p><strong>File:</strong> <code>src/components/layout/app-sidebar.hydration.test.tsx:118</code>
+<strong>Issue:</strong> A single <code>setTimeout(resolve, 0)</code> advances one macrotask tick. React 19 schedules
+some reconciler work in microtasks (via <code>queueMicrotask</code>) and some in additional scheduler
+tasks. If any hydration-triggered effects run in a later tick the test will not see them.
+This issue is secondary to CR-02, but if the spy approach is retained after fixing CR-02, the
+flush must be more robust.</p>
+<p><strong>Fix:</strong> Use <code>await act(async () =&gt; { hydrateRoot(...); })</code> (React&#39;s <code>act</code> drains the full
+scheduler queue including microtasks and pending state updates) instead of a bare
+<code>setTimeout</code>.</p>
+<hr>
+<h3>WR-03: SSR test assertion on CSS class string is brittle and under-specified</h3>
+<p><strong>File:</strong> <code>src/components/layout/app-sidebar.ssr.test.tsx:130</code>
+<strong>Issue:</strong> The test <code>&#39;renders UserAvatarProfile markup (no {user &amp;&amp; ...} gating)&#39;</code> asserts:</p>
+<pre><code class="language-ts">expect(html).toContain(&#39;flex items-center gap-2&#39;);
+</code></pre>
+<p>This passes if any element in the rendered HTML has that Tailwind class — not specifically
+<code>UserAvatarProfile</code>. If the class is renamed, split across breakpoints, or deduplicated by a
+future CSS-in-JS change, the test breaks for the wrong reason. Conversely, it could pass even
+if <code>UserAvatarProfile</code> were removed and another component happened to use those classes.</p>
+<p><strong>Fix:</strong> Assert on user content that is meaningfully tied to <code>UserAvatarProfile</code> rendering,
+not on an internal CSS string:</p>
+<pre><code class="language-ts">it(&#39;renders UserAvatarProfile unconditionally (no {user &amp;&amp; ...} gating)&#39;, () =&gt; {
+  // UserAvatarProfile always renders a &lt;span&gt; wrapping avatar + name/email
+  // Asserting on actual user data output is a stronger guarantee:
+  expect(html).toContain(&#39;Steve Bronstein&#39;);
+  expect(html).toContain(&#39;steve@bronstein.org&#39;);
+});
+</code></pre>
+<p>The tests on lines 133-136 already do this. The line-130 test can be merged into or replaced
+by those stronger assertions.</p>
+<hr>
+<h2>Info</h2>
+<h3>IN-01: <code>vitest.config.ts</code> missing the <code>~/</code> path alias defined in <code>tsconfig.json</code></h3>
+<p><strong>File:</strong> <code>vitest.config.ts:9-11</code>
+<strong>Issue:</strong> <code>tsconfig.json</code> defines both <code>@/*</code> and <code>~/*</code> aliases. The Vitest config only maps
+<code>@/</code>. If any test file or helper imported via test imports a module that uses <code>~/*</code> (public
+assets), resolution would fail at test-time. Currently no test files use <code>~/*</code>, so this is
+not an active failure, but it is an inconsistency that could surprise future contributors.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-ts">alias: {
+  &#39;@&#39;: path.resolve(__dirname, &#39;./src&#39;),
+  &#39;~&#39;: path.resolve(__dirname, &#39;./public&#39;)
+}
+</code></pre>
+<hr>
+<h3>IN-02: <code>pipeline.test.ts</code> has no coverage of <code>on_hold</code> as a source of transitions</h3>
+<p><strong>File:</strong> <code>src/lib/domain/pipeline.test.ts</code>
+<strong>Issue:</strong> The <code>on_hold</code> state has outbound transitions to <code>applied</code>, <code>recruiter_screen</code>,
+<code>phone_interview</code>, <code>withdrawn</code>, and <code>ghosted</code>. No test exercises an <code>on_hold → X</code> or
+<code>on_hold → invalid</code> path. The &quot;valid forward moves&quot; loop covers valid destinations but there
+is no explicit guard showing that <code>on_hold → offer</code> (an invalid jump) returns <code>false</code>.</p>
+<p><strong>Fix:</strong> Add targeted cases:</p>
+<pre><code class="language-ts">it(&#39;allows on_hold → applied (re-activation)&#39;, () =&gt; {
+  expect(canTransition(&#39;on_hold&#39;, &#39;applied&#39;)).toBe(true);
+});
+
+it(&#39;blocks on_hold → offer (invalid jump from hold)&#39;, () =&gt; {
+  expect(canTransition(&#39;on_hold&#39;, &#39;offer&#39;)).toBe(false);
+});
+</code></pre>
+<hr>
+<p><em>Reviewed: 2026-05-12</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: deep</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

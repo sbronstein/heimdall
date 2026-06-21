@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-04-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-04-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 04
+type: execute
+wave: 2
+depends_on:</p>
+<ul>
+<li>02-01
+files_modified:</li>
+<li>src/components/layout/app-sidebar.ssr.test.tsx</li>
+<li>src/components/layout/app-sidebar.hydration.test.tsx
+autonomous: true
+requirements:</li>
+<li>TEST-A3
+tags:</li>
+<li>vitest</li>
+<li>bug-01</li>
+<li>regression</li>
+<li>hydration</li>
+<li>clerk-mock
+must_haves:
+  truths:<ul>
+<li>&quot;The SSR test asserts no <code>&lt;div&gt;</code> descendant appears inside any <code>&lt;button&gt;</code> element in the rendered <code>&lt;AppSidebar /&gt;</code> output&quot;</li>
+<li>&quot;The SSR test asserts the <code>UserAvatarProfile</code> outer <code>&lt;span class=&#39;flex items-center gap-2&#39;&gt;</code> is present in the rendered output (and that the mocked user&#39;s <code>fullName</code> and <code>emailAddresses[0].emailAddress</code> strings appear in the SSR HTML, proving the component rendered unconditionally — no <code>{user &amp;&amp; ...}</code> gating)&quot;</li>
+<li>&quot;The hydration test asserts <code>console.error</code> was NOT called with any argument matching <code>/hydrat/i</code> or <code>/did not match/i</code> during <code>hydrateRoot</code> of <code>&lt;AppSidebar /&gt;</code> in jsdom&quot;</li>
+<li>&quot;Both regression files pass with the current (fixed) source under <code>npm run test:run</code>&quot;
+artifacts:</li>
+<li>path: &quot;src/components/layout/app-sidebar.ssr.test.tsx&quot;
+provides: &quot;SSR structural assertions for BUG-01 (node environment): no <code>&lt;div&gt;</code> in <code>&lt;button&gt;</code>, <code>UserAvatarProfile</code> markup present&quot;
+contains: &quot;renderToString&quot;</li>
+<li>path: &quot;src/components/layout/app-sidebar.hydration.test.tsx&quot;
+provides: &quot;Hydration mount with console.error spy (jsdom environment): no hydration warnings&quot;
+contains: &quot;@vitest-environment jsdom&quot;
+key_links:</li>
+<li>from: &quot;src/components/layout/app-sidebar.ssr.test.tsx&quot;
+to: &quot;src/components/layout/app-sidebar.tsx&quot;
+via: &quot;renderToString(<AppSidebar />) → parse output for structural assertions&quot;
+pattern: &quot;renderToString&quot;</li>
+<li>from: &quot;src/components/layout/app-sidebar.hydration.test.tsx&quot;
+to: &quot;src/components/layout/app-sidebar.tsx&quot;
+via: &quot;hydrateRoot(container, <AppSidebar />) inside jsdom; spy on console.error&quot;
+pattern: &quot;hydrateRoot&quot;</li>
+<li>from: &quot;Both test files&quot;
+to: &quot;@clerk/nextjs&quot;
+via: &quot;vi.mock(&#39;@clerk/nextjs&#39;, ...) returning useUser + SignOutButton stubs (D-16)&quot;
+pattern: &quot;vi\.mock\(&#39;@clerk/nextjs&#39;&quot;
+decisions_honored:</li>
+<li>&quot;D-02: tests colocated with app-sidebar.tsx&quot;</li>
+<li>&quot;D-03: .test.tsx naming&quot;</li>
+<li>&quot;D-09: hydration test uses // @vitest-environment jsdom pragma; SSR uses default node&quot;</li>
+<li>&quot;D-14: two tests pin BUG-01 (SSR structural + hydration mount); implementation note in CONTEXT.md records the file split rationale&quot;</li>
+<li>&quot;D-15: hydration spy filters for /hydrat/i and /did not match/i only&quot;</li>
+<li>&quot;D-16: vi.mock(&#39;@clerk/nextjs&#39;) returns fixed user; real Clerk runtime never imported&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Pin the BUG-01 fix with two regression tests per D-14: one SSR-only structural test (default `node` env) that catches re-introduction of `<div>` inside `<button>` and `{user && ...}` gating of `UserAvatarProfile`, and one hydration-mount test (jsdom env via per-file pragma) that catches re-introduction of hydration warnings via a `console.error` spy.<p>Purpose: Phase 1 fixed BUG-01 in <code>src/components/layout/app-sidebar.tsx</code> and <code>src/components/user-avatar-profile.tsx</code>. Without these regression tests, a future refactor could re-introduce the crash. The two-file split honors the pattern-mapper caveat: <code>@vitest-environment</code> pragmas are file-scope only, so SSR (node) and hydration (jsdom) cannot share one file. CONTEXT.md D-14 originally said &quot;Two tests, one file&quot;; the deviation rationale is captured in D-14&#39;s implementation note in 02-CONTEXT.md.</p>
+<p>Output: Two <code>.test.tsx</code> files colocated with <code>app-sidebar.tsx</code>. Both mock <code>@clerk/nextjs</code> and <code>next/navigation</code>. Both run under a single <code>npm run test:run</code> invocation.
+</objective></p>
+<decisions_honored>
+This plan honors the following CONTEXT.md decisions:
+- **D-02:** Tests colocated with source (`app-sidebar.ssr.test.tsx` and `app-sidebar.hydration.test.tsx` sit next to `app-sidebar.tsx`).
+- **D-03:** `.test.tsx` naming (React/TSX uses `.tsx` extension; convention preserved).
+- **D-09:** Hydration mount uses `// @vitest-environment jsdom` pragma (SSR test uses default `node`).
+- **D-14:** Two tests pin BUG-01 — SSR structural (no `<div>` inside `<button>`, `UserAvatarProfile` present in SSR output) plus hydration mount (`hydrateRoot` + `console.error` spy). Implementation note in CONTEXT.md D-14 records the two-file split rationale.
+- **D-15:** Hydration spy filters for `/hydrat/i` and `/did not match/i` patterns only — other `console.error` calls pass through, so the test is resilient to React warning-text changes that don't relate to hydration.
+- **D-16:** `vi.mock('@clerk/nextjs')` returns a fixed user object. The real Clerk runtime is never imported.
+</decisions_honored><execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/02-test-infrastructure/02-CONTEXT.md
+@.planning/phases/02-test-infrastructure/02-PATTERNS.md
+@CLAUDE.md
+@bug.md
+@src/components/layout/app-sidebar.tsx
+@src/components/user-avatar-profile.tsx
+@.planning/phases/01-critical-bug-fix/01-CONTEXT.md<interfaces>
+<!-- Component shapes and external dependencies the tests must mock. --><p>From src/components/layout/app-sidebar.tsx:</p>
+<pre><code>&#39;use client&#39;;
+// Imports:
+//   useUser, SignOutButton from &#39;@clerk/nextjs&#39;
+//   usePathname, useRouter from &#39;next/navigation&#39;
+// Default export: function AppSidebar()
+// Renders &lt;UserAvatarProfile user={user ?? null} /&gt; at line 148 (inside SidebarMenuButton → &lt;button&gt;)
+// Renders &lt;UserAvatarProfile user={user ?? null} /&gt; at line 164 (inside DropdownMenuLabel → not a &lt;button&gt;)
+</code></pre>
+<p>From src/components/user-avatar-profile.tsx:</p>
+<pre><code>// Named export: UserAvatarProfile
+// Outer element: &lt;span className=&#39;flex items-center gap-2&#39;&gt;
+// Inner: &lt;Avatar&gt;, conditional &lt;span className=&#39;grid flex-1 ...&#39;&gt; with fullName + emailAddresses[0]?.emailAddress ?? &#39;&#39;
+</code></pre>
+<p>Clerk dependency to mock (D-16):</p>
+<pre><code>vi.mock(&#39;@clerk/nextjs&#39;, () =&gt; ({
+  useUser: () =&gt; ({
+    user: {
+      fullName: &#39;Steve Bronstein&#39;,
+      imageUrl: &#39;https://img.clerk.com/test&#39;,
+      emailAddresses: [{ emailAddress: &#39;steve@bronstein.org&#39; }]
+    }
+  }),
+  SignOutButton: ({ children }: { children?: React.ReactNode }) =&gt; children ?? null
+}));
+</code></pre>
+<p>next/navigation dependency to mock:</p>
+<pre><code>vi.mock(&#39;next/navigation&#39;, () =&gt; ({
+  usePathname: () =&gt; &#39;/dashboard/overview&#39;,
+  useRouter: () =&gt; ({ push: vi.fn() })
+}));
+</code></pre>
+<p>Other components rendered by AppSidebar that may need light handling:</p>
+<ul>
+<li><code>@/components/ui/sidebar</code> (Sidebar, SidebarMenuButton, etc.) — these are real shadcn components built on Radix UI; they should render in SSR without a problem because Radix primitives are SSR-safe in this codebase (the app SSRs in production).</li>
+<li><code>@/hooks/use-media-query</code> <code>useMediaQuery</code> — returns <code>{ isOpen: boolean }</code>. In SSR/jsdom there is no real <code>window.matchMedia</code>. Either:<ul>
+<li>Mock the hook: <code>vi.mock(&#39;@/hooks/use-media-query&#39;, () =&gt; ({ useMediaQuery: () =&gt; ({ isOpen: true }) }));</code></li>
+<li>Or stub <code>window.matchMedia</code> in the jsdom test only.
+Prefer mocking the hook so the SSR test (node env, no window at all) also works.</li>
+</ul>
+</li>
+<li><code>@/hooks/use-nav</code> <code>useFilteredNavItems</code> — returns the filtered nav items array. Mock to return <code>navItems</code> unchanged: <code>vi.mock(&#39;@/hooks/use-nav&#39;, () =&gt; ({ useFilteredNavItems: (items: unknown) =&gt; items }));</code></interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: SSR structural regression test (BUG-01) in node environment</name>
+  <files>src/components/layout/app-sidebar.ssr.test.tsx</files>
+  <read_first>
+    - src/components/layout/app-sidebar.tsx (full file, 199 lines) — confirm line 148 (UserAvatarProfile inside SidebarMenuButton) and the `user ?? null` pattern
+    - src/components/user-avatar-profile.tsx (full file, 39 lines) — confirm outer `<span className='flex items-center gap-2'>`
+    - bug.md — root cause description
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-14 bullet 1 + implementation note, D-16)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("`src/components/layout/app-sidebar.test.tsx`" section, specifically the SSR assertions block)
+  </read_first>
+  <behavior>
+    - `renderToString(<AppSidebar />)` produces a non-empty HTML string with no thrown error.
+    - No `<button>` element in the output has a `<div>` descendant. Implementation: parse the HTML via `linkedom`-style parsing or, more reliably, use `jsdom` directly (jsdom is available as a transitive dep of vitest, OR install it explicitly in 02-01 if needed — see Action below for how to detect and handle). For each `<button>`, `button.querySelector('div')` must be `null`.
+      * NOTE: This assertion runs in the default `node` environment, where there is no `document` global. Either import the JSDOM API directly (`import { JSDOM } from 'jsdom'`) and parse the SSR string, OR use a regex assertion as a fallback. Prefer JSDOM parsing — it's deterministic and catches nested cases the regex would miss.
+    - The SSR HTML contains the string `'flex items-center gap-2'` (the outer `<span>` className of `UserAvatarProfile`). This catches re-introduction of `{user && <UserAvatarProfile />}` gating because `useUser` is mocked to return a user, so the component must render unconditionally for `flex items-center gap-2` to appear.
+    - The SSR HTML contains `'Steve Bronstein'` and `'steve@bronstein.org'` (from the mocked Clerk user — confirms `UserAvatarProfile` rendered with the user prop, not as a gated-out empty branch).
+  </behavior>
+  <action>
+    Create `src/components/layout/app-sidebar.ssr.test.tsx`. No pragma — runs in default `node` env per D-09.<pre><code>1. Add `jsdom` to devDependencies if not already present. Verify with `node -e &quot;require.resolve(&#39;jsdom&#39;)&quot;` first — vitest typically pulls it in as a transitive optional dep, but in a node-default config it may not be auto-installed. If `require.resolve` fails, run `npm install --save-dev jsdom` as part of this task. (One-line check + conditional install. Document in summary which path was taken.)
+
+2. Mock order — these all go at the top of the file, BEFORE the route module import:
+   ```
+   vi.mock(&#39;@clerk/nextjs&#39;, () =&gt; ({
+     useUser: () =&gt; ({
+       user: {
+         fullName: &#39;Steve Bronstein&#39;,
+         imageUrl: &#39;https://img.clerk.com/test&#39;,
+         emailAddresses: [{ emailAddress: &#39;steve@bronstein.org&#39; }]
+       }
+     }),
+     SignOutButton: ({ children }) =&gt; children ?? null
+   }));
+   vi.mock(&#39;next/navigation&#39;, () =&gt; ({
+     usePathname: () =&gt; &#39;/dashboard/overview&#39;,
+     useRouter: () =&gt; ({ push: vi.fn() })
+   }));
+   vi.mock(&#39;@/hooks/use-media-query&#39;, () =&gt; ({ useMediaQuery: () =&gt; ({ isOpen: true }) }));
+   vi.mock(&#39;@/hooks/use-nav&#39;, () =&gt; ({ useFilteredNavItems: (items: unknown) =&gt; items }));
+   ```
+
+3. Imports:
+   - `import { renderToString } from &#39;react-dom/server&#39;;`
+   - `import React from &#39;react&#39;;`
+   - `import { JSDOM } from &#39;jsdom&#39;;`
+   - `import AppSidebar from &#39;@/components/layout/app-sidebar&#39;;` (default export per source line 49)
+
+4. Single `describe(&#39;AppSidebar SSR structural (BUG-01 regression)&#39;, ...)` with these `it()` blocks:
+   - `it(&#39;SSR renders without throwing&#39;)` — `expect(() =&gt; renderToString(&lt;AppSidebar /&gt;)).not.toThrow();`
+   - `it(&#39;contains no &lt;div&gt; inside any &lt;button&gt;&#39;)` — parse via JSDOM, iterate `document.querySelectorAll(&#39;button&#39;)`, assert `btn.querySelector(&#39;div&#39;) === null` for every one. The failure message must include the offending button&#39;s outerHTML (truncated) for debuggability.
+   - `it(&#39;renders UserAvatarProfile markup (no {user &amp;&amp; ...} gating)&#39;)` — assert the SSR string includes `&#39;flex items-center gap-2&#39;`.
+   - `it(&#39;renders the mocked user fullName and email&#39;)` — assert the SSR string includes both `&#39;Steve Bronstein&#39;` and `&#39;steve@bronstein.org&#39;`.
+
+5. Wrap the SSR call in a single `beforeAll`:
+   ```
+   let html: string;
+   let dom: JSDOM;
+   beforeAll(() =&gt; {
+     html = renderToString(&lt;AppSidebar /&gt;);
+     dom = new JSDOM(html);
+   });
+   ```
+   Each `it()` consumes the shared `html` / `dom`.
+
+Style: single quotes, 2-space indent, semicolons. Use the file extension `.test.tsx` so JSX is recognized.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/components/layout/app-sidebar.ssr.test.tsx --reporter=basic</automated>
+  </verify>
+  <done>
+    File exists. All 4 `it()` blocks pass. `jsdom` is available (either pre-existing transitive dep or newly installed). The structural assertion uses JSDOM parsing, not a regex, so deeply-nested cases are caught. No hydration logic appears in this file (that's Task 2).
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Hydration mount regression test (BUG-01) in jsdom environment</name>
+  <files>src/components/layout/app-sidebar.hydration.test.tsx</files>
+  <read_first>
+    - src/components/layout/app-sidebar.tsx (already read in Task 1 — confirm `'use client'` directive on line 1)
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-14 bullet 2 + implementation note, D-15, D-16)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("Hydration mount assertions" subsection)
+    - The newly-created `src/components/layout/app-sidebar.ssr.test.tsx` (created in Task 1) — copy the mock blocks verbatim
+  </read_first>
+  <behavior>
+    - The very first line of the file is exactly `// @vitest-environment jsdom`. Vitest only honors this pragma when it appears as a comment at the top of the file (D-09).
+    - SSR-rendering `<AppSidebar />` then hydrating into a jsdom container does NOT trigger any `console.error` call whose first argument matches `/hydrat/i` or `/did not match/i`.
+    - Non-hydration console.error calls (e.g. an unrelated Radix UI warning) do NOT fail the test — the assertion filters specifically for hydration patterns.
+    - The hydration assertion gates on React having actually committed: the test awaits a microtask flush (`await new Promise((r) => setTimeout(r, 0))`) before reading the spy.
+  </behavior>
+  <action>
+    Create `src/components/layout/app-sidebar.hydration.test.tsx`.<pre><code>1. **First line of the file MUST be:**
+   ```
+   // @vitest-environment jsdom
+   ```
+   No blank lines before this. The pragma is file-scope; Vitest will refuse to honor it if anything precedes it.
+
+2. Mock blocks — copy verbatim from Task 1 (same Clerk, next/navigation, use-media-query, use-nav mocks). These belong below the pragma but above all `import` statements that exercise the mocked modules.
+
+3. Imports:
+   - `import { renderToString } from &#39;react-dom/server&#39;;`
+   - `import { hydrateRoot } from &#39;react-dom/client&#39;;`
+   - `import React from &#39;react&#39;;`
+   - `import AppSidebar from &#39;@/components/layout/app-sidebar&#39;;`
+
+4. Single `describe(&#39;AppSidebar hydration mount (BUG-01 regression)&#39;, ...)` with one `it(&#39;hydrates without React hydration warnings&#39;)`:
+   ```
+   const html = renderToString(&lt;AppSidebar /&gt;);
+   const container = document.createElement(&#39;div&#39;);
+   container.innerHTML = html;
+   document.body.appendChild(container);
+
+   const errorSpy = vi.spyOn(console, &#39;error&#39;).mockImplementation(() =&gt; {});
+
+   hydrateRoot(container, &lt;AppSidebar /&gt;);
+   // Flush so React commits and any hydration mismatch surfaces.
+   await new Promise((resolve) =&gt; setTimeout(resolve, 0));
+
+   const hydrationCalls = errorSpy.mock.calls.filter(([firstArg]) =&gt;
+     typeof firstArg === &#39;string&#39; &amp;&amp; (/hydrat/i.test(firstArg) || /did not match/i.test(firstArg))
+   );
+
+   expect(hydrationCalls, `Unexpected hydration warnings:\n${hydrationCalls.map((c) =&gt; c.join(&#39; &#39;)).join(&#39;\n&#39;)}`).toEqual([]);
+
+   errorSpy.mockRestore();
+   ```
+
+5. The custom failure message (second arg to `expect`) MUST include the offending error messages so a regression failure shows what React complained about, not just &quot;expected [] but got [...]&quot;.
+
+6. Add an `afterEach` that calls `vi.restoreAllMocks()` and removes the container: `document.body.innerHTML = &#39;&#39;;` — defensive isolation in case this file ever grows more `it()` blocks.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/components/layout/app-sidebar.hydration.test.tsx --reporter=basic && head -1 src/components/layout/app-sidebar.hydration.test.tsx | grep -q "// @vitest-environment jsdom"</automated>
+  </verify>
+  <done>
+    File exists with the `// @vitest-environment jsdom` pragma as the literal first line. The hydration test passes against the current (fixed) source. The failure message of the assertion includes the offending error strings so future regression diagnoses are one-glance. `afterEach` restores mocks and cleans the document body.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>test-runtime → @clerk/nextjs</td>
+<td>Clerk is fully mocked. The real Clerk runtime (<code>useUser</code>, <code>SignOutButton</code> components) is never imported, so no Clerk publishable key, no fetch to clerk.com, no auth state.</td>
+</tr>
+<tr>
+<td>test-runtime → react</td>
+<td>React render output is asserted via string + DOM parsing only. No external network.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-02-09</td>
+<td>Information disclosure</td>
+<td><code>vi.mock(&#39;@clerk/nextjs&#39;)</code></td>
+<td>mitigate</td>
+<td>Mock returns hardcoded <code>&#39;steve@bronstein.org&#39;</code> — this is the project owner&#39;s known address and is already a public single-user lock per <code>src/proxy.ts</code>; the project README documents the address. No additional secret exposure.</td>
+</tr>
+<tr>
+<td>T-02-10</td>
+<td>Information disclosure</td>
+<td>JSDOM parsing of SSR HTML</td>
+<td>accept</td>
+<td>JSDOM is in-process and does not load external resources by default. No <code>&lt;script&gt;</code> execution, no resource fetching. Low risk.</td>
+</tr>
+<tr>
+<td>T-02-11</td>
+<td>Tampering</td>
+<td><code>console.error</code> spy in hydration test</td>
+<td>mitigate</td>
+<td>Spy is restored via <code>mockRestore()</code> and <code>vi.restoreAllMocks()</code> in <code>afterEach</code>. Cross-test leakage structurally prevented.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. `npm run test:run` exits 0 with both new files passing.
+2. `head -1 src/components/layout/app-sidebar.hydration.test.tsx` returns exactly `// @vitest-environment jsdom`.
+3. `head -1 src/components/layout/app-sidebar.ssr.test.tsx` does NOT contain `@vitest-environment` (file should run in default node env per D-09).
+4. Sanity regression check (executor performs manually after both tests pass):
+   - Temporarily edit `src/components/user-avatar-profile.tsx` line 19 to use a `<div>` instead of `<span>` as the outer element. Run `npx vitest run src/components/layout/app-sidebar.ssr.test.tsx` — it should FAIL on the "no <div> inside any <button>" assertion. Revert the edit. Document the result in 02-04-SUMMARY.md.
+</verification><success_criteria>
+- [ ] `src/components/layout/app-sidebar.ssr.test.tsx` exists; runs in node env; has 4 `it()` blocks covering: no-throw render, no-div-in-button, UserAvatarProfile markup present, mocked user fullName/email present.
+- [ ] `src/components/layout/app-sidebar.hydration.test.tsx` exists; first line is the `// @vitest-environment jsdom` pragma; has 1 `it()` covering hydration with the filtered `console.error` spy.
+- [ ] Both files mock `@clerk/nextjs`, `next/navigation`, `@/hooks/use-media-query`, `@/hooks/use-nav`.
+- [ ] The structural assertion uses JSDOM parsing (not a regex) for nested-element correctness.
+- [ ] The hydration assertion filters for `/hydrat/i` and `/did not match/i` patterns; other console.error calls do not fail the test (per D-15: only React's hydration warnings are gated).
+- [ ] `npm run test:run` exits 0.
+</success_criteria><output>
+After completion, create `.planning/phases/02-test-infrastructure/02-04-SUMMARY.md` capturing:
+- Whether `jsdom` was newly installed or pre-existing
+- The regression sanity-check result (introduce-a-`<div>`, see SSR test fail, revert)
+- Any unexpected console.error noise the hydration test surfaced (Radix UI warnings, etc.) and confirmation that the filter correctly ignored them
+- Confirmation that no real Clerk runtime was imported (grep for `@clerk/themes` or actual Clerk imports outside `vi.mock`)
+</output>
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-04-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-05-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-05-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 05
+subsystem: ui</p>
+<p>tags: [ui, react, shadcn, sonner, clipboard, job-leads, claude-skill]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 05-job-leads-completion
+plan: 01
+provides: jobLeadStatusValues now contains &#39;queued&#39; and &#39;failed&#39;; JobLead.lastError / lastErrorAt columns</li>
+<li>phase: 05-job-leads-completion
+plan: 04
+provides: POST /api/job-leads/[id]/search rewritten as thin state-machine flip — used by handleRetry to re-queue a failed lead
+provides:</li>
+<li>src/features/job-leads/components/job-lead-detail.tsx — new render branches for scraped/queued/searching/failed with copy-skill-invocation button and categorized failure banner</li>
+<li>src/features/job-leads/components/job-lead-card.tsx — extended statusColors map with distinct visual treatment for queued (amber) and failed (red)
+affects: [05-06, 05-07]</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;Copy-to-clipboard via navigator.clipboard.writeText, wrapped in try/catch with sonner toast.success / toast.error&quot;
+    - &quot;Local optimistic state flip on retry: setLead((prev) =&gt; ({...prev, status: &#39;queued&#39;, lastError: null, lastErrorAt: null})) after successful POST — no full page refresh needed for the visual feedback&quot;
+    - &quot;Categorized failure banner pattern: lead.lastError?.split(&#39;:&#39;)[0] for category in bold, .split(&#39;:&#39;).slice(1).join(&#39;:&#39;).trim() for detail tail in muted text — matches D-09 format &#39;Category: detail&#39;&quot;
+    - &quot;Status-driven render branches via {lead.status === &#39;X&#39; &amp;&amp; (...)} chains — no useEffect-based polling component (D-17 explicitly defers real-time notifications)&quot;</p>
+<p>key-files:
+  created: []
+  modified:
+    - src/features/job-leads/components/job-lead-detail.tsx
+    - src/features/job-leads/components/job-lead-card.tsx</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Used the explicit amber Tailwind classes (bg-amber-100/text-amber-900 dark:bg-amber-900/30 dark:text-amber-200) for the queued status in the card, matching CONTEXT.md <specifics> verbatim rather than the simpler <code>Badge variant=&#39;secondary&#39;</code> — visually clearer in a list of mostly cool-toned status colors.&quot;</li>
+<li>&quot;Used explicit red Tailwind classes (bg-red-100/text-red-900 dark:bg-red-900/30 dark:text-red-200) for the failed status in the card rather than the <code>Badge variant=&#39;destructive&#39;</code> shadcn variant — the card already renders all statuses via the className-on-Badge pattern with variant=&#39;outline&#39;, so the explicit-color approach keeps the table-row visual rhythm intact.&quot;</li>
+<li>&quot;Dropped the optional &#39;Or mark queued&#39; convenience button on the scraped branch — Task 1&#39;s <action> flagged it as optional, and per D-16 the copy-skill-invocation button is the primary affordance. Adding a second button on the same branch would muddy the user&#39;s mental model (the skill itself flips scraped→queued when it claims the lead; the user shouldn&#39;t need a manual UI shortcut).&quot;</li>
+<li>&quot;Did NOT edit job-leads-page.tsx — the page is a plain card list with no status-filter UI. The new queued + failed values are absorbed automatically via the card&#39;s statusColors map, exactly what Task 2&#39;s <action> says to do in this case.&quot;</li>
+<li>&quot;Searching status remains amber in the card (unchanged from baseline). It now visually overlaps with queued, but the label text (&#39;queued for connection scrape&#39; vs &#39;searching&#39;) disambiguates. Plan acceptance criteria explicitly says &#39;Other 8 statuses: preserve existing rendering exactly&#39; — touching the searching color would violate that. The detail page&#39;s queued+searching branches both render Badge variant=&#39;secondary&#39; for consistency.&quot;</li>
+<li>&quot;handleRetry POSTs to /api/job-leads/<id>/search (Wave 2&#39;s thin status-flip route), NOT PATCH /status — this is the canonical retry entrypoint per Plan 04&#39;s state-machine design: both scraped→queued and failed→queued go through the same /search route, which delegates the transition gate to canJobLeadTransition.&quot;</li>
+<li>&quot;On retry success, the response envelope is checked via json.success rather than res.ok — robust against routes that return 200 with success:false bodies (none currently do, but the pattern aligns with the broader codebase&#39;s API contract).&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Status-driven render branch pattern for entity-detail pages: each state in the domain enum gets its own {entity.status === &#39;X&#39; &amp;&amp; (...)} block; the component is essentially a state-machine view. Avoids useEffect polling components and lets the next agent extend by adding one more branch.&quot;</li>
+<li>&quot;Clipboard copy via navigator.clipboard.writeText wrapped in try/catch with sonner toast — gracefully degrades when the browser blocks clipboard access (e.g., non-https origins, iframes).&quot;</li>
+</ul>
+<p>requirements-completed: [JL-B5]</p>
+<h1>Metrics</h1>
+<h2>duration: ~3min (commit-to-commit, including tsc + test verification)
+completed: 2026-05-14</h2>
+<h1>Phase 05 Plan 05: UI rewrite — queued/failed affordances Summary</h1>
+<p><strong>Replaced the in-app Find Connections workflow on the lead detail page with a copy-skill-invocation button and a categorized failure banner with retry, and surfaced the new queued + failed statuses in the list card. The detail page is now the user&#39;s launchpad for the Claude Code scraping skill.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~3 min (e45548f → e4ee474, 2 commits, ~50 LOC delta)</li>
+<li><strong>Tasks:</strong> 2 (1 commit each)</li>
+<li><strong>Test results:</strong> <strong>129/129 passing</strong> project-wide (no regression from baseline)</li>
+<li><strong>TypeScript:</strong> Only pre-existing prioritization.ts (4) + scrape-connections.ts (3) errors — no new errors</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><strong><code>job-lead-detail.tsx</code> rewritten</strong> (97 → 156 lines):<ul>
+<li>Imports: removed <code>IconSearch</code> + <code>SearchProgress</code>; added <code>IconCopy</code>, <code>IconRefresh</code>, <code>Badge</code>, <code>toast</code></li>
+<li>State: removed <code>isSearching</code> + <code>handleSearchComplete</code>; added <code>handleCopyInvocation</code> + <code>handleRetry</code></li>
+<li>4 new render branches: scraped (copy button + helper text), queued (badge + copy button + helper text), searching (passive badge, no polling per D-17), failed (categorized banner with destructive-toned wrapper + Retry button)</li>
+<li>3 preserved branches: found, ready/actioned, found+untriagedCount===0 — all rendered verbatim from the previous version</li>
+</ul>
+</li>
+<li><strong><code>job-lead-card.tsx</code> extended</strong> statusColors map:<ul>
+<li><code>queued</code>: amber (<code>bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200</code>)</li>
+<li><code>failed</code>: red (<code>bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200</code>)</li>
+<li>Other 8 entries preserved verbatim</li>
+</ul>
+</li>
+<li><strong><code>job-leads-page.tsx</code> untouched</strong> — the page has no status-filter UI, so Plan 01&#39;s enum-array update propagates automatically through the card&#39;s status renderer.</li>
+</ul>
+<h2>Task Commits</h2>
+<p>Branch: <code>worktree-agent-a425c2664988daa1c</code></p>
+<ol>
+<li><strong>Task 1 — replace Find Connections with copy-skill-invocation + failure banner</strong> — <code>e45548f</code> (feat)</li>
+<li><strong>Task 2 — render queued + failed statuses in card</strong> — <code>e4ee474</code> (feat)</li>
+</ol>
+<h2>Files Modified</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Lines changed</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>+94 / -36</td>
+<td>Rewrote imports + state + render branches; removed SearchProgress consumption</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/job-lead-card.tsx</code></td>
+<td>+3 / -1</td>
+<td>Added queued (amber) and failed (red) entries to statusColors</td>
+</tr>
+</tbody></table>
+<h2>Plan Output Spec — Per-Bullet Confirmation</h2>
+<p>Per <code>&lt;output&gt;</code> section of the plan:</p>
+<ol>
+<li><strong>Confirmation that <code>handleCopyInvocation</code> copies the canonical command string:</strong> ✅ Confirmed — the callback body contains <code>await navigator.clipboard.writeText(\</code>claude /scrape-linkedin-connections ${lead.id}`)<code>(verified by</code>grep -c &quot;claude /scrape-linkedin-connections&quot; src/features/job-leads/components/job-lead-detail.tsx` = 1).</li>
+<li><strong>Whether the optional &quot;Or mark queued&quot; convenience button was kept or dropped:</strong> Dropped — see key-decisions §3. The copy-skill-invocation button is the sole affordance on the scraped branch per D-16.</li>
+<li><strong>Whether <code>job-leads-page.tsx</code> needed editing or if the filter was already derived from <code>jobLeadStatusValues</code>:</strong> Not edited — the page has no status-filter UI at all (it&#39;s a flat card list). The card itself absorbs the new statuses via its statusColors map.</li>
+<li><strong>One sentence on visual treatment chosen for queued and failed in the card:</strong> Amber Tailwind classes for queued (matching CONTEXT.md <code>&lt;specifics&gt;</code> verbatim) and red Tailwind classes for failed (destructive-toned to match the detail-page failure banner).</li>
+</ol>
+<h2>Verification Grep Checks</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Required</th>
+<th>Actual</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>grep -c &quot;SearchProgress&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>0</td>
+<td>0</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;Find Connections&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>0</td>
+<td>0</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;IconSearch&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>0</td>
+<td>0</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;handleFindConnections&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>0</td>
+<td>0</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;isSearching&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>0</td>
+<td>0</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;handleCopyInvocation&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>3</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;handleRetry&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;claude /scrape-linkedin-connections&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;writeText&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;bg-destructive/10&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;IconCopy&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>3</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;IconRefresh&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;from &#39;@/components/ui/badge&#39;&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -c &quot;from &#39;sonner&#39;&quot; src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>≥ 1</td>
+<td>1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -cE &quot;queued|failed&quot; src/features/job-leads/components/job-lead-card.tsx</code></td>
+<td>≥ 1</td>
+<td>2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>grep -n &quot;fetch&quot; src/features/job-leads/components/job-lead-detail.tsx</code> posts to <code>/api/job-leads/${lead.id}/search</code></td>
+<td>yes</td>
+<td>yes (line 43)</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<h2>Render Branch Coverage Table</h2>
+<table>
+<thead>
+<tr>
+<th><code>lead.status</code></th>
+<th>Render content</th>
+<th>Source of truth</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pending</code></td>
+<td>ScrapeResults only (back-link + scraped data block at top)</td>
+<td>preserved from previous version</td>
+</tr>
+<tr>
+<td><code>scraping</code></td>
+<td>ScrapeResults only</td>
+<td>preserved</td>
+</tr>
+<tr>
+<td><code>scraped</code></td>
+<td>Copy skill invocation button + helper text</td>
+<td>NEW (D-16)</td>
+</tr>
+<tr>
+<td><code>queued</code></td>
+<td>&quot;queued for connection scrape&quot; badge + Copy skill invocation button + helper text</td>
+<td>NEW (D-16)</td>
+</tr>
+<tr>
+<td><code>searching</code></td>
+<td>&quot;scrape in progress&quot; badge + &quot;Skill is running. Refresh the page to see the result.&quot;</td>
+<td>NEW (D-17 — no polling)</td>
+</tr>
+<tr>
+<td><code>found</code></td>
+<td>TriageTrigger (and RecommendationList if untriagedCount === 0)</td>
+<td>preserved</td>
+</tr>
+<tr>
+<td><code>ready</code></td>
+<td>RecommendationList</td>
+<td>preserved</td>
+</tr>
+<tr>
+<td><code>actioned</code></td>
+<td>RecommendationList</td>
+<td>preserved</td>
+</tr>
+<tr>
+<td><code>archived</code></td>
+<td>ScrapeResults only</td>
+<td>preserved (no explicit branch — falls through)</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td>Categorized failure banner (bg-destructive/10 border-destructive/30) + Retry button</td>
+<td>NEW (D-18)</td>
+</tr>
+</tbody></table>
+<h2>TypeScript Status</h2>
+<p><code>npx tsc --noEmit</code> shows only the pre-existing errors documented in Plan 04&#39;s SUMMARY:</p>
+<ul>
+<li><code>src/features/job-leads/lib/prioritization.ts</code> lines 70–72 (downlevelIteration, implicit any) — scheduled for cleanup in <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code></li>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code> lines 56, 93, 187 — scheduled for deletion in Plan 05-07</li>
+</ul>
+<p>No new TypeScript errors introduced by Plan 05-05.</p>
+<h2>Test Suite Status</h2>
+<p><code>npm run test:run</code> exit 0 with <strong>129/129 tests passing across 16 files</strong>. No new tests added — the changes are pure UI components with no test infrastructure for client React (the project has no jsdom/RTL setup wired up); regression coverage relies on the existing API-layer tests + the project-wide tsc + the manual verification grep table above.</p>
+<h2>Decisions Made</h2>
+<ol>
+<li><strong>Dropped the optional &quot;Or mark queued&quot; convenience button on scraped.</strong> Plan flagged it as optional and D-16 names the copy button as the primary affordance. Adding a second button on the same branch would duplicate state-machine entry points (the skill flips scraped→queued automatically when it claims the lead via PATCH /status; the user shouldn&#39;t need a manual UI shortcut for that).</li>
+<li><strong>Used explicit Tailwind classes for queued + failed in the card</strong> rather than <code>Badge variant=&#39;secondary&#39;</code> / <code>Badge variant=&#39;destructive&#39;</code>. The card already renders all statuses via the className-on-Badge pattern with <code>variant=&#39;outline&#39;</code>; mixing variants would break the table-row visual rhythm. Both new entries follow the same shape as the 8 existing entries.</li>
+<li><strong>Searching color unchanged</strong> — both queued and searching are amber-toned. Plan acceptance criteria says &quot;Other 8 statuses: preserve existing rendering exactly,&quot; so this is intentional. The badge label text disambiguates (&quot;queued for connection scrape&quot; vs &quot;searching&quot;). On the detail page, both render <code>Badge variant=&#39;secondary&#39;</code> for visual consistency.</li>
+<li><strong>Did NOT edit job-leads-page.tsx.</strong> Task 2&#39;s <code>&lt;action&gt;</code> explicitly says: &quot;If the existing filter is built from <code>jobLeadStatusValues</code> already, no change is needed — Plan 01&#39;s enum update propagates automatically. Verify by reading the file before editing; if no change is needed, document that in the SUMMARY and skip the edit.&quot; The page is a plain card list with no filter UI at all, so this matches the skip path.</li>
+<li><strong>handleRetry POSTs to /search, not PATCH /status.</strong> This is the canonical retry route per Plan 04&#39;s design: <code>/search</code> is now the thin state-machine flip for both scraped→queued and failed→queued (it delegates to <code>canJobLeadTransition</code>). Using PATCH /status would have worked but would have spread the retry logic across two routes.</li>
+<li><strong>Optimistic local state update on retry.</strong> After a successful POST, the component does <code>setLead((prev) =&gt; ({...prev, status: &#39;queued&#39;, lastError: null, lastErrorAt: null}))</code> — the user sees the queued badge instantly without a page reload. If the user wants to re-issue the skill invocation, the queued branch renders the copy button.</li>
+</ol>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 3 - Blocking] Symlinked <code>node_modules</code> from main repo into worktree</strong></p>
+<ul>
+<li><strong>Found during:</strong> Pre-Task-1 environment check</li>
+<li><strong>Issue:</strong> Worktree spawned without <code>node_modules</code>. <code>npx tsc --noEmit</code> and <code>npm run test:run</code> would fail without it.</li>
+<li><strong>Fix:</strong> <code>ln -s /Users/sbronstein/Github/heimdall/node_modules /Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a425c2664988daa1c/node_modules</code>. Verified <code>node_modules/</code> is gitignored.</li>
+</ul>
+<p><strong>Total deviations:</strong> 1 (environment-only). No code-level deviations. All plan acceptance criteria satisfied.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><strong>Color overlap between queued and searching in the card.</strong> Both end up amber-toned per CONTEXT.md <code>&lt;specifics&gt;</code>. The badge label disambiguates, and the plan&#39;s acceptance criteria forbids changing searching&#39;s color. Acceptable; documented under decisions §3.</li>
+<li><strong>Pre-commit husky hook not executable.</strong> Warning emitted on every commit (<code>hint: The &#39;/Users/sbronstein/Github/heimdall/.husky/pre-commit&#39; hook was ignored because it&#39;s not set as executable.</code>). Not a blocker — commits succeed and the project&#39;s lint-staged config is unchanged. Documented for visibility; outside scope to fix.</li>
+</ul>
+<h2>Threat Model Verification</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Disposition</th>
+<th>Mitigation Verified</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-05-01</td>
+<td>mitigate (lastError XSS in UI)</td>
+<td>✅ React JSX text content auto-escapes; no <code>dangerouslySetInnerHTML</code> anywhere in <code>job-lead-detail.tsx</code>; <code>lead.lastError</code> is rendered via <code>{lead.lastError?.split(&#39;:&#39;)[0]}</code> and <code>{lead.lastError?.split(&#39;:&#39;).slice(1).join(&#39;:&#39;).trim()}</code> — pure string operations, never converted to HTML. Plan 04&#39;s API layer caps <code>lastError</code> at 220 chars upstream.</td>
+</tr>
+<tr>
+<td>T-05-05-02</td>
+<td>accept (clipboard sniffing)</td>
+<td>✅ Single-user app; clipboard payload is a benign command string (<code>claude /scrape-linkedin-connections &lt;uuid&gt;</code>); no secrets/tokens written.</td>
+</tr>
+<tr>
+<td>T-05-05-03</td>
+<td>mitigate (forged retry POST)</td>
+<td>✅ Browser path goes through Clerk middleware (Phase 3 single-user lock on <a href="mailto:steve@bronstein.org">steve@bronstein.org</a>). CLI path uses the bearer-token bypass added in Plan 05-02. Both gates are enforced before the route handler runs.</td>
+</tr>
+<tr>
+<td>T-05-05-04</td>
+<td>accept (tight-loop retry DoS)</td>
+<td>✅ User click rate is the natural throttle; the underlying API is sub-100ms per Plan 04&#39;s measurement. Explicit &quot;disable during pending&quot; YAGNI for single-user.</td>
+</tr>
+</tbody></table>
+<h2>Threat Flags</h2>
+<p>None — no new trust boundaries or attack surface introduced. The component reads from props (server-vouched via the RSC page query) and writes to the existing <code>/api/job-leads/[id]/search</code> endpoint (Plan 04 contract, Zod-validated, state-machine-gated).</p>
+<h2>User Setup Required</h2>
+<p>None. The page renders immediately on the next <code>/dashboard/job-leads/&lt;id&gt;</code> request. To exercise the copy-invocation flow:</p>
+<ol>
+<li>Visit <code>/dashboard/job-leads/&lt;id&gt;</code> for a lead in <code>scraped</code> or <code>queued</code> status.</li>
+<li>Click &quot;Copy skill invocation.&quot;</li>
+<li>Paste in Claude Code (this directory) — runs <code>claude /scrape-linkedin-connections &lt;id&gt;</code> (skill ships in Plan 05-06).</li>
+</ol>
+<p>To exercise the retry flow:</p>
+<ol>
+<li>Visit a lead in <code>failed</code> status (the skill will write this state via PATCH /status on its first failure — Plan 05-06).</li>
+<li>Read the category + detail from the destructive-toned banner.</li>
+<li>Click &quot;Retry&quot; — the local state flips to <code>queued</code>, ready for another skill run.</li>
+</ol>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li><strong>Plan 05-06 (Claude Code skill):</strong> Unblocked. The skill needs only the lead UUID (which the user pastes from the Copy button) + the Plan 04 API contract. The detail page surfaces every state the skill produces (queued / searching / failed / found).</li>
+<li><strong>Plan 05-07 (scrape-connections.ts + search-progress.tsx deletion):</strong> Pre-requisite verified — <code>grep -r &quot;SearchProgress&quot; src/features/job-leads/components/</code> returns only the file itself; the detail page no longer imports it.</li>
+</ul>
+<h2>Self-Check</h2>
+<p>Verified before commit:</p>
+<ul>
+<li><code>src/features/job-leads/components/job-lead-detail.tsx</code> modified (FOUND, line 1–156)</li>
+<li><code>src/features/job-leads/components/job-lead-card.tsx</code> modified (FOUND)</li>
+<li>Commit <code>e45548f</code> (Task 1) — FOUND in <code>git log --oneline</code></li>
+<li>Commit <code>e4ee474</code> (Task 2) — FOUND in <code>git log --oneline</code></li>
+<li><code>npm run test:run</code> exit 0 with 129/129 passing — VERIFIED</li>
+<li><code>npx tsc --noEmit</code> shows only pre-existing prioritization + scrape-connections errors — VERIFIED</li>
+<li>All 16 grep checks in the verification table PASS — VERIFIED</li>
+<li><code>job-leads-page.tsx</code> unchanged (<code>git diff --name-only HEAD~2 HEAD</code> returns only detail + card files) — VERIFIED</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<hr>
+<p><em>Phase: 05-job-leads-completion</em>
+<em>Plan: 05</em>
+<em>Completed: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-05-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

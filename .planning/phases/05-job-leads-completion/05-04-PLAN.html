@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-04-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-04-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 04
+type: execute
+wave: 2
+depends_on:</p>
+<ul>
+<li>05-01
+files_modified:</li>
+<li>src/app/api/job-leads/route.ts</li>
+<li>src/app/api/job-leads/[id]/status/route.ts</li>
+<li>src/app/api/job-leads/[id]/search/route.ts</li>
+<li>src/app/api/job-leads/[id]/prospects/route.ts</li>
+<li>src/app/api/job-leads/[id]/status/route.test.ts</li>
+<li>src/app/api/job-leads/[id]/prospects/route.test.ts</li>
+<li>src/app/api/job-leads/[id]/search/route.test.ts</li>
+<li>src/app/api/job-leads/route.test.ts</li>
+<li>src/lib/domain/job-lead-pipeline.ts
+autonomous: true
+requirements:</li>
+<li>JL-B3</li>
+<li>JL-B4</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;GET /api/job-leads?status=queued returns only leads whose status is &#39;queued&#39; (and supports multi-value via comma-separated input)&quot;
+    - &quot;PATCH /api/job-leads/[id]/status enforces the D-08 state machine: pending→scraping→scraped→queued→searching→found, with retry path failed→queued&quot;
+    - &quot;PATCH /api/job-leads/[id]/status writes last_error and last_error_at when transitioning to &#39;failed&#39;, and clears both on transition to &#39;queued&#39; or &#39;found&#39;&quot;
+    - &quot;POST /api/job-leads/[id]/prospects bulk-inserts an array of up to 200 ScrapedProspect rows in a single db.insert(...).values([]) call (NOT a for-loop)&quot;
+    - &quot;POST /api/job-leads/[id]/prospects persists ALL five ScrapedProspect fields (name, title, linkedinUrl, profileSnippet, mutualConnectionNames) — no field is silently dropped&quot;
+    - &quot;POST /api/job-leads/[id]/prospects flips the lead status to &#39;found&#39; and writes a job_lead_search_complete timeline event with prospectCount metadata&quot;
+    - &quot;POST /api/job-leads/[id]/search is now a thin synchronous status flip (scraped→queued or failed→queued) gated by canJobLeadTransition(lead.status, &#39;queued&#39;) — single source of truth for transitions&quot;
+    - &quot;POST /api/job-leads/[id]/search has no fire-and-forget IIFE and no scrapeConnections import&quot;
+    - &quot;The new bulk-insert is a single SQL statement, not a per-row loop&quot;
+  artifacts:
+    - path: &quot;src/lib/domain/job-lead-pipeline.ts&quot;
+      provides: &quot;canJobLeadTransition function + jobLeadTransitions graph (D-08 state machine)&quot;
+      contains: &quot;canJobLeadTransition&quot;
+    - path: &quot;src/app/api/job-leads/[id]/status/route.ts&quot;
+      provides: &quot;PATCH handler with state-machine + optional lastError field&quot;
+      contains: &quot;canJobLeadTransition&quot;
+    - path: &quot;src/app/api/job-leads/[id]/prospects/route.ts&quot;
+      provides: &quot;POST handler with Zod-validated bulk-insert (5-field shape) + status flip to &#39;found&#39; + timeline event&quot;
+      contains: &quot;z.array(prospectSchema).max(200)&quot;
+    - path: &quot;src/app/api/job-leads/[id]/search/route.ts&quot;
+      provides: &quot;Thin POST handler that flips scraped|failed → queued via canJobLeadTransition gate&quot;
+      contains: &quot;canJobLeadTransition&quot;
+    - path: &quot;src/app/api/job-leads/route.ts&quot;
+      provides: &quot;GET handler extended with status query filter&quot;
+      contains: &quot;parseArrayParam(&#39;status&#39;)&quot;
+  key_links:
+    - from: &quot;src/app/api/job-leads/[id]/status/route.ts&quot;
+      to: &quot;src/lib/domain/job-lead-pipeline.ts&quot;
+      via: &quot;import { canJobLeadTransition }&quot;
+      pattern: &quot;from &#39;@/lib/domain/job-lead-pipeline&#39;&quot;
+    - from: &quot;src/app/api/job-leads/[id]/search/route.ts&quot;
+      to: &quot;src/lib/domain/job-lead-pipeline.ts&quot;
+      via: &quot;import { canJobLeadTransition } — same transition graph as /status&quot;
+      pattern: &quot;from &#39;@/lib/domain/job-lead-pipeline&#39;&quot;
+    - from: &quot;src/app/api/job-leads/[id]/prospects/route.ts&quot;
+      to: &quot;drizzle/schema (jobLeads + prospects tables)&quot;
+      via: &quot;db.insert(prospects).values(rows) single statement, persists all 5 ScrapedProspect fields&quot;
+      pattern: &quot;db\.insert\(prospects\)\.values\(&quot;
+    - from: &quot;src/app/api/job-leads/[id]/search/route.ts&quot;
+      to: &quot;drizzle/schema (jobLeads.status)&quot;
+      via: &quot;synchronous PATCH to &#39;queued&#39; (no IIFE)&quot;
+  pattern: &quot;status: &#39;queued&#39;&quot;
+</p>
+<hr>
+<objective>
+Stand up the API surface the Claude Code skill (Plan 06) will call: a bulk-prospects POST, a state-machine-enforcing PATCH /status, a thin status-flip POST /search (replacing the fire-and-forget IIFE), and a GET /job-leads with a status filter. Plus the state-machine module the routes share.<p>Purpose: D-13 / D-20 / D-22 establish the API contract the skill writes against; JL-B3 + JL-B4 require the routes plus the queue model to exist before the skill (Plan 06) and UI (Plan 05) can consume them.</p>
+<p>Output: Three modified routes, one new route, one new state-machine module, and PGlite-backed tests for each.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@.planning/phases/05-job-leads-completion/05-PATTERNS.md
+@.planning/phases/05-job-leads-completion/05-01-PLAN.md
+@.planning/codebase/CONVENTIONS.md
+@CLAUDE.md<interfaces>
+Existing analog: src/app/api/applications/[id]/status/route.ts (PATCH state-machine — copy the shape, swap table + enum).
+Existing analog: src/app/api/tasks/route.ts GET (lines 23–60) for the status array filter pattern.
+Existing analog: src/app/api/contacts/import/route.ts (POST bulk-with-timeline composite).
+Test analog: src/app/api/applications/[id]/status/route.test.ts (vi.hoisted + Proxy mock of @/lib/db + createTestDb seed pattern).<p>D-08 state machine (from CONTEXT.md):</p>
+<ul>
+<li>pending → scraping (existing job-page-scrape flow)</li>
+<li>scraping → scraped (existing) or scraping → pending (existing fallback on scrape error)</li>
+<li>scraped → queued (new: POST /search becomes thin flip)</li>
+<li>queued → searching (skill claims)</li>
+<li>searching → found (skill success — writes prospects)</li>
+<li>searching → failed (skill failure — writes lastError)</li>
+<li>failed → queued (retry — clears lastError)</li>
+<li>found → ready / actioned / archived (existing)</li>
+<li>ready → actioned / archived (existing)</li>
+<li>actioned → archived (existing)</li>
+<li>archived: terminal</li>
+</ul>
+<p>Zod schema for bulk prospects (D-22 base shape extended with profileSnippet — the 5-field ScrapedProspect end-to-end):</p>
+<pre><code class="language-typescript">const prospectSchema = z.object({
+  name: z.string().min(1).max(200),
+  title: z.string().max(300).nullable(),
+  linkedinUrl: z.string().url().nullable(),
+  profileSnippet: z.string().max(500).nullable(),
+  mutualConnectionNames: z.array(z.string().max(200)).max(50)
+});
+const bulkBody = z.object({ prospects: z.array(prospectSchema).max(200) });
+</code></pre>
+<p>Note on <code>profileSnippet</code>: the field was missing from the initial D-22 sketch but is present in <code>ScrapedProspect</code> (src/features/job-leads/lib/types.ts after Plan 01 — 5 fields total) and the skill (Plan 06) scrapes it. The Zod schema and the DB insert MUST both carry it through end-to-end, otherwise the skill&#39;s extraction work is silently discarded and JL-B2 (&quot;extract prospects in the existing ScrapedProspect shape&quot;) cannot be satisfied.</p>
+<p>Response envelope helpers in src/lib/api/types.ts and src/lib/api/errors.ts:</p>
+<ul>
+<li><code>success(data)</code> → 200, <code>created(data)</code> → 201, <code>paginated(data, meta)</code> → 200</li>
+<li><code>notFound(&#39;Job lead&#39;)</code> → 404, <code>validationError(msg)</code> → 400, <code>serverError(err)</code> → 500</li>
+</ul>
+<p>Timeline event types to emit:</p>
+<ul>
+<li><code>job_lead_search_queued</code> — when PATCH /status or POST /search flips to &#39;queued&#39;</li>
+<li><code>job_lead_search_claimed</code> — when PATCH /status flips to &#39;searching&#39;</li>
+<li><code>job_lead_search_complete</code> — when POST /prospects flips to &#39;found&#39; (existing event type — preserve)</li>
+<li><code>job_lead_search_failed</code> — when PATCH /status flips to &#39;failed&#39;</li>
+</ul>
+<p>ScrapedProspect type (after Plan 01): import from <code>@/features/job-leads/lib/types</code>, not <code>scrape-connections</code>.</p>
+<p>Example POST /prospects body (note the 5 fields including profileSnippet):</p>
+<pre><code class="language-json">{
+  &quot;prospects&quot;: [
+    {
+      &quot;name&quot;: &quot;Alice Smith&quot;,
+      &quot;title&quot;: &quot;CTO&quot;,
+      &quot;linkedinUrl&quot;: &quot;https://linkedin.com/in/alice&quot;,
+      &quot;profileSnippet&quot;: &quot;Building data infrastructure at scale. ex-Stripe, ex-Airbnb.&quot;,
+      &quot;mutualConnectionNames&quot;: [&quot;Bob Jones&quot;, &quot;Carol Lee&quot;]
+    }
+  ]
+}
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: State-machine module + PATCH /status route</name>
+  <read_first>
+    - src/app/api/applications/[id]/status/route.ts (full file, ~78 lines — primary analog for PATCH state-machine)
+    - src/app/api/applications/[id]/status/route.test.ts (full file, ~80+ lines — test pattern)
+    - src/app/api/job-leads/[id]/status/route.ts (full file, ~30 lines — existing GET handler to preserve)
+    - src/lib/domain/pipeline.ts (full file, ~55 lines — analog for the canTransition + transitions-graph module shape)
+    - src/lib/db/timeline.ts (full file, ~22 lines — logTimeline signature)
+    - src/lib/api/errors.ts (for notFound / validationError / serverError signatures)
+    - src/lib/api/types.ts (for success signature)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"MOD .../status/route.ts" (lines 263–353 for the PATCH shape)
+  </read_first>
+  <behavior>
+    - Test 1: PATCH with body `{ status: 'queued' }` on a lead in status `'scraped'` → 200; lead.status = 'queued'; lastError = null; lastErrorAt = null; one timeline event emitted with eventType `'job_lead_search_queued'`
+    - Test 2: PATCH with body `{ status: 'searching' }` on a lead in status `'queued'` → 200; eventType `'job_lead_search_claimed'`
+    - Test 3: PATCH with body `{ status: 'failed', lastError: 'Timeout: navigation exceeded 30000ms' }` on a lead in status `'searching'` → 200; lead.status = 'failed'; lead.lastError matches the input; lead.lastErrorAt is set; eventType `'job_lead_search_failed'`
+    - Test 4: PATCH with body `{ status: 'queued' }` on a lead in status `'failed'` (retry path) → 200; lastError and lastErrorAt are cleared (null)
+    - Test 5: PATCH with body `{ status: 'found' }` on a lead in status `'pending'` → 400 with `validationError('Invalid transition: pending -> found')`; no DB mutation; no timeline event
+    - Test 6: PATCH with body `{ status: 'invalid_value' }` → 400 with a Zod error message; no DB mutation
+    - Test 7: PATCH against a non-existent lead id → 404 `notFound('Job lead')`
+    - Test 8: GET /api/job-leads/[id]/status remains unchanged (regression — the existing GET handler must still return `{ success, data: { status, prospectCount, updatedAt } }`)
+  </behavior>
+  <files>src/lib/domain/job-lead-pipeline.ts, src/app/api/job-leads/[id]/status/route.ts, src/app/api/job-leads/[id]/status/route.test.ts</files>
+  <action>
+    Create `src/lib/domain/job-lead-pipeline.ts` mirroring `src/lib/domain/pipeline.ts` shape: a `jobLeadTransitions` Record<string, string[]> graph encoding the D-08 transitions, a `canJobLeadTransition(from, to)` named export that returns boolean (`return jobLeadTransitions[from]?.includes(to) ?? false`), and a `jobLeadTerminalStates` array (`['archived']` only — `'failed'` is recoverable, not terminal). Use single-quote strings, named exports, no default export per CONVENTIONS.md.<pre><code>Modify `src/app/api/job-leads/[id]/status/route.ts`: KEEP the existing GET handler unchanged (lines 7–30 — the polling endpoint stays for any external consumer even though the in-app `SearchProgress` component is being deleted in Plan 07). ADD a new PATCH handler beneath the GET handler:
+- Import `canJobLeadTransition` from `&#39;@/lib/domain/job-lead-pipeline&#39;`
+- Import `z` from `&#39;zod&#39;`, `jobLeadStatusValues` from `&#39;@/lib/domain/types&#39;` (Plan 01 updated this array to 10 values)
+- Import `logTimeline` from `&#39;@/lib/db/timeline&#39;`
+- Define `statusChangeSchema` with required `status: z.enum(jobLeadStatusValues)` and optional `lastError: z.string().max(220).nullable().optional()` (220 = 200 chars of detail per D-09 + ~20 chars of category prefix budget)
+- In the handler: parse body via the schema; fetch the lead; 404 if not found; call `canJobLeadTransition(lead.status, newStatus)`; 400 with `validationError(\`Invalid transition: ${lead.status} -&gt; ${newStatus}\`)` on rejection.
+- Build a partial update object: always `{ status: newStatus, updatedAt: new Date() }`. When newStatus is `&#39;failed&#39;`: set `lastError: validated.lastError ?? null` and `lastErrorAt: new Date()`. When newStatus is `&#39;queued&#39;` OR `&#39;found&#39;`: clear `lastError: null, lastErrorAt: null` (retry path / success path).
+- Update the row with `.returning()`.
+- Emit a timeline event: eventType chosen by status — `&#39;queued&#39; → &#39;job_lead_search_queued&#39;`, `&#39;searching&#39; → &#39;job_lead_search_claimed&#39;`, `&#39;failed&#39; → &#39;job_lead_search_failed&#39;`, `&#39;found&#39; → &#39;job_lead_search_complete&#39;`, else `&#39;job_lead_status_changed&#39;`. Title format: `\`${lead.companyName || &#39;Job lead&#39;}: ${lead.status} -&gt; ${newStatus}\``. Metadata: `{ jobLeadId: id, from: lead.status, to: newStatus, lastError: validated.lastError ?? null }`. Pass `companyId: lead.companyId || undefined`.
+- Return `success(updated)` (200).
+- Catch `ZodError` → `validationError(err.issues[0].message)`; other errors → `serverError(err)`.
+
+Create `src/app/api/job-leads/[id]/status/route.test.ts` following the `src/app/api/applications/[id]/status/route.test.ts` pattern exactly:
+- vi.hoisted + Proxy mock of `@/lib/db`
+- `dbRef.current = await createTestDb()` in beforeEach; seed a `companies` row + a `jobLeads` row with status `&#39;scraped&#39;`
+- Eight `it(...)` cases covering the eight behaviors above; use `callRoute(PATCH as ..., { method: &#39;PATCH&#39;, body: { ... }, params: { id: leadId } })` for the PATCH cases and `callRoute(GET ..., { method: &#39;GET&#39;, params: { id: leadId } })` for Test 8
+- Each successful test asserts the timeline row count and event type via `await dbRef.current!.select().from(timelineEvents)`
+- Test 8 specifically: seed one `jobLeads` row via the Drizzle insert helper in beforeEach (already seeded); GET returns response body shape exactly `{ success: true, data: { status: &#39;&lt;seeded value, e.g. &quot;scraped&quot;&gt;&#39;, prospectCount: &lt;seeded count, e.g. 0&gt;, updatedAt: &lt;ISO string&gt; } }` with NO extra fields on `data` (assert via `Object.keys(body.data).sort()` equals `[&#39;prospectCount&#39;, &#39;status&#39;, &#39;updatedAt&#39;]`)
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/app/api/job-leads/[id]/status/route.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/lib/domain/job-lead-pipeline.ts` exports `canJobLeadTransition` (function) and `jobLeadTransitions` (Record)
+    - `jobLeadTransitions['scraped']` includes `'queued'`; `jobLeadTransitions['queued']` includes `'searching'`; `jobLeadTransitions['searching']` includes both `'found'` and `'failed'`; `jobLeadTransitions['failed']` includes `'queued'`
+    - `canJobLeadTransition('pending', 'found')` returns `false`; `canJobLeadTransition('scraped', 'queued')` returns `true`
+    - File `src/app/api/job-leads/[id]/status/route.ts` exports both `GET` and `PATCH`
+    - PATCH handler imports `canJobLeadTransition` from `'@/lib/domain/job-lead-pipeline'`
+    - PATCH handler imports `z` and uses `z.enum(jobLeadStatusValues)`
+    - PATCH handler emits a timeline event after every successful write (no path that mutates the row without a `logTimeline` call)
+    - Test 8 explicit response-body shape assertion: `expect(Object.keys(body.data).sort()).toEqual(['prospectCount', 'status', 'updatedAt'])` AND `expect(body).toMatchObject({ success: true, data: { status: 'scraped', prospectCount: 0 } })` — no extra fields permitted on `data`
+    - All 8 test cases in `route.test.ts` pass via `npm run test:run -- src/app/api/job-leads/[id]/status/route.test.ts`
+    - No new TypeScript errors (the pre-existing `prioritization.ts:70` error remains the only one)
+  </acceptance_criteria>
+  <done>
+    PATCH /api/job-leads/[id]/status enforces the D-08 state machine, writes `lastError`/`lastErrorAt` correctly on failures, clears them on retries/successes, and emits the right timeline event for each transition.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Bulk-prospects POST route + thin /search status-flip + GET status filter</name>
+  <read_first>
+    - src/app/api/contacts/import/route.ts (full file — primary analog for bulk + timeline + dedup; specifically the lines around the `db.insert(contacts).values(rows)` array shape)
+    - src/app/api/contacts/import/categorize/route.ts (lines 9–16 for `bulkCategorizeSchema = z.object({ updates: z.array(...) })` Zod shape)
+    - src/app/api/job-leads/[id]/search/route.ts (full file, ~103 lines — what to delete/replace per D-12 + D-13)
+    - src/app/api/job-leads/route.ts (full file, ~123 lines — GET handler to extend with status filter; preserve POST unchanged)
+    - src/app/api/tasks/route.ts GET (lines 23–60 — analog for `parseArrayParam('status')` + `inArray(...)`)
+    - src/lib/api/filters.ts (for `parseArrayParam`, `parseCursor`, `parseLimit` signatures)
+    - drizzle/schema/job-leads.ts (Plan 01 added lastError + lastErrorAt — needed for the prospects route's status flip)
+    - src/lib/domain/job-lead-pipeline.ts (Task 1 created `canJobLeadTransition` — Task 2's /search route MUST import and use this for the transition gate)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"NEW .../prospects/route.ts" and §"MOD .../search/route.ts" and §"MOD .../job-leads/route.ts"
+  </read_first>
+  <behavior>
+    For POST /api/job-leads/[id]/prospects:
+    - Test 1: POST with body `{ prospects: [{ name: 'Alice', title: 'CTO', linkedinUrl: 'https://linkedin.com/in/alice', profileSnippet: 'Building data infra. ex-Stripe.', mutualConnectionNames: [] }, ...4 more] }` against a lead in status `'searching'` → 201; insertedCount=5; lead.status='found'; lead.prospectCount=5; lead.lastError=null; one timeline event with eventType `'job_lead_search_complete'` and metadata.prospectCount=5
+    - Test 1b (profileSnippet round-trip): SELECT prospects WHERE jobLeadId = leadId → each row's `profileSnippet` column equals the input string for that prospect (Alice's row has `'Building data infra. ex-Stripe.'`); a prospect posted with `profileSnippet: null` persists as null
+    - Test 2: POST with body containing one prospect that has an empty name string → 400 with the Zod error message
+    - Test 3: POST with body containing 201 prospects → 400 (max(200) rejection)
+    - Test 4: POST against a lead in status `'pending'` (NOT `'searching'`) → 400 with `validationError(\`Cannot write prospects to lead in status 'pending'\`)`
+    - Test 5: POST against a non-existent lead → 404 `notFound('Job lead')`
+    - Test 6: POST inserts the full prospects array in ONE statement (regression — assert via PGlite that the row count equals the input length and that no per-row trace exists; the assertion is "5 prospects rows present after one POST")<pre><code>For POST /api/job-leads/[id]/search (thin status-flip):
+- Test 7: POST against a lead in status `&#39;scraped&#39;` → 200; lead.status=&#39;queued&#39;; lead.lastError=null; one timeline event with eventType `&#39;job_lead_search_queued&#39;`
+- Test 8: POST against a lead in status `&#39;failed&#39;` → 200; status flips to `&#39;queued&#39;`; lastError and lastErrorAt cleared (retry path)
+- Test 9: POST against a lead in status `&#39;searching&#39;` → 400 (`Cannot queue lead in status &#39;searching&#39;`); no mutation. This rejection MUST flow through `canJobLeadTransition(&#39;searching&#39;, &#39;queued&#39;) === false`, not a hand-coded equality check.
+- Test 10: POST against a non-existent lead → 404
+- Test 11: The file `src/app/api/job-leads/[id]/search/route.ts` does NOT import `scrapeConnections`, `matchConnections`, or `inferSeniority` (regression check via grep in the test or in the acceptance criteria — file-level assertion)
+
+For GET /api/job-leads with status filter:
+- Test 12: GET `/api/job-leads?status=queued` returns only leads with status=`&#39;queued&#39;`; `paginated` envelope with hasMore=false on a seeded set of 3 leads (1 queued, 2 scraped)
+- Test 13: GET `/api/job-leads?status=queued,failed` returns both queued and failed leads (multi-value)
+- Test 14: GET `/api/job-leads` (no status param) preserves existing behavior — returns all non-archived leads
+</code></pre>
+  </behavior>
+  <files>src/app/api/job-leads/[id]/prospects/route.ts, src/app/api/job-leads/[id]/search/route.ts, src/app/api/job-leads/route.ts, src/app/api/job-leads/[id]/prospects/route.test.ts, src/app/api/job-leads/[id]/search/route.test.ts, src/app/api/job-leads/route.test.ts</files>
+  <action>
+    **A. New route `src/app/api/job-leads/[id]/prospects/route.ts`** (per Pattern Map §"NEW prospects/route.ts" lines 34–123):
+    - Imports: `db` from `'@/lib/db'`; `jobLeads`, `prospects` from `'../../../../../../drizzle/schema'`; `eq` from `'drizzle-orm'`; `created` from `'@/lib/api/types'`; `notFound`, `serverError`, `validationError` from `'@/lib/api/errors'`; `logTimeline` from `'@/lib/db/timeline'`; `z` from `'zod'`; `inferSeniority` from `'@/features/job-leads/lib/seniority'` (keeps title→seniority enrichment in-app, matching the deleted route's behavior).
+    - Define `prospectSchema` and `bulkBody` Zod schemas matching the 5-field ScrapedProspect (see `<interfaces>` block above): name (min 1 max 200), title (max 300, nullable), linkedinUrl (url, nullable), `profileSnippet: z.string().max(500).nullable()`, mutualConnectionNames (array of strings max 200 each, max 50 entries). `bulkBody = z.object({ prospects: z.array(prospectSchema).max(200) })`.
+    - POST handler shape: `async function POST(request, { params })` — await params; await request.json(); parse via `bulkBody`; select the lead; `notFound('Job lead')` if absent; `validationError(\`Cannot write prospects to lead in status '${lead.status}'\`)` if `lead.status !== 'searching'`.
+    - Build rows via `scraped.map((p) => ({ jobLeadId: id, name: p.name, title: p.title, linkedinUrl: p.linkedinUrl, profileSnippet: p.profileSnippet, seniorityLevel: inferSeniority(p.title ?? '').level }))`. The `profileSnippet` field is now wired through from the validated input — NOT hardcoded `null`. Use a single `await db.insert(prospects).values(rows);` call — NOT a `for...of`. This is the exact perf-antipattern the deleted route had at lines 47–57; the new route avoids it.
+    - Update the lead: `.update(jobLeads).set({ status: 'found', prospectCount: rows.length, lastError: null, lastErrorAt: null, updatedAt: new Date() }).where(eq(jobLeads.id, id)).returning()`.
+    - Emit timeline: `eventType: 'job_lead_search_complete'`, `title: \`Found ${rows.length} prospects at ${lead.companyName}\``, `companyId: lead.companyId || undefined`, `metadata: { jobLeadId: id, prospectCount: rows.length }` — preserves the existing eventType from the deleted route so any downstream timeline consumers don't break.
+    - Return `created({ insertedCount: rows.length, lead: updated })`.
+    - Catch ZodError → `validationError(err.issues[0].message)`; else `serverError(err)`.<pre><code>**B. Convert `src/app/api/job-leads/[id]/search/route.ts`** per Pattern Map §&quot;MOD search/route.ts&quot; lines 357–414 — DELETE the imports `scrapeConnections`, `matchConnections`, `inferSeniority` (line 7–9). DELETE the entire fire-and-forget IIFE block (lines 38–96). Replace the handler body with the thin status flip:
+- Import `canJobLeadTransition` from `&#39;@/lib/domain/job-lead-pipeline&#39;` (Task 1 created this module — reuse it; no hand-coded transition logic in this route).
+- Select the lead; 404 if absent.
+- Gate the flip with `canJobLeadTransition(lead.status, &#39;queued&#39;)`. If it returns `false` → reject with `validationError(\`Cannot queue lead in status &#39;${lead.status}&#39;\`)`. This replaces the hand-coded `lead.status !== &#39;scraped&#39; &amp;&amp; lead.status !== &#39;failed&#39;` check from the original draft — single source of truth for transitions.
+- Update: `.set({ status: &#39;queued&#39;, lastError: null, lastErrorAt: null, updatedAt: new Date() })`.
+- Emit timeline: `eventType: &#39;job_lead_search_queued&#39;`, title `\`Queued for connection scrape: ${lead.companyName || &#39;Unknown&#39;}\``, metadata `{ jobLeadId: id, from: lead.status, to: &#39;queued&#39; }`.
+- Return `success(updated)`.
+
+**C. Extend `src/app/api/job-leads/route.ts` GET handler** per Pattern Map §&quot;MOD job-leads/route.ts&quot; lines 418–446 — add imports `inArray` from `&#39;drizzle-orm&#39;`, `parseArrayParam` from `&#39;@/lib/api/filters&#39;`, `jobLeadStatusValues` from `&#39;@/lib/domain/types&#39;`. Between the `parseCursor` call (line 20) and the conditions array (line 22), add `const statuses = parseArrayParam(searchParams.get(&#39;status&#39;));`. Inside the conditions building, between the archivedAt check and the cursor check, add: `if (statuses) { conditions.push(inArray(jobLeads.status, statuses as (typeof jobLeadStatusValues)[number][])); }`. Preserve the POST handler entirely.
+
+**D. Tests:**
+- Create `src/app/api/job-leads/[id]/prospects/route.test.ts` covering Tests 1, 1b, 2–6 (POST /prospects behaviors). Use the PGlite + callRoute + vi.hoisted Proxy mock pattern from `src/app/api/applications/[id]/status/route.test.ts`. Seed a lead with status `&#39;searching&#39;` in beforeEach. Test 1b explicitly SELECTs from `prospects` after the POST and asserts `profileSnippet` was persisted for each input row (not silently dropped).
+- Create `src/app/api/job-leads/[id]/search/route.test.ts` covering Tests 7–11 (thin status flip). Seed two leads: one `&#39;scraped&#39;`, one `&#39;failed&#39;` with `lastError: &#39;Timeout: ...&#39;`. Test 11 is a `readFileSync` assertion at the top of the file: `expect(content).not.toMatch(/scrapeConnections|matchConnections/)` to lock the deletion in.
+- Create `src/app/api/job-leads/route.test.ts` (NEW file — list-route tests don&#39;t exist yet) covering Tests 12–14 (GET status filter). Seed 3 leads with statuses `&#39;queued&#39;`, `&#39;scraped&#39;`, `&#39;failed&#39;`.
+
+Use `parseArrayParam(value)` correctly per `src/lib/api/filters.ts` — it returns `null` when input is null/empty and otherwise returns the split array.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/app/api/job-leads/</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/app/api/job-leads/[id]/prospects/route.ts` exists and exports `POST`
+    - File contains `db.insert(prospects).values(rows)` exactly once with `rows` as an array (not inside a for-loop)
+    - File contains `bulkBody = z.object({ prospects: z.array(prospectSchema).max(200) })` (or equivalent shape)
+    - `prospectSchema` defines all 5 ScrapedProspect fields including `profileSnippet: z.string().max(500).nullable()` (verified by `grep -c "profileSnippet" src/app/api/job-leads/\[id\]/prospects/route.ts` returning ≥ 2 — one in the schema, one in the row mapping)
+    - The row-mapping uses `profileSnippet: p.profileSnippet` (NOT a hardcoded `profileSnippet: null`); `grep -c "profileSnippet: null" src/app/api/job-leads/\[id\]/prospects/route.ts` returns 0
+    - Round-trip test (Test 1b) passes: `profileSnippet` written via POST is readable via SELECT from the `prospects` table
+    - `grep -c "for (const" src/app/api/job-leads/\[id\]/prospects/route.ts | xargs -I{} test {} -eq 0` (no per-row loops)
+    - File `src/app/api/job-leads/[id]/search/route.ts` does NOT contain `scrapeConnections` or `matchConnections` (regression — the IIFE is gone)
+    - File `src/app/api/job-leads/[id]/search/route.ts` imports and uses `canJobLeadTransition` from `'@/lib/domain/job-lead-pipeline'` (single source of truth for transitions — no hand-coded `lead.status !== 'scraped'` checks)
+    - `grep -c "canJobLeadTransition" src/app/api/job-leads/\[id\]/search/route.ts | xargs -I{} test {} -ge 1`
+    - `grep -c "lead\.status !== 'scraped'\|lead\.status !== 'failed'" src/app/api/job-leads/\[id\]/search/route.ts | xargs -I{} test {} -eq 0` (no hand-coded equality checks)
+    - `grep -c "scrapeConnections\|matchConnections" src/app/api/job-leads/\[id\]/search/route.ts | xargs -I{} test {} -eq 0`
+    - File `src/app/api/job-leads/route.ts` GET handler contains `parseArrayParam('status')` or `parseArrayParam(searchParams.get('status'))` (the read of `?status=`)
+    - File `src/app/api/job-leads/route.ts` contains `inArray(jobLeads.status, ...)` inside the conditions block
+    - `npm run test:run -- src/app/api/job-leads/` passes all new tests (Tests 1–14 above, plus Test 1b)
+    - No new TypeScript errors introduced (pre-existing `prioritization.ts:70` remains the only TS error)
+  </acceptance_criteria>
+  <done>
+    The skill (Plan 06) can POST prospects in a single bulk insert with the full 5-field ScrapedProspect shape (profileSnippet persisted, not dropped), claim leads via PATCH /status, and the UI (Plan 05) can call POST /search to re-queue a failed lead. The thin /search route is now sub-100ms, uses the same `canJobLeadTransition` gate as PATCH /status (one transition graph), and the fire-and-forget IIFE is gone.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Code (skill) → POST /prospects</td>
+<td>Untrusted body — the skill assembles prospect rows from LinkedIn DOM via agent-browser; malicious or malformed strings cross this boundary</td>
+</tr>
+<tr>
+<td>Web UI / Skill → PATCH /status</td>
+<td>Untrusted body — state-machine validation prevents fabricated terminal states</td>
+</tr>
+<tr>
+<td>Web UI → POST /search</td>
+<td>Untrusted (browser-supplied) lead id — UUID-shape enforced via Drizzle&#39;s <code>eq(jobLeads.id, id)</code> typed comparison; non-UUID inputs would fail at the DB layer with a 500 (acceptable — adversary supplies valid UUID-shaped input or gets a server error)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-04-01</td>
+<td>Tampering</td>
+<td>POST /prospects bulk body</td>
+<td>mitigate</td>
+<td>Zod schema enforces: name min(1) max(200), title max(300), linkedinUrl <code>z.string().url()</code>, profileSnippet max(500), mutualConnectionNames each <code>max(200)</code> count <code>max(50)</code>, top-level <code>max(200)</code>. Reject before any DB write.</td>
+</tr>
+<tr>
+<td>T-05-04-02</td>
+<td>Tampering</td>
+<td>PATCH /status state-machine bypass</td>
+<td>mitigate</td>
+<td><code>canJobLeadTransition</code> invariant check rejects any <code>from -&gt; to</code> not in the D-08 graph with <code>validationError(...)</code>. POST /search uses the same gate (single source of truth — no drift between routes). No DB mutation, no timeline event on rejection. Tests 5 + 9 prove the gate.</td>
+</tr>
+<tr>
+<td>T-05-04-03</td>
+<td>Information Disclosure</td>
+<td>last_error reflected in API response</td>
+<td>mitigate</td>
+<td>The <code>last_error</code> column is bounded to 220 chars by Zod (<code>z.string().max(220)</code>); content originates from the skill, never from end-users; Plan 05 renders via React JSX text content (auto-escaped) — no dangerouslySetInnerHTML path</td>
+</tr>
+<tr>
+<td>T-05-04-04</td>
+<td>Denial of Service</td>
+<td>Bulk endpoint with very large body</td>
+<td>mitigate</td>
+<td>Top-level <code>z.array(prospectSchema).max(200)</code> rejects &gt; 200 prospects per request. Each prospect&#39;s array bounds prevent JSON-bomb amplification; profileSnippet bounded at 500 chars</td>
+</tr>
+<tr>
+<td>T-05-04-05</td>
+<td>Repudiation</td>
+<td>Status changes without audit trail</td>
+<td>mitigate</td>
+<td>Every successful PATCH /status, POST /prospects, and POST /search emits a <code>logTimeline()</code> event with from→to in metadata. No mutation path skips timeline (verified by tests)</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npm run test:run -- src/app/api/job-leads/` runs all 14+ new test cases (including profileSnippet round-trip Test 1b) and passes
+- `npm run test:run` (full suite) passes with no regressions
+- `grep -rn "scrapeConnections\|matchConnections" src/app/api/` returns 0 matches
+- `grep -c "for (const" src/app/api/job-leads/\[id\]/prospects/route.ts` returns 0 (single bulk insert, no per-row loop)
+- `grep -c "profileSnippet: null" src/app/api/job-leads/\[id\]/prospects/route.ts` returns 0 (no hardcoded null — field flows through from input)
+- `grep -c "canJobLeadTransition" src/app/api/job-leads/\[id\]/search/route.ts` returns ≥ 1 (single source of truth gate, not hand-coded equality)
+- The POST /prospects route file is ≤ 80 lines (single-concern, matches the analog `src/app/api/applications/[id]/status/route.ts` at 78 lines)
+- `npx tsc --noEmit` shows only the pre-existing `prioritization.ts:70` error
+</verification><success_criteria>
+1. Four routes accept skill traffic: `GET /api/job-leads?status=queued`, `PATCH /api/job-leads/[id]/status` (state-machine + lastError), `POST /api/job-leads/[id]/prospects` (bulk, 5-field shape), `POST /api/job-leads/[id]/search` (thin scraped|failed → queued flip gated by `canJobLeadTransition`).
+2. The fire-and-forget IIFE in `/search` is GONE; no `scrapeConnections` import exists anywhere in `src/app/api/`.
+3. `POST /prospects` uses a SINGLE `db.insert(prospects).values(rows)` call — no per-row loop. (PERF-A1 incidentally satisfied; Phase 6 explicitly audits.)
+4. `POST /prospects` persists ALL 5 ScrapedProspect fields end-to-end — `profileSnippet` is wired through Zod and the row mapping, NOT silently dropped (round-trip test asserts).
+5. `PATCH /status` and POST `/search` both use `canJobLeadTransition` — one transition graph governs both routes. Invalid transitions return 400 with no DB mutation and no timeline event.
+6. Every successful mutation emits a `logTimeline()` event with the correct eventType per `<interfaces>` block (`job_lead_search_queued`, `job_lead_search_claimed`, `job_lead_search_complete`, `job_lead_search_failed`).
+7. 14+ test cases pass via `npm run test:run -- src/app/api/job-leads/` (including the profileSnippet round-trip test).
+</success_criteria><output>
+After completion, create `.planning/phases/05-job-leads-completion/05-04-SUMMARY.md` recording:
+- Final list of routes touched and the eventType emitted from each transition
+- Confirmation that the `/search` IIFE was fully removed (line count: 103 → ~30 expected)
+- Confirmation that POST /search uses `canJobLeadTransition` (single source of truth — no hand-coded equality checks)
+- Confirmation that profileSnippet is persisted end-to-end (round-trip test result)
+- The 14+ test cases (8 status + 7 prospects/search/list including profileSnippet round-trip) with PASS/FAIL each
+- Whether `inferSeniority` import was preserved in `/prospects/route.ts` (CONTEXT.md D-12 says the import is from `seniority.ts`, not `scrape-connections.ts` — verify)
+</output>
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-04-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

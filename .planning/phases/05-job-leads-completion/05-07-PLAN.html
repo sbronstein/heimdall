@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-07-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-07-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 07
+type: execute
+wave: 4
+depends_on:</p>
+<ul>
+<li>05-01</li>
+<li>05-04</li>
+<li>05-05
+files_modified:</li>
+<li>src/features/job-leads/lib/scrape-connections.ts</li>
+<li>src/features/job-leads/components/search-progress.tsx</li>
+<li>src/<strong>cleanup</strong>.test.ts
+autonomous: true
+requirements:</li>
+<li>JL-B3</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;src/features/job-leads/lib/scrape-connections.ts no longer exists on disk&quot;
+    - &quot;src/features/job-leads/components/search-progress.tsx no longer exists on disk&quot;
+    - &quot;No file in src/ imports from &#39;@/features/job-leads/lib/scrape-connections&#39; or &#39;./search-progress&#39;&quot;
+    - &quot;src/<strong>cleanup</strong>.test.ts has a Phase 5 deletion block asserting both paths are absent + grep assertions that scrapeConnections + SearchProgress are not referenced&quot;
+    - &quot;npm run test:run passes the full suite including the new Phase 5 deletion test cases&quot;
+  artifacts:
+    - path: &quot;src/<strong>cleanup</strong>.test.ts&quot;
+      provides: &quot;Filesystem-existence and grep regressions locking in the Phase 5 deletions&quot;
+      contains: &quot;phase5DeletedPaths&quot;
+  key_links:
+    - from: &quot;src/<strong>cleanup</strong>.test.ts (phase5DeletedPaths array)&quot;
+      to: &quot;src/features/job-leads/lib/scrape-connections.ts (deleted)&quot;
+      via: &quot;fs.existsSync(...) === false assertion&quot;
+      pattern: &quot;scrape-connections\.ts&quot;
+    - from: &quot;src/<strong>cleanup</strong>.test.ts (grep block)&quot;
+      to: &quot;src/app/api/job-leads/[id]/search/route.ts and src/features/job-leads/components/job-lead-detail.tsx&quot;
+      via: &quot;readFileSync + .not.toMatch regression locks&quot;
+  pattern: &quot;scrapeConnections|SearchProgress&quot;
+</p>
+<hr>
+<objective>
+Delete the in-app LinkedIn scraper code that was replaced by the Claude Code skill (Plan 06): the brittle `scrape-connections.ts` (hardcoded `'point'`, 20+ debug `console.log` dumps, `waitForTimeout` antipatterns, leaked browser context) and the `search-progress.tsx` polling component. Lock the deletions in via filesystem-existence and grep-based regression tests in `src/__cleanup__.test.ts`, mirroring the Phase 4 D-16 pattern.<p>Purpose: D-12 + D-26 + SC #3 — the user wants the brittle code GONE, not refactored. The cleanup test ensures a future refactor cannot accidentally re-introduce these files or their imports.</p>
+<p>Output: Two source files deleted from the filesystem, an extended cleanup test that fails if either file or its symbols return.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@.planning/phases/05-job-leads-completion/05-PATTERNS.md
+@.planning/phases/05-job-leads-completion/05-01-PLAN.md
+@.planning/phases/05-job-leads-completion/05-04-PLAN.md
+@.planning/phases/05-job-leads-completion/05-05-PLAN.md
+@CLAUDE.md<interfaces>
+Files to delete (per CONTEXT.md D-12):
+1. `src/features/job-leads/lib/scrape-connections.ts` — the Playwright scraper. ~360 lines including the hardcoded `'point'` bug (line 62), 20+ debug logs, "leave browser open" pattern (lines 344–346).
+2. `src/features/job-leads/components/search-progress.tsx` — the polling UI component for the in-app scrape that no longer exists.<p>Pre-deletion verification (must be true before rm):</p>
+<ul>
+<li><code>grep -rn &quot;scrapeConnections&quot; src/</code> returns 0 matches (Plan 04 removed the only import in src/app/api/job-leads/[id]/search/route.ts)</li>
+<li><code>grep -rn &quot;SearchProgress&quot; src/</code> returns 0 matches (Plan 05 removed the only import in src/features/job-leads/components/job-lead-detail.tsx)</li>
+<li><code>grep -rn &quot;from &#39;\\./scrape-connections&#39;&quot; src/features/job-leads/</code> returns 0 matches (Plan 01 relocated <code>ScrapedProspect</code> and updated match-connections.ts to import from <code>./types</code>)</li>
+</ul>
+<p>If any of those greps return non-zero, STOP. A consumer was not migrated; the file is not yet safe to delete. The dependency chain Plan 01 → Plan 04 → Plan 05 → Plan 07 is intentional precisely so this plan never has to rewrite consumers.</p>
+<p>Existing cleanup test pattern (src/<strong>cleanup</strong>.test.ts, full file, 37 lines) — Phase 4 deletion block at lines 5–37:</p>
+<ul>
+<li><code>deletedPaths</code> array (line 8) — typed <code>const</code>, 13 paths</li>
+<li><code>describe(&#39;Phase 4 starter-template cleanup&#39;, ...)</code> block at line 24</li>
+<li><code>it.each(deletedPaths)(&#39;removes %s&#39;, ...)</code> pattern at line 25 — <code>expect(existsSync(resolve(process.cwd(), relPath))).toBe(false)</code></li>
+<li><code>it(&#39;removes unused computeBridgeScore import from job-leads search route&#39;, ...)</code> at line 29 — <code>readFileSync</code> + <code>.not.toMatch</code> pattern</li>
+</ul>
+<p>Phase 5 deletion block to add (per Pattern Map §&quot;DELETE scrape-connections.ts&quot; lines 647–676 — Phase 4 block as template):</p>
+<pre><code class="language-typescript">const phase5DeletedPaths = [
+  &#39;src/features/job-leads/lib/scrape-connections.ts&#39;,
+  &#39;src/features/job-leads/components/search-progress.tsx&#39;
+];
+
+describe(&#39;Phase 5 in-app scraper deletion&#39;, () =&gt; {
+  it.each(phase5DeletedPaths)(&#39;removes %s&#39;, (relPath) =&gt; {
+    expect(existsSync(resolve(process.cwd(), relPath))).toBe(false);
+  });
+
+  it(&#39;removes scrapeConnections import from job-leads search route&#39;, () =&gt; {
+    const file = resolve(process.cwd(), &#39;src/app/api/job-leads/[id]/search/route.ts&#39;);
+    const content = readFileSync(file, &#39;utf-8&#39;);
+    expect(content).not.toMatch(/scrapeConnections/);
+  });
+
+  it(&#39;removes SearchProgress import from job-lead detail&#39;, () =&gt; {
+    const file = resolve(process.cwd(), &#39;src/features/job-leads/components/job-lead-detail.tsx&#39;);
+    const content = readFileSync(file, &#39;utf-8&#39;);
+    expect(content).not.toMatch(/SearchProgress/);
+  });
+});
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Pre-delete safety check + delete the two files</name>
+  <read_first>
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md §D-12 (deletion targets)
+    - .planning/phases/05-job-leads-completion/05-01-SUMMARY.md (Plan 01 confirmed ScrapedProspect relocation; if SUMMARY missing, re-verify via grep)
+    - .planning/phases/05-job-leads-completion/05-04-SUMMARY.md (Plan 04 confirmed scrapeConnections + matchConnections imports removed from search/route.ts)
+    - .planning/phases/05-job-leads-completion/05-05-SUMMARY.md (Plan 05 confirmed SearchProgress import removed from job-lead-detail.tsx)
+  </read_first>
+  <files>src/features/job-leads/lib/scrape-connections.ts, src/features/job-leads/components/search-progress.tsx</files>
+  <action>
+    **Step 1: Pre-delete grep safety check.** Run each of these greps from the repo root and confirm zero matches before proceeding:
+    - `grep -rn "scrapeConnections" src/` — should return 0 matches (any match means a consumer was missed by Plan 04)
+    - `grep -rn "SearchProgress" src/` — should return 0 matches (any match means Plan 05 missed an import)
+    - `grep -rn "from '\\./scrape-connections'\|from '@/features/job-leads/lib/scrape-connections'" src/` — should return 0 matches (any match means a type import or runtime import is dangling)
+    - `grep -rn "search-progress" src/` — should return 0 matches in code (any match in a comment or doc string is acceptable; flag for review)<pre><code>If ANY of these greps returns a non-zero count, **DO NOT delete.** Stop and report the dangling reference. The dependency chain (Plan 01 → 04 → 05 → 07) was designed so this never happens; if it does, treat it as a verification gap and back out — the executor for the offending earlier plan failed to clean up its consumer.
+
+If all greps pass, proceed.
+
+**Step 2: Delete the two files** using shell remove (single commit, both removals together for atomic history):
+- `rm src/features/job-leads/lib/scrape-connections.ts`
+- `rm src/features/job-leads/components/search-progress.tsx`
+
+**Step 3: Re-run `npx tsc --noEmit`** and confirm:
+- No new TS errors introduced (the pre-existing `prioritization.ts:70` MapIterator error remains; nothing else)
+- Specifically, no `Cannot find module &#39;./scrape-connections&#39;` or `Cannot find module &#39;./search-progress&#39;` errors anywhere
+
+**Step 4: Optional — drop Playwright from production dependencies (CD-04 discretion).** Check whether `scrape-job-page.ts` uses Playwright:
+- `grep -c &quot;playwright&quot; src/features/job-leads/lib/scrape-job-page.ts` — if 0, Playwright is now a dev-only dependency (the only remaining consumer was `scrape-connections.ts` which is gone, and `linkedin-browser.ts` which is referenced from `scrape-job-page.ts`).
+- If `linkedin-browser.ts` is the only remaining consumer and `scrape-job-page.ts` uses it: leave Playwright in `dependencies` (D-14 keeps `linkedin-browser.ts`).
+- If `scrape-job-page.ts` is pure cheerio + fetch and doesn&#39;t transitively pull Playwright: per CD-04, the planner has discretion to move `playwright` to `devDependencies` in `package.json`. **Recommended: leave as-is for this plan.** Dependency hygiene is a separate concern and CD-04 says &quot;planner has discretion&quot;; the safer move is to defer the package.json change to a follow-up so this plan stays narrowly focused on deletions.
+</code></pre>
+  </action>
+  <verify>
+    <!--
+      NOTE: the `grep -v "__cleanup__.test.ts"` filter below is PREEMPTIVE. At the moment Task 1
+      executes, src/__cleanup__.test.ts does NOT yet contain references to `scrapeConnections` or
+      `SearchProgress` (those references are added by Task 2 as regression-lock assertions). The
+      filter is in place so that when Task 2 lands and re-running this same verify still passes,
+      the new test-file references do not register as "consumer survived" false positives. In
+      other words: the filter is a forward guard for Task 2's additions, not a workaround for a
+      Task 1 problem.
+    -->
+    <automated>test ! -f src/features/job-leads/lib/scrape-connections.ts && test ! -f src/features/job-leads/components/search-progress.tsx && grep -rn "scrapeConnections" src/ 2>/dev/null | grep -v "__cleanup__.test.ts" | wc -l | xargs -I{} test {} -eq 0 && grep -rn "SearchProgress" src/ 2>/dev/null | grep -v "__cleanup__.test.ts" | wc -l | xargs -I{} test {} -eq 0 && npx tsc --noEmit 2>&1 | grep -v "prioritization.ts:70" | grep -E "error TS" ; test $? -ne 0</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/features/job-leads/lib/scrape-connections.ts` does NOT exist on disk
+    - File `src/features/job-leads/components/search-progress.tsx` does NOT exist on disk
+    - `grep -rn "scrapeConnections" src/` returns 0 matches EXCEPT for `src/__cleanup__.test.ts` (which is added in Task 2 and intentionally references the symbol in the regression assertion)
+    - `grep -rn "SearchProgress" src/` returns 0 matches EXCEPT for `src/__cleanup__.test.ts`
+    - `grep -rn "from '\\./scrape-connections'" src/` returns 0 matches (no dangling imports)
+    - `npx tsc --noEmit` shows only the pre-existing `prioritization.ts:70` error
+    - No new files were created in this task (deletions only)
+  </acceptance_criteria>
+  <done>
+    The two brittle in-app scraper files are physically gone from the repo, and the TypeScript compiler is happy. The hardcoded `'point'`, the `waitForTimeout` antipatterns, and the 20+ debug `console.log` dumps are all gone with them.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Add Phase 5 deletion block to src/__cleanup__.test.ts</name>
+  <read_first>
+    - src/__cleanup__.test.ts (full file, 37 lines)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"DELETE scrape-connections.ts" (lines 647–676)
+    - .planning/phases/04-starter-template-cleanup/04-CONTEXT.md §D-16 (Phase 4 cleanup-test pattern — confirms the template)
+  </read_first>
+  <files>src/__cleanup__.test.ts</files>
+  <action>
+    Append a new `describe` block to `src/__cleanup__.test.ts` after the existing Phase 4 block (after line 37), mirroring the Phase 4 block's structure exactly per Pattern Map §"DELETE scrape-connections.ts". The new block has four test cases:<pre><code>1. **`phase5DeletedPaths`** — a `const` array containing exactly two strings:
+   - `&#39;src/features/job-leads/lib/scrape-connections.ts&#39;`
+   - `&#39;src/features/job-leads/components/search-progress.tsx&#39;`
+
+2. **`describe(&#39;Phase 5 in-app scraper deletion&#39;, () =&gt; { ... })`** block containing:
+   - `it.each(phase5DeletedPaths)(&#39;removes %s&#39;, (relPath) =&gt; { expect(existsSync(resolve(process.cwd(), relPath))).toBe(false); });` — two `it` cases generated by `it.each` (one per path)
+   - `it(&#39;removes scrapeConnections import from job-leads search route&#39;, () =&gt; { ... })` — reads `src/app/api/job-leads/[id]/search/route.ts` and asserts `expect(content).not.toMatch(/scrapeConnections/)`. This regression-locks the Plan 04 thin-status-flip refactor.
+   - `it(&#39;removes SearchProgress import from job-lead detail&#39;, () =&gt; { ... })` — reads `src/features/job-leads/components/job-lead-detail.tsx` and asserts `expect(content).not.toMatch(/SearchProgress/)`. This regression-locks the Plan 05 UI rewrite.
+
+Use the existing imports at the top of the file (`existsSync`, `readFileSync`, `resolve` from `node:path`/`node:fs`); do not duplicate import statements. The Phase 4 block already imports everything needed.
+
+Add a brief comment above the new block:
+```
+// Phase 5 deletion targets. Per .planning/phases/05-job-leads-completion/05-CONTEXT.md D-12 + D-26.
+// The in-app Playwright scraper is replaced by the Claude Code skill at
+// .claude/skills/scrape-linkedin-connections/. These files MUST NOT exist on disk post-Phase-5.
+```
+
+Do NOT modify the existing Phase 4 block (`deletedPaths` array, `describe(&#39;Phase 4 starter-template cleanup&#39;, ...)`, etc.). Append-only.
+
+Do NOT alter the file&#39;s imports (the Phase 4 block already imports `existsSync`, `readFileSync`, `resolve`, `describe`, `it`, `expect` — the new block uses exactly the same set).
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -c "phase5DeletedPaths" src/__cleanup__.test.ts | xargs -I{} test {} -ge 1 && grep -c "Phase 5 in-app scraper deletion" src/__cleanup__.test.ts | xargs -I{} test {} -eq 1 && grep -c "scrapeConnections" src/__cleanup__.test.ts | xargs -I{} test {} -ge 1 && grep -c "SearchProgress" src/__cleanup__.test.ts | xargs -I{} test {} -ge 1 && npm run test:run -- src/__cleanup__.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/__cleanup__.test.ts` contains the literal `phase5DeletedPaths` identifier exactly once
+    - File contains the literal `'src/features/job-leads/lib/scrape-connections.ts'` and `'src/features/job-leads/components/search-progress.tsx'` strings
+    - File contains the `describe('Phase 5 in-app scraper deletion', ...)` block
+    - File contains the regression check `expect(content).not.toMatch(/scrapeConnections/)`
+    - File contains the regression check `expect(content).not.toMatch(/SearchProgress/)`
+    - `npm run test:run -- src/__cleanup__.test.ts` passes ALL tests (the existing Phase 4 block + the new Phase 5 block — both blocks green)
+    - Phase 4's `deletedPaths` array remains unchanged (13 entries, untouched)
+    - Phase 4's existing `it('removes unused computeBridgeScore import ...')` remains and passes
+    - No new top-level imports added to the file
+  </acceptance_criteria>
+  <done>
+    The cleanup test is the durable guarantee that `scrape-connections.ts` and `search-progress.tsx` cannot accidentally return, and that the consumers in `search/route.ts` and `job-lead-detail.tsx` cannot accidentally re-import the deleted symbols.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filesystem → repo state</td>
+<td>Deletions are local; the post-Phase state is the commit hash that reflects the absence of the files</td>
+</tr>
+<tr>
+<td>Tests → CI/dev-loop</td>
+<td>The cleanup test runs on every <code>npm run test:run</code>; a regression accidentally re-introducing either file fails the suite</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-07-01</td>
+<td>Tampering</td>
+<td>A future developer copy-pastes scrape-connections.ts back in</td>
+<td>mitigate</td>
+<td><code>src/__cleanup__.test.ts</code> Phase 5 block fails immediately if either file returns; the failure message names the exact path that should be absent</td>
+</tr>
+<tr>
+<td>T-05-07-02</td>
+<td>Tampering</td>
+<td>A future refactor re-imports scrapeConnections from somewhere</td>
+<td>mitigate</td>
+<td>The grep-based regression check on the consumer files (<code>search/route.ts</code>, <code>job-lead-detail.tsx</code>) fails if either file regains a reference; the test message names the offending file</td>
+</tr>
+<tr>
+<td>T-05-07-03</td>
+<td>Information Disclosure</td>
+<td>Stale debug logs in the deleted file leak in git history</td>
+<td>accept</td>
+<td>git history retains the deleted file&#39;s content (including the 20+ debug logs and the hardcoded <code>&#39;point&#39;</code>); per CONTEXT.md <code>&lt;deferred&gt;</code> and CD-01, the user may want this preserved as an audit trail for the failed in-app approach. No PII or secrets in the deleted file.</td>
+</tr>
+<tr>
+<td>T-05-07-04</td>
+<td>Repudiation</td>
+<td>Deletions without a clear commit message</td>
+<td>mitigate</td>
+<td>Phase commit (post-execution by /gsd-execute-phase) will reference Phase 5 + JL-B3; the SUMMARY.md will document the exact paths deleted</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `test ! -f src/features/job-leads/lib/scrape-connections.ts` (file is gone)
+- `test ! -f src/features/job-leads/components/search-progress.tsx` (file is gone)
+- `grep -rn "scrapeConnections" src/ | grep -v "__cleanup__.test.ts"` returns no matches (no consumer survived)
+- `grep -rn "SearchProgress" src/ | grep -v "__cleanup__.test.ts"` returns no matches
+- `npm run test:run -- src/__cleanup__.test.ts` passes
+- `npm run test:run` (full suite) passes — no regression in any other test from the deletions
+- `npx tsc --noEmit` produces only the pre-existing `prioritization.ts:70` error
+</verification><success_criteria>
+1. Two files are deleted from disk: `src/features/job-leads/lib/scrape-connections.ts` and `src/features/job-leads/components/search-progress.tsx`.
+2. The hardcoded `'point'` bug, the `waitForTimeout` antipatterns, and the 20+ debug `console.log` dumps that lived in `scrape-connections.ts` are all GONE — verifiable by the file not existing.
+3. `src/__cleanup__.test.ts` has a new `Phase 5 in-app scraper deletion` describe block with 4 `it` cases (2 filesystem existence + 2 grep regression locks).
+4. `npm run test:run` passes the full suite including the new Phase 5 cleanup cases.
+5. The TypeScript compiler reports no new errors — the dependency chain from Plan 01 (type relocation) through Plans 04 (route refactor) and 05 (UI rewrite) successfully prepared every consumer.
+</success_criteria><output>
+After completion, create `.planning/phases/05-job-leads-completion/05-07-SUMMARY.md` recording:
+- Final confirmation that both files are absent (`ls` output of the parent dirs)
+- The output of `npm run test:run -- src/__cleanup__.test.ts` (number of tests + PASS)
+- Whether the pre-delete grep safety check returned all-clean on first run, or whether a dangling reference was found (and which earlier plan needed to be re-executed)
+- CD-04 disposition: whether playwright was kept in `dependencies` or moved (recommendation in Task 1: kept — defer the dependency-hygiene decision)
+</output>
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-07-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

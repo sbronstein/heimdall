@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 6: Performance - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-05-14
+<strong>Files analyzed:</strong> 9 (5 route/lib modifications + 2 schema modifications + 1 new migration + 1 test family)
+<strong>Analogs found:</strong> 7 strong / 9 total — 2 patterns (<code>db.transaction</code>, <code>index()</code>/<code>uniqueIndex()</code>) have <strong>no existing analog in the repo</strong>; planner must establish them from Drizzle docs (see &quot;No Analog Found&quot; section).</p>
+<hr>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/job-leads/[id]/prospects/route.ts</code></td>
+<td>API route (POST)</td>
+<td>bulk-write + transaction</td>
+<td><code>src/app/api/job-leads/[id]/prospects/route.ts</code> (self — already bulk-insert; add inline <code>matchConnections</code> + transaction wrap)</td>
+<td>exact (extends self)</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/match-connections.ts</code></td>
+<td>service / domain lib</td>
+<td>bulk read + bulk write</td>
+<td><code>src/app/api/contacts/import/route.ts</code> (lines 55-74 narrowed SELECT building Set-of-keys for in-app dedup)</td>
+<td>role + flow match</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/categorize/route.ts</code></td>
+<td>API route (PATCH)</td>
+<td>bulk UPDATE via single SQL</td>
+<td><code>src/app/api/metrics/dashboard/route.ts</code> (only existing <code>sql</code> template + <code>import { sql }</code> pattern in api routes — but no UPDATE example)</td>
+<td>partial (no <code>db.execute(sql\</code>UPDATE…`)` analog exists)</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.ts</code></td>
+<td>API route (POST, multipart)</td>
+<td>CSV ingest + bulk insert + ON CONFLICT</td>
+<td><code>drizzle/seed.ts</code> lines 107-112 (<code>onConflictDoNothing({ target: pipelineStages.name })</code> — only existing <code>onConflictDoNothing</code> with explicit target) + <code>src/app/api/job-leads/[id]/prospects/route.ts</code> (bulk values insert)</td>
+<td>role + flow match</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.ts</code></td>
+<td>API route (GET)</td>
+<td>per-row UPDATE → bulk UPDATE</td>
+<td>self (lines 44-52 is the N+1 to replace); same <code>UPDATE … FROM unnest()</code> shape as <code>categorize/route.ts</code> (D-05)</td>
+<td>exact (extends self)</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/contacts.ts</code></td>
+<td>schema definition</td>
+<td>DDL (index declarations)</td>
+<td><code>drizzle/schema/job-leads.ts</code> line 85 — <code>(table) =&gt; [unique(&#39;prospect_bridge_unique&#39;).on(...)]</code> is the only third-callback table-constraint pattern in the repo; <strong><code>index()</code> / <code>uniqueIndex()</code> have no prior usage</strong></td>
+<td>partial (constraint syntax shape only)</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/companies.ts</code></td>
+<td>schema definition</td>
+<td>DDL (index declarations)</td>
+<td>same as <code>contacts.ts</code></td>
+<td>partial</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/0008_*.sql</code> (new)</td>
+<td>migration</td>
+<td>DDL</td>
+<td><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> (most recent; <code>--&gt; statement-breakpoint</code> format)</td>
+<td>exact (format)</td>
+</tr>
+<tr>
+<td><code>src/app/api/**/route.test.ts</code> (each rewritten route) + new index-presence test</td>
+<td>tests</td>
+<td>PGlite-backed assertions</td>
+<td><code>src/app/api/contacts/import/route.test.ts</code>, <code>src/app/api/job-leads/[id]/prospects/route.test.ts</code>, <code>src/app/api/applications/[id]/status/route.test.ts</code></td>
+<td>exact</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>src/app/api/job-leads/[id]/prospects/route.ts</code> (API route, bulk-write + transaction wrap)</h3>
+<p><strong>Analog:</strong> self (the route already implements the canonical shell; D-02 adds a <code>db.transaction</code> wrap and the inline <code>matchConnections</code> call between the bulk prospect insert and the status flip).</p>
+<p><strong>Canonical route shell</strong> — exactly preserved across the Phase 6 rewrite. Current lines 25-89:</p>
+<pre><code class="language-typescript">export async function POST(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = bulkBody.parse(body);
+
+    const [lead] = await db
+      .select()
+      .from(jobLeads)
+      .where(eq(jobLeads.id, id))
+      .limit(1);
+
+    if (!lead) return notFound(&#39;Job lead&#39;);
+
+    if (lead.status !== &#39;searching&#39;) {
+      return validationError(
+        `Cannot write prospects to lead in status &#39;${lead.status}&#39;`
+      );
+    }
+    // ... mutations ...
+    return created({ insertedCount: rows.length, lead: updated });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return validationError(err.issues[0].message);
+    }
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>Bulk insert pattern</strong> (lines 50-61 — already correct, <strong>DO NOT regress</strong>):</p>
+<pre><code class="language-typescript">const rows = validated.prospects.map((p) =&gt; ({
+  jobLeadId: id,
+  name: p.name,
+  title: p.title,
+  linkedinUrl: p.linkedinUrl,
+  profileSnippet: p.profileSnippet,
+  seniorityLevel: inferSeniority(p.title ?? &#39;&#39;).level
+}));
+
+if (rows.length &gt; 0) {
+  await db.insert(prospects).values(rows);  // SINGLE statement, not a loop
+}
+</code></pre>
+<p><strong>Manual <code>updatedAt</code> on UPDATE</strong> (lines 63-73 — Drizzle does NOT auto-update; every UPDATE in Phase 6 must include <code>updatedAt: new Date()</code>):</p>
+<pre><code class="language-typescript">const [updated] = await db
+  .update(jobLeads)
+  .set({
+    status: &#39;found&#39;,
+    prospectCount: rows.length,
+    lastError: null,
+    lastErrorAt: null,
+    updatedAt: new Date()         // &lt;-- mandatory; D-05 must do the same in SQL via `updated_at = NOW()`
+  })
+  .where(eq(jobLeads.id, id))
+  .returning();
+</code></pre>
+<p><strong>Timeline side-effect</strong> (lines 75-80 — preserved in all rewrites; exactly <strong>one</strong> event per successful write):</p>
+<pre><code class="language-typescript">await logTimeline({
+  eventType: &#39;job_lead_search_complete&#39;,
+  title: `Found ${rows.length} prospects at ${lead.companyName || &#39;Unknown&#39;}`,
+  companyId: lead.companyId || undefined,
+  metadata: { jobLeadId: id, prospectCount: rows.length }
+});
+</code></pre>
+<p><strong>D-02 transaction wrap — NO existing analog in repo.</strong> Drizzle&#39;s neon-http adapter exposes <code>db.transaction(async (tx) =&gt; { ... })</code>. The planner introduces this pattern. Inside the callback, every Drizzle call MUST use <code>tx</code> (not the imported <code>db</code>) for atomicity to hold. The <code>matchConnections</code> callee (D-03 discretion) either accepts <code>tx</code> as a parameter, or runs free-standing and the planner wraps both insert + matchConnections + status-flip in the outer transaction using a shared <code>tx</code> handle. See <code>lib/db/index.ts</code> line 7 — <code>db</code> is the drizzle instance returned from <code>drizzle(sql, { schema })</code>, so <code>db.transaction</code> is the Drizzle API.</p>
+<hr>
+<h3><code>src/features/job-leads/lib/match-connections.ts</code> (service lib, bulk read + narrowed SELECT + bulk insert)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/contacts/import/route.ts</code> lines 55-74 — the same shape (narrowed SELECT building a <code>Set</code> keyed on tuple-ish strings, then in-memory filter). Phase 6 keeps the in-memory fuzzy match but narrows the WHERE clause from <code>WHERE archived_at IS NULL</code> (full table) to one keyed on tokens from scraped mutual-connection names.</p>
+<p><strong>Current N+1 to replace</strong> (lines 103-112 — the per-row bridge insert loop with swallow-exceptions):</p>
+<pre><code class="language-typescript">// Insert bridges
+if (bridgeValues.length &gt; 0) {
+  for (const val of bridgeValues) {
+    try {
+      await db.insert(prospectBridges).values(val).onConflictDoNothing();
+    } catch {
+      // Ignore duplicate bridge errors
+    }
+  }
+}
+</code></pre>
+<p><strong>D-04 replacement</strong> — single bulk insert leveraging the existing <code>unique(&#39;prospect_bridge_unique&#39;)</code> constraint on <code>(prospect_id, contact_id)</code> from <code>drizzle/schema/job-leads.ts:85</code>:</p>
+<pre><code class="language-typescript">// Per D-04: ONE statement, no try/catch around it.
+if (bridgeValues.length &gt; 0) {
+  await tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing();
+  // ^ tx (transaction handle) if matchConnections takes tx (D-03), else db
+}
+</code></pre>
+<p><strong>Narrowed SELECT pattern</strong> (<code>contacts/import/route.ts</code> lines 55-64 — the analog for D-11&#39;s narrowing approach):</p>
+<pre><code class="language-typescript">// Analog showing narrowed SELECT keyed on application-built tuples
+const existing = await db
+  .select({
+    id: contacts.id,
+    linkedinUrl: contacts.linkedinUrl,
+    firstName: contacts.firstName,
+    lastName: contacts.lastName,
+    currentCompany: contacts.currentCompany
+  })
+  .from(contacts)
+  .where(isNull(contacts.archivedAt));
+</code></pre>
+<p><strong>Soft-delete invariant</strong> (lines 43-47 of <code>match-connections.ts</code> — <code>WHERE archived_at IS NULL</code> filter MUST be preserved when narrowing per D-11):</p>
+<pre><code class="language-typescript">const allContacts = await db
+  .select()
+  .from(contacts)
+  .where(isNull(contacts.archivedAt));
+</code></pre>
+<p>The Phase 6 rewrite replaces the <code>where(isNull(contacts.archivedAt))</code> with <code>where(and(isNull(contacts.archivedAt), &lt;narrow-token-clause&gt;))</code> — soft-delete filter stays, full-table scan goes away.</p>
+<p><strong>Tuple-IN clause idiom</strong> — for D-11&#39;s <code>WHERE lower(first_name) IN (...) OR lower(last_name) IN (...)</code>, see <code>src/app/api/contacts/route.ts:68</code> for the <code>sql</code> template tag composing an OR&#39;d <code>ilike</code> cluster:</p>
+<pre><code class="language-typescript">sql`(${ilike(contacts.firstName, `%${search}%`)} OR ${ilike(contacts.lastName, `%${search}%`)})`
+</code></pre>
+<p>Same <code>sql</code> template tag is used to express tuple-IN. The planner refines exact binding (Drizzle&#39;s <code>inArray(contacts.firstName, lowerNamesArray)</code> is the cleanest builder-native option; <code>sql</code> template tag is the fallback).</p>
+<hr>
+<h3><code>src/app/api/contacts/import/categorize/route.ts</code> (API route, bulk UPDATE via <code>db.execute(sql\</code>...`)`)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/metrics/dashboard/route.ts</code> is the only file in the repo that imports <code>sql</code> from <code>drizzle-orm</code> for non-WHERE use, but no <code>db.execute(sql\</code>UPDATE…`)` analog exists anywhere. <strong>The pattern is new to this codebase.</strong> Reference points to assemble it:</p>
+<p><strong>Current N+1 to replace</strong> (entire file, lines 18-38):</p>
+<pre><code class="language-typescript">export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { updates } = bulkCategorizeSchema.parse(body);
+
+    let updated = 0;
+    for (const { contactId, closeness } of updates) {
+      const [result] = await db
+        .update(contacts)
+        .set({ closeness, updatedAt: new Date() })
+        .where(eq(contacts.id, contactId))
+        .returning();
+      if (result) updated++;
+    }
+
+    return success({ updated, total: updates.length });
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>D-05 replacement</strong> — single <code>db.execute(sql\</code>UPDATE … FROM unnest(${ids}::uuid[], ${vals}::contact_closeness[]) AS data(id, cl) WHERE contacts.id = data.id`)<code>. The planner picks the exact parameter-binding shape (Drizzle template-tag interpolation vs. </code>sql.raw` for the ARRAY literal). Reference shape from CONTEXT D-05:</p>
+<pre><code class="language-typescript">// CONTEXT D-05 reference (planner refines exact binding):
+await db.execute(sql`
+  UPDATE contacts
+  SET closeness = data.cl, updated_at = NOW()
+  FROM (
+    SELECT * FROM unnest(${ids}::uuid[], ${vals}::contact_closeness[]) AS d(id, cl)
+  ) AS data
+  WHERE contacts.id = data.id
+`);
+// updated_at = NOW() is the SQL-side analog of the `updatedAt: new Date()`
+// mandatory in builder UPDATEs.
+</code></pre>
+<p><strong>Imports needed</strong> — add <code>sql</code> to the <code>drizzle-orm</code> import (see <code>src/app/api/metrics/dashboard/route.ts:9</code> for the existing pattern):</p>
+<pre><code class="language-typescript">import { sql, isNull, inArray, lte, gte, and, count } from &#39;drizzle-orm&#39;;
+</code></pre>
+<p><strong>Response envelope</strong> — unchanged. <code>success({ updated, total })</code>:</p>
+<pre><code class="language-typescript">return success({ updated, total: updates.length });
+</code></pre>
+<p><strong>Row-count derivation</strong> — Drizzle&#39;s <code>db.execute()</code> returns a result with <code>rowCount</code> (Neon-HTTP) or <code>rowsAffected</code>. Planner picks. Alternative: <code>.execute(sql\</code>... RETURNING id`)<code>and use</code>.length`.</p>
+<p><strong>Error handling shell preserved</strong> (lines 34-37 — the canonical <code>ZodError → validationError; default → serverError</code> shape):</p>
+<pre><code class="language-typescript">} catch (err) {
+  if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+  return serverError(err);
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/contacts/import/route.ts</code> (API route, multipart POST → bulk insert + ON CONFLICT)</h3>
+<p><strong>Analog:</strong> <code>drizzle/seed.ts</code> lines 107-112 — the only <code>onConflictDoNothing({ target: ... })</code> with an explicit target in the codebase + <code>src/app/api/job-leads/[id]/prospects/route.ts</code> lines 50-61 for the bulk values insert shape.</p>
+<p><strong><code>onConflictDoNothing</code> with target column</strong> (<code>drizzle/seed.ts:108-111</code>):</p>
+<pre><code class="language-typescript">await db
+  .insert(pipelineStages)
+  .values(stage)
+  .onConflictDoNothing({ target: pipelineStages.name });
+</code></pre>
+<p>D-08 uses the <strong>same <code>{ target: ... }</code> shape</strong> keyed on <code>contacts.linkedinUrl</code>, but requires the UNIQUE partial index from the schema (added in Wave 1) so Postgres has a unique constraint matching the <code>target</code>:</p>
+<pre><code class="language-typescript">// D-10 replacement shape:
+await db
+  .insert(contacts)
+  .values(rowsToInsert)  // built from filtered CSV
+  .onConflictDoNothing({ target: contacts.linkedinUrl });
+</code></pre>
+<p><strong>Current N+1 to replace</strong> (lines 80-143 — per-row insert with try/catch and per-row error string):</p>
+<pre><code class="language-typescript">for (const row of parsed.data) {
+  const firstName = row[&#39;First Name&#39;]?.trim();
+  // ... validation + per-row dedup checks ...
+  try {
+    const [contact] = await db.insert(contacts).values({...}).returning();
+    created++;
+  } catch (err) {
+    errors.push(`Failed to import ${firstName} ${lastName}: ${String(err)}`);
+  }
+}
+</code></pre>
+<p><strong>D-10 wave structure</strong> — five-step rewrite per CONTEXT:</p>
+<ol>
+<li>Filter/validate rows (collect <code>errors[]</code> for missing-name + Zod-style failures only)</li>
+<li>Build name+company tuple set from validated rows</li>
+<li>Issue narrowed name+company SELECT (D-09) — only tuples appearing in the CSV</li>
+<li>Filter out rows that match either dedup branch (URL via DB-side ON CONFLICT, name+company via narrowed SELECT)</li>
+<li>ONE bulk insert with ON CONFLICT DO NOTHING (D-08)</li>
+<li><code>logTimeline</code> once with aggregate counts</li>
+</ol>
+<p><strong>Narrowed name+company SELECT</strong> (D-09) — keep <code>archivedAt IS NULL</code> filter, narrow to tuples from the CSV. See <code>match-connections.ts</code> pattern guidance above (same <code>sql</code> template tuple-IN approach).</p>
+<p><strong>Single <code>logTimeline</code> aggregate event</strong> (already correct at lines 145-151):</p>
+<pre><code class="language-typescript">if (created &gt; 0) {
+  await logTimeline({
+    eventType: &#39;contacts_imported&#39;,
+    title: `Imported ${created} contacts from LinkedIn CSV`,
+    metadata: { created, skipped, errors: errors.length }
+  });
+}
+</code></pre>
+<p><strong>Response envelope</strong> unchanged: <code>success({ created, skipped, errors })</code>.</p>
+<hr>
+<h3><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> (API route GET, per-row UPDATE → bulk UPDATE)</h3>
+<p><strong>Analog:</strong> self (lines 44-52 is the N+1) + the D-05 unnest-update pattern from <code>categorize/route.ts</code> planning.</p>
+<p><strong>Current N+1 to replace</strong> (lines 43-53):</p>
+<pre><code class="language-typescript">// Compute and persist scores for any bridges missing them
+for (const row of rows) {
+  if (row.bridge.score === null) {
+    const score = computeBridgeScore(row.prospect, row.contact);
+    await db
+      .update(prospectBridges)
+      .set({ score })
+      .where(eq(prospectBridges.id, row.bridge.id));
+    row.bridge.score = score;
+  }
+}
+</code></pre>
+<p><strong>D-15 replacement</strong> — two acceptable variants, planner picks:</p>
+<p><strong>Variant A — bulk UPDATE persist (same shape as D-05):</strong></p>
+<pre><code class="language-typescript">const missing = rows.filter((r) =&gt; r.bridge.score === null);
+if (missing.length &gt; 0) {
+  const ids = missing.map((r) =&gt; r.bridge.id);
+  const scores = missing.map((r) =&gt; computeBridgeScore(r.prospect, r.contact));
+  await db.execute(sql`
+    UPDATE prospect_bridges
+    SET score = data.s
+    FROM (SELECT * FROM unnest(${ids}::uuid[], ${scores}::integer[]) AS d(id, s)) AS data
+    WHERE prospect_bridges.id = data.id
+  `);
+  // Mutate the rows array in-memory so the rest of the handler sees updated scores
+  for (let i = 0; i &lt; missing.length; i++) {
+    missing[i].bridge.score = scores[i];
+  }
+}
+</code></pre>
+<p><strong>Variant B — compute on-the-fly, drop persistence entirely.</strong> Planner greps for other consumers of <code>prospectBridges.score</code>; if none rely on the persisted column, just compute scores in-handler without writing them back. See CONTEXT D-15 &quot;Decision deferred to planner based on whether other callers rely on <code>prospectBridges.score</code> being persisted (grep + decide).&quot;</p>
+<p><strong>Note:</strong> No <code>updatedAt</code> column on <code>prospect_bridges</code> (see <code>drizzle/schema/job-leads.ts:66-86</code> — only <code>createdAt</code>). So Variant A does NOT need a <code>SET ..., updated_at = NOW()</code> clause for this table specifically.</p>
+<hr>
+<h3><code>drizzle/schema/contacts.ts</code> (schema, add <code>index()</code> + <code>uniqueIndex()</code>)</h3>
+<p><strong>Analog:</strong> <code>drizzle/schema/job-leads.ts:85</code> — the only third-callback table-constraint usage in the codebase. <strong><code>index()</code> and <code>uniqueIndex()</code> themselves have no prior usage.</strong> This is the canonical Drizzle PG-core API; planner adds it.</p>
+<p><strong>Existing table-constraint shape</strong> (<code>drizzle/schema/job-leads.ts:66-86</code>):</p>
+<pre><code class="language-typescript">export const prospectBridges = pgTable(
+  &#39;prospect_bridges&#39;,
+  {
+    id: uuid(&#39;id&#39;).defaultRandom().primaryKey(),
+    prospectId: uuid(&#39;prospect_id&#39;).references(() =&gt; prospects.id).notNull(),
+    contactId: uuid(&#39;contact_id&#39;).references(() =&gt; contacts.id).notNull(),
+    score: integer(&#39;score&#39;),
+    createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull()
+  },
+  (table) =&gt; [unique(&#39;prospect_bridge_unique&#39;).on(table.prospectId, table.contactId)]
+);
+</code></pre>
+<p><strong>D-12/D-13 additions</strong> — <code>index()</code> and <code>uniqueIndex().where()</code> from <code>drizzle-orm/pg-core</code>. Add to the import block, then declare in the third-callback array (same shape as <code>unique(&#39;...&#39;)</code> above). Planner pattern:</p>
+<pre><code class="language-typescript">import {
+  pgTable, uuid, text, timestamp,
+  index, uniqueIndex   // &lt;-- NEW imports for D-12
+} from &#39;drizzle-orm/pg-core&#39;;
+import { sql } from &#39;drizzle-orm&#39;;  // &lt;-- NEW for the partial-index WHERE clause
+
+export const contacts = pgTable(
+  &#39;contacts&#39;,
+  {
+    // ... existing column block unchanged ...
+  },
+  (table) =&gt; [
+    index(&#39;contacts_archived_at_idx&#39;).on(table.archivedAt),
+    uniqueIndex(&#39;contacts_linkedin_url_unique_idx&#39;)
+      .on(table.linkedinUrl)
+      .where(sql`${table.linkedinUrl} IS NOT NULL`),  // partial UNIQUE per D-08
+    index(&#39;contacts_company_id_idx&#39;).on(table.companyId),
+    index(&#39;contacts_linkedin_connection_date_idx&#39;).on(table.linkedinConnectionDate)
+  ]
+);
+</code></pre>
+<p><strong>Index naming convention</strong> — no precedent in the repo. Planner picks (CONTEXT &quot;Claude&#39;s Discretion&quot; calls this out: <code>idx_contacts_archived_at</code> vs <code>contacts_archived_at_idx</code>). Recommended: <code>&lt;table&gt;_&lt;column&gt;_idx</code> (Drizzle default convention; what <code>drizzle-kit</code> emits when no name is given) — but explicit names are required for D-13 because the regression test (D-20) queries <code>pg_indexes.indexname</code>.</p>
+<hr>
+<h3><code>drizzle/schema/companies.ts</code> (schema, add <code>index()</code> on name)</h3>
+<p><strong>Analog:</strong> same as <code>contacts.ts</code>. Single index per D-13 point 5:</p>
+<pre><code class="language-typescript">import {
+  pgTable, uuid, text, timestamp, integer, jsonb,
+  index   // &lt;-- NEW
+} from &#39;drizzle-orm/pg-core&#39;;
+
+export const companies = pgTable(
+  &#39;companies&#39;,
+  {
+    // ... existing column block unchanged ...
+  },
+  (table) =&gt; [
+    index(&#39;companies_name_idx&#39;).on(table.name)
+  ]
+);
+</code></pre>
+<hr>
+<h3><code>drizzle/migrations/0008_*.sql</code> (NEW — generated by <code>npm run db:generate</code>)</h3>
+<p><strong>Analog:</strong> <code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> (most recent migration; format reference):</p>
+<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;queued&#39; BEFORE &#39;searching&#39;;--&gt; statement-breakpoint
+ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;failed&#39;;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error&quot; text;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error_at&quot; timestamp with time zone;
+</code></pre>
+<p><strong>Format invariants:</strong></p>
+<ul>
+<li>Each DDL statement followed by <code>--&gt; statement-breakpoint</code> marker (except the final one)</li>
+<li>Double-quoted identifiers: <code>&quot;public&quot;.&quot;job_lead_status&quot;</code>, <code>&quot;job_leads&quot;</code>, <code>&quot;last_error&quot;</code></li>
+<li><code>_journal.json</code> auto-updated by <code>drizzle-kit</code>; planner does NOT hand-edit this file</li>
+</ul>
+<p><strong>Generation step:</strong> <code>npm run db:generate</code> after the schema edits (Wave 1). The generated migration filename has a random slug after the sequential number (see <code>0005_closed_cassandra_nova.sql</code>, <code>0006_add_job_leads.sql</code> — only <code>0006</code> and <code>0007</code> use descriptive slugs because they were renamed; D-14 says <code>0008_*.sql</code> is fine, planner can rename to a descriptive slug post-generation if desired).</p>
+<p><strong>Expected DDL content (6 statements):</strong></p>
+<pre><code class="language-sql">CREATE INDEX &quot;contacts_archived_at_idx&quot; ON &quot;contacts&quot; USING btree (&quot;archived_at&quot;);--&gt; statement-breakpoint
+CREATE UNIQUE INDEX &quot;contacts_linkedin_url_unique_idx&quot; ON &quot;contacts&quot; USING btree (&quot;linkedin_url&quot;) WHERE &quot;linkedin_url&quot; IS NOT NULL;--&gt; statement-breakpoint
+CREATE INDEX &quot;contacts_company_id_idx&quot; ON &quot;contacts&quot; USING btree (&quot;company_id&quot;);--&gt; statement-breakpoint
+CREATE INDEX &quot;contacts_linkedin_connection_date_idx&quot; ON &quot;contacts&quot; USING btree (&quot;linkedin_connection_date&quot;);--&gt; statement-breakpoint
+CREATE INDEX &quot;companies_name_idx&quot; ON &quot;companies&quot; USING btree (&quot;name&quot;);
+</code></pre>
+<p>Plain <code>CREATE INDEX</code> — <strong>not</strong> <code>CREATE INDEX CONCURRENTLY</code> per D-12 (Drizzle migration runner wraps DDL in transactions, conflicts with CONCURRENTLY; tiny tables make the brief lock irrelevant).</p>
+<hr>
+<h3>Test Files (PGlite harness reuse — D-19, D-20)</h3>
+<p><strong>Analogs (multiple, all use the same harness):</strong></p>
+<ul>
+<li><code>src/app/api/contacts/import/route.test.ts</code> — formData + CSV fixture + dedup assertion</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> — bulk insert + status flip + timeline event</li>
+<li><code>src/app/api/applications/[id]/status/route.test.ts</code> — params-dynamic-route handler shape</li>
+</ul>
+<p><strong>Canonical harness boilerplate</strong> (used identically in all five existing route tests — <code>import/route.test.ts:1-11</code>):</p>
+<pre><code class="language-typescript">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { callRoute } from &#39;@/test-utils/call-route&#39;;
+import { contacts, timelineEvents } from &#39;../../../../../drizzle/schema&#39;;
+
+// vi.hoisted + Proxy pattern — mandated by D-05/D-07/02-03-PLAN
+const { dbRef } = vi.hoisted(() =&gt; ({
+  dbRef: { current: null as Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt; | null }
+}));
+
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({
+  db: new Proxy({}, {
+    get: (_: object, prop: string | symbol) =&gt;
+      (dbRef.current as unknown as Record&lt;string | symbol, unknown&gt;)[prop]
+  })
+}));
+</code></pre>
+<p><strong>Per-test seed pattern</strong> (<code>prospects/route.test.ts:25-49</code> — beforeEach creates fresh PGlite, seeds dependent rows):</p>
+<pre><code class="language-typescript">describe(&#39;POST /api/job-leads/[id]/prospects (bulk insert)&#39;, () =&gt; {
+  let leadId: string;
+  let companyId: string;
+
+  beforeEach(async () =&gt; {
+    dbRef.current = await createTestDb();
+
+    const [company] = await dbRef.current
+      .insert(companies)
+      .values({ name: &#39;AcmeCo&#39; })
+      .returning();
+    companyId = company.id;
+
+    const [lead] = await dbRef.current
+      .insert(jobLeads)
+      .values({
+        linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/4001&#39;,
+        companyId,
+        companyName: &#39;AcmeCo&#39;,
+        roleTitle: &#39;VP Data&#39;,
+        status: &#39;searching&#39;
+      })
+      .returning();
+    leadId = lead.id;
+  });
+  // ... it() blocks ...
+});
+</code></pre>
+<p><strong>Dynamic-params handler call shape</strong> (<code>prospects/route.test.ts:92-100</code> — the cast required because <code>callRoute</code>&#39;s <code>params</code> signature is <code>Record&lt;string,string&gt;</code> but route handlers declare narrower):</p>
+<pre><code class="language-typescript">const { status, body } = await callRoute(
+  POST as unknown as Parameters&lt;typeof callRoute&gt;[0],
+  {
+    method: &#39;POST&#39;,
+    body: { prospects: inputProspects },
+    params: { id: leadId }
+  }
+);
+</code></pre>
+<p><strong>Idempotency-under-retry assertion shape</strong> (D-19 requirement) — pattern available in <code>import/route.test.ts:82-108</code> (dedup within import returns <code>created: 1, skipped: 1</code> and ends with <code>expect(contactRows).toHaveLength(1)</code>).</p>
+<p><strong>Index-presence regression test (D-20) — NEW pattern, no analog.</strong> Strategy: query <code>pg_indexes</code> via the PGlite handle and assert all 6 indexes exist on the expected columns. Sketch:</p>
+<pre><code class="language-typescript">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { sql } from &#39;drizzle-orm&#39;;
+
+describe(&#39;Phase 6 schema indexes regression&#39;, () =&gt; {
+  it(&#39;migrations create 6 hot-path indexes (D-13)&#39;, async () =&gt; {
+    const db = await createTestDb();
+    const result = await db.execute(sql`
+      SELECT indexname, tablename, indexdef
+      FROM pg_indexes
+      WHERE schemaname = &#39;public&#39;
+        AND tablename IN (&#39;contacts&#39;, &#39;companies&#39;)
+    `);
+    const indexNames = (result.rows as Array&lt;{ indexname: string }&gt;).map((r) =&gt; r.indexname);
+    expect(indexNames).toEqual(expect.arrayContaining([
+      &#39;contacts_archived_at_idx&#39;,
+      &#39;contacts_linkedin_url_unique_idx&#39;,
+      &#39;contacts_company_id_idx&#39;,
+      &#39;contacts_linkedin_connection_date_idx&#39;,
+      &#39;companies_name_idx&#39;
+    ]));
+  });
+});
+</code></pre>
+<p>PGlite supports <code>pg_indexes</code> (real Postgres catalog), so this works against the in-memory instance after <code>createTestDb()</code> has replayed all migrations including <code>0008</code>.</p>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>Response Envelope</h3>
+<p><strong>Source:</strong> <code>src/lib/api/types.ts:12-39</code> and <code>src/lib/api/errors.ts:1-22</code>
+<strong>Apply to:</strong> All four code-change atomics in Wave 2 (Plans 2a, 2b, 2c, 2d).</p>
+<p>Every API route in the phase preserves these factories exactly:</p>
+<ul>
+<li><code>success(data)</code> → 200 <code>{ success: true, data }</code></li>
+<li><code>created(data)</code> → 201 <code>{ success: true, data }</code></li>
+<li><code>notFound(&#39;Job lead&#39;)</code> → 404 <code>{ success: false, error: &#39;Job lead not found&#39; }</code></li>
+<li><code>validationError(msg)</code> → 400 <code>{ success: false, error: msg }</code></li>
+<li><code>serverError(err)</code> → 500 <code>{ success: false, error: &#39;Internal server error&#39; }</code> (also logs via <code>console.error(&#39;API Error:&#39;, err)</code>)</li>
+</ul>
+<p>Canonical try/catch shell (every Phase 6 route preserves this):</p>
+<pre><code class="language-typescript">try {
+  // params + parse + query + mutation + logTimeline + return success/created
+} catch (err) {
+  if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+  return serverError(err);
+}
+</code></pre>
+<h3>Soft-Delete Filter</h3>
+<p><strong>Source:</strong> <code>src/features/job-leads/lib/match-connections.ts:47</code>, <code>src/app/api/contacts/import/route.ts:64</code>
+<strong>Apply to:</strong> <code>match-connections.ts</code> narrowed SELECT (D-11), <code>contacts/import/route.ts</code> narrowed name+company SELECT (D-09).</p>
+<p><code>WHERE archived_at IS NULL</code> MUST be preserved when narrowing. Code form: <code>isNull(contacts.archivedAt)</code> combined via <code>and(...)</code> with the narrowing predicates.</p>
+<h3>Manual <code>updatedAt</code> on UPDATE</h3>
+<p><strong>Source:</strong> <code>src/app/api/job-leads/[id]/prospects/route.ts:70</code>
+<strong>Apply to:</strong> All Phase 6 UPDATEs.</p>
+<ul>
+<li>Drizzle builder UPDATE: explicit <code>.set({ ..., updatedAt: new Date() })</code></li>
+<li>SQL-side UPDATE (D-05, D-15): explicit <code>SET ..., updated_at = NOW()</code> in the SQL string</li>
+<li>Exception: <code>prospect_bridges</code> table has no <code>updated_at</code> column — D-15 SQL skips it.</li>
+</ul>
+<h3><code>logTimeline</code> Side-Effect</h3>
+<p><strong>Source:</strong> <code>src/lib/db/timeline.ts:17-22</code>
+<strong>Apply to:</strong> Plan 2a (<code>POST /prospects</code> already emits one event — keep it), Plan 2b (no timeline emission currently — preserve absence), Plan 2c (one aggregate event per import, D-10).</p>
+<p><strong>Invariant:</strong> exactly one <code>logTimeline</code> call per successful write path. The phase MUST NOT emit per-row timeline events even when bulk-inserting multiple rows.</p>
+<h3>Drizzle <code>sql</code> Template Tag (CLAUDE.md &quot;no raw SQL&quot; exception per D-06)</h3>
+<p><strong>Source:</strong> <code>src/app/api/metrics/dashboard/route.ts:9</code> (import) + every multi-condition WHERE clause in the codebase (e.g., <code>src/app/api/contacts/route.ts:68-77</code>)
+<strong>Apply to:</strong> Plan 2b (D-05 UPDATE), Plan 2c (D-09 narrowed name+company SELECT), Plan 2d (D-15 if Variant A), <code>drizzle/schema/contacts.ts</code> (partial UNIQUE index WHERE clause).</p>
+<p>CLAUDE.md says &quot;no raw SQL in app code except for pgvector queries.&quot; D-06 documents that <code>sql</code> template tag inside <code>db.execute()</code> is the standard Drizzle escape for batched UPDATEs and <strong>is not</strong> the &quot;raw SQL&quot; the rule forbids. The rule targets handwritten string-concatenated SQL bypassing the query builder. <strong>Document this exception inline</strong> with a one-line comment on the <code>db.execute()</code> call.</p>
+<h3><code>onConflictDoNothing</code> with Target</h3>
+<p><strong>Source:</strong> <code>drizzle/seed.ts:108-111</code>
+<strong>Apply to:</strong> Plan 2a (D-04 <code>prospectBridges</code> — uses <code>prospect_bridge_unique</code> constraint, no <code>target</code> needed because Postgres will infer from the only unique constraint), Plan 2c (D-08 <code>contacts.linkedinUrl</code> — requires <code>{ target: contacts.linkedinUrl }</code> because the partial UNIQUE index is what Postgres matches).</p>
+<p>Two callsite variants:</p>
+<ul>
+<li><code>await db.insert(prospectBridges).values([...]).onConflictDoNothing()</code> — D-04</li>
+<li><code>await db.insert(contacts).values([...]).onConflictDoNothing({ target: contacts.linkedinUrl })</code> — D-08/D-10</li>
+</ul>
+<hr>
+<h2>No Analog Found</h2>
+<p>Two patterns have <strong>zero precedent</strong> in the repo and require the planner to introduce them from Drizzle docs:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Files Affected</th>
+<th>Why No Analog</th>
+<th>Planner Reference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>db.transaction(async (tx) =&gt; {...})</code></td>
+<td><code>src/app/api/job-leads/[id]/prospects/route.ts</code> (D-02 wrap), optionally <code>src/features/job-leads/lib/match-connections.ts</code> (D-03 if signature takes <code>tx</code>)</td>
+<td>The codebase has never used transactions — every write so far was single-statement or fire-and-forget</td>
+<td>Drizzle neon-http transaction API; CONTEXT D-02 confirms <code>drizzle-orm</code> v0.45.1 supports it via the adapter</td>
+</tr>
+<tr>
+<td><code>index()</code> / <code>uniqueIndex().where()</code> in Drizzle schema</td>
+<td><code>drizzle/schema/contacts.ts</code>, <code>drizzle/schema/companies.ts</code></td>
+<td>The codebase has never declared explicit indexes — only <code>unique(&#39;prospect_bridge_unique&#39;)</code> and primary-key indexes (auto)</td>
+<td><code>drizzle-orm/pg-core</code> exports both; partial UNIQUE via <code>.where(sql\</code>...`)` — see CONTEXT D-08</td>
+</tr>
+</tbody></table>
+<p>Both patterns are well-documented in Drizzle&#39;s docs. Planner refines exact syntax during plan authoring.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong></p>
+<ul>
+<li><code>src/app/api/**</code> (all 34 route files surveyed via Grep)</li>
+<li><code>src/features/job-leads/lib/**</code></li>
+<li><code>drizzle/schema/**</code> (all 13 schema files)</li>
+<li><code>drizzle/migrations/**</code> (8 SQL files)</li>
+<li><code>src/test-utils/**</code></li>
+<li><code>src/lib/{api,db,domain}/**</code></li>
+</ul>
+<p><strong>Files Grep-scanned:</strong> ~60 TypeScript files, 8 SQL migrations.</p>
+<p><strong>Key absences</strong> confirmed by exhaustive Grep:</p>
+<ul>
+<li>No <code>db.transaction</code> callsite anywhere in <code>src/</code> or <code>drizzle/</code></li>
+<li>No <code>index(</code> or <code>uniqueIndex(</code> in <code>drizzle/schema/</code></li>
+<li>No <code>db.execute(sql\</code>UPDATE<code>or</code>db.execute(sql`INSERT<code>pattern — only</code>sql` template inside WHERE clauses</li>
+<li>No <code>sql.raw(</code> usage in src/ or drizzle/</li>
+</ul>
+<p><strong>Pattern extraction date:</strong> 2026-05-14</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

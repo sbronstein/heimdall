@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STRUCTURE</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/codebase/STRUCTURE.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Codebase Structure</h1>
+<p><strong>Analysis Date:</strong> 2026-05-12</p>
+<h2>Directory Layout</h2>
+<pre><code>heimdall/
+├── src/
+│   ├── app/                      # Next.js App Router root
+│   │   ├── layout.tsx            # Root HTML shell (theme, providers)
+│   │   ├── page.tsx              # / → redirect to /dashboard/overview
+│   │   ├── proxy.ts              # Clerk middleware (auth + email lock)
+│   │   ├── api/                  # REST API routes (all mutations here)
+│   │   │   ├── applications/     # GET, POST + [id]/ PATCH/DELETE + [id]/status/ PATCH
+│   │   │   ├── companies/        # GET, POST + [id]/ + [id]/applications/ + [id]/contacts/
+│   │   │   ├── contacts/         # GET, POST + [id]/ + [id]/interactions/ + import/ + connections/
+│   │   │   ├── interactions/     # GET, POST + [id]/
+│   │   │   ├── job-leads/        # GET, POST + [id]/ + [id]/search/ + [id]/recommendations/ + [id]/status/
+│   │   │   ├── metrics/          # GET + dashboard/
+│   │   │   ├── notes/            # GET, POST + [id]/
+│   │   │   ├── pipeline-stages/  # GET
+│   │   │   ├── recruiters/       # GET, POST + [id]/
+│   │   │   ├── search/           # GET (cross-entity full-text search)
+│   │   │   ├── tasks/            # GET, POST + [id]/
+│   │   │   └── timeline/         # GET
+│   │   ├── auth/                 # Clerk sign-in/sign-up pages
+│   │   └── dashboard/            # All authenticated pages
+│   │       ├── layout.tsx        # Sidebar + header shell
+│   │       ├── overview/         # Dashboard home (parallel routes for charts)
+│   │       ├── pipeline/         # Kanban pipeline board
+│   │       ├── companies/        # Company list + [companyId]/ detail
+│   │       ├── contacts/         # Contact list + [contactId]/ detail + triage/
+│   │       ├── job-leads/        # Job lead list + [id]/ detail + [id]/triage/
+│   │       ├── networking/       # Networking outreach dashboard
+│   │       ├── tasks/            # Tasks list
+│   │       ├── notes/            # Notes list + [noteId]/
+│   │       ├── metrics/          # Weekly metrics tracker
+│   │       ├── kanban/           # Generic kanban (client-only, not DB-backed)
+│   │       └── profile/          # Clerk profile page
+│   ├── features/                 # Domain feature slices
+│   │   ├── companies/components/ # CompanyTable, company-listing RSC
+│   │   ├── contacts/
+│   │   │   ├── components/       # ContactTable, triage, linkedin-import UI
+│   │   │   └── lib/              # closeness-colors.ts
+│   │   ├── job-leads/
+│   │   │   ├── components/       # JobLeadDetail, RecommendationList, SearchProgress, TriageTrigger
+│   │   │   └── lib/              # scrape-job-page.ts, scrape-connections.ts, linkedin-browser.ts,
+│   │   │                         # match-connections.ts, prioritization.ts, seniority.ts
+│   │   ├── kanban/
+│   │   │   ├── components/       # KanbanBoard, BoardColumn, TaskCard
+│   │   │   └── utils/store.ts    # Zustand store (localStorage-persisted, not DB-backed)
+│   │   ├── metrics/components/   # MetricsPage, MetricsTrends, WeeklySnapshotForm
+│   │   ├── networking/components/# NetworkingDashboard, OutreachList, ConnectionFinder
+│   │   ├── notes/components/     # NoteForm, NoteTable
+│   │   ├── overview/components/  # KpiCards, AreaGraph, BarGraph, PieGraph, ActivityTimeline
+│   │   ├── pipeline/
+│   │   │   ├── components/       # PipelineBoard, PipelineColumn, ApplicationCard, NewApplicationDialog
+│   │   │   └── utils/store.ts    # Zustand store for drag-and-drop optimistic updates
+│   │   ├── recruiters/components/# RecruiterListing
+│   │   ├── search/components/    # SearchCommand (KBar-triggered overlay)
+│   │   └── tasks/components/     # TaskTable, TaskForm
+│   ├── lib/
+│   │   ├── db/
+│   │   │   ├── index.ts          # Drizzle client singleton (neon/serverless)
+│   │   │   └── timeline.ts       # logTimeline() — side-effect for every write
+│   │   ├── api/
+│   │   │   ├── types.ts          # Response envelope helpers: success(), created(), paginated(), error()
+│   │   │   ├── errors.ts         # notFound(), validationError(), serverError()
+│   │   │   └── filters.ts        # parseArrayParam(), parseCursor(), parseLimit()
+│   │   ├── domain/
+│   │   │   ├── types.ts          # Drizzle-inferred TS types + all enum value arrays
+│   │   │   └── pipeline.ts       # canTransition(), isTerminalState(), validTransitions map
+│   │   ├── utils.ts              # cn() (clsx/tailwind-merge), misc helpers
+│   │   ├── format.ts             # Date/string formatting utilities
+│   │   └── parsers.ts            # URL param parsers
+│   ├── components/
+│   │   ├── ui/                   # shadcn/ui primitives (button, card, dialog, sidebar, etc.)
+│   │   ├── layout/               # AppSidebar, Header, PageContainer, InfoSidebar
+│   │   ├── forms/                # Controlled form inputs (FormInput, FormSelect, FormDatePicker, etc.)
+│   │   ├── kbar/                 # KBar command palette wrapper
+│   │   ├── modal/                # Modal provider
+│   │   └── themes/               # ThemeProvider, font config, theme config
+│   ├── hooks/                    # Custom React hooks
+│   │   ├── use-breadcrumbs.tsx
+│   │   ├── use-data-table.ts     # TanStack Table integration
+│   │   ├── use-debounce.tsx
+│   │   ├── use-media-query.ts
+│   │   ├── use-mobile.tsx
+│   │   ├── use-nav.ts            # Navigation item filtering
+│   │   └── use-multistep-form.tsx
+│   ├── config/
+│   │   ├── nav-config.ts         # Sidebar navigation items definition
+│   │   ├── data-table.ts         # Data table configuration helpers
+│   │   └── infoconfig.ts         # Info sidebar configuration
+│   ├── constants/
+│   │   ├── data.ts               # Static data constants
+│   │   └── mock-api.ts           # Mock API data (dev use)
+│   ├── types/
+│   │   ├── index.ts              # NavItem, FooterItem, SidebarNavItem types
+│   │   ├── base-form.ts          # Base form types
+│   │   └── data-table.ts         # Data table column/filter types
+│   └── styles/
+│       ├── globals.css           # Tailwind CSS v4 base styles
+│       └── themes/               # Custom theme CSS variables
+├── drizzle/
+│   ├── schema/                   # One file per table + barrel index
+│   │   ├── index.ts              # Re-exports all tables
+│   │   ├── enums.ts              # All pgEnum definitions
+│   │   ├── companies.ts
+│   │   ├── contacts.ts
+│   │   ├── applications.ts
+│   │   ├── interactions.ts
+│   │   ├── tasks.ts
+│   │   ├── notes.ts
+│   │   ├── pipeline-stages.ts
+│   │   ├── timeline-events.ts
+│   │   ├── recruiters.ts
+│   │   ├── search-metrics.ts
+│   │   └── job-leads.ts          # Also contains prospects + prospect_bridges tables
+│   └── migrations/               # Drizzle-kit generated SQL migrations
+├── docs/                         # Architecture reference docs
+│   ├── database-schema.md
+│   ├── api-conventions.md
+│   └── job-search-playbook.md
+├── scripts/                      # One-off utility scripts
+├── __CLEANUP__/                  # Removed/archived code (clerk, kanban, sentry variants)
+├── public/                       # Static assets
+├── drizzle.config.ts             # Drizzle Kit config (schema path, migrations dir)
+├── next.config.ts                # Next.js config
+├── tsconfig.json                 # TypeScript (strict mode, path alias @/ → ./src/)
+├── .prettierrc                   # Prettier config
+├── .eslintrc.json                # ESLint config
+└── CLAUDE.md                     # Project conventions for Claude Code
+</code></pre>
+<h2>Directory Purposes</h2>
+<p><strong><code>src/app/api/</code>:</strong></p>
+<ul>
+<li>Purpose: All REST API handlers — the only place data mutations occur</li>
+<li>Contains: <code>route.ts</code> files with named <code>GET</code>, <code>POST</code>, <code>PATCH</code>, <code>DELETE</code> exports</li>
+<li>Key pattern: Every handler imports <code>db</code> from <code>@/lib/db</code>, validates with Zod, calls <code>logTimeline()</code>, returns response envelope</li>
+</ul>
+<p><strong><code>src/features/</code>:</strong></p>
+<ul>
+<li>Purpose: Domain feature slices; co-locates components and feature-specific utilities</li>
+<li>Contains: <code>components/</code> (UI) and optionally <code>lib/</code> (business logic, scrapers)</li>
+<li>Key pattern: Listing components are often Server Components that query DB directly; interactive components are <code>&#39;use client&#39;</code></li>
+</ul>
+<p><strong><code>src/lib/</code>:</strong></p>
+<ul>
+<li>Purpose: App-wide shared utilities with no feature coupling</li>
+<li>Contains: DB client, API response helpers, domain type definitions, pipeline rules</li>
+<li>Key pattern: <code>src/lib/domain/types.ts</code> is the central source for all TypeScript entity types and enum value arrays</li>
+</ul>
+<p><strong><code>drizzle/schema/</code>:</strong></p>
+<ul>
+<li>Purpose: Postgres schema definitions — single source of truth for table structure and TS types</li>
+<li>Contains: One <code>.ts</code> file per logical entity (note: <code>job-leads.ts</code> contains three tables: <code>jobLeads</code>, <code>prospects</code>, <code>prospectBridges</code>)</li>
+<li>Key pattern: <code>drizzle/schema/index.ts</code> barrel-exports everything; API routes import from <code>../../../../drizzle/schema</code></li>
+</ul>
+<p><strong><code>src/features/job-leads/lib/</code>:</strong></p>
+<ul>
+<li>Purpose: LinkedIn automation and intro-recommendation algorithms</li>
+<li>Contains: Playwright browser management, job page scraper (Cheerio), connection scraper, seniority inference, bridge score computation</li>
+<li>Key files: <code>linkedin-browser.ts</code>, <code>scrape-connections.ts</code>, <code>scrape-job-page.ts</code>, <code>prioritization.ts</code>, <code>seniority.ts</code>, <code>match-connections.ts</code></li>
+</ul>
+<h2>Key File Locations</h2>
+<p><strong>Entry Points:</strong></p>
+<ul>
+<li><code>src/app/page.tsx</code>: Root redirect (auth check → dashboard)</li>
+<li><code>src/app/layout.tsx</code>: Root HTML layout with theme and providers</li>
+<li><code>src/app/dashboard/layout.tsx</code>: Dashboard shell (sidebar, header, KBar)</li>
+<li><code>src/proxy.ts</code>: Clerk auth middleware (file is the middleware, not named <code>middleware.ts</code>)</li>
+</ul>
+<p><strong>Configuration:</strong></p>
+<ul>
+<li><code>drizzle.config.ts</code>: Drizzle Kit migration config</li>
+<li><code>src/config/nav-config.ts</code>: Sidebar nav items</li>
+<li><code>tsconfig.json</code>: <code>@/</code> path alias pointing to <code>./src/</code></li>
+<li><code>CLAUDE.md</code>: Project conventions and commands</li>
+</ul>
+<p><strong>Core Logic:</strong></p>
+<ul>
+<li><code>src/lib/db/index.ts</code>: Database client (import <code>db</code> from here everywhere)</li>
+<li><code>src/lib/db/timeline.ts</code>: <code>logTimeline()</code> — call after every write</li>
+<li><code>src/lib/api/types.ts</code>: Response envelope factories</li>
+<li><code>src/lib/api/errors.ts</code>: Error response factories</li>
+<li><code>src/lib/domain/types.ts</code>: All entity types and enum value arrays</li>
+<li><code>src/lib/domain/pipeline.ts</code>: <code>canTransition()</code> and <code>isTerminalState()</code></li>
+<li><code>drizzle/schema/index.ts</code>: Barrel export for all tables — import tables from here</li>
+</ul>
+<p><strong>Feature-Specific Logic:</strong></p>
+<ul>
+<li><code>src/features/job-leads/lib/scrape-job-page.ts</code>: Cheerio scraper for LinkedIn job pages</li>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code>: Playwright scraper for LinkedIn employee connections</li>
+<li><code>src/features/job-leads/lib/linkedin-browser.ts</code>: Playwright browser context management (CDP/WS/local)</li>
+<li><code>src/features/job-leads/lib/prioritization.ts</code>: <code>buildRecommendations()</code> and <code>computeBridgeScore()</code></li>
+<li><code>src/features/pipeline/utils/store.ts</code>: Zustand store for pipeline drag-and-drop</li>
+</ul>
+<h2>Naming Conventions</h2>
+<p><strong>Files:</strong></p>
+<ul>
+<li>Kebab-case for all files: <code>company-listing.tsx</code>, <code>scrape-job-page.ts</code></li>
+<li>API routes always named <code>route.ts</code></li>
+<li>Page files always named <code>page.tsx</code></li>
+<li>Layout files always named <code>layout.tsx</code></li>
+<li>Loading/error states named <code>loading.tsx</code>, <code>error.tsx</code>, <code>default.tsx</code></li>
+</ul>
+<p><strong>Directories:</strong></p>
+<ul>
+<li>Feature directories: kebab-case singular noun — <code>job-leads/</code>, <code>pipeline/</code>, <code>networking/</code></li>
+<li>Parallel routes (overview page): <code>@area_stats/</code>, <code>@bar_stats/</code>, <code>@pie_stats/</code>, <code>@sales/</code></li>
+</ul>
+<p><strong>Components:</strong></p>
+<ul>
+<li>React component functions: PascalCase named exports — <code>export function PipelineViewPage()</code></li>
+<li>Page-level default exports: PascalCase — <code>export default function PipelinePage()</code></li>
+</ul>
+<p><strong>API route segment patterns:</strong></p>
+<ul>
+<li>Collection: <code>/api/[entity]/route.ts</code></li>
+<li>Single item: <code>/api/[entity]/[id]/route.ts</code></li>
+<li>Sub-resource: <code>/api/[entity]/[id]/[sub-resource]/route.ts</code></li>
+<li>Actions (non-CRUD): <code>/api/[entity]/[id]/[action]/route.ts</code> (e.g., <code>search/</code>, <code>status/</code>, <code>recommendations/</code>)</li>
+</ul>
+<h2>Where to Add New Code</h2>
+<p><strong>New domain entity (table + API + UI):</strong></p>
+<ol>
+<li>Schema: <code>drizzle/schema/&lt;entity&gt;.ts</code> → re-export in <code>drizzle/schema/index.ts</code></li>
+<li>Run <code>npm run db:generate &amp;&amp; npm run db:migrate</code></li>
+<li>Types: Add inferred types and enum arrays to <code>src/lib/domain/types.ts</code></li>
+<li>API routes: <code>src/app/api/&lt;entity&gt;/route.ts</code> (collection) + <code>src/app/api/&lt;entity&gt;/[id]/route.ts</code> (single)</li>
+<li>Feature components: <code>src/features/&lt;entity&gt;/components/</code></li>
+<li>Page: <code>src/app/dashboard/&lt;entity&gt;/page.tsx</code></li>
+<li>Nav item: <code>src/config/nav-config.ts</code></li>
+</ol>
+<p><strong>New API endpoint for an existing entity:</strong></p>
+<ul>
+<li>Collection-level: <code>src/app/api/&lt;entity&gt;/route.ts</code> (add <code>GET</code>/<code>POST</code>)</li>
+<li>Item-level: <code>src/app/api/&lt;entity&gt;/[id]/route.ts</code> (add <code>PATCH</code>/<code>DELETE</code>)</li>
+<li>Action endpoint: <code>src/app/api/&lt;entity&gt;/[id]/&lt;action&gt;/route.ts</code></li>
+<li>Always: validate with Zod, call <code>logTimeline()</code> after writes, return via helpers in <code>src/lib/api/types.ts</code></li>
+</ul>
+<p><strong>New feature component:</strong></p>
+<ul>
+<li>Interactive: <code>src/features/&lt;domain&gt;/components/&lt;name&gt;.tsx</code> with <code>&#39;use client&#39;</code> at top</li>
+<li>Server listing (fetches own data): <code>src/features/&lt;domain&gt;/components/&lt;name&gt;-listing.tsx</code> (no directive, async function)</li>
+</ul>
+<p><strong>New utility/shared logic:</strong></p>
+<ul>
+<li>App-wide: <code>src/lib/utils.ts</code> or a new file in <code>src/lib/</code></li>
+<li>Domain-specific non-UI logic: <code>src/features/&lt;domain&gt;/lib/&lt;name&gt;.ts</code></li>
+<li>Enum value arrays and types: <code>src/lib/domain/types.ts</code></li>
+</ul>
+<p><strong>New page:</strong></p>
+<ul>
+<li>Create <code>src/app/dashboard/&lt;section&gt;/page.tsx</code></li>
+<li>Query DB directly in the RSC function</li>
+<li>Wrap in <code>&lt;PageContainer&gt;</code> from <code>@/components/layout/page-container</code></li>
+<li>Add to sidebar nav: <code>src/config/nav-config.ts</code></li>
+</ul>
+<p><strong>New schema table:</strong></p>
+<ul>
+<li>Add <code>drizzle/schema/&lt;table&gt;.ts</code></li>
+<li>Add export to <code>drizzle/schema/index.ts</code></li>
+<li>Add Drizzle-inferred types to <code>src/lib/domain/types.ts</code></li>
+</ul>
+<h2>Special Directories</h2>
+<p><strong><code>__CLEANUP__/</code>:</strong></p>
+<ul>
+<li>Purpose: Archived/removed code variants (Clerk setup alternatives, Kanban variations, Sentry config)</li>
+<li>Generated: No</li>
+<li>Committed: Yes (historical reference)</li>
+</ul>
+<p><strong><code>.planning/</code>:</strong></p>
+<ul>
+<li>Purpose: GSD planning documents (codebase maps, phase plans)</li>
+<li>Generated: Yes (by GSD tools)</li>
+<li>Committed: Yes</li>
+</ul>
+<p><strong><code>drizzle/migrations/</code>:</strong></p>
+<ul>
+<li>Purpose: SQL migration files generated by <code>drizzle-kit</code></li>
+<li>Generated: Yes (<code>npm run db:generate</code>)</li>
+<li>Committed: Yes</li>
+</ul>
+<p><strong><code>.next/</code>:</strong></p>
+<ul>
+<li>Purpose: Next.js build output</li>
+<li>Generated: Yes</li>
+<li>Committed: No (<code>.gitignore</code>)</li>
+</ul>
+<hr>
+<p><em>Structure analysis: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/codebase/STRUCTURE.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

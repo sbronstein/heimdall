@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: 02
+type: execute
+wave: 2
+depends_on: [06-01]
+files_modified:</p>
+<ul>
+<li>src/app/api/job-leads/[id]/prospects/route.ts</li>
+<li>src/features/job-leads/lib/match-connections.ts</li>
+<li>src/app/api/job-leads/[id]/prospects/route.test.ts</li>
+<li>.planning/ROADMAP.md
+autonomous: true
+requirements: [PERF-A1, PERF-A2]
+tags: [transactions, drizzle, neon-http, bulk-insert, atomicity]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;POST /api/job-leads/[id]/prospects calls matchConnections inline after the bulk prospect insert and before the status flip to &#39;found&#39; (D-01)&quot;
+    - &quot;The entire POST /prospects handler runs inside db.transaction(async (tx) =&gt; {...}); on any failure all writes roll back (prospects, bridges, jobLeads status) (D-02)&quot;
+    - &quot;matchConnections takes a tx handle typed as the actual neon-http transaction handle (NOT <code>typeof db</code>) and uses tx for every db call inside it (D-03 + WARNING 1 fix)&quot;
+    - &quot;Bridge insert is a single tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing() — no per-row loop, no try/catch swallow (D-04)&quot;
+    - &quot;match-connections.ts contacts SELECT is narrowed: archived_at IS NULL AND (lower(first_name) IN (...) OR lower(last_name) IN (...)) using tokens from scrapedProspects.flatMap(p =&gt; p.mutualConnectionNames) (D-11)&quot;
+    - &quot;The skill&#39;s contract is preserved — response envelope stays { insertedCount, lead }; no new fields and no breaking changes&quot;
+    - &quot;ROADMAP §Phase 6 SC #1 wording is refreshed to name /api/job-leads/[id]/prospects as the prospect-insert path and to mark the prospect bulk-insert half satisfied (D-18)&quot;
+    - &quot;The greppable N+1 anti-pattern <code>for...of await tx.insert(prospectBridges)</code> does NOT survive in match-connections.ts (D-21)&quot;
+    - &quot;logTimeline is emitted AFTER <code>await db.transaction(...)</code> resolves — Drizzle&#39;s neon-http transaction await guarantees post-commit semantics, so a rolled-back transaction emits zero timeline events (pinned by Test 3)&quot;
+    - &quot;D-17: this plan is Wave 2 / Plan 2a — one of four parallel code-change atomics blocked on Wave 1 (Plan 01) and disjoint from Plans 03/04/05 in its file set (prospects/route.ts + match-connections.ts + ROADMAP.md)&quot;
+    - &quot;D-19: PGlite-backed route tests assert post-conditions on each rewritten path (row counts, idempotency under retry, exactly-one logTimeline emission); the Phase 2 harness (src/test-utils/{pglite,call-route}.ts) is reused without modification&quot;
+  artifacts:
+    - path: &quot;src/app/api/job-leads/[id]/prospects/route.ts&quot;
+      provides: &quot;Transactional bulk-prospect insert + inline matchConnections + status flip + logTimeline&quot;
+      contains: &quot;db.transaction(async (tx) =&gt;&quot;
+    - path: &quot;src/features/job-leads/lib/match-connections.ts&quot;
+      provides: &quot;matchConnections(tx, jobLeadId, scrapedProspects) — narrowed contacts SELECT + bulk bridge insert&quot;
+      contains: &quot;tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()&quot;
+    - path: &quot;src/app/api/job-leads/[id]/prospects/route.test.ts&quot;
+      provides: &quot;PGlite test coverage extended for: (a) bridges inserted when mutualConnectionNames match seeded contacts, (b) rollback-on-bridge-failure leaves no prospects/bridges/timeline rows, (c) idempotency under retry&quot;
+      contains: &quot;expect(bridges).toHaveLength&quot;
+  key_links:
+    - from: &quot;src/app/api/job-leads/[id]/prospects/route.ts&quot;
+      to: &quot;src/features/job-leads/lib/match-connections.ts&quot;
+      via: &quot;inline call inside db.transaction with tx passed through&quot;
+      pattern: &quot;await matchConnections\(tx,&quot;
+    - from: &quot;src/features/job-leads/lib/match-connections.ts&quot;
+      to: &quot;drizzle/schema/job-leads.ts:85 (prospect_bridge_unique constraint)&quot;
+      via: &quot;tx.insert(prospectBridges).values(...).onConflictDoNothing()&quot;
+  pattern: &quot;onConflictDoNothing\(\)&quot;
+</p>
+<hr>
+<objective>
+Restore the bridges-building flow Phase 5 orphaned: invoke `matchConnections` inline inside `POST /api/job-leads/[id]/prospects` after the bulk prospect insert, wrap the entire handler in `db.transaction()` for atomicity, replace the per-row bridge insert loop with a single bulk insert leveraging the existing `prospect_bridge_unique` constraint, and narrow the full-table contacts SELECT to a token-keyed subset. Refresh the ROADMAP Phase 6 SC #1 wording in the same commit.<p>Purpose: PERF-A1 (bridges half — the prospect half already shipped in Phase 5) and PERF-A2 (caller restoration + atomic write set). After this lands, <code>/triage</code> and <code>/recommendations</code> start showing real data again with no UI change.
+Output: 1 route refactored (transaction wrap + inline call), 1 service lib refactored (narrowed SELECT + bulk bridge insert), test coverage extended, ROADMAP SC #1 wording refreshed.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/06-performance/06-CONTEXT.md
+@.planning/phases/06-performance/06-PATTERNS.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@CLAUDE.md
+@src/app/api/job-leads/[id]/prospects/route.ts
+@src/features/job-leads/lib/match-connections.ts
+@src/app/api/job-leads/[id]/prospects/route.test.ts
+@drizzle/schema/job-leads.ts
+@src/lib/db/index.ts
+@src/lib/db/timeline.ts
+@.claude/skills/scrape-linkedin-connections/references/heimdall-api.md<interfaces>
+<!-- Drizzle neon-http transaction surface (planner-introduced — see 06-PATTERNS.md §"No Analog Found"). --><p>From drizzle-orm (neon-http adapter, v0.45.1):</p>
+<pre><code class="language-typescript">// Per CONTEXT D-02: the neon-http adapter supports db.transaction(); statements
+// inside the callback are coalesced into a single transactional HTTP request.
+// Every Drizzle call inside the callback MUST use the `tx` parameter, NOT the
+// imported `db`, or atomicity does not hold.
+db.transaction&lt;T&gt;(callback: (tx: NeonHttpTransaction&lt;...&gt;) =&gt; Promise&lt;T&gt;): Promise&lt;T&gt;;
+</code></pre>
+<p>The <code>tx</code> handle is NOT <code>typeof db</code> — it is <code>NeonHttpTransaction&lt;...&gt;</code>, which forbids nested transactions (<code>tx.transaction(...)</code> is a compile error). This narrower type is what matchConnections receives.</p>
+<p>From src/features/job-leads/lib/match-connections.ts (CURRENT signature — being changed):</p>
+<pre><code class="language-typescript">// CURRENT:
+export async function matchConnections(
+  jobLeadId: string,
+  scrapedProspects: ScrapedProspect[]
+): Promise&lt;MatchResult&gt;;
+
+// NEW (D-03 planner pick — take tx so the transaction is composable):
+import type { NeonHttpTransaction } from &#39;drizzle-orm/neon-http&#39;;
+import type { ExtractTablesWithRelations } from &#39;drizzle-orm&#39;;
+import * as schema from &#39;../../../../drizzle/schema&#39;;  // path adjusts to actual file depth
+
+type Tx = NeonHttpTransaction&lt;typeof schema, ExtractTablesWithRelations&lt;typeof schema&gt;&gt;;
+
+export async function matchConnections(
+  tx: Tx,
+  jobLeadId: string,
+  scrapedProspects: ScrapedProspect[]
+): Promise&lt;MatchResult&gt;;
+
+type MatchResult = {
+  matched: number;
+  unmatched: number;
+  contactIdsNeedingTriage: string[];
+};
+</code></pre>
+<p>If the named export <code>NeonHttpTransaction</code> does not exist in drizzle-orm v0.45.1, fall back to the structural alias:</p>
+<pre><code class="language-typescript">type Tx = Parameters&lt;Parameters&lt;typeof db.transaction&gt;[0]&gt;[0];
+// → the parameter of the callback passed to db.transaction; structurally the same
+//   narrower transaction handle.
+</code></pre>
+<p>From drizzle/schema/job-leads.ts (line 85 — D-04 piggybacks):</p>
+<pre><code class="language-typescript">// Existing unique constraint on the (prospect_id, contact_id) pair.
+// onConflictDoNothing() with no `target` arg lets Postgres infer this
+// as the conflict target (it&#39;s the only unique constraint on the table
+// besides the primary key).
+unique(&#39;prospect_bridge_unique&#39;).on(table.prospectId, table.contactId)
+</code></pre>
+<p>From src/lib/db/timeline.ts (line 17):</p>
+<pre><code class="language-typescript">// logTimeline currently uses the singleton `db`, not a tx. Per D-02 + WARNING 3 fix:
+//
+// Drizzle&#39;s neon-http `db.transaction(...)` returns ONLY after the Neon HTTP endpoint
+// acknowledges COMMIT. Therefore `await db.transaction(...)` resolves post-commit;
+// placing `logTimeline()` after that `await` guarantees the timeline event is emitted
+// only on committed state. If the transaction throws, logTimeline never runs.
+export async function logTimeline(input: TimelineInput): Promise&lt;void&gt;;
+</code></pre>
+</interfaces><existing_test_shape>
+The existing route.test.ts (read fully — referenced in Task 3's `<read_first>`) covers Test 1 (5 prospects → flips to 'found', emits one timeline event). New test cases for this plan extend the same file using the same `vi.hoisted + Proxy` harness; do NOT create a new file.
+</existing_test_shape>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: Refactor matchConnections to accept tx, narrow contacts SELECT, bulk-insert bridges</name>
+  <files>src/features/job-leads/lib/match-connections.ts</files>
+  <read_first>
+    - src/features/job-leads/lib/match-connections.ts (full file, 119 lines) — current implementation. Lines 44-47 (`SELECT * FROM contacts WHERE archived_at IS NULL`) is the full-table scan being narrowed; lines 103-112 is the per-row N+1 bridge insert with try/catch swallow being replaced.
+    - src/app/api/contacts/import/route.ts lines 55-74 — analog for narrowed SELECT building Set-of-keys in-app, then in-memory filter.
+    - src/app/api/contacts/route.ts:68 — `sql\`(... OR ...)\`` template-tag composition for OR-clusters; reference for the `lower(first_name) IN (...) OR lower(last_name) IN (...)` narrowing predicate.
+    - drizzle/schema/contacts.ts (the new third-callback — established by Plan 1; `contacts_company_id_idx` and the partial UNIQUE are present, but the narrowed SELECT in this task uses neither — it uses a sequential scan over the narrowed predicate, which is fine on 1500 rows).
+    - .planning/phases/06-performance/06-CONTEXT.md D-03, D-04, D-11.
+    - .planning/phases/06-performance/06-PATTERNS.md §"src/features/job-leads/lib/match-connections.ts" — full guidance.
+    - src/lib/db/index.ts — confirms the drizzle client is `drizzle({...}, { schema })` so the `Tx` structural type alias resolves to the schema-aware transaction handle.
+  </read_first>
+  <behavior>
+    - Test 1 (signature change): The exported function takes 3 args: `(tx, jobLeadId, scrapedProspects)`. Caller passes the transaction handle from `POST /prospects`.
+    - Test 2 (narrowed SELECT): When called with 3 scraped prospects whose `mutualConnectionNames` list is `['Carol Chen', 'Dave Davis']`, the contacts SELECT issued returns ONLY rows whose `lower(first_name)` or `lower(last_name)` is in `{'carol', 'chen', 'dave', 'davis'}` (verified via PGlite — seed an extra `Wendy Wong` contact and confirm she is NOT in the working set the fuzzy match iterates over). Soft-delete invariant preserved: `archived_at IS NULL` still gates the result.
+    - Test 3 (bulk bridge insert): Given 3 prospects → 5 valid bridges, `tx.insert(prospectBridges).values(bridges).onConflictDoNothing()` is called exactly once with all 5 rows. After return, the DB has 5 `prospect_bridges` rows.
+    - Test 4 (idempotency under retry): Running the same matchConnections invocation twice in two separate transactions (re-scraping the same lead) results in 5 bridges total, not 10 — the partial conflict on `prospect_bridge_unique` deduplicates the second batch silently.
+    - Test 5 (empty input): scrapedProspects=[] → returns `{matched:0, unmatched:0, contactIdsNeedingTriage:[]}` with NO SELECT and NO INSERT issued (defensive early return).
+  </behavior>
+  <action>
+    Rewrite `src/features/job-leads/lib/match-connections.ts` to:<pre><code>1. Change the exported signature per D-03 + WARNING 1 fix. Use the precise neon-http transaction type, NOT `typeof db`:
+   ```typescript
+   import type { NeonHttpTransaction } from &#39;drizzle-orm/neon-http&#39;;
+   import type { ExtractTablesWithRelations } from &#39;drizzle-orm&#39;;
+   import * as schema from &#39;../../../../drizzle/schema&#39;;  // adjust path
+
+   type Tx = NeonHttpTransaction&lt;typeof schema, ExtractTablesWithRelations&lt;typeof schema&gt;&gt;;
+
+   export async function matchConnections(
+     tx: Tx,
+     jobLeadId: string,
+     scrapedProspects: ScrapedProspect[]
+   ): Promise&lt;MatchResult&gt;
+   ```
+
+   **Fallback if the named export does not exist in drizzle-orm v0.45.1**: use the structural alias.
+   ```typescript
+   import type { db } from &#39;@/lib/db&#39;;
+   type Tx = Parameters&lt;Parameters&lt;typeof db.transaction&gt;[0]&gt;[0];
+   ```
+   During implementation, attempt the named-import form first; if `tsc` complains that `NeonHttpTransaction` is not exported, switch to the structural alias.
+
+   The narrower type is mandatory — `typeof db` would permit `tx.transaction(...)` (nested transactions are unsupported by neon-http). Lock the narrowness with an acceptance criterion comment in the function body: `// @ts-expect-error tx is NeonHttpTransaction and forbids nested transactions` placed immediately above a hypothetical `tx.transaction(...)` call site (the line is deliberately broken to assert type narrowness, OR — preferred — a single inline comment without the actual call, documenting the invariant).
+
+2. Replace every `db.X` call in the function body with `tx.X`. There must be ZERO references to the imported `db` runtime singleton inside `matchConnections` after the rewrite. **The `db` import is reduced to a TYPE-ONLY import** (WARNING 5 fix): change the import to `import type { db } from &#39;@/lib/db&#39;;` so `db` survives only as a type reference for the `Tx` fallback alias (above) — runtime usages are removed. The greppable regression `grep -c &#39;await db\.&#39; src/features/job-leads/lib/match-connections.ts` MUST return 0 — `import type` does not generate runtime imports.
+
+   Note: if the named `NeonHttpTransaction` import works (no fallback needed), the `import type { db }` line can be removed entirely.
+
+3. Implement the narrowed contacts SELECT per D-11:
+   - First, defensive early return: if `scrapedProspects.length === 0`, return `{matched:0, unmatched:0, contactIdsNeedingTriage:[]}` without issuing any SELECT or INSERT.
+   - Collect all unique whitespace-split lowercase tokens from `scrapedProspects.flatMap(p =&gt; p.mutualConnectionNames).flatMap(s =&gt; s.toLowerCase().split(/\s+/)).filter(Boolean)`.
+   - If the token set is empty (all prospects had empty `mutualConnectionNames`), `allContacts = []` and skip the SELECT — there is no way any contact could match an empty mutual-names list, so the fuzzy match will produce zero bridges anyway.
+   - Else: issue ONE narrowed SELECT:
+     ```typescript
+     const tokens = Array.from(tokenSet);  // string[]
+     const allContacts = await tx
+       .select()
+       .from(contacts)
+       .where(and(
+         isNull(contacts.archivedAt),
+         sql`(lower(${contacts.firstName}) IN (${sql.join(tokens.map(t =&gt; sql`${t}`), sql`, `)}) OR lower(${contacts.lastName}) IN (${sql.join(tokens.map(t =&gt; sql`${t}`), sql`, `)}))`
+       ));
+     ```
+     The `sql.join(tokens.map(t =&gt; sql`${t}`), sql`, `)` pattern is the established Drizzle idiom for parameterized IN-lists with arbitrary array contents (see `src/app/api/interactions/route.ts:39` for `sql.join` usage). This binds each token as a separate parameter — NO string concatenation, NO SQL injection surface.
+
+     Alternative considered + rejected: `inArray(sql\`lower(${contacts.firstName})\`, tokens)` — Drizzle&#39;s `inArray` does not support expression-on-the-left-of-IN cleanly; the `sql` template is more reliable here.
+
+4. Keep the existing fuzzy match logic (lines 17-37, `normalizeForMatch` + `fuzzyMatch`) UNCHANGED. The narrowing in step 3 is a pre-filter; the existing in-memory `fuzzyMatch` is the final comparison. D-11 explicitly preserves the in-memory fuzzy match.
+
+5. Replace the per-row bridge insert loop (current lines 103-112) with a single bulk insert per D-04:
+   ```typescript
+   if (bridgeValues.length &gt; 0) {
+     await tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing();
+   }
+   ```
+   NO `try/catch` around it. NO `target` argument — Postgres infers from the only unique constraint on the table (`prospect_bridge_unique`). The `onConflictDoNothing()` silently drops duplicates that would violate the (prospect_id, contact_id) uniqueness, preserving idempotency under retry (D-19 invariant).
+
+6. Update imports at the top of the file:
+   - Add `and` to the `drizzle-orm` import (currently only `eq, isNull`).
+   - Add `sql` to the `drizzle-orm` import — required for the `sql.join` parameterized IN-list.
+   - Convert any remaining `db` import to `import type { db }` (WARNING 5 fix), OR remove it entirely if the `NeonHttpTransaction` named import is used. Keep the file&#39;s other imports unchanged.
+
+Do NOT change the `ScrapedProspect` shape, the `MatchResult` shape, the `fuzzyMatch` algorithm, or the `prospectByName` map construction. Do NOT introduce `pg_trgm` or any server-side fuzzy matching — that is deferred per CONTEXT §Deferred. Do NOT remove the `archived_at IS NULL` filter — soft-delete invariant.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -v '^#' src/features/job-leads/lib/match-connections.ts | grep -c "await db\." | grep -q "^0$" && grep -v '^#' src/features/job-leads/lib/match-connections.ts | grep -c "for.*await tx.insert" | grep -q "^0$" && echo "No `await db.*` and no for-await-tx.insert in match-connections.ts"</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/features/job-leads/lib/match-connections.ts` exported signature is `matchConnections(tx, jobLeadId, scrapedProspects)` with `tx: Tx` where `Tx` is either the named `NeonHttpTransaction<...>` or the structural `Parameters<Parameters<typeof db.transaction>[0]>[0]` fallback — NOT `typeof db`.
+    - Zero `await db.` references remain in `matchConnections` body (verified by grep above; comments-only matches stripped via the `grep -v '^#'` filter so header comments cannot self-invalidate the gate).
+    - The `db` import (if retained for the fallback type alias) is `import type { db } from '@/lib/db'` — type-only, no runtime emission. If the `NeonHttpTransaction` named import works, the `db` import is removed entirely.
+    - Zero `for...of await tx.insert(prospectBridges)` patterns remain (verified by greppable regression per D-21).
+    - The narrowed SELECT uses Drizzle's `sql.join` parameter binding for the IN-list (NOT `sql.raw` with string concatenation) — this is a SECURITY-CRITICAL requirement per the security threat model below. Verify by inspecting the implementation: every token must be interpolated as `sql\`${t}\``, never embedded into a template literal.
+    - The bulk bridge insert is exactly one `tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()` call with no surrounding `try/catch`.
+    - `isNull(contacts.archivedAt)` is preserved in the narrowed WHERE clause (soft-delete invariant).
+    - `npx tsc --noEmit` exits 0. **The compile MUST fail** if a hypothetical `tx.transaction(...)` call were added — verifying the type narrowness. The implementer may add a single `// @ts-expect-error` test line near the end of the function (immediately removed before commit) to confirm; the durable check is that `Tx` is structurally narrower than `typeof db`.
+    - The full vitest suite (`npm run test:run`) exits 0 — the test for this task (Task 3 below) plus all existing tests pass.
+  </acceptance_criteria>
+  <done>matchConnections is transaction-aware (with the narrow NeonHttpTransaction type), narrowed, and bulk-inserts bridges in one statement.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Wrap POST /api/job-leads/[id]/prospects in db.transaction and call matchConnections inline</name>
+  <files>src/app/api/job-leads/[id]/prospects/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/prospects/route.ts (full file, 89 lines) — current implementation; the bulk prospect insert (lines 50-61) is correct and stays. The transaction wrap is the new outer scope; the inline matchConnections call sits between the bulk insert and the status update.
+    - src/features/job-leads/lib/match-connections.ts (post-Task-1) — new signature `matchConnections(tx, jobLeadId, scrapedProspects)`.
+    - .planning/phases/06-performance/06-CONTEXT.md D-01, D-02 (atomic rollback invariant), D-03.
+    - .planning/phases/06-performance/06-PATTERNS.md §"src/app/api/job-leads/[id]/prospects/route.ts" — canonical route shell to preserve.
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md — the skill's contract; the response envelope MUST remain `{ insertedCount, lead }` per the agreement with the skill (this is what `expect(body).toMatchObject({success: true, data: expect.objectContaining({insertedCount: 5})})` in the existing test asserts).
+  </read_first>
+  <behavior>
+    - Test 1 (existing happy-path Test 1 in route.test.ts — must still pass): POST 5 prospects → status flips to 'found', prospectCount=5, exactly one timeline event with eventType `job_lead_search_complete`. Response envelope `{success:true, data:{insertedCount:5, lead:...}}` unchanged.
+    - Test 2 (new — inline matchConnections produces bridges): seed 2 active contacts (`Carol Chen`, `Dave Davis`); POST 1 prospect with `mutualConnectionNames: ['Carol Chen', 'Dave Davis']`. After the route returns 201, `select * from prospect_bridges` returns 2 rows.
+    - Test 3 (new — atomicity / rollback on bridge failure): force a failure inside `matchConnections` via `mockRejectedValueOnce` (see Task 3 for the single-strategy mock pattern). Assert: after the route returns 500, `select * from prospects where job_lead_id = leadId` returns 0 rows AND `select * from prospect_bridges where ...` returns 0 rows AND `select status from job_leads where id = leadId` returns `'searching'` (NOT `'found'`) AND `select * from timeline_events` returns 0 rows (D-02 invariant: no partial state observed; logTimeline post-commit emission).
+    - Test 4 (new — idempotency under retry): call the route twice in succession with the same 3 prospects + 1 mutual-name match. First call: 3 prospects inserted, 1 bridge inserted, status flip → 'found', 1 timeline event. Second call: returns 400 `validationError("Cannot write prospects to lead in status 'found'")` because the state check at line 42-46 rejects writes to non-`searching` leads. This proves the state-check ordering is preserved.
+  </behavior>
+  <action>
+    Rewrite the handler body of `POST /api/job-leads/[id]/prospects/route.ts` to wrap the entire write set in `db.transaction()`:<pre><code>Before the rewrite, confirm: the existing bulk prospect insert (lines 50-61) is already a single statement and is correct. DO NOT touch the row-mapping logic, the Zod parse, the lead-lookup, the status check, or the 404/validation/server error returns.
+
+Required structure (preserve every layer):
+```typescript
+export async function POST(request, { params }) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = bulkBody.parse(body);
+
+    // Lead lookup + status check — happen BEFORE the transaction (read-only,
+    // not in the write set). Status check rejects writes to non-&#39;searching&#39;
+    // leads; if it fails, no transaction is opened at all.
+    const [lead] = await db.select().from(jobLeads).where(eq(jobLeads.id, id)).limit(1);
+    if (!lead) return notFound(&#39;Job lead&#39;);
+    if (lead.status !== &#39;searching&#39;) {
+      return validationError(`Cannot write prospects to lead in status &#39;${lead.status}&#39;`);
+    }
+
+    const rows = validated.prospects.map((p) =&gt; ({ /* unchanged row mapping */ }));
+
+    // ATOMIC WRITE SET: prospects insert + matchConnections + status flip
+    // all commit or all roll back together. logTimeline is OUTSIDE so a
+    // rolled-back transaction never emits an event (D-02 invariant; see
+    // logTimeline placement rationale below).
+    const updated = await db.transaction(async (tx) =&gt; {
+      if (rows.length &gt; 0) {
+        await tx.insert(prospects).values(rows);
+      }
+
+      // Inline matchConnections call per D-01. Bridges insert happens inside
+      // tx; rollback on failure unwinds prospects too.
+      await matchConnections(tx, id, validated.prospects);
+
+      const [u] = await tx
+        .update(jobLeads)
+        .set({
+          status: &#39;found&#39;,
+          prospectCount: rows.length,
+          lastError: null,
+          lastErrorAt: null,
+          updatedAt: new Date()
+        })
+        .where(eq(jobLeads.id, id))
+        .returning();
+      return u;
+    });
+
+    // POST-COMMIT side-effect (WARNING 3 fix — concrete rationale):
+    //
+    // Drizzle&#39;s neon-http `db.transaction(...)` returns ONLY after the Neon
+    // HTTP endpoint acknowledges COMMIT. Therefore `await db.transaction(...)`
+    // resolves post-commit; placing `logTimeline()` after that `await`
+    // guarantees the timeline event is emitted only on committed state.
+    // If the transaction throws, logTimeline never runs (Test 3 asserts this).
+    await logTimeline({
+      eventType: &#39;job_lead_search_complete&#39;,
+      title: `Found ${rows.length} prospects at ${lead.companyName || &#39;Unknown&#39;}`,
+      companyId: lead.companyId || undefined,
+      metadata: { jobLeadId: id, prospectCount: rows.length }
+    });
+
+    return created({ insertedCount: rows.length, lead: updated });
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+```
+
+Imports to add at the top of the route file:
+- `matchConnections` from `@/features/job-leads/lib/match-connections`.
+
+Do NOT move logTimeline INSIDE the transaction. The post-commit-only invariant (Test 3 asserts zero timeline rows after rollback) is the durable correctness signal — any change here voids the D-02 atomicity guarantee.
+
+Do NOT change the `bulkBody` Zod schema, the `prospectSchema` shape, or the request-body shape — the skill&#39;s contract depends on `mutualConnectionNames` continuing to be optional-empty-array per the existing Zod schema at line 18.
+
+Do NOT change the response envelope (`{ insertedCount, lead }`). The skill in `.claude/skills/scrape-linkedin-connections/references/heimdall-api.md` lines 56-65 documents this exact shape; breaking it would require updating the skill, which is out of scope for Phase 6.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -v '^#' src/app/api/job-leads/[id]/prospects/route.ts | grep -q "db.transaction" && grep -v '^#' src/app/api/job-leads/[id]/prospects/route.ts | grep -q "matchConnections(tx," && echo "transaction wrap + tx-passed inline call present"</automated>
+  </verify>
+  <acceptance_criteria>
+    - The route imports `matchConnections` from `@/features/job-leads/lib/match-connections`.
+    - The handler wraps `prospects.insert + matchConnections + jobLeads.update` in `db.transaction(async (tx) => {...})`. All three writes use `tx`, not `db`.
+    - `logTimeline()` is called AFTER `await db.transaction(...)` resolves successfully — it is OUTSIDE the transaction callback. This is the post-commit invariant from WARNING 3 fix: Drizzle's neon-http transaction await guarantees the COMMIT has been acknowledged before resolving.
+    - The lead-lookup `db.select().from(jobLeads)...` and the `lead.status !== 'searching'` check happen BEFORE the transaction opens (they are read-only / decision-only).
+    - Response envelope is `{ insertedCount, lead }` (unchanged from current — verified by the existing test continuing to pass).
+    - Test 3 (rollback) MUST assert `await dbRef.current!.select().from(timelineEvents)` returns zero rows after the forced rollback — pinning the post-commit-only invariant.
+    - `npx tsc --noEmit` exits 0.
+    - `npm run test:run -- src/app/api/job-leads/[id]/prospects/route.test.ts` exits 0 with the existing Test 1 still passing AND the 3 new tests from Task 3 (Test 2, 3, 4) passing.
+  </acceptance_criteria>
+  <done>Route handler wraps the full write set in a transaction and inlines the matchConnections call; logTimeline is post-commit; existing skill contract preserved.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 3: Extend route.test.ts with bridges, rollback-on-failure, and idempotency tests</name>
+  <files>src/app/api/job-leads/[id]/prospects/route.test.ts</files>
+  <read_first>
+    - **src/app/api/job-leads/[id]/prospects/route.test.ts (the EXISTING test file — full read mandatory)** — Test 1 is already written; its existing assertions establish the harness and the happy-path baseline. The new tests append to the SAME `describe` block and reuse the SAME `beforeEach`. The mock strategy chosen below (BLOCKER 2 fix) is designed to preserve Test 1's existing assertions verbatim.
+    - src/app/api/contacts/import/route.test.ts (the dedup-within-import test at lines 82-108 is the analog for "second call returns expected response" + DB-state-after assertion pattern).
+    - drizzle/schema/index.ts — confirms `contacts` and `prospectBridges` are exported (they are; the existing barrel re-exports all schema tables).
+    - .planning/phases/06-performance/06-CONTEXT.md D-19 (PGlite-backed route tests assert post-conditions: correct row counts, idempotency under retry, logTimeline emitted exactly once).
+  </read_first>
+  <behavior>
+    - Test 1 (existing — DO NOT modify): 5 prospects → flips to 'found', emits one timeline event. Existing assertions hold because (a) Test 1 seeds zero contacts whose first/last name overlaps with the mutual-name tokens in Test 1's prospects, so the REAL matchConnections's narrowed SELECT returns 0 contacts → 0 bridges, leaving prospect-insert behavior unchanged; (b) if Test 1's seeds did happen to match a token, that is an additional positive assertion the test now makes — not a regression.
+    - Test 2 (new — bridges happy path): seed 2 contacts (`Carol Chen`, `Dave Davis`, both archived_at NULL); POST 1 prospect with `mutualConnectionNames: ['Carol Chen', 'Dave Davis']`. Expected: 1 prospect row, 2 prospect_bridges rows, status='found', 1 timeline event. **Uses the REAL matchConnections — NO mock.**
+    - Test 3 (new — rollback-on-bridge-failure): use `vi.mocked(matchConnections).mockRejectedValueOnce(new Error('forced rollback'))` to inject ONE failure (Tests 1, 2, 4 are unaffected — they use the REAL matchConnections via `vi.importActual`). After the call returns 500, assert: 0 prospects, 0 bridges, 0 timeline events, lead.status === 'searching' (unchanged). The zero-timeline-events assertion is the post-commit-only invariant from WARNING 3 fix.
+    - Test 4 (new — idempotency): same as Test 1 but call the route twice. First call returns 201. Second call returns 400 with error message containing `Cannot write prospects to lead in status 'found'` (per the existing status guard at route.ts line 42-46). DB state after both calls: 3 prospects, exactly 1 timeline event total. **Uses the REAL matchConnections — NO mock.**
+  </behavior>
+  <action>
+    Append three new `it(...)` blocks to the existing `describe('POST /api/job-leads/[id]/prospects (bulk insert)', ...)` block in `src/app/api/job-leads/[id]/prospects/route.test.ts`. Do NOT create a new test file — reuse the existing harness setup (`beforeEach` already creates a fresh PGlite + seeds company + lead).<pre><code>**Mock strategy (BLOCKER 2 fix — single, decisive pattern):**
+
+Use `vi.importActual` + selective `mockImplementationOnce` ONLY for the failure injection in Test 3. Tests 1, 2, and 4 ALL use the REAL `matchConnections` against the seeded PGlite database — NO stubbing for those.
+
+Top of the test file (alongside the existing `dbRef` hoisted mock):
+```typescript
+import * as matchConnectionsModule from &#39;@/features/job-leads/lib/match-connections&#39;;
+
+// No vi.mock(...) at module top. We use vi.spyOn at the test level (Test 3 only)
+// so Tests 1/2/4 receive the real export and exercise its real behavior against
+// the seeded PGlite database.
+```
+
+Tests 1, 2, 4 do not touch the mock — they call the route as-is, the route imports `matchConnections` from the real module, and that real function executes against the seeded contacts.
+
+Test 3 alone overrides with `mockRejectedValueOnce`:
+```typescript
+it(&#39;Test 3: rollback on matchConnections failure leaves no prospects, bridges, or timeline events (D-02)&#39;, async () =&gt; {
+  const spy = vi.spyOn(matchConnectionsModule, &#39;matchConnections&#39;)
+    .mockRejectedValueOnce(new Error(&#39;forced rollback&#39;));
+
+  try {
+    const { POST } = await import(&#39;@/app/api/job-leads/[id]/prospects/route&#39;);
+    const { status } = await callRoute(POST, {
+      method: &#39;POST&#39;,
+      params: { id: leadId },
+      body: { prospects: [/* 2 valid prospects */] }
+    });
+    expect(status).toBe(500);
+
+    // FOUR rollback invariants:
+    const prospectRows = await dbRef.current!.select().from(prospects);
+    expect(prospectRows).toHaveLength(0);
+
+    const bridgeRows = await dbRef.current!.select().from(prospectBridges);
+    expect(bridgeRows).toHaveLength(0);
+
+    const timelineRows = await dbRef.current!.select().from(timelineEvents);
+    expect(timelineRows).toHaveLength(0);  // Post-commit-only invariant pinned.
+
+    const [leadAfter] = await dbRef.current!
+      .select()
+      .from(jobLeads)
+      .where(eq(jobLeads.id, leadId));
+    expect(leadAfter.status).toBe(&#39;searching&#39;);
+  } finally {
+    spy.mockRestore();
+  }
+});
+```
+
+**Why this strategy is the single chosen pattern (BLOCKER 2 fix narrative):**
+- Tests 1 (existing happy path) and 4 (new idempotency) both rely on real matchConnections behavior — Test 1&#39;s existing assertions hold because Test 1 seeds zero contacts that overlap with the prospects&#39; mutual-name tokens (the narrowed SELECT returns 0 → 0 bridges inserted → prospect-insert + status flip behavior unchanged).
+- Test 2 (new bridges happy path) EXPLICITLY needs the real matchConnections to produce the 2 bridges from the 2 seeded matching contacts.
+- Test 3 is the ONLY test that needs to inject a failure — `vi.spyOn(...).mockRejectedValueOnce(...)` is the minimal-blast-radius pattern: it modifies the actual imported binding for ONE call only, then `spy.mockRestore()` reverts. No `vi.hoisted`, no `vi.mock`, no `vi.doMock`, no `vi.resetModules` — none of those are used in this file.
+- This pattern works in vitest because `matchConnectionsModule` is an ESM namespace; `vi.spyOn(namespace, &#39;export&#39;)` rewrites the export binding for the test&#39;s duration (vitest&#39;s documented behavior for ESM mocking via spy).
+
+Test 2 (real matchConnections):
+```typescript
+it(&#39;Test 2: inline matchConnections inserts bridges for matched mutual connections (D-01, D-04)&#39;, async () =&gt; {
+  const [carol, dave] = await dbRef.current!
+    .insert(contacts)
+    .values([
+      { firstName: &#39;Carol&#39;, lastName: &#39;Chen&#39; },
+      { firstName: &#39;Dave&#39;, lastName: &#39;Davis&#39; }
+    ])
+    .returning();
+
+  const { POST } = await import(&#39;@/app/api/job-leads/[id]/prospects/route&#39;);
+  const { status, body } = await callRoute(POST, {
+    method: &#39;POST&#39;,
+    params: { id: leadId },
+    body: {
+      prospects: [{
+        name: &#39;Alice&#39;,
+        title: &#39;CTO&#39;,
+        linkedinUrl: &#39;https://linkedin.com/in/alice&#39;,
+        profileSnippet: null,
+        mutualConnectionNames: [&#39;Carol Chen&#39;, &#39;Dave Davis&#39;]
+      }]
+    }
+  });
+
+  expect(status).toBe(201);
+  const data = (body as { data: { insertedCount: number } }).data;
+  expect(data.insertedCount).toBe(1);
+
+  const bridges = await dbRef.current!.select().from(prospectBridges);
+  expect(bridges).toHaveLength(2);
+  const bridgedContactIds = bridges.map((b) =&gt; b.contactId).sort();
+  expect(bridgedContactIds).toEqual([carol.id, dave.id].sort());
+});
+```
+
+Test 4 (idempotency — real matchConnections):
+```typescript
+it(&#39;Test 4: second call to same lead returns 400 (status check rejects), DB state unchanged&#39;, async () =&gt; {
+  const { POST } = await import(&#39;@/app/api/job-leads/[id]/prospects/route&#39;);
+  const body = {
+    prospects: [
+      { name: &#39;A&#39;, title: &#39;CTO&#39;, linkedinUrl: null, profileSnippet: null, mutualConnectionNames: [] },
+      { name: &#39;B&#39;, title: &#39;VP&#39;,  linkedinUrl: null, profileSnippet: null, mutualConnectionNames: [] },
+      { name: &#39;C&#39;, title: &#39;Dir&#39;, linkedinUrl: null, profileSnippet: null, mutualConnectionNames: [] }
+    ]
+  };
+
+  const first = await callRoute(POST, { method: &#39;POST&#39;, params: { id: leadId }, body });
+  expect(first.status).toBe(201);
+
+  const second = await callRoute(POST, { method: &#39;POST&#39;, params: { id: leadId }, body });
+  expect(second.status).toBe(400);
+  expect((second.body as { error: string }).error).toContain(&quot;Cannot write prospects to lead in status &#39;found&#39;&quot;);
+
+  const prospectRows = await dbRef.current!.select().from(prospects);
+  expect(prospectRows).toHaveLength(3);
+
+  const timelineRows = await dbRef.current!.select().from(timelineEvents);
+  expect(timelineRows).toHaveLength(1);
+});
+```
+
+Naming the tests in the standard pattern: `&#39;Test N: &lt;description&gt;&#39;` to match the existing Test 1 naming in the file.
+
+Do NOT reorder existing tests. Do NOT modify Test 1. Place the three new `it` blocks AFTER Test 1 in the same describe block.
+
+Do NOT use `vi.hoisted` to pre-mock matchConnections — that would break Tests 1, 2, and 4 (which need the real implementation). Do NOT use `vi.doMock` + `vi.resetModules` — that competing pattern was explicitly rejected (BLOCKER 2). The `vi.spyOn + mockRejectedValueOnce` pattern is the SINGLE chosen approach.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/app/api/job-leads/[id]/prospects/route.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - Test file contains 4 `it(...)` blocks total (the existing Test 1 plus 3 new tests).
+    - All 4 tests pass (`npm run test:run -- src/app/api/job-leads/[id]/prospects/route.test.ts` exits 0).
+    - Tests 1, 2, 4 use the REAL `matchConnections` from `@/features/job-leads/lib/match-connections` — NO mocking. Test 3 is the SOLE test that injects a failure, via `vi.spyOn(matchConnectionsModule, 'matchConnections').mockRejectedValueOnce(...)` + `spy.mockRestore()` in `finally`.
+    - Test 3 asserts ALL FOUR rollback invariants: 0 prospects, 0 bridges, 0 timeline events, lead.status remained 'searching' (D-02 invariant). The zero-timeline-events assertion specifically pins the post-commit-only invariant from WARNING 3 fix.
+    - Test 4 asserts exactly 1 timeline event total after 2 calls — proves the post-commit emission pattern (idempotent under user-side retry).
+    - There is NO `vi.hoisted`, NO `vi.mock`, NO `vi.doMock`, NO `vi.resetModules`, and NO `vi.importActual` in the new test code — the `vi.spyOn` pattern is the single chosen strategy.
+    - The full suite (`npm run test:run`) still exits 0 — the new tests do not break any existing test.
+  </acceptance_criteria>
+  <done>Three new PGlite-backed tests pin the bridges + rollback + idempotency invariants from D-19 and D-21, using a single decisive mock strategy.</done>
+</task><task type="auto">
+  <name>Task 4: Refresh ROADMAP §Phase 6 SC #1 wording per D-18 (folded into Task 2's commit)</name>
+  <files>.planning/ROADMAP.md, .planning/views/ROADMAP.html</files>
+  <read_first>
+    - .planning/ROADMAP.md lines 123-132 — Phase 6 entry with the 4 numbered Success Criteria. SC #1 currently reads "`/api/job-leads/[id]/search` inserts all scraped prospects in a single bulk insert, and `match-connections.ts` inserts all prospect bridges in a single bulk insert ..." but the prospect-insert path was relocated to `/api/job-leads/[id]/prospects` in Phase 5 (and `/api/job-leads/[id]/search` is now a thin status-flip per the Phase 5 reshape — see .planning/phases/05-job-leads-completion/05-CONTEXT.md).
+    - .planning/phases/06-performance/06-CONTEXT.md D-18 (atomic-per-requirement commit pattern) + the "Incidental fold #1 — Refresh ROADMAP SC #1 wording" entry in §"In scope".
+    - CLAUDE.md §"Planning-document HTML companions" — every `.planning/*.md` change must produce or refresh `.planning/views/*.html`.
+    - .planning/views/ROADMAP.html (existing companion — palette + structure).
+  </read_first>
+  <action>
+    Edit `.planning/ROADMAP.md` Phase 6 Success Criterion #1 to:
+    > "`/api/job-leads/[id]/prospects` (the route Phase 5 introduced for bulk prospect writes) performs a single bulk insert of scraped prospects, and `match-connections.ts` performs a single bulk insert of prospect bridges (`onConflictDoNothing()` on the `prospect_bridge_unique` constraint). The entire `POST /prospects` handler runs inside `db.transaction()` so prospect insert + bridge insert + status flip commit or roll back together."<pre><code>Keep SC #2, #3, #4 unchanged.
+
+Then refresh `.planning/views/ROADMAP.html` to mirror the same wording — locate the Phase 6 card&#39;s SC #1 list item and update it. Do NOT touch SC #2-#4 in the HTML; do NOT regenerate the entire file from scratch; minimal-diff edit only. Use the same `&lt;li&gt;` markup as the surrounding SC items.
+
+Do NOT remove or renumber SC #1. Do NOT bump the phase status — Phase 6 is still in-flight.
+
+**Commit folding (per INFO 1):** This edit is a doc-only change that documents the same code change as Task 2. To save an atomic-commit cycle, the implementer SHOULD fold this edit into Task 2&#39;s commit (the route refactor commit) as a follow-up edit within the same staged hunk — same commit message, two doc files added. If the executor&#39;s git workflow makes that awkward, a separate doc commit immediately after Task 2 is acceptable per D-18 (&quot;ROADMAP SC #1 wording refresh ships in the same commit as Plan 2a since it documents the same change&quot;).
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -q "api/job-leads/\[id\]/prospects" .planning/ROADMAP.md && grep -q "db.transaction" .planning/ROADMAP.md && grep -q "api/job-leads/\[id\]/prospects" .planning/views/ROADMAP.html && echo "ROADMAP + HTML companion both updated"</automated>
+  </verify>
+  <acceptance_criteria>
+    - `.planning/ROADMAP.md` Phase 6 SC #1 names `/api/job-leads/[id]/prospects` (NOT `/api/job-leads/[id]/search`) as the prospect-insert path.
+    - `.planning/ROADMAP.md` Phase 6 SC #1 references `db.transaction()` (the atomic-write invariant from D-02).
+    - `.planning/views/ROADMAP.html` Phase 6 card's SC #1 contains the same wording (the HTML companion may lag content but for this commit must be in sync per the user's global instruction).
+    - SC #2, #3, #4 wording is unchanged in both files.
+    - No other phase entries modified.
+  </acceptance_criteria>
+  <done>ROADMAP SC #1 wording refreshed to match the actual prospect-insert path and atomicity guarantee, and the HTML companion mirrors it.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Code skill → POST /api/job-leads/[id]/prospects</td>
+<td>Bearer-token authenticated; request body Zod-validated against <code>bulkBody</code> schema (lines 21-23); inputs are scraped prospect data (name, title, linkedinUrl, profileSnippet, mutualConnectionNames). The skill is single-user-locked; trust is high but not absolute.</td>
+</tr>
+<tr>
+<td>matchConnections inputs → narrowed contacts SELECT</td>
+<td>mutualConnectionNames flow from skill-controlled input into a SQL <code>IN (...)</code> clause; parameter binding is the only safe construction.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-06-05</td>
+<td>T (tampering) / I (injection)</td>
+<td>match-connections.ts narrowed SELECT IN-list</td>
+<td>mitigate</td>
+<td>The token array (from <code>mutualConnectionNames</code>) is interpolated via Drizzle&#39;s <code>sql\</code>${t}`<code>template tag (which generates a parameterized bind), NOT</code>sql.raw<code>. Task 1 acceptance criteria explicitly forbid </code>sql.raw<code>for the token list — every token must be a separate bound parameter. Verified by visual inspection during code review and by Zod&#39;s</code>z.string().max(200)` cap on each name string (line 18 of route.ts) which bounds the per-token payload size.</td>
+</tr>
+<tr>
+<td>T-06-06</td>
+<td>T (tampering)</td>
+<td>partial atomicity (prospects inserted but bridges fail)</td>
+<td>mitigate</td>
+<td>D-02 invariant: <code>db.transaction()</code> wraps the prospect insert + bridge insert + status flip. Test 3 (Task 3) deliberately fails matchConnections and asserts 0 prospects/bridges/timeline events post-rollback. The neon-http adapter coalesces the transaction into one HTTP request; partial state cannot be observed by the UI.</td>
+</tr>
+<tr>
+<td>T-06-07</td>
+<td>R (repudiation) / I</td>
+<td>timeline event emitted for a rolled-back transaction</td>
+<td>mitigate</td>
+<td>logTimeline is intentionally placed OUTSIDE the transaction callback (post-commit). Drizzle&#39;s neon-http <code>db.transaction(...)</code> returns ONLY after the Neon HTTP endpoint acknowledges COMMIT, so <code>await db.transaction(...)</code> resolves post-commit; logTimeline after that await runs only on committed state. Test 3 asserts 0 timeline rows after a forced rollback, pinning the invariant.</td>
+</tr>
+<tr>
+<td>T-06-08</td>
+<td>D (denial of service)</td>
+<td>bridge insert with 100k mutual connections</td>
+<td>accept</td>
+<td>Zod schema caps <code>mutualConnectionNames: z.array(...).max(50)</code> per prospect; <code>prospects: z.array(...).max(200)</code> per request — worst case 10,000 mutual names per request, fuzzy-match O(n*m) is bounded. Single-user app makes resource exhaustion not a realistic threat.</td>
+</tr>
+<tr>
+<td>T-06-09</td>
+<td>E (elevation of privilege)</td>
+<td>matchConnections taking a <code>tx</code> handle</td>
+<td>accept</td>
+<td><code>tx</code> is the transaction-scoped Drizzle handle (<code>NeonHttpTransaction&lt;...&gt;</code>); it has the same schema/permission scope as the singleton <code>db</code> (same Neon connection, same role) but is structurally narrower (cannot open nested transactions). No privilege escalation surface; the narrower type prevents accidental nested-transaction misuse at compile time.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. Greppable regression gate: `grep -v '^#' src/features/job-leads/lib/match-connections.ts | grep -c "for.*await.*tx.insert"` returns `0` (D-21 forbidden pattern).
+2. Greppable regression gate: `grep -v '^#' src/features/job-leads/lib/match-connections.ts | grep -c "await db\."` returns `0` (no singleton-db calls inside matchConnections).
+3. Greppable regression gate: `grep -v '^#' src/app/api/job-leads/[id]/prospects/route.ts | grep -q "db.transaction"` exits 0.
+4. `npx tsc --noEmit` exits 0.
+5. `npm run test:run` exits 0 (the full suite, not just the route test — verifies no cross-test regression).
+6. `npm run build` exits 0.
+7. ROADMAP grep gate: `grep -q "api/job-leads/\[id\]/prospects" .planning/ROADMAP.md` and `.planning/views/ROADMAP.html` both pass.
+</verification><success_criteria>
+- POST /api/job-leads/[id]/prospects atomically inserts prospects + bridges + flips status — verified by Test 2 (bridges created), Test 3 (rollback invariant including zero timeline events — post-commit-only), and the existing Test 1 (happy path unchanged).
+- match-connections.ts no longer scans the full contacts table — verified by code review (narrowed SELECT predicate with `lower(first_name) IN (...) OR lower(last_name) IN (...)` token list).
+- Bridge insert is a single statement with `onConflictDoNothing()` — verified by greppable regression for `for...of await tx.insert(prospectBridges)`.
+- matchConnections's `tx` parameter is typed as the narrow neon-http transaction handle (NOT `typeof db`) — verified by the type alias chosen (`NeonHttpTransaction<...>` or the structural fallback).
+- Skill contract preserved — response envelope `{ insertedCount, lead }` is unchanged; the heimdall-api.md reference doc does not need updating.
+- ROADMAP SC #1 wording reflects the actual code path (D-18).
+- PERF-A1 (bridges half) and PERF-A2 are both delivered in one atomic commit.
+</success_criteria><output>
+After completion, create `.planning/phases/06-performance/06-02-SUMMARY.md` capturing:
+- The final type alias chosen for `matchConnections`'s `tx` parameter (named `NeonHttpTransaction` or the structural `Parameters<Parameters<typeof db.transaction>[0]>[0]` fallback).
+- The exact form of the narrowed SELECT predicate (the planner-chosen `sql.join` idiom).
+- The mock strategy used in Test 3 (`vi.spyOn + mockRejectedValueOnce + spy.mockRestore` is the single chosen pattern — confirm).
+- Any duplicate-bridge entries dropped by `onConflictDoNothing()` during the idempotency test (Test 4) — expected count: zero (Test 4's second call is rejected at the status guard before reaching the transaction).
+</output>
+</content>
+</invoke>
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/features/products/components/product-listing.tsx</li>
+<li>src/features/products/components/product-form.tsx</li>
+<li>src/features/products/components/product-view-page.tsx</li>
+<li>src/features/products/components/product-tables/columns.tsx</li>
+<li>src/features/products/components/product-tables/cell-action.tsx</li>
+<li>src/app/dashboard/product/page.tsx</li>
+<li>src/app/dashboard/product/[productId]/page.tsx</li>
+<li>src/constants/mock-api.ts</li>
+<li>src/constants/data.ts</li>
+<li>src/hooks/use-breadcrumbs.tsx
+autonomous: true
+requirements:</li>
+<li>DEBT-A1
+tags:</li>
+<li>cleanup</li>
+<li>starter-template</li>
+<li>deletion</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;src/features/products/ no longer exists in the repo (SC #2)&quot;
+    - &quot;src/app/dashboard/product/ no longer exists in the repo (SC #1, SC #2)&quot;
+    - &quot;src/constants/mock-api.ts no longer exists (dead support consumed only by products)&quot;
+    - &quot;Product, SaleUser, recentSalesData symbols no longer exist anywhere in src/&quot;
+    - &quot;The &#39;/dashboard/product&#39; entry no longer exists in the breadcrumbs map&quot;
+    - &quot;npm run build exits 0 after the deletions (no orphan import errors)&quot;
+    - &quot;D-07: src/features/products/ and src/app/dashboard/product/ both deleted (whole directories)&quot;
+    - &quot;D-08: src/constants/mock-api.ts deleted outright (sole consumers were products feature)&quot;
+    - &quot;D-09: Product, SaleUser, recentSalesData stripped from src/constants/data.ts (file deleted if empty per CD-01)&quot;
+    - &quot;D-10: &#39;/dashboard/product&#39; breadcrumb entry removed from src/hooks/use-breadcrumbs.tsx&quot;
+    - &quot;D-19: atomic commit per DEBT-Ax preserved (one commit for DEBT-A1)&quot;
+  artifacts:
+    - path: &quot;.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-01-SUMMARY.md&quot;
+      provides: &quot;Plan completion record&quot;
+  key_links:
+    - from: &quot;src/features/products/&quot;
+      to: &quot;(absent)&quot;
+      via: &quot;git rm -r&quot;
+      pattern: &quot;deletion verified by fs.existsSync = false&quot;
+    - from: &quot;src/constants/mock-api.ts&quot;
+      to: &quot;(absent)&quot;
+      via: &quot;git rm&quot;
+  pattern: &quot;deletion verified by fs.existsSync = false&quot;
+</p>
+<hr>
+<objective>
+Delete the entire Next.js Shadcn starter "products" feature plus its dead support code so the repo contains only Heimdall code. This plan executes DEBT-A1 verbatim — including the transitive dead-support files that exist only to serve the products feature.<p>Purpose: The products feature is starter-template residue with no relationship to the Heimdall job-search CRM. Verified by scout (per D-08, D-09): <code>src/constants/mock-api.ts</code> is consumed only by <code>src/features/products/components/*</code>, and <code>Product</code>/<code>SaleUser</code>/<code>recentSalesData</code> in <code>src/constants/data.ts</code> are consumed only by the products components. The breadcrumb entry at <code>/dashboard/product</code> points at a route that will no longer exist. Removing all of it together (per D-07..D-10) keeps the post-phase tree clean and avoids a second cleanup pass.</p>
+<p>Output: Two deleted directories (<code>src/features/products/</code>, <code>src/app/dashboard/product/</code>), one deleted file (<code>src/constants/mock-api.ts</code>), one stripped file (<code>src/constants/data.ts</code> — or deleted if it becomes empty per CD-01), one edited file (<code>src/hooks/use-breadcrumbs.tsx</code>).
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/04-starter-template-cleanup/04-CONTEXT.md
+@.planning/codebase/CONCERNS.md
+@CLAUDE.md<interfaces>
+<!-- Pre-deletion scout confirmed these are the only callers of the deletion targets. Executor should NOT need to re-grep before committing — just verify post-deletion. --><p>mock-api.ts consumers (only these three, all inside src/features/products/):</p>
+<ul>
+<li>src/features/products/components/product-view-page.tsx:1 — <code>import { fakeProducts, Product } from &#39;@/constants/mock-api&#39;;</code></li>
+<li>src/features/products/components/product-listing.tsx:2 — <code>import { fakeProducts } from &#39;@/constants/mock-api&#39;;</code></li>
+<li>src/features/products/components/product-form.tsx:10 — <code>import { Product } from &#39;@/constants/mock-api&#39;;</code></li>
+</ul>
+<p>src/constants/data.ts exports (per CONTEXT.md PD-04 + scout): Product, SaleUser, recentSalesData ONLY. After stripping these three, the file should be empty — per CD-01, delete the file if no exports remain.</p>
+<p>src/hooks/use-breadcrumbs.tsx routeMapping entries (lines ~18-20):</p>
+<ul>
+<li>&#39;/dashboard/product&#39;: [...] — REMOVE this single entry. The &#39;/dashboard/employee&#39; entry above it is also a starter remnant but is NOT named in DEBT-A1; leave it alone (deferred — see CONTEXT.md <code>&lt;deferred&gt;</code>).</interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto">
+  <name>Task 1: Delete products feature + route directories (DEBT-A1 — primary deletion)</name>
+  <files>
+    src/features/products/components/product-listing.tsx,
+    src/features/products/components/product-form.tsx,
+    src/features/products/components/product-view-page.tsx,
+    src/features/products/components/product-tables/columns.tsx,
+    src/features/products/components/product-tables/cell-action.tsx,
+    src/app/dashboard/product/page.tsx,
+    src/app/dashboard/product/[productId]/page.tsx
+  </files>
+  <action>
+    Per D-07 in CONTEXT.md: delete BOTH the feature directory and the route directory in a single atomic step.<pre><code>1. Run `git rm -r src/features/products/` to remove the entire feature directory (components + product-tables subtree).
+2. Run `git rm -r src/app/dashboard/product/` to remove the route directory (page.tsx + [productId]/page.tsx).
+3. Verify no other file in `src/` imports from `@/features/products` or `@/app/dashboard/product`:
+   - `grep -rn &quot;from &#39;@/features/products&quot; src/` MUST return zero hits.
+   - `grep -rn &quot;/dashboard/product&quot; src/ --include=&#39;*.tsx&#39; --include=&#39;*.ts&#39;` MUST return zero hits OUTSIDE the breadcrumbs file (which is fixed in Task 3).
+
+Do NOT add a `not-found.tsx` page — Next.js&#39;s framework-default 404 is the contract per CD-02. Do NOT touch `src/config/nav-config.ts` — D-12 already confirmed the nav has no `/dashboard/product` entry.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test ! -d src/features/products && test ! -d src/app/dashboard/product &amp;&amp; ! grep -rn "from '@/features/products" src/ &amp;&amp; npm run build</automated>
+  </verify>
+  <done>
+    Both directories deleted via `git rm -r`. No remaining import of `@/features/products` anywhere in `src/`. `npm run build` exits 0 with no TS errors related to the deleted symbols.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Delete src/constants/mock-api.ts and strip product types from data.ts (DEBT-A1 — dead support)</name>
+  <files>
+    src/constants/mock-api.ts,
+    src/constants/data.ts
+  </files>
+  <action>
+    Per D-08, D-09, CD-01, CD-05 in CONTEXT.md:<pre><code>1. Confirm zero non-products consumers of `mock-api.ts` BEFORE deleting:
+   `grep -rn &quot;from &#39;@/constants/mock-api&#39;&quot; src/` should return zero hits (the products imports were removed in Task 1). If any non-products hit is returned, STOP and flag — Task 1 was incomplete.
+2. `git rm src/constants/mock-api.ts`.
+3. Edit `src/constants/data.ts`:
+   - Strip the `Product` type, `SaleUser` interface, and `recentSalesData` const (per CONTEXT.md `&lt;canonical_refs&gt;` these are the three exports in the file).
+   - If the file is now empty (no exports remaining), delete it entirely via `git rm src/constants/data.ts` (CD-01: recommended).
+   - If any unrelated exports remain (unlikely per scout), leave the file with only those exports.
+4. Verify nothing else imports the stripped symbols:
+   - `grep -rn &quot;SaleUser\|recentSalesData&quot; src/` MUST return zero hits.
+   - `grep -rn &quot;import.*Product.*from &#39;@/constants/data&#39;&quot; src/` MUST return zero hits.
+   Note: the `Product` symbol name is generic; a bare `Product` grep will hit many false positives. Pin to imports from `@/constants/data` and `@/constants/mock-api`.
+
+No new files created. No new code written. This is pure deletion.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test ! -f src/constants/mock-api.ts &amp;&amp; ! grep -rn "from '@/constants/mock-api'" src/ &amp;&amp; ! grep -rn "SaleUser\|recentSalesData" src/ &amp;&amp; npm run build</automated>
+  </verify>
+  <done>
+    `src/constants/mock-api.ts` does not exist. `src/constants/data.ts` either does not exist (preferred per CD-01) or contains zero references to `Product`/`SaleUser`/`recentSalesData`. `npm run build` exits 0.
+  </done>
+</task><task type="auto">
+  <name>Task 3: Remove /dashboard/product entry from breadcrumbs + commit DEBT-A1 atomically</name>
+  <files>
+    src/hooks/use-breadcrumbs.tsx
+  </files>
+  <action>
+    Per D-10 in CONTEXT.md:<pre><code>1. Open `src/hooks/use-breadcrumbs.tsx`. Locate the `routeMapping` object (around line 12).
+2. Remove the entire `&#39;/dashboard/product&#39;: [{ title: &#39;Dashboard&#39;, link: &#39;/dashboard&#39; }, { title: &#39;Product&#39;, link: &#39;/dashboard/product&#39; }]` block (one key-value pair, typically lines ~18-20).
+3. Leave the `&#39;/dashboard&#39;` and `&#39;/dashboard/employee&#39;` entries alone — `/dashboard/employee` is also starter residue but is NOT named in DEBT-A1 and is explicitly deferred in CONTEXT.md `&lt;deferred&gt;`. Do not opportunistically clean it up.
+4. Verify the file still parses — TypeScript strict mode (CLAUDE.md) means a syntax error here would surface at build time.
+5. Run `npm run build` one final time to confirm zero errors for the full DEBT-A1 deletion set (Tasks 1+2+3).
+6. Commit the entire DEBT-A1 plan atomically per D-19:
+   ```
+   git add src/features/products/ src/app/dashboard/product/ src/constants/mock-api.ts src/constants/data.ts src/hooks/use-breadcrumbs.tsx
+   git commit -m &quot;feat(04): DEBT-A1 — delete products feature + dead support files&quot;
+   ```
+   (Use `git status` first to confirm the staged set; the deleted directories will appear as &quot;deleted&quot; entries. Match Phase 3&#39;s commit style: `feat(&lt;phase-number&gt;): &lt;DEBT-ID&gt; — &lt;summary&gt;`.)
+</code></pre>
+  </action>
+  <verify>
+    <automated>! grep -n "'/dashboard/product'" src/hooks/use-breadcrumbs.tsx &amp;&amp; npm run build &amp;&amp; git log -1 --oneline | grep -q "DEBT-A1"</automated>
+  </verify>
+  <done>
+    Breadcrumb entry for `/dashboard/product` is removed. `npm run build` exits 0. One atomic commit exists with `DEBT-A1` in the message.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(n/a)</td>
+<td>No new trust boundary introduced. This plan is pure deletion.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-04-01</td>
+<td>Information Disclosure</td>
+<td><code>src/features/products/</code> + <code>src/constants/mock-api.ts</code></td>
+<td>mitigate</td>
+<td>Reduces attack surface by removing 5 starter-template components and 1 mock-data module that exposed <code>slingacademy.com</code> external URLs in <code>recentSalesData</code>. After deletion, zero references to <code>api.slingacademy.com</code> remain in app code (verified by grep in Task 2).</td>
+</tr>
+<tr>
+<td>T-04-02</td>
+<td>Tampering</td>
+<td>Breadcrumb routing table</td>
+<td>accept</td>
+<td><code>use-breadcrumbs.tsx</code> is a client-only display component with no auth or routing-decision power. Removing one entry has no security impact.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+After all three tasks:
+- `find src/features/products src/app/dashboard/product src/constants/mock-api.ts -maxdepth 0 2>/dev/null` returns nothing.
+- `grep -rn "SaleUser\|recentSalesData\|from '@/constants/mock-api'\|from '@/features/products" src/` returns zero hits.
+- `grep -n "'/dashboard/product'" src/hooks/use-breadcrumbs.tsx` returns nothing.
+- `npm run build` exits 0.
+- `git log -1 --oneline` shows a single atomic commit containing the message `DEBT-A1`.
+</verification><success_criteria>
+Plan is complete when:
+1. `src/features/products/` does not exist.
+2. `src/app/dashboard/product/` does not exist.
+3. `src/constants/mock-api.ts` does not exist.
+4. `src/constants/data.ts` either does not exist (CD-01 path) OR contains zero of `Product`/`SaleUser`/`recentSalesData`.
+5. `src/hooks/use-breadcrumbs.tsx` contains no `'/dashboard/product'` key.
+6. `npm run build` exits 0.
+7. One atomic git commit exists with message prefix matching Phase 3 style and `DEBT-A1` in the subject.
+</success_criteria><output>
+After completion, create `.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-01-SUMMARY.md` summarizing the deletion set and any deviations from CONTEXT.md (e.g., whether CD-01 was exercised — `data.ts` deleted vs left as stub).
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

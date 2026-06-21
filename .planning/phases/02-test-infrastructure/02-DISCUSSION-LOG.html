@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 2: Test Infrastructure - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-12
+<strong>Phase:</strong> 2-Test Infrastructure
+<strong>Areas discussed:</strong> DB harness approach, TEST-A3 regression strategy, Test environment split, TEST-A2 coverage scope</p>
+<hr>
+<h2>DB harness approach</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mock-only with vi.mock</td>
+<td>Stub <code>@/lib/db</code> and <code>@/lib/db/timeline</code>. Tests assert call shape, not actual SQL. Fastest, simplest, matches TESTING.md&#39;s example. Schema drift between Drizzle and real Postgres goes undetected.</td>
+<td></td>
+</tr>
+<tr>
+<td>PGlite (in-memory Postgres)</td>
+<td>Real SQL runs in-process. Catches constraint violations, JSONB issues, pipeline-stage CHECK constraints. Requires running migrations into PGlite before each test file (~1-2s overhead).</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Neon ephemeral branch</td>
+<td>Full fidelity, slowest. Overkill for the 5 load-bearing surfaces this phase targets. Better fit if Phase 2.x ever needs pgvector or real index behavior.</td>
+<td></td>
+</tr>
+<tr>
+<td>Hybrid: mock for pure logic, PGlite for the 1-2 routes worth integration-testing</td>
+<td>vi.mock for pure functions. PGlite for the <code>applications/[id]/status</code> route since canTransition enforcement at the API layer is the highest-priority untested surface.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> PGlite (in-memory Postgres).
+<strong>Notes:</strong> Pure-logic tests don&#39;t need any DB harness — they get plain inputs and return plain outputs. PGlite is reserved for tests that exercise SQL. PGlite supports JSONB and text arrays natively, which Heimdall uses heavily.</p>
+<h3>Follow-up: logTimeline verification with PGlite</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Real row in PGlite&#39;s timeline_events</td>
+<td>Don&#39;t mock logTimeline. After the API route runs, query <code>timeline_events</code> from PGlite directly and assert the row exists. Higher fidelity.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Mock logTimeline and spy on calls</td>
+<td>Keep <code>vi.mock(&#39;@/lib/db/timeline&#39;)</code> even with PGlite. Faster, decouples timeline tests from API-route tests.</td>
+<td></td>
+</tr>
+<tr>
+<td>Both — real row in integration tests, spy in unit tests</td>
+<td>Mixes the two patterns explicitly.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Real row in PGlite&#39;s timeline_events.
+<strong>Notes:</strong> Since the <code>db</code> singleton is replaced with the PGlite instance, <code>logTimeline</code> writes to PGlite automatically — no separate mock needed.</p>
+<hr>
+<h2>TEST-A3 regression strategy</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SSR-only structural assertion</td>
+<td>Render <code>&lt;AppSidebar /&gt;</code> with renderToString. Assert no <code>&lt;div&gt;</code> inside any <code>&lt;button&gt;</code>, and <code>UserAvatarProfile</code> markup present. Pure node, no jsdom. Catches both failure modes structurally.</td>
+<td></td>
+</tr>
+<tr>
+<td>Full hydration mount with console.error spy</td>
+<td><code>@testing-library/react</code> + jsdom. SSR-render, then hydrateRoot, then spy on console.error for hydration warnings. Closer to actual browser failure mode but flakier — React&#39;s warning text isn&#39;t a stable API.</td>
+<td></td>
+</tr>
+<tr>
+<td>Both: SSR structural test + hydration mount</td>
+<td>Structural test in node catches HTML nesting deterministically. Hydration mount in jsdom catches mismatch warnings. Two tests, two environments, full coverage.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Both — SSR structural test + hydration mount.
+<strong>Notes:</strong> Structural test is the deterministic backstop; hydration test catches mismatch warnings. Acceptable that React&#39;s warning text could drift; structural fence protects either way.</p>
+<hr>
+<h2>Test environment split</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Single config, per-file <code>// @vitest-environment</code> pragma</td>
+<td>One <code>vitest.config.ts</code> defaults to <code>node</code>. The hydration-mount test gets <code>// @vitest-environment jsdom</code>. Single <code>npm test</code> command.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Two configs, projects mode</td>
+<td>Use Vitest&#39;s <code>projects</code> feature: one project for node, one for jsdom. Each has its own setup file.</td>
+<td></td>
+</tr>
+<tr>
+<td>Single config with <code>environmentMatchGlobs</code></td>
+<td>Pattern-match <code>*.dom.test.ts</code> → jsdom. <code>environmentMatchGlobs</code> was deprecated in Vitest 3 in favor of projects.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Single config + pragma.
+<strong>Notes:</strong> One jsdom file currently — projects mode is overkill. Pragma keeps the env switch visible at the top of the one DOM file.</p>
+<hr>
+<h2>TEST-A2 coverage scope</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Strict: only the 5 roadmap surfaces</td>
+<td>Envelope, canTransition, logTimeline, CSV parse, bridge-score. Nothing else.</td>
+<td></td>
+</tr>
+<tr>
+<td>Roadmap + filters.ts (parseCursor, parseLimit)</td>
+<td>Adds ~10 lines of pure-function tests. parseCursor&#39;s date parsing is exercised by every paginated API route.</td>
+<td></td>
+</tr>
+<tr>
+<td>Roadmap + filters.ts + seniority.ts (inferSeniority)</td>
+<td>Adds bridge-score&#39;s input-side dependency. inferSeniority feeds the bridge score — if it drifts, bridge-score tests can pass while real recommendations rot.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Roadmap + filters.ts + seniority.ts + match-connections.ts</td>
+<td>Largest scope expansion. Phase 5 will touch match-connections; deferring there is cleaner.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Roadmap + filters.ts + seniority.ts.
+<strong>Notes:</strong> <code>match-connections.ts</code> and scraper modules are deferred to Phase 5 — testing them now would be discarded work.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<ul>
+<li>Husky pre-push hook integration (whether to add <code>npm test</code> alongside <code>bun run build</code>).</li>
+<li>Wave ordering inside Phase 2 plan.</li>
+<li>Whether to introduce <code>tsconfig.test.json</code>.</li>
+<li>Exact PGlite bootstrap mechanism (migrations vs. push vs. raw SQL).</li>
+<li>Per-file vs. shared PGlite instance.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Auth-gate test sweep across <code>/api/*</code> routes (Phase 3).</li>
+<li><code>match-connections.ts</code> and Job Leads scraper coverage (Phase 5).</li>
+<li>Playwright E2E test runner.</li>
+<li>Coverage tooling / thresholds.</li>
+<li>GitHub Actions CI test step.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

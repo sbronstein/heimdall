@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 03
+subsystem: planning-docs
+tags: [requirements, supersession, html-companion, phase-5-reshape]
+requires: []
+provides: [JL-B1-defined, JL-B2-defined, JL-B3-defined, JL-B4-defined, JL-B5-defined]
+affects: [.planning/REQUIREMENTS.md, .planning/views/REQUIREMENTS.html]
+tech-stack:
+  added: []
+  patterns: [strikethrough-for-audit-trail, html-companion-mirror, nane-warm-earth-palette]
+key-files:
+  created: []
+  modified:
+    - .planning/REQUIREMENTS.md
+    - .planning/views/REQUIREMENTS.html
+decisions:</p>
+<ul>
+<li>&quot;Used [~] strikethrough markdown (<del>...</del>) rather than removing JL-A1..A5 entries — preserves the audit trail per threat T-05-03-01&quot;</li>
+<li>&quot;Kept the &#39;v1 Active requirements: 22 total&#39; headline number; the count is unchanged (5 superseded, 5 added) but annotated parenthetically&quot;</li>
+<li>&quot;HTML callout uses warm-earth #fbeee4 background with --warn (#b85a3a) left border — visually distinct from the .core-value (orange-bordered, gradient) and .badge-good (green)&quot;</li>
+<li>&quot;Added a new .badge-superseded badge class (tan #ecdcd1 background, --warn text, italic) for the traceability table; not previously in the template&quot;
+metrics:
+  duration: &quot;~6 minutes&quot;
+  completed: 2026-05-13
+  tasks: 2
+  files_modified: 2</li>
+</ul>
+<hr>
+<h1>Phase 5 Plan 03: REQUIREMENTS Supersession + JL-B Definitions + HTML Companion Summary</h1>
+<p><strong>One-liner:</strong> Recorded the Phase 5 architectural pivot in REQUIREMENTS.md by superseding JL-A1..A5 (preserved with strikethrough for audit trail) and defining JL-B1..B5 mapped 1:1 to ROADMAP §Phase 5 (RESHAPED) Success Criteria; regenerated REQUIREMENTS.html companion using the nane warm earth-tone palette.</p>
+<h2>What Shipped</h2>
+<h3>Task 1 — REQUIREMENTS.md updates (commit <code>5aedf0a</code>)</h3>
+<ul>
+<li>Inserted a <code>&gt; **SUPERSEDED 2026-05-13:** ...</code> blockquote immediately under the <code>### Job Leads Completion</code> heading explaining the in-app-scraper → Claude Code skill + agent-browser pivot.</li>
+<li>Wrapped JL-A1..A5 list items in Markdown strikethrough (<code>~~...~~</code>) so the historical requirement set stays visible but is visually muted.</li>
+<li>Appended JL-B1..JL-B5 as new <code>- [ ] **JL-Bx**: ...</code> checkbox items beneath the strikethrough block. Each is actionable and verifiable:<ul>
+<li><strong>JL-B1</strong> — skill exists at <code>.claude/skills/scrape-linkedin-connections/</code> with arg-or-drain semantics</li>
+<li><strong>JL-B2</strong> — skill drives agent-browser through job → company → employees → 2nd-degree nav and extracts the existing <code>ScrapedProspect</code> shape</li>
+<li><strong>JL-B3</strong> — skill writes back via REST routes; in-app <code>scrape-connections.ts</code> + fire-and-forget IIFE + <code>search-progress.tsx</code> deleted</li>
+<li><strong>JL-B4</strong> — <code>queued</code> + <code>failed</code> enum values, <code>last_error</code> + <code>last_error_at</code> columns, state-machine enforced</li>
+<li><strong>JL-B5</strong> — UI: queued badge + Copy-skill-invocation button + categorized failure banner + retry → re-queue</li>
+</ul>
+</li>
+<li>Traceability table: flipped JL-A1..A5 status from <code>Pending</code> to <code>SUPERSEDED</code>; appended five new JL-B1..B5 rows under <code>Phase 5 / Pending</code>.</li>
+<li>Updated Coverage block to annotate the count (<code>22 total (5 superseded; net 22 active, with JL-A1..A5 replaced by JL-B1..B5)</code>) without changing the headline number — the swap is 5-for-5.</li>
+<li>Footer last-updated line bumped to <code>2026-05-13 — JL-A1..A5 superseded by JL-B1..B5 for the Phase 5 reshape (Claude Code skill + agent-browser direction)</code>.</li>
+</ul>
+<h3>Task 2 — REQUIREMENTS.html companion regenerated (commit <code>2cc4a33</code>)</h3>
+<ul>
+<li>Added a <code>.callout</code> div (warm-earth <code>#fbeee4</code> background, <code>--warn</code> (<code>#b85a3a</code>) left border, italic body) above the Job Leads Completion list mirroring the markdown&#39;s SUPERSEDED blockquote text.</li>
+<li>Marked JL-A1..A5 <code>&lt;li&gt;</code> entries with a new <code>.superseded</code> class (<code>text-decoration: line-through; color: var(--muted)</code>; bullet replaced with <code>~</code> in <code>--warn</code> color) — visually mirrors the markdown strikethrough.</li>
+<li>Appended five JL-B1..B5 <code>&lt;li&gt;</code> entries with the existing <code>.active</code> styling (orange <code>☐</code> bullets) carrying the full markdown text verbatim.</li>
+<li>Traceability table: added a new <code>.badge-superseded</code> variant (tan <code>#ecdcd1</code> background, <code>--warn</code> text, italic) used on JL-A1..A5 rows; JL-B1..B5 rows use the existing <code>.badge-pending</code> style for consistency.</li>
+<li>Header tagline updated to <code>28 validated · 22 active (5 superseded, replaced) · 6 phases mapped</code>; Coverage meta line and footer note both reflect the 2026-05-13 reshape.</li>
+<li>Preserved the warm earth-tone palette intact (<code>--bg: #faf8f5</code>, <code>--accent: #6b8e6b</code>, <code>--accent-2: #c97a4a</code>, <code>--warn: #b85a3a</code>, <code>--line: #e4ddd2</code>, <code>--code-bg: #f4efe7</code>) per the user&#39;s global CLAUDE.md HTML-companion preference.</li>
+<li>Footer source-of-truth note preserved: markdown is canonical, HTML may lag behind.</li>
+</ul>
+<h2>Verification</h2>
+<h3>Automated checks (all green)</h3>
+<pre><code>grep -c &quot;SUPERSEDED 2026-05-13&quot; .planning/REQUIREMENTS.md            → 1
+grep -cE &quot;^\- \[ \] \*\*JL-B[1-5]\*\*&quot; .planning/REQUIREMENTS.md     → 5
+grep -cE &quot;^\| JL-B[1-5] \| Phase 5 \| Pending \|$&quot; REQUIREMENTS.md   → 5
+grep -cE &quot;^\| JL-A[1-5] \| Phase 5 \| SUPERSEDED \|$&quot; REQUIREMENTS.md → 5
+grep -c &quot;JL-B&quot; .planning/REQUIREMENTS.md                              → 13  (≥10 ✓)
+grep -c &quot;SUPERSEDED&quot; .planning/REQUIREMENTS.md                        → 6   (≥6 ✓)
+grep &quot;\-\-bg: #faf8f5&quot; .planning/views/REQUIREMENTS.html              → 1   (nane palette ✓)
+JL-B1..B5 each appears in REQUIREMENTS.html                          → 5/5 found
+SUPERSEDED 2026-05-13 callout in HTML                                → 1
+JL-A1..A5 still present in HTML (with .superseded styling)           → 14 occurrences
+</code></pre>
+<h3>Confirmation against task acceptance criteria</h3>
+<p><strong>JL-A1..A5 visibly SUPERSEDED in list + traceability table.</strong> Both surfaces:</p>
+<ul>
+<li>Markdown list: strikethrough on each item</li>
+<li>Markdown table: status column reads <code>SUPERSEDED</code> (not <code>Pending</code>)</li>
+<li>HTML list: <code>.superseded</code> class applied — line-through + muted color</li>
+<li>HTML table: <code>.badge-superseded</code> badge (tan with warn-color italic text)</li>
+</ul>
+<p><strong>JL-B1..B5 present in list + traceability table.</strong> Five new list items, five new table rows. Each verifiable by ID grep.</p>
+<p><strong>REQUIREMENTS.html regenerated</strong> — not &quot;already up-to-date.&quot; The prior HTML had no callout, no <code>.superseded</code> styling, no <code>.badge-superseded</code> class, and listed JL-A1..A5 as active. All four are now present.</p>
+<h2>Downstream Consumption</h2>
+<p>Downstream plan validators consume the new JL-B IDs via each plan&#39;s <code>requirements:</code> frontmatter array. Plans 05-01, 05-02, 05-04, 05-05, 05-06, and 05-07 reference one or more of <code>JL-B1..JL-B5</code>. The requirements gate in <code>gsd-sdk query requirements.*</code> greps for these IDs against <code>.planning/REQUIREMENTS.md</code> — that grep now succeeds. JL-A IDs in any downstream plan frontmatter would still resolve (the IDs remain visible in the markdown, just struck through and marked SUPERSEDED in the table), but no downstream plan in this phase references them.</p>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written. No bugs found, no auth gates, no architectural decisions required.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li>File <code>.planning/REQUIREMENTS.md</code>: FOUND (modified)</li>
+<li>File <code>.planning/views/REQUIREMENTS.html</code>: FOUND (modified)</li>
+<li>Commit <code>5aedf0a</code> (Task 1): FOUND in <code>git log --all</code></li>
+<li>Commit <code>2cc4a33</code> (Task 2): FOUND in <code>git log --all</code></li>
+<li>All acceptance criteria verified above with passing grep counts</li>
+<li>HTML companion preserves nane warm earth-tone palette CSS variables</li>
+<li>No modifications to STATE.md or ROADMAP.md (per parallel-executor contract)</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

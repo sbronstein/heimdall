@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>03-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/03-security-hardening/03-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 03-security-hardening
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/features/auth/components/github-auth-button.tsx</li>
+<li>src/features/auth/components/user-auth-form.tsx</li>
+<li>src/features/auth/components/sign-in-view.tsx</li>
+<li>src/features/auth/components/sign-up-view.tsx</li>
+<li>src/app/auth/sign-in/[[...sign-in]]/page.tsx</li>
+<li>src/app/auth/sign-up/[[...sign-up]]/page.tsx
+autonomous: true
+requirements:</li>
+<li>SEC-A2
+tags:</li>
+<li>auth-cleanup</li>
+<li>starter-template</li>
+<li>security
+must_haves:
+  truths:<ul>
+<li>&quot;The file <code>src/features/auth/components/github-auth-button.tsx</code> no longer exists in the repo (D-10 — delete outright via git rm)&quot;</li>
+<li>&quot;No remaining import of <code>./github-auth-button</code> exists anywhere in <code>src/</code>&quot;</li>
+<li>&quot;No <code>&lt;GithubSignInButton /&gt;</code> render appears anywhere in <code>src/</code>&quot;</li>
+<li>&quot;Neither <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> nor <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code> issues an outbound fetch to <code>api.github.com</code> on render (D-11)&quot;</li>
+<li>&quot;Both auth page.tsx files are non-async server components after the await fetch is removed (CD-05)&quot;</li>
+<li>&quot;<code>SignInViewPage</code> and <code>SignUpViewPage</code> no longer accept a <code>stars</code> prop (D-12)&quot;</li>
+<li>&quot;The <code>&lt;Link href=&#39;https://github.com/kiranism/next-shadcn-dashboard-starter&#39;&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> block is removed from both view components (D-12)&quot;</li>
+<li>&quot;Other auth-page chrome (Random Dude quote, Logo SVG, interactive-grid decoration, Login top-right link) is NOT touched (D-13 — Phase 4 territory)&quot;</li>
+<li>&quot;<code>npm run build</code> succeeds with no TypeScript errors and no unused-import warnings&quot;</li>
+<li>&quot;<code>npm run test:run</code> (full suite) exits 0&quot;
+artifacts:</li>
+<li>path: &quot;src/features/auth/components/sign-in-view.tsx&quot;
+provides: &quot;Sign-in view without stars prop, without Star-on-GitHub Link block, with all other chrome preserved&quot;
+contains: &quot;ClerkSignInForm&quot;</li>
+<li>path: &quot;src/features/auth/components/sign-up-view.tsx&quot;
+provides: &quot;Sign-up view without stars prop, without Star-on-GitHub Link block, with all other chrome preserved&quot;
+contains: &quot;ClerkSignUpForm&quot;</li>
+<li>path: &quot;src/app/auth/sign-in/[[...sign-in]]/page.tsx&quot;
+provides: &quot;Synchronous server component that renders <code>&lt;SignInViewPage /&gt;</code> with no props and no outbound fetch&quot;
+contains: &quot;SignInViewPage&quot;</li>
+<li>path: &quot;src/app/auth/sign-up/[[...sign-up]]/page.tsx&quot;
+provides: &quot;Synchronous server component that renders <code>&lt;SignUpViewPage /&gt;</code> with no props and no outbound fetch&quot;
+contains: &quot;SignUpViewPage&quot;</li>
+<li>path: &quot;src/features/auth/components/user-auth-form.tsx&quot;
+provides: &quot;User auth form with the GithubSignInButton render + import removed (preserves the orphan form for Phase 4 broader cleanup per D-13 boundary)&quot;
+contains: &quot;UserAuthForm&quot;
+key_links:</li>
+<li>from: &quot;src/app/auth/sign-in/[[...sign-in]]/page.tsx&quot;
+to: &quot;src/features/auth/components/sign-in-view.tsx&quot;
+via: &quot;default import + render with no props&quot;
+pattern: &quot;SignInViewPage\(\)|&lt;SignInViewPage *\/&gt;&quot;</li>
+<li>from: &quot;src/app/auth/sign-up/[[...sign-up]]/page.tsx&quot;
+to: &quot;src/features/auth/components/sign-up-view.tsx&quot;
+via: &quot;default import + render with no props&quot;
+pattern: &quot;SignUpViewPage\(\)|&lt;SignUpViewPage *\/&gt;&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Strip the two starter-template auth artifacts that leak third-party network calls and present a misleading auth control to users: (a) delete the no-op `github-auth-button.tsx` component and remove every render/import of it, (b) remove the `await fetch('https://api.github.com/repos/...')` call from both auth `page.tsx` files, (c) remove the now-dead `stars` prop and the `<Link>...Star on GitHub...{stars}</Link>` block from both view components.<p>Purpose: Close SEC-A2 — the &quot;Continue with GitHub&quot; button is a no-op (its onClick just logs to console — verified in <code>github-auth-button.tsx:16</code>) and presenting it as a working auth method on a single-user Clerk-locked app is a UX/security smell. The <code>api.github.com</code> fetch is starter-template residue that issues an outbound request to a third-party API on every render of the sign-in/sign-up pages — pointless in this fork, an SSRF-shaped surface to delete.</p>
+<p>Output:</p>
+<ul>
+<li><code>src/features/auth/components/github-auth-button.tsx</code> — DELETED via <code>git rm</code> (CD-04)</li>
+<li><code>src/features/auth/components/user-auth-form.tsx</code> — <code>&lt;GithubSignInButton /&gt;</code> render + import removed (the only other caller — preserves the orphan form for Phase 4)</li>
+<li><code>src/features/auth/components/sign-in-view.tsx</code>, <code>sign-up-view.tsx</code> — <code>stars</code> prop + Star-on-GitHub <code>&lt;Link&gt;</code> block removed; all other chrome preserved per D-13</li>
+<li><code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code>, <code>sign-up/[[...sign-up]]/page.tsx</code> — <code>try { fetch(...) }</code> block + <code>stars</code> variable + <code>stars={stars}</code> prop pass removed; converted from <code>async</code> to sync (CD-05)</objective></li>
+</ul>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/03-security-hardening/03-CONTEXT.md
+@.planning/codebase/CONCERNS.md
+@CLAUDE.md
+@src/features/auth/components/github-auth-button.tsx
+@src/features/auth/components/user-auth-form.tsx
+@src/features/auth/components/sign-in-view.tsx
+@src/features/auth/components/sign-up-view.tsx
+@src/app/auth/sign-in/[[...sign-in]]/page.tsx
+@src/app/auth/sign-up/[[...sign-up]]/page.tsx<interfaces>
+<!-- Concrete identifiers the executor edits / preserves / removes. --><p>Files to DELETE (entire file):</p>
+<ul>
+<li><code>src/features/auth/components/github-auth-button.tsx</code> (default export <code>GithubSignInButton</code>, 22 lines, no-op onClick → <code>console.log(&#39;continue with github clicked&#39;)</code>)</li>
+</ul>
+<p>Identifiers to REMOVE from <code>src/features/auth/components/user-auth-form.tsx</code>:</p>
+<ul>
+<li>Line 18: <code>import GithubSignInButton from &#39;./github-auth-button&#39;;</code></li>
+<li>Line 78: <code>&lt;GithubSignInButton /&gt;</code></li>
+<li>Also remove the &quot;Or continue with&quot; divider block (lines 68-77) if its only purpose was framing the GitHub button — confirm via read; if the divider has no other purpose after removing the button, remove it; if it&#39;s used elsewhere keep it (judgment call — recommend removing since &quot;Or continue with [nothing]&quot; is dead UX).</li>
+</ul>
+<p>Identifiers to REMOVE from <code>src/features/auth/components/sign-in-view.tsx</code>:</p>
+<ul>
+<li>Prop signature: change <code>({ stars }: { stars: number })</code> → <code>()</code> (no props)</li>
+<li>Imports no longer needed after Link block removal: <code>GitHubLogoIcon</code> from <code>@radix-ui/react-icons</code>, <code>IconStar</code> from <code>@tabler/icons-react</code>. Verify no other usage in the file before deleting the import; if exclusive to the Star-on-GitHub block (likely), delete the imports.</li>
+<li>The <code>&lt;Link className={cn(&#39;group inline-flex hover:text-yellow-200&#39;)} ... href={&#39;https://github.com/kiranism/next-shadcn-dashboard-starter&#39;}&gt; ... Star on GitHub ... {stars} ... &lt;/Link&gt;</code> block (file lines 64-80 in the current source — the entire <code>&lt;Link&gt;</code> element containing the GitHubLogoIcon + IconStar + <code>{stars}</code> interpolation).</li>
+</ul>
+<p>Identifiers to PRESERVE in <code>src/features/auth/components/sign-in-view.tsx</code> (D-13 — Phase 4 territory, do NOT touch):</p>
+<ul>
+<li>The &quot;Login&quot; <code>&lt;Link href=&#39;/examples/authentication&#39; ...&gt;</code> top-right link (lines 18-26)</li>
+<li>The Logo SVG block (lines 30-43)</li>
+<li>The <code>&lt;InteractiveGridPattern .../&gt;</code> decoration (lines 44-49)</li>
+<li>The &quot;Random Dude&quot; <code>&lt;blockquote&gt;</code> (lines 51-58)</li>
+<li>The <code>&lt;ClerkSignInForm forceRedirectUrl=&#39;/dashboard/overview&#39; /&gt;</code> core auth form (line 81-83)</li>
+<li>The two trailing <code>&lt;Link&gt;</code> blocks for &quot;open-source project&quot; (<code>/about</code>) and &quot;View on GitHub&quot; — D-13 leaves these alone (they are auth-page chrome, not network leaks or fake auth controls; Phase 4 may scrub them)</li>
+<li>The Terms of Service / Privacy Policy <code>&lt;Link&gt;</code> blocks (lines 106-122)</li>
+</ul>
+<p>Same identifier rules apply to <code>src/features/auth/components/sign-up-view.tsx</code> (mirror structure; the &quot;Login&quot; link is replaced with &quot;Sign Up&quot; at line 25 — preserve it).</p>
+<p>Identifiers to REMOVE from <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> AND <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code>:</p>
+<ul>
+<li>The <code>let stars = 3000</code> declaration (line 10)</li>
+<li>The entire <code>try { const response = await fetch(&#39;https://api.github.com/repos/...&#39;, ...); ... } catch (error) { ... }</code> block (lines 12-26)</li>
+<li>The <code>stars={stars}</code> prop pass on the rendered view component (line 27)</li>
+<li>The <code>async</code> keyword on the default export (CD-05)</li>
+<li>After cleanup the file should be roughly: imports → metadata → <code>export default function Page() { return &lt;SignInViewPage /&gt;; }</code> (or <code>&lt;SignUpViewPage /&gt;</code>)</li>
+</ul>
+<p>Note on <code>user-auth-form.tsx</code>: This file is an ORPHAN — no other source file renders <code>UserAuthForm</code>. Per D-13 + Phase 4 ownership boundary, leave the orphan form in place but remove the <code>GithubSignInButton</code> reference so the build stays green. The full deletion of the orphan form belongs to Phase 4 (DEBT-A* under Starter-Template Cleanup).
+</interfaces>
+</context></p>
+<tasks><task type="auto" tdd="false">
+  <name>Task 1: Delete github-auth-button.tsx and remove its import + render from user-auth-form.tsx</name>
+  <files>src/features/auth/components/github-auth-button.tsx (deleted), src/features/auth/components/user-auth-form.tsx</files>
+  <read_first>
+    - `src/features/auth/components/github-auth-button.tsx` (the 22-line file being deleted — confirm no exports beyond `GithubSignInButton` default and no critical side-effects)
+    - `src/features/auth/components/user-auth-form.tsx` (the one remaining caller after sign-in-view / sign-up-view turn out NOT to reference it — see `<interfaces>` block above)
+    - `.planning/phases/03-security-hardening/03-CONTEXT.md` §"Decisions" D-10 + CD-04
+  </read_first>
+  <action>
+    Step 1: `git rm src/features/auth/components/github-auth-button.tsx` (CD-04 — clean removal preferred over leaving an empty file).<pre><code>Step 2: Edit `src/features/auth/components/user-auth-form.tsx`:
+- Remove the line `import GithubSignInButton from &#39;./github-auth-button&#39;;` (currently line 18).
+- Remove the `&lt;GithubSignInButton /&gt;` render line (currently line 78).
+- Remove the now-dead &quot;Or continue with&quot; divider block (the `&lt;div className=&#39;relative&#39;&gt;...&lt;/div&gt;` block at lines 68-77 — its only purpose was framing the GitHub button below it; with the button gone, the divider says &quot;Or continue with [nothing]&quot; which is incoherent UX).
+- Leave the rest of `UserAuthForm` intact (form, email field, Continue With Email button) — Phase 4 owns deciding whether to delete the orphan form entirely.
+
+Verify after edit: no other file imports from `./github-auth-button` (already grep-verified during planning: only `user-auth-form.tsx` references it; `sign-in-view.tsx` and `sign-up-view.tsx` do NOT currently render `&lt;GithubSignInButton /&gt;` despite CONTEXT.md&#39;s description — the views&#39; starter-template residue is the `&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;` block, handled by Task 2).
+</code></pre>
+  </action>
+  <verify>
+    <automated>test ! -f src/features/auth/components/github-auth-button.tsx &amp;&amp; ! grep -rn "github-auth-button\|GithubSignInButton" src 2>/dev/null &amp;&amp; npm run build 2>&amp;1 | tail -10</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/features/auth/components/github-auth-button.tsx` does not exist (verified via `test ! -f`)
+    - `grep -rn "github-auth-button" src` returns no matches (no remaining import path references)
+    - `grep -rn "GithubSignInButton" src` returns no matches (no remaining identifier references)
+    - `src/features/auth/components/user-auth-form.tsx` no longer contains the literal substring `github-auth-button`
+    - `src/features/auth/components/user-auth-form.tsx` no longer contains the literal substring `Or continue with` (dead divider also removed)
+    - `npm run build` exits 0 with no TypeScript errors and no unused-import warnings
+    - The `UserAuthForm` default export still exists (orphan preserved per D-13 / Phase 4 boundary)
+  </acceptance_criteria>
+  <done>The no-op `GithubSignInButton` component is deleted from the repo and no caller references it. The orphan `UserAuthForm` is preserved (sans the dead button + "Or continue with" divider) for Phase 4 to address as a whole under DEBT-A* cleanup.</done>
+</task><task type="auto" tdd="false">
+  <name>Task 2: Remove stars prop, Star-on-GitHub Link block, and api.github.com fetch from auth views + pages</name>
+  <files>src/features/auth/components/sign-in-view.tsx, src/features/auth/components/sign-up-view.tsx, src/app/auth/sign-in/[[...sign-in]]/page.tsx, src/app/auth/sign-up/[[...sign-up]]/page.tsx</files>
+  <read_first>
+    - `src/features/auth/components/sign-in-view.tsx` (full file — to identify the exact Link block to remove and confirm imports are exclusive to it)
+    - `src/features/auth/components/sign-up-view.tsx` (mirror of sign-in-view)
+    - `src/app/auth/sign-in/[[...sign-in]]/page.tsx` (full file — the fetch + stars + async pattern)
+    - `src/app/auth/sign-up/[[...sign-up]]/page.tsx` (mirror of sign-in page.tsx)
+    - `.planning/phases/03-security-hardening/03-CONTEXT.md` §"Decisions" D-11, D-12, D-13, CD-05
+  </read_first>
+  <action>
+    Edits to `src/features/auth/components/sign-in-view.tsx` (D-12):
+    1. Change the component signature from `export default function SignInViewPage({ stars }: { stars: number })` to `export default function SignInViewPage()` (no props).
+    2. Delete the entire `<Link className={cn('group inline-flex hover:text-yellow-200')} ... href={'https://github.com/kiranism/next-shadcn-dashboard-starter'}>` element (the block containing `<GitHubLogoIcon className='size-4' />`, the `<span>Star on GitHub</span>`, `<IconStar ... />`, and the `<span className='font-display font-medium'>{stars}</span>` interpolation). Also delete the `{/* github link  */}` comment line immediately above it.
+    3. Remove now-unused imports: `GitHubLogoIcon` from `@radix-ui/react-icons`, `IconStar` from `@tabler/icons-react`. ONLY remove these if no other reference remains in the file after step 2 (likely no other reference — verify via post-edit read or grep).
+    4. PRESERVE per D-13: the "Login" top-right `<Link href='/examples/authentication'>` block, the Logo SVG block, the `<InteractiveGridPattern />` decoration, the "Random Dude" blockquote, the `<ClerkSignInForm forceRedirectUrl='/dashboard/overview' />` core auth form, the two trailing `<Link>` blocks (open-source project + "View on GitHub" text-only — not a network leak, just a hyperlink), the Terms / Privacy `<Link>` blocks.<pre><code>Apply the SAME edits to `src/features/auth/components/sign-up-view.tsx` (mirror structure; preserves the &quot;Sign Up&quot; top-right link instead of &quot;Login&quot;, and the `ClerkSignUpForm` instead of `ClerkSignInForm`).
+
+Edits to `src/app/auth/sign-in/[[...sign-in]]/page.tsx` (D-11 + CD-05):
+1. Remove the `let stars = 3000` line (current line 10).
+2. Remove the entire `try { const response = await fetch(&#39;https://api.github.com/repos/kiranism/next-shadcn-dashboard-starter&#39;, { next: { revalidate: 86400 } }); if (response.ok) { const data = await response.json(); stars = data.stargazers_count || stars; } } catch (error) { /* ... */ }` block (current lines 12-26).
+3. Remove the `stars={stars}` prop pass — the render becomes `&lt;SignInViewPage /&gt;` with no props.
+4. Change `export default async function Page()` to `export default function Page()` (CD-05 — no remaining awaited work).
+5. Final shape: imports → `export const metadata: Metadata = {...}` → `export default function Page() { return &lt;SignInViewPage /&gt;; }`.
+
+Apply the SAME edits to `src/app/auth/sign-up/[[...sign-up]]/page.tsx` (mirror — uses `SignUpViewPage`).
+
+Smoke verification approach (informational, not blocking — automated build/test is the binding gate):
+- Optionally start `npm run dev`, load `/auth/sign-in` and `/auth/sign-up`, open DevTools Network panel, confirm zero outbound request to `api.github.com` and no &quot;Continue with GitHub&quot; button visible. This is human-loop sanity, not part of the acceptance gate.
+</code></pre>
+  </action>
+  <verify>
+    <automated>! grep -rn "api.github.com" src 2>/dev/null &amp;&amp; ! grep -rn "Star on GitHub" src/features/auth 2>/dev/null &amp;&amp; ! grep -rn "stars" src/app/auth src/features/auth/components/sign-in-view.tsx src/features/auth/components/sign-up-view.tsx 2>/dev/null &amp;&amp; ! grep -n "async function Page" src/app/auth/sign-in/\[\[...sign-in\]\]/page.tsx src/app/auth/sign-up/\[\[...sign-up\]\]/page.tsx 2>/dev/null &amp;&amp; npm run build 2>&amp;1 | tail -10 &amp;&amp; npm run test:run 2>&amp;1 | tail -10</automated>
+  </verify>
+  <acceptance_criteria>
+    - `grep -rn "api.github.com" src` returns no matches anywhere under `src/` (D-11 satisfied — no source file issues an outbound fetch to api.github.com on render or elsewhere)
+    - `grep -rn "Star on GitHub" src/features/auth` returns no matches (D-12 — the Link block text is removed)
+    - `grep -n "stars" src/features/auth/components/sign-in-view.tsx` returns no matches (the prop is fully removed from the file)
+    - `grep -n "stars" src/features/auth/components/sign-up-view.tsx` returns no matches
+    - `grep -n "stars" src/app/auth/sign-in/\[\[...sign-in\]\]/page.tsx` returns no matches
+    - `grep -n "stars" src/app/auth/sign-up/\[\[...sign-up\]\]/page.tsx` returns no matches
+    - `grep -n "async function Page" src/app/auth/sign-in/\[\[...sign-in\]\]/page.tsx` returns no match (CD-05 — converted to sync)
+    - `grep -n "async function Page" src/app/auth/sign-up/\[\[...sign-up\]\]/page.tsx` returns no match (CD-05)
+    - `grep -c "ClerkSignInForm" src/features/auth/components/sign-in-view.tsx` returns >= 1 (D-13 — core auth form preserved)
+    - `grep -c "ClerkSignUpForm" src/features/auth/components/sign-up-view.tsx` returns >= 1 (D-13)
+    - `grep -c "Random Dude" src/features/auth/components/sign-in-view.tsx` returns >= 1 (D-13 — Phase 4 territory, not removed)
+    - `grep -c "Random Dude" src/features/auth/components/sign-up-view.tsx` returns >= 1 (D-13)
+    - `grep -c "InteractiveGridPattern" src/features/auth/components/sign-in-view.tsx` returns >= 1 (D-13)
+    - `npm run build` exits 0 (no TypeScript errors; no unused-import warnings for `GitHubLogoIcon` or `IconStar` since they were also removed from the imports list)
+    - `npm run test:run` exits 0 (full suite — no regressions)
+  </acceptance_criteria>
+  <done>Both auth pages render synchronously with no outbound network call beyond standard Clerk SDK behavior; the misleading "Star on GitHub" hyperlink with its live star-count interpolation is gone from both view components; all other auth-page chrome (Random Dude, Logo, grid, Login/Sign Up link, Terms/Privacy links) survives untouched per D-13 (Phase 4 owns broader cleanup).</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server-side render → external HTTP (api.github.com)</td>
+<td>The auth pages currently issue an SSR fetch to a third-party domain on every render. The third party can observe Heimdall&#39;s render-time pattern (low-value but unnecessary signal leak); the request itself runs in Next.js&#39;s SSR runtime.</td>
+</tr>
+<tr>
+<td>User → &quot;Continue with GitHub&quot; button</td>
+<td>The user is presented with what looks like a functional OAuth control. Clicking it produces a <code>console.log</code> only — no auth flow, no error toast, no visible failure. UX risk shaped like a phishing surface (the user believes a third auth method exists).</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T4 (T-03-04)</td>
+<td>Tampering / Information Disclosure (SSRF-shape)</td>
+<td><code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> and <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code> <code>await fetch(&#39;https://api.github.com/repos/...&#39;)</code></td>
+<td>mitigate</td>
+<td>Task 2 deletes the entire <code>try { fetch(...) } catch { }</code> block from both files. After the edit, <code>grep -rn &quot;api.github.com&quot; src</code> returns no matches (asserted). The <code>fetch</code> URL is currently hardcoded (not user-influenced), so the active SSRF risk is theoretical — but the surface is starter-template noise that should not exist in a forked single-user app per SEC-A2.</td>
+</tr>
+<tr>
+<td>T5 (T-03-05)</td>
+<td>Spoofing (UX-level — misleading auth control)</td>
+<td><code>src/features/auth/components/github-auth-button.tsx</code> (no-op <code>onClick={() =&gt; console.log(&#39;continue with github clicked&#39;)}</code>)</td>
+<td>mitigate</td>
+<td>Task 1 deletes the component file outright (<code>git rm</code>) and removes the only remaining render site in <code>user-auth-form.tsx</code>. Sign-in-view and sign-up-view turn out not to render the button (CONTEXT.md description was slightly off — verified during planning); after Task 1 the identifier <code>GithubSignInButton</code> no longer appears anywhere in <code>src/</code> (asserted via grep).</td>
+</tr>
+<tr>
+<td>T6 (T-03-06)</td>
+<td>Information Disclosure (UX confusion via dead chrome)</td>
+<td><code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> block in both view components</td>
+<td>mitigate</td>
+<td>Task 2 removes the entire Link element from both files. The interpolated <code>{stars}</code> count was the only consumer of the deleted prop; once the Link is gone, the prop signature on both view components is empty. Asserted via <code>grep -n &quot;stars&quot; src/features/auth/components/sign-in-view.tsx</code> returning no match.</td>
+</tr>
+</tbody></table>
+<h2>Residual Risk</h2>
+<ul>
+<li>T4: <strong>low</strong> — fetch URL is hardcoded and removed entirely; no remaining outbound calls to non-Clerk endpoints from the auth page render path.</li>
+<li>T5: <strong>low</strong> — component file and all callers removed; full-suite <code>npm run test:run</code> + <code>npm run build</code> exit 0 confirms no dangling references.</li>
+<li>T6: <strong>low</strong> — dead chrome removed; D-13 preserves the rest of the auth-page chrome (Random Dude quote, Logo, etc.) for Phase 4&#39;s broader DEBT cleanup. Those preserved items are stylistic, not network or auth-control surfaces.</li>
+</ul>
+<p><strong>Block-on-high count: 0.</strong> ASVS L1 gate clears.</p>
+<p><strong>Note on T1–T3 coverage:</strong> This plan does NOT mitigate T1, T2, or T3 (those are owned by plan 03-01, which lands in the same wave). The two plans together cover the full T1–T6 register for Phase 3.
+</threat_model></p>
+<verification>
+After both tasks complete:<ol>
+<li><code>test ! -f src/features/auth/components/github-auth-button.tsx</code> (file deleted)</li>
+<li><code>grep -rn &quot;github-auth-button\|GithubSignInButton&quot; src</code> returns no matches</li>
+<li><code>grep -rn &quot;api.github.com&quot; src</code> returns no matches</li>
+<li><code>grep -rn &quot;Star on GitHub&quot; src/features/auth</code> returns no matches</li>
+<li><code>grep -n &quot;stars&quot; src/app/auth src/features/auth/components/sign-in-view.tsx src/features/auth/components/sign-up-view.tsx</code> returns no matches</li>
+<li><code>grep -n &quot;async function Page&quot; src/app/auth/sign-in/\[\[...sign-in\]\]/page.tsx src/app/auth/sign-up/\[\[...sign-up\]\]/page.tsx</code> returns no matches (CD-05 verified)</li>
+<li>Preserved-chrome sanity (D-13 boundary): <code>grep -c &quot;Random Dude\|InteractiveGridPattern\|ClerkSignInForm&quot; src/features/auth/components/sign-in-view.tsx</code> returns 3</li>
+<li><code>npm run build</code> exits 0</li>
+<li><code>npm run test:run</code> (full suite) exits 0 — no regression to Phase 2 tests or to plan 03-01 middleware tests</li>
+<li>Smoke verify (manual, optional, not blocking): Load <code>/auth/sign-in</code> and <code>/auth/sign-up</code> in <code>npm run dev</code>, confirm DevTools Network panel shows zero request to <code>api.github.com</code> and no &quot;Continue with GitHub&quot; button visible.</verification></li>
+</ol>
+<success_criteria>
+SEC-A2 satisfied:
+- `src/features/auth/components/github-auth-button.tsx` deleted; no caller anywhere in `src/` references `GithubSignInButton` or the file path
+- Neither `src/app/auth/sign-in/[[...sign-in]]/page.tsx` nor `src/app/auth/sign-up/[[...sign-up]]/page.tsx` issues an outbound fetch to `api.github.com` on render
+- The `stars` prop and the `<Link>...Star on GitHub...{stars}</Link>` block are removed from both view components
+- Both auth `page.tsx` files are sync (non-async) server components (CD-05)
+- Other auth-page chrome (Random Dude, Logo SVG, interactive grid, Login/Sign Up top-right link, trailing open-source/View on GitHub/Terms/Privacy `<Link>` blocks) is preserved per D-13 — Phase 4 owns broader cleanup
+- `npm run build` and `npm run test:run` both exit 0
+</success_criteria><output>
+After completion, create `.planning/phases/03-security-hardening/03-02-SUMMARY.md` documenting:
+- Confirmation `git rm` was used for `github-auth-button.tsx` deletion (CD-04)
+- Note that `user-auth-form.tsx` was found to also reference `GithubSignInButton` (not anticipated in CONTEXT.md, which only named sign-in-view + sign-up-view); the render + import + dead divider were removed but the orphan `UserAuthForm` itself was preserved for Phase 4 to address under DEBT-A* (consistent with D-13 boundary)
+- Confirmation that `sign-in-view.tsx` / `sign-up-view.tsx` did NOT actually render `<GithubSignInButton />` despite CONTEXT.md's reference to "line ~63" — what they DID render was the `<Link>...Star on GitHub...{stars}</Link>` block, which was the target this plan removed
+- List of preserved chrome (D-13 boundary check — Random Dude, Logo, InteractiveGridPattern, Login/Sign Up top-right link, open-source / View on GitHub / Terms / Privacy links)
+- Confirmation that `async` was removed from both auth page.tsx files (CD-05)
+- Note for Phase 4 follow-on: the orphan `UserAuthForm` and the surviving auth-page chrome are candidates for the broader DEBT-A* cleanup
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/03-security-hardening/03-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

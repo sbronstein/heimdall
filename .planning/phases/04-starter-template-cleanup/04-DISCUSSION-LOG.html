@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 4: Starter-Template Cleanup - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in <code>04-CONTEXT.md</code> — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-13
+<strong>Phase:</strong> 04-Starter-Template Cleanup
+<strong>Mode:</strong> <code>--auto</code> (Claude auto-selected the recommended option for each gray area; no AskUserQuestion calls — per <code>workflows/discuss-phase/modes/auto.md</code>)
+<strong>Areas discussed:</strong> Kanban route fate, Infobar deletion scope, Products deletion blast radius, Plan grouping, Verification approach, Atomic commit granularity, <code>__CLEANUP__/</code> deletion ordering, Adjacent starter orphans, Decision record location</p>
+<hr>
+<h2>Kanban Route Fate (DEBT-A3 — SC #3 record requirement)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Wire to <code>/api/tasks</code></td>
+<td>Replace zustand+localStorage store with REST calls to existing <code>/api/tasks</code>; rebuild board state to be DB-backed; rewrite <code>kanban-board.tsx</code> to consume tasks-API responses.</td>
+<td></td>
+</tr>
+<tr>
+<td>Remove entirely</td>
+<td>Delete <code>src/app/dashboard/kanban/</code> and <code>src/features/kanban/</code>; record decision in <code>.planning/PROJECT.md</code>.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Remove (recommended).
+<strong>Rationale:</strong> localStorage persistence is explicitly an anti-pattern per <code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns&quot;. Heimdall already has <code>/dashboard/pipeline</code> (PIPE-V1, the load-bearing system of record per PROJECT.md core value) and <code>/dashboard/tasks</code> (TASK-V1, DB-backed). A third localStorage-backed board is redundant. Wiring kanban to <code>/api/tasks</code> would be feature work, not cleanup — out of phase scope.
+<strong>Captured as:</strong> D-01, D-02, D-03, PD-03.</p>
+<hr>
+<h2>Infobar Deletion Scope (DEBT-A2 transitive)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Surgical (just <code>infobar.tsx</code>)</td>
+<td>Delete only <code>src/components/ui/infobar.tsx</code>; leave dependents in place.</td>
+<td></td>
+</tr>
+<tr>
+<td>Transitive (whole machinery)</td>
+<td>Delete <code>infobar.tsx</code>, <code>info-button.tsx</code>, <code>info-sidebar.tsx</code>, <code>infoconfig.ts</code>; strip <code>InfobarProvider</code>+<code>&lt;InfoSidebar /&gt;</code> from dashboard layout; drop <code>infoContent</code> prop from <code>PageContainer</code> and <code>Heading</code>.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Transitive (recommended).
+<strong>Rationale:</strong> Surgical deletion breaks the build immediately — five+ files import from <code>infobar.tsx</code> (<code>InfobarProvider</code>, <code>useInfobar</code>, <code>InfobarContent</code> type). The phase boundary commits to deleting <code>infobar.tsx</code>, so all dependents must come along.
+<strong>Captured as:</strong> D-04, D-05, D-06, PD-02.</p>
+<hr>
+<h2>Products Deletion Blast Radius (DEBT-A1 transitive)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Named files only</td>
+<td>Delete <code>src/features/products/</code> and <code>src/app/dashboard/product/</code>.</td>
+<td></td>
+</tr>
+<tr>
+<td>Named + dead support</td>
+<td>Also delete <code>src/constants/mock-api.ts</code>; strip <code>Product</code>/<code>SaleUser</code>/<code>recentSalesData</code> from <code>src/constants/data.ts</code>; remove <code>/dashboard/product</code> breadcrumb entry.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Named + dead support (recommended).
+<strong>Rationale:</strong> <code>mock-api.ts</code> and the three exports in <code>data.ts</code> are consumed <em>only</em> by <code>src/features/products/</code>. Leaving them is starter residue by another name and creates a follow-on cleanup chore. The breadcrumb entry would render against a non-existent route.
+<strong>Captured as:</strong> D-07, D-08, D-09, D-10, PD-04.</p>
+<hr>
+<h2>Plan Grouping</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One bulk plan</td>
+<td>Single <code>04-01-PLAN.md</code> doing all five DEBT-Ax requirements sequentially.</td>
+<td></td>
+</tr>
+<tr>
+<td>Four parallel + one verification</td>
+<td>Wave 1: four disjoint parallel plans, one per DEBT-A1/A2/A3/A5. Wave 2: one verification plan for DEBT-A4 + filesystem-existence test.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Four parallel + one verification (recommended).
+<strong>Rationale:</strong> File sets are disjoint (with <code>infoContent</code> ownership locked to 04-02), mirroring Phase 3&#39;s two-disjoint-plans-in-parallel pattern. <code>__CLEANUP__/</code> removal must be last because the script in it can overwrite real source files. The planner has final authority over the breakdown.
+<strong>Captured as:</strong> D-18, D-14.</p>
+<hr>
+<h2>Verification Approach</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Runtime HTTP 404 smoke</td>
+<td>Boot dev server, <code>curl</code> <code>/dashboard/product</code> etc., assert 404 response.</td>
+<td></td>
+</tr>
+<tr>
+<td>Filesystem-existence + clean build</td>
+<td>Vitest test asserting deleted paths return <code>existsSync(...) === false</code>; <code>npm run build</code> passes (already gated by Phase 2 pre-push).</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Filesystem-existence + clean build (recommended).
+<strong>Rationale:</strong> Next.js&#39;s route resolver IS the 404 contract — running an HTTP smoke means testing the framework itself. Filesystem assertion is deterministic, fast (&lt;50ms), runs in the existing Phase 2 Vitest harness without PGlite, and is a stronger contract than HTTP responses (which can be affected by middleware or unrelated routing changes).
+<strong>Captured as:</strong> D-16, D-17, PD-05.</p>
+<hr>
+<h2>Atomic Commit Granularity</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One sweep commit</td>
+<td>Single commit at end of phase with all deletions.</td>
+<td></td>
+</tr>
+<tr>
+<td>Per DEBT-Ax</td>
+<td>One commit per requirement (5 commits + verification commit).</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Per DEBT-Ax (recommended).
+<strong>Rationale:</strong> Phase 3 set the pattern (<code>docs(03)</code>, <code>feat(03)</code> commit prefixes per requirement). <code>git log --diff-filter=D</code> becomes useful for retrospectives. Easy revert per requirement if anything regresses.
+<strong>Captured as:</strong> D-19, CD-04.</p>
+<hr>
+<h2><code>__CLEANUP__/</code> Deletion Ordering</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>First</td>
+<td>Delete <code>__CLEANUP__/</code> at the start of the phase.</td>
+<td></td>
+</tr>
+<tr>
+<td>Last (Wave 2)</td>
+<td>Delete after all Wave 1 deletions complete.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Last (recommended).
+<strong>Rationale:</strong> <code>__CLEANUP__/scripts/cleanup.js</code> can overwrite real source with template versions (it&#39;s a feature-strip tool). Sequencing the directory&#39;s removal last makes &quot;accidentally run the cleanup script against half-cleaned state&quot; structurally impossible.
+<strong>Captured as:</strong> D-14.</p>
+<hr>
+<h2>Adjacent Starter Orphans (Out of Scope)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sweep along</td>
+<td>Also delete <code>org-switcher.tsx</code>, <code>demo-form.tsx</code>, <code>user-auth-form.tsx</code>, profile route, Profile/Login nav items, auth-page visual chrome.</td>
+<td></td>
+</tr>
+<tr>
+<td>Defer</td>
+<td>Stay within named DEBT-A1..A5 requirements; defer untracked orphans to a follow-on.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Defer (recommended).
+<strong>Rationale:</strong> These items are mentioned in <code>.planning/codebase/CONCERNS.md</code> but not named in the v1 Active requirements. Each would need a separate scope decision (e.g., the <code>profile</code> route uses Clerk&#39;s <code>&lt;UserProfile /&gt;</code> — keep or replace?). Adding them to Phase 4 expands scope and contradicts the GSD discipline of &quot;phase boundaries come from ROADMAP.md&quot;.
+<strong>Captured as:</strong> <code>&lt;deferred&gt;</code> block in CONTEXT.md.</p>
+<hr>
+<h2>Decision Record Location for SC #3</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New ADR</td>
+<td>Create <code>.planning/decisions/004-kanban-removed.md</code>.</td>
+<td></td>
+</tr>
+<tr>
+<td>New section in PROJECT.md</td>
+<td>Add a &quot;Decisions&quot; section with the kanban rationale.</td>
+<td></td>
+</tr>
+<tr>
+<td>Amend existing PROJECT.md line</td>
+<td>Append <code>(Removed in Phase 4)</code> to the existing kanban &quot;Out of Scope&quot; entry.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> Amend existing line (recommended).
+<strong>Rationale:</strong> PROJECT.md already commits to removal in &quot;Out of Scope&quot; (&quot;starter-template residue; will be removed under DEBT-A3&quot;). Minimum complete edit is one line. New ADRs/sections would be inventing process where the existing process already covers it.
+<strong>Captured as:</strong> D-02.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>The following decisions were left to the planner/executor&#39;s judgment with recommendations in CONTEXT.md <code>&lt;decisions&gt;</code> §&quot;Claude&#39;s Discretion&quot;:</p>
+<ul>
+<li>CD-01: Delete <code>src/constants/data.ts</code> if it becomes empty post-strip, vs leave it as an empty stub. <strong>Recommended: delete.</strong></li>
+<li>CD-02: Add a Heimdall-branded custom 404 page vs rely on Next.js default. <strong>Recommended: rely on default — not cleanup work.</strong></li>
+<li>CD-03: Filesystem-existence test as <code>describe</code> with multiple <code>it</code>s vs single <code>it</code> with <code>forEach</code>. <strong>Recommended: <code>forEach</code>.</strong></li>
+<li>CD-04: Single sweep commit vs per-requirement commits in Wave 1. <strong>Recommended: per requirement (matches D-19).</strong></li>
+<li>CD-05: How aggressively to grep for unexpected consumers of products/data symbols before deletion. <strong>Recommended: grep before each <code>git rm</code> in 04-01.</strong></li>
+<li>CD-06: Whether Phase 3&#39;s <code>&lt;Link&gt;... Star on GitHub ...&lt;/Link&gt;</code> removal is fully done (if not, fold here). <strong>Recommended: skip — assume Phase 3 D-12 completed it; planner verifies.</strong></li>
+</ul>
+<h2>Deferred Ideas</h2>
+<p>The full <code>&lt;deferred&gt;</code> block lives in <code>04-CONTEXT.md</code>. Summary of ideas that came up but belong in other phases:</p>
+<ul>
+<li><code>src/components/org-switcher.tsx</code> — orphan after Phase 4 workspaces deletion; not named in DEBT.</li>
+<li><code>src/components/forms/demo-form.tsx</code> — starter demo form, orphan.</li>
+<li><code>src/features/auth/components/user-auth-form.tsx</code> — starter auth form, orphan.</li>
+<li><code>src/app/dashboard/profile/[[...profile]]/page.tsx</code> + <code>Profile</code>/<code>Login</code> nav entries — needs UX decision.</li>
+<li>Auth-page visual chrome (Random Dude quote, placeholder Logo, <code>interactive-grid</code>, <code>Star on GitHub</code> link text) — Phase 3 explicitly deferred.</li>
+<li><code>any</code> typings in <code>src/components/kbar/index.tsx</code> and <code>src/features/metrics/components/weekly-snapshot-form.tsx</code> — type-debt, not starter-residue.</li>
+<li><code>playwright</code> package classification — JL2-02, v2-deferred.</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> map refresh — post-milestone doc-update.</li>
+<li>Phase 3 <code>.planning/codebase/ARCHITECTURE.md</code> correction (already deferred from Phase 3).</li>
+<li>No project-level todos cross-referenced (<code>gsd-sdk query todo.match-phase</code> returned none).</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

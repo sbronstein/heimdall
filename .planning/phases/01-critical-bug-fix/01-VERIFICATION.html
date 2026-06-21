@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/01-critical-bug-fix/01-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 01-critical-bug-fix
+verified: 2026-05-12T00:00:00Z
+status: human_needed
+score: 2/3 must-haves verified (1 partial)
+overrides_applied: 0
+re_verification:
+  previous_status: none
+  previous_score: n/a
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
+deferred:</p>
+<ul>
+<li>truth: &quot;Zero hydration warnings on EVERY /dashboard/* route (criterion 2 in full)&quot;
+addressed_in: &quot;Follow-up (not yet scheduled in ROADMAP) — pre-existing useTheme/ClerkProvider baseTheme cascade in src/components/layout/providers.tsx&quot;
+evidence: &quot;01-CONTEXT.md D-02: &#39;Do NOT grep for or fix other unsafe Clerk property chains [...] those would be a new audit and belong in a different phase if needed.&#39; SUMMARY Finding 2 documents the pre-existing useId() cascade as an explicit follow-up. This bug predates Phase 1&#39;s scope (BUG-01 + BUG-02) and the SUMMARY&#39;s self-check classifies it as out of scope.&quot;
+human_verification:</li>
+<li>test: &quot;Hard refresh /dashboard/overview in a real Chromium browser, open DevTools Console&quot;
+expected: &quot;Zero React hydration errors (no &#39;Hydration failed&#39;, no &#39;did not match&#39;, no &#39;Text content does not match server-rendered HTML&#39;). Console-level attribute mismatch warnings from the documented Radix/useId cascade on /dashboard are tolerated as out-of-scope.&quot;
+why_human: &quot;Hydration warnings appear only at runtime in the browser DevTools. The automated smoke (scripts/phase-01-smoke.mjs) covers this but the script is untracked and not part of CI; verifier cannot re-run it without launching Playwright + completing a Clerk sign-in flow.&quot;</li>
+<li>test: &quot;Click every sidebar nav link on /dashboard/networking after importing 1500+ LinkedIn contacts (or any large dataset)&quot;
+expected: &quot;Each click changes the URL and renders the destination page. Sidebar remains interactive — the original BUG-01 symptom (all links unclickable) does not recur.&quot;
+why_human: &quot;Criterion 1 is about runtime interactivity post-import. The 1500-contact dataset is the production dataset; reproducing the original failure would require restoring a pre-fix HEAD. The fix is mechanically correct (no {user &amp;&amp; ...} guard, valid HTML, suppressHydrationWarning on diverging text nodes), but only the user can confirm the symptom is gone in their actual environment.&quot;</li>
+<li>test: &quot;Sign in as a Clerk SSO-only user (emailAddresses: []) and load /dashboard/overview&quot;
+expected: &quot;Sidebar UserAvatarProfile renders. No runtime TypeError on emailAddresses[0].emailAddress. The email row in the user dropdown is empty string.&quot;
+why_human: &quot;Criterion 3 explicitly calls out &#39;edge-case users with no email addresses&#39;. CONTEXT.md D-04 explicitly defers synthesis of a no-email Clerk user. The optional-chain guard is mechanically correct (verified in code), but the runtime behavior with a real SSO-only user is not exercised by anything in this phase.&quot;</li>
+</ul>
+<hr>
+<h1>Phase 01: Critical Bug Fix Verification Report</h1>
+<p><strong>Phase Goal:</strong> Restore reliable dashboard navigation after large LinkedIn imports
+<strong>Verified:</strong> 2026-05-12
+<strong>Status:</strong> human_needed
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths (from ROADMAP.md Success Criteria)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth (Success Criterion)</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>After importing 1500+ LinkedIn contacts, every sidebar nav link on every dashboard page remains clickable and routes correctly</td>
+<td>⚠️ PARTIAL / human_needed</td>
+<td>Code-level cause is fully addressed: app-sidebar.tsx (HEAD) has zero <code>{user &amp;&amp; &lt;UserAvatarProfile</code> matches (grep returns 0) and 2 <code>user={user ?? null}</code> matches (one per render site); user-avatar-profile.tsx (HEAD) renders <code>&lt;span&gt;</code> at root + inner showInfo (zero <code>&lt;div&gt;</code> in file). Smoke script (<code>scripts/phase-01-smoke.mjs</code>) per SUMMARY drove 12/12 sidebar routes with no page-crashing errors. Runtime confirmation under the actual 1500-contact dataset is the user&#39;s call.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Loading any <code>/dashboard/*</code> page produces no React hydration warnings or errors in the browser console</td>
+<td>⚠️ PARTIAL</td>
+<td>Pre-existing <code>useTheme()</code> → <code>ClerkProvider</code> <code>baseTheme</code> cascade in <code>src/components/layout/providers.tsx:23</code> (<code>baseTheme: resolvedTheme === &#39;dark&#39; ? dark : undefined</code>) causes Radix <code>useId()</code> counter shifts SSR vs CSR on <code>/dashboard</code>. Documented in SUMMARY as Finding 2 and explicitly scoped out per CONTEXT.md D-02. Smoke script confirmed <code>/dashboard/overview</code> and <code>/dashboard/networking</code> (the two routes named in D-03) load with zero hydration <code>pageerror</code>. Four non-fatal <code>console.error</code> attribute-mismatch warnings remain on <code>/dashboard</code> from the documented cascade.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>UserAvatarProfile renders correctly inside SidebarMenuButton for both signed-in users and edge-case users with no email addresses (no runtime crash on emailAddresses[0] access)</td>
+<td>✓ VERIFIED (signed-in path) / ? UNCERTAIN (no-email edge case)</td>
+<td>Code: user-avatar-profile.tsx:33 reads <code>user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;</code> (verified by grep); user-nav.tsx:38 reads the same pattern (verified by grep); codebase-wide search for unguarded <code>emailAddresses[0].emailAddress</code> returns zero matches. AppSidebar passes <code>user={user ?? null}</code> to UserAvatarProfile at both render sites (line 151 and 167). The signed-in path is mechanically verified. The &quot;no email addresses&quot; path is mechanically correct but unexercised — CONTEXT.md D-04 explicitly defers synthesizing this state.</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 2/3 fully verified (1 partial with documented out-of-scope cause + 1 sub-case requiring human confirmation)</p>
+<h3>Deferred Items</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Addressed In</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Truth 2 in its strongest form (&quot;any <code>/dashboard/*</code> page&quot;) — pre-existing Radix useId() cascade caused by <code>useTheme()</code> returning different values SSR vs CSR in <code>providers.tsx</code>, propagated through <code>ClerkProvider</code>&#39;s <code>baseTheme</code> prop</td>
+<td>Follow-up phase (not yet scheduled in ROADMAP)</td>
+<td>CONTEXT.md D-02 explicitly scopes this out: &quot;Do NOT grep for or fix other unsafe Clerk property chains [...] those would be a new audit and belong in a different phase if needed.&quot; SUMMARY Follow-up #1 names the file, line, and required structural fix. The remaining warnings are React 19 attribute-mismatch warnings, NOT the page-crashing hydration error that BUG-01 described.</td>
+</tr>
+</tbody></table>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/components/user-avatar-profile.tsx</code></td>
+<td>Span-based avatar profile with optional-chain guard on emailAddresses[0]; <code>suppressHydrationWarning</code> on three user-derived text nodes</td>
+<td>✓ VERIFIED</td>
+<td>Root <code>&lt;span&gt;</code> at line 19; inner showInfo <code>&lt;span&gt;</code> at line 28; <code>user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;</code> at line 33; <code>suppressHydrationWarning</code> present on AvatarFallback (line 22), full-name span (line 29), email span (line 32). Zero <code>&lt;div&gt;</code> in file.</td>
+</tr>
+<tr>
+<td><code>src/components/layout/app-sidebar.tsx</code></td>
+<td>Unconditional UserAvatarProfile render at both sidebar-footer sites with <code>user={user ?? null}</code></td>
+<td>✓ VERIFIED</td>
+<td>Both render sites (lines 148-152 and 164-168) pass <code>user={user ?? null}</code>. Zero <code>{user &amp;&amp; &lt;UserAvatarProfile</code> matches in file.</td>
+</tr>
+<tr>
+<td><code>src/components/layout/user-nav.tsx</code></td>
+<td>Optional-chain guard on emailAddresses[0] in dropdown email row</td>
+<td>✓ VERIFIED</td>
+<td>Line 38: <code>{user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;}</code>. Outer <code>if (user)</code> guard at line 18 intact (an early return for falsy user — not a hydration mismatch site).</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/components/layout/app-sidebar.tsx</code></td>
+<td><code>src/components/user-avatar-profile.tsx</code></td>
+<td>Unconditional render with <code>user={user ?? null}</code></td>
+<td>✓ WIRED</td>
+<td>Two matches at lines 151 and 167; UserAvatarProfile imported at line 31.</td>
+</tr>
+<tr>
+<td><code>src/components/user-avatar-profile.tsx</code></td>
+<td>Browser DOM (valid HTML inside <code>&lt;button&gt;</code>)</td>
+<td>Root <code>&lt;span&gt;</code> + inner showInfo <code>&lt;span&gt;</code></td>
+<td>✓ WIRED</td>
+<td>Root span at line 19 with <code>className=&#39;flex items-center gap-2&#39;</code>; inner span at line 28 with <code>className=&#39;grid flex-1 text-left text-sm leading-tight&#39;</code>. No <code>&lt;div&gt;</code> in the file — valid as descendant of <code>&lt;button&gt;</code> (the <code>SidebarMenuButton</code>).</td>
+</tr>
+<tr>
+<td><code>src/components/layout/user-nav.tsx</code></td>
+<td><code>src/components/user-avatar-profile.tsx</code> (separate render site, top-bar dropdown)</td>
+<td>Imported and rendered</td>
+<td>✓ WIRED</td>
+<td>UserAvatarProfile imported at line 12, rendered at line 23. Note: user-nav is not actually mounted by app-sidebar; it&#39;s a parallel surface in the global header (not load-bearing for criterion 1) but is still in BUG-02 scope.</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>user-avatar-profile.tsx</code></td>
+<td><code>user</code> prop</td>
+<td><code>useUser()</code> from <code>@clerk/nextjs</code> in <code>app-sidebar.tsx:52</code> and <code>user-nav.tsx:16</code></td>
+<td>Yes — Clerk session populates this client-side after hydration</td>
+<td>✓ FLOWING</td>
+</tr>
+<tr>
+<td><code>app-sidebar.tsx</code> (footer)</td>
+<td><code>user</code> (Clerk) → <code>&lt;UserAvatarProfile user={user ?? null} /&gt;</code></td>
+<td>Real Clerk session</td>
+<td>Yes</td>
+<td>✓ FLOWING</td>
+</tr>
+</tbody></table>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No <code>{user &amp;&amp; &lt;UserAvatarProfile</code> JSX guard in app-sidebar.tsx</td>
+<td><code>grep -c &quot;user &amp;&amp; &lt;UserAvatarProfile&quot; src/components/layout/app-sidebar.tsx</code></td>
+<td><code>0</code></td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Both AppSidebar render sites use <code>user={user ?? null}</code></td>
+<td><code>grep -c &quot;user={user ?? null}&quot; src/components/layout/app-sidebar.tsx</code></td>
+<td><code>2</code></td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Optional-chain guard at user-avatar-profile.tsx</td>
+<td><code>grep -q &quot;user?.emailAddresses\[0\]?.emailAddress ?? &#39;&#39;&quot; src/components/user-avatar-profile.tsx</code></td>
+<td>match at line 33</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Optional-chain guard at user-nav.tsx</td>
+<td><code>grep -q &quot;user?.emailAddresses\[0\]?.emailAddress ?? &#39;&#39;&quot; src/components/layout/user-nav.tsx</code></td>
+<td>match at line 38</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>No remaining unguarded <code>emailAddresses[0].emailAddress</code> anywhere in src/</td>
+<td><code>grep -rnE &quot;emailAddresses\[0\]\.emailAddress&quot; src</code></td>
+<td>zero matches</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>user-avatar-profile.tsx has zero <code>&lt;div&gt;</code> (valid inside <code>&lt;button&gt;</code>)</td>
+<td><code>grep -c &quot;&lt;div&quot; src/components/user-avatar-profile.tsx</code></td>
+<td><code>0</code></td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td><code>suppressHydrationWarning</code> on three user-derived text nodes (residual BUG-01 fix)</td>
+<td><code>grep -c &quot;suppressHydrationWarning&quot; src/components/user-avatar-profile.tsx</code></td>
+<td><code>3</code></td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Live dev-server smoke (12/12 sidebar routes)</td>
+<td>per SUMMARY: <code>scripts/phase-01-smoke.mjs</code> second run</td>
+<td>&quot;Zero hydration <code>pageerror</code> on any route. 12/12 sidebar routes load correctly.&quot;</td>
+<td>? SKIP (script untracked, requires Clerk sign-in) — verifier cannot re-run without external state</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<table>
+<thead>
+<tr>
+<th>Probe</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Conventional <code>scripts/*/tests/probe-*.sh</code></td>
+<td><code>find scripts -path &#39;*/tests/probe-*.sh&#39;</code></td>
+<td>none found</td>
+<td>N/A (no probes declared or conventionally present for this phase)</td>
+</tr>
+<tr>
+<td><code>scripts/phase-01-smoke.mjs</code> — Playwright smoke</td>
+<td><code>node scripts/phase-01-smoke.mjs</code></td>
+<td>Not re-run by verifier (needs interactive Clerk sign-in; script is untracked per D-09 boundary)</td>
+<td>? SKIP (route to human verification — see human_verification[1])</td>
+</tr>
+</tbody></table>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BUG-01</td>
+<td>01-01-PLAN.md</td>
+<td>Eliminate React hydration crash in <code>app-sidebar.tsx</code> so sidebar nav stays alive after LinkedIn import — remove <code>{user &amp;&amp; ...}</code> guard, verify <code>&lt;span&gt;</code> migration, add smoke check</td>
+<td>✓ SATISFIED (with documented residual out-of-scope)</td>
+<td>(a) Guard removed: zero <code>{user &amp;&amp; &lt;UserAvatarProfile</code> matches in app-sidebar.tsx. (b) <code>&lt;span&gt;</code> migration: zero <code>&lt;div&gt;</code> in user-avatar-profile.tsx; root + inner spans verified. (c) Smoke check: <code>scripts/phase-01-smoke.mjs</code> exists and (per SUMMARY) drove 12/12 routes with zero page-crashing hydration errors. Residual Radix useId() attribute warnings on <code>/dashboard</code> come from a pre-existing useTheme/ClerkProvider cascade in <code>providers.tsx</code> — explicitly scoped out by D-02 and filed as follow-up #1.</td>
+</tr>
+<tr>
+<td>BUG-02</td>
+<td>01-01-PLAN.md</td>
+<td>Guard <code>emailAddresses[0]</code> access at the two known sites (<code>user-avatar-profile.tsx:31</code>, <code>user-nav.tsx:38</code>)</td>
+<td>✓ SATISFIED</td>
+<td>Both sites use <code>user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;</code> (verified by grep). Codebase-wide check for unguarded <code>emailAddresses[0].emailAddress</code> returns zero matches.</td>
+</tr>
+</tbody></table>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(none)</td>
+<td>—</td>
+<td>No TODO/FIXME/XXX/HACK markers found in the three BUG-scoped files</td>
+<td>ℹ️ Info</td>
+<td>Clean implementation.</td>
+</tr>
+<tr>
+<td><code>src/components/layout/providers.tsx</code></td>
+<td>16, 23</td>
+<td><code>useTheme()</code> produces SSR/CSR-divergent <code>baseTheme</code> prop on <code>ClerkProvider</code> — known root cause of residual Radix <code>useId()</code> attribute mismatches on <code>/dashboard</code></td>
+<td>ℹ️ Info (out of phase scope)</td>
+<td>Documented in SUMMARY follow-up #1; explicitly scoped out by CONTEXT.md D-02 (no codebase-wide sweep). Not a BUG-01-family fix this phase.</td>
+</tr>
+</tbody></table>
+<h3>Human Verification Required</h3>
+<h4>1. Hydration-clean console on /dashboard/overview</h4>
+<p><strong>Test:</strong> Hard-refresh <code>http://localhost:4000/dashboard/overview</code> in Chromium with DevTools Console open.
+<strong>Expected:</strong> Zero <code>Hydration failed</code> / <code>did not match</code> / <code>Text content does not match server-rendered HTML</code> errors. Console-level attribute warnings on <code>/dashboard</code> from the documented <code>useTheme</code>/<code>ClerkProvider</code>/Radix <code>useId()</code> cascade are acceptable (out-of-scope follow-up).
+<strong>Why human:</strong> Hydration errors surface only at runtime in browser DevTools. The repo has no CI hook running Playwright, and the smoke script (<code>scripts/phase-01-smoke.mjs</code>) is untracked and requires an interactive Clerk sign-in. The verifier cannot reproduce the browser console programmatically.</p>
+<h4>2. Sidebar still interactive after a 1500-contact dataset</h4>
+<p><strong>Test:</strong> With the production-size contacts dataset present (or after importing one), navigate to <code>/dashboard/networking</code> and click every sidebar nav link in turn.
+<strong>Expected:</strong> Every link routes correctly; the sidebar does not lock up; the original BUG-01 symptom (all nav unclickable) does not recur.
+<strong>Why human:</strong> Criterion 1 is fundamentally about runtime interactivity under load. Reproducing the original failure would require restoring a pre-fix HEAD and importing the 1500-contact dataset. The fix is mechanically correct in the code (hydration cause removed), but only the user can confirm the symptom is gone in their actual environment.</p>
+<h4>3. SSO-only Clerk user with no email addresses</h4>
+<p><strong>Test:</strong> Sign in as a Clerk user whose <code>emailAddresses</code> array is empty (e.g., SSO-only). Load <code>/dashboard/overview</code>. Open the sidebar-footer user dropdown.
+<strong>Expected:</strong> No runtime <code>TypeError</code> on <code>.emailAddress</code>. Avatar renders. Email row in the dropdown is an empty string.
+<strong>Why human:</strong> CONTEXT.md D-04 explicitly defers synthesis of this state. The optional-chain guard is mechanically correct (verified by grep), but the live edge-case is not exercised anywhere in this phase. Note: SUMMARY follow-up #2 already flags that the smoke script could not robustly verify the dropdown open path.</p>
+<h3>Gaps Summary</h3>
+<p>No FAILED truths, no MISSING/STUB artifacts, no broken key links, no debt markers. The three success criteria are addressed at the code level with surgical, well-targeted fixes (commit <code>265fc6f</code> for the residual hydration text-mismatch + BUG-02 guards; commit <code>954c39d</code> for the pre-existing surface BUG-01 fix that the audit accepted per D-07).</p>
+<p>What prevents a clean <code>passed</code>:</p>
+<ul>
+<li><strong>Criterion 2 is partial-by-design:</strong> the smoke run found residual attribute-level hydration warnings on <code>/dashboard</code> driven by a pre-existing <code>useTheme()</code> → <code>ClerkProvider.baseTheme</code> cascade. SUMMARY documents this as Finding 2 and explicitly defers it (CONTEXT.md D-02 forbids a codebase-wide sweep this phase). The deferred-item filter correctly catches this — it does not constitute a phase-1 gap.</li>
+<li><strong>Criteria 1 and 3 require human runtime confirmation:</strong> the code-level cause-removal is mechanical and verifiable from grep, but the original symptom (sidebar locked after 1500-contact import) and the edge case (SSO-only user with no email) are runtime behaviors the verifier cannot exercise.</li>
+</ul>
+<p>Therefore the overall finding is <strong>PARTIAL</strong> — code-level success criteria are met; runtime confirmation under production-like conditions and the no-email Clerk edge case are routed to human verification.</p>
+<hr>
+<p><em>Verified: 2026-05-12</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/01-critical-bug-fix/01-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

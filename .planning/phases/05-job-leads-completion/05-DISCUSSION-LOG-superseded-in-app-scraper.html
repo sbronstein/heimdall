@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-DISCUSSION-LOG-superseded-in-app-scraper</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-DISCUSSION-LOG-superseded-in-app-scraper.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 5: Job Leads Completion - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-13
+<strong>Phase:</strong> 05-job-leads-completion
+<strong>Areas discussed:</strong> Error surfacing model, Timeout budget + revert behavior, Browser lifecycle, Debug-log cleanup scope</p>
+<hr>
+<h2>Gray Area Selection</h2>
+<p>User was offered 4 phase-specific gray areas (5th, <code>navigateToEmployeeList</code> resilience, dropped due to AskUserQuestion&#39;s 4-option cap and folded into CONTEXT.md CD-04).</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Error surfacing model</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Timeout budget + revert behavior</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Browser lifecycle</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Debug-log cleanup scope</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Outcome:</strong> All 4 selected → all 4 deep-dived below.</p>
+<hr>
+<h2>Error surfacing model</h2>
+<h3>Q1: Where should the scrape-failure error live so the UI can render it?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New <code>lastError</code> text column on job_leads</td>
+<td>Add <code>last_error: text</code> + <code>last_error_at: timestamp</code> to job_leads schema. On failure: revert status, write error message + timestamp. <code>/status</code> endpoint returns it. Cleared on next successful scrape. Persistent, dead simple.</td>
+<td></td>
+</tr>
+<tr>
+<td>timeline_events row only</td>
+<td>On failure, write a <code>job_lead_search_failed</code> timeline event with the error message in <code>metadata.error</code>. UI joins / queries timeline for the latest failure event. Uses existing infra (no migration), but the UI has to fetch + filter timeline.</td>
+<td></td>
+</tr>
+<tr>
+<td>Both — column + timeline event</td>
+<td>Write to both: <code>lastError</code> column for fast &#39;current state of this lead&#39; read, AND a timeline_events row for the activity feed / audit trail. Most informative. Two writes per failure.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Toast on the click + nothing persisted</td>
+<td>Return the error from <code>/search</code> POST synchronously when known fast, or have <code>/status</code> return a one-shot <code>error</code> field that clears on next read. No new column, no timeline event. If the user navigates away, the error is gone.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Both — column + timeline event.
+<strong>Notes:</strong> Captured as D-01 in CONTEXT.md. Drives Drizzle migration + extending <code>/status</code> payload + new timeline event type.</p>
+<h3>Q2: What does the user see when a scrape fails?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Inline banner on job-lead detail + Retry button</td>
+<td>Banner above Find Connections; Retry clears error and re-POSTs to <code>/search</code>.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Toast on poll completion + persistent timeline entry</td>
+<td>Sonner toast when <code>SearchProgress</code> poll detects status reverted with <code>lastError</code> set; no banner.</td>
+<td></td>
+</tr>
+<tr>
+<td>Both — inline banner AND toast</td>
+<td>Toast for immediate feedback + banner for durable signal.</td>
+<td></td>
+</tr>
+<tr>
+<td>Inline banner only, no toast</td>
+<td>Banner on detail page only.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Inline banner on job-lead detail + Retry button.
+<strong>Notes:</strong> Captured as D-02. New <code>scrape-error-banner.tsx</code> component. No sonner integration this phase.</p>
+<h3>Q3: What error message gets stored — raw or normalized?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Categorized + short raw tail</td>
+<td><code>&lt;category&gt;: &lt;first 200 chars of err.message&gt;</code>. 5 categories.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Raw err.message (truncated to 500 chars)</td>
+<td>Honest but ugly.</td>
+<td></td>
+</tr>
+<tr>
+<td>Category only, no raw text</td>
+<td>Cleanest UI but no per-scrape diagnostic.</td>
+<td></td>
+</tr>
+<tr>
+<td>Two columns — <code>errorCategory</code> + <code>errorDetail</code></td>
+<td>Most structure, most schema cost.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Categorized + short raw tail.
+<strong>Notes:</strong> Captured as D-03. 5-category taxonomy: <code>Timeout</code>, <code>LinkedIn navigation failed</code>, <code>No prospects found</code>, <code>Browser unavailable</code>, <code>Unknown error</code>.</p>
+<hr>
+<h2>Timeout budget + revert behavior</h2>
+<h3>Q1: What&#39;s the wall-clock budget for a single scrape before the IIFE is killed and the lead reverts to <code>scraped</code>?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>90 seconds</td>
+<td>Long enough for nav + 10 pages under normal load; ~30s headroom over the per-step timeout sum.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>120 seconds</td>
+<td>More generous; trades responsiveness for resilience.</td>
+<td></td>
+</tr>
+<tr>
+<td>60 seconds</td>
+<td>Tight; aggressive feedback loop.</td>
+<td></td>
+</tr>
+<tr>
+<td>Configurable via env (SCRAPE_TIMEOUT_MS), default 90s</td>
+<td>Same default, adds one knob.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> 90 seconds.
+<strong>Notes:</strong> Captured as D-06. No env override.</p>
+<h3>Q2: When the 90s timeout fires, how do we clean up the in-flight Playwright work?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Promise.race + AbortController + close context</td>
+<td>Aborts in-flight Playwright + closes context. Cleanest.</td>
+<td></td>
+</tr>
+<tr>
+<td>Promise.race + close context (no abort)</td>
+<td>Closes context; in-flight calls throw and are caught.</td>
+<td></td>
+</tr>
+<tr>
+<td>Promise.race + leave Playwright dangling</td>
+<td>Just race against 90s and revert status. Lingering promise GC&#39;d later.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Promise.race + close context + log full error to timeline</td>
+<td>Option 1 + separate <code>job_lead_search_timeout</code> event type.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Promise.race + leave Playwright dangling.
+<strong>Notes:</strong> Captured as D-10. Tension flag against SC #3 (&quot;no leaked browser instance open after completion&quot;) documented for plan-checker — interpretation is &quot;successful completion closes the browser; timeout-abort releases promise ownership and lets the context GC; SC #3 is about the success-path leak only.&quot;</p>
+<hr>
+<h2>Browser lifecycle</h2>
+<h3>Q1: How should the browser context be closed after a successful scrape?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Always close context after scrape finishes</td>
+<td>Simplest, satisfies SC #3 cleanly; pays open/close cost per scrape.</td>
+<td></td>
+</tr>
+<tr>
+<td>Close in remote (CDP/WS) mode only</td>
+<td>In remote mode <code>close()</code> is cheap (just disconnect); in local mode <code>close()</code> shuts the whole persistent Chromium and the next scrape relaunches.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Always close + return result without context</td>
+<td>Same as option 1, but scrapeConnections no longer returns <code>context</code>.</td>
+<td></td>
+</tr>
+<tr>
+<td>Module-level shared context singleton + idle timeout</td>
+<td>Caches context, idle-times-out after 5 min. Best perf, most complex.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Close in remote (CDP/WS) mode only.
+<strong>Notes:</strong> Captured as D-12. Export <code>isRemote()</code> from <code>linkedin-browser.ts</code>. Local-dev <code>launchPersistentContext</code> left alive between scrapes.</p>
+<hr>
+<h2>Debug-log cleanup scope</h2>
+<h3>Q1: How aggressive should the console.log cleanup be in scrape-connections.ts?</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Gate behind DEBUG_SCRAPE=1 env flag, silent by default</td>
+<td>Wrap every <code>console.log</code> in env check.</td>
+<td></td>
+</tr>
+<tr>
+<td>Delete all console.log calls outright</td>
+<td>Strip everything; <code>console.error</code> only in catch.</td>
+<td></td>
+</tr>
+<tr>
+<td>Replace logs with a small <code>scrapeLog()</code> helper</td>
+<td>DRY version of env-flag option.</td>
+<td></td>
+</tr>
+<tr>
+<td>Keep navigation breadcrumbs (~5 lines), drop DOM dumps</td>
+<td>Middle ground — high-level breadcrumbs stay, JSON dumps go.</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Keep navigation breadcrumbs (~5 lines), drop DOM dumps.
+<strong>Notes:</strong> Captured as D-15/D-16/D-17. Specific keep/drop list in CONTEXT.md D-15.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>Areas not asked but locked by analysis or roadmap text (full list in CONTEXT.md <code>### Claude&#39;s Discretion</code>):</p>
+<ul>
+<li><strong>CD-01:</strong> How to handle the existing 457-line working-tree diff (commit as-is then fix forward, vs rewrite history). Recommended: commit as-is.</li>
+<li><strong>CD-02:</strong> Regression test for <code>&#39;point&#39;</code> removal as filesystem grep, not behavioral test.</li>
+<li><strong>CD-03:</strong> Whether to lift <code>Scraped*</code> types into a shared types file — skip (premature).</li>
+<li><strong>CD-04:</strong> Whether to reorder/strip <code>navigateToEmployeeList</code> fallback chain — defer; leave as-is.</li>
+<li><strong>CD-05:</strong> Show &quot;5 min ago&quot; timestamp in banner via <code>date-fns formatDistanceToNow</code>.</li>
+<li><strong>CD-06:</strong> Retry button uses optimistic UI (matches existing <code>handleFindConnections</code> pattern).</li>
+<li><strong>CD-07:</strong> Keep <code>job_lead_search_complete</code> and <code>job_lead_search_failed</code> as disjoint event types.</li>
+<li><strong>CD-08:</strong> New tests use the <code>callRoute</code> helper from Phase 2.</li>
+</ul>
+<hr>
+<h2>Deferred Ideas</h2>
+<p>Ideas mentioned during discussion that belong in other phases (full list in CONTEXT.md <code>&lt;deferred&gt;</code>):</p>
+<ul>
+<li>PERF-A1, PERF-A2 — N+1 inserts (Phase 6).</li>
+<li>JL2-01..JL2-04 — decouple scrape worker, package classification, captcha detection, deeper pagination (v2).</li>
+<li>LinkedIn cookie file handling (Phase 3 deferred → Phase 5 closes as &quot;no action needed&quot;).</li>
+<li>Architecture-doc rewrites to mark JL fragility resolved.</li>
+<li>Possible split of &quot;Browser unavailable&quot; into &quot;CDP unreachable&quot; vs &quot;Captcha detected&quot; once usage data justifies it.</li>
+<li>Persisting scrape duration on success-path timeline events.</li>
+</ul>
+<hr>
+<p><em>Phase: 05-Job Leads Completion</em>
+<em>Logged: 2026-05-13</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-DISCUSSION-LOG-superseded-in-app-scraper.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

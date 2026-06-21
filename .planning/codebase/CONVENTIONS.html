@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CONVENTIONS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/codebase/CONVENTIONS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Coding Conventions</h1>
+<p><strong>Analysis Date:</strong> 2026-05-12</p>
+<h2>Naming Patterns</h2>
+<p><strong>Files:</strong></p>
+<ul>
+<li>kebab-case for all files: <code>company-form.tsx</code>, <code>scrape-job-page.ts</code>, <code>pipeline-board.tsx</code></li>
+<li>Schema files use kebab-case in <code>drizzle/schema/</code>: <code>job-leads.ts</code>, <code>timeline-events.ts</code></li>
+<li>API routes follow Next.js convention: <code>route.ts</code> in directory-per-endpoint layout</li>
+</ul>
+<p><strong>Functions:</strong></p>
+<ul>
+<li>camelCase for all functions: <code>scrapeJobPage</code>, <code>logTimeline</code>, <code>canTransition</code>, <code>buildRecommendations</code></li>
+<li>Event handlers prefixed with <code>on</code>: <code>onSubmit</code>, <code>onDragStart</code>, <code>onCardClick</code></li>
+<li>Handler callbacks passed as props prefixed with <code>handle</code>: <code>handleCreate</code></li>
+<li>Async route handlers named after HTTP verb: <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code></li>
+</ul>
+<p><strong>Variables:</strong></p>
+<ul>
+<li>camelCase: <code>companyId</code>, <code>newStatus</code>, <code>hasMore</code>, <code>searchParams</code></li>
+<li>Boolean variables prefixed with <code>is</code>/<code>has</code>: <code>isMounted</code>, <code>hasMore</code>, <code>isOverlay</code>, <code>isDragging</code></li>
+<li>Constants (enum value arrays) use camelCase with <code>Values</code> suffix: <code>applicationStatusValues</code>, <code>companyStageValues</code></li>
+</ul>
+<p><strong>Types and Interfaces:</strong></p>
+<ul>
+<li>PascalCase for types and interfaces: <code>Company</code>, <code>PipelineApplication</code>, <code>ScrapedJobData</code></li>
+<li>Props interfaces named <code>[ComponentName]Props</code>: <code>PipelineBoardProps</code>, <code>ApplicationCardProps</code></li>
+<li>Inferred Drizzle types use simple entity names: <code>Company</code>, <code>Contact</code>, <code>Application</code> (defined in <code>src/lib/domain/types.ts</code>)</li>
+<li>Insert variants prefixed <code>New</code>: <code>NewCompany</code>, <code>NewContact</code>, <code>NewApplication</code></li>
+<li>Type-only imports use <code>import type</code>: <code>import type { PipelineStage } from &#39;@/lib/domain/types&#39;</code></li>
+</ul>
+<p><strong>Components:</strong></p>
+<ul>
+<li>PascalCase named exports for all React components: <code>PipelineBoard</code>, <code>ApplicationCard</code>, <code>JobLeadsPage</code></li>
+<li>No default exports for components — Next.js page files (<code>page.tsx</code>, <code>layout.tsx</code>) are the only exception</li>
+</ul>
+<p><strong>React hooks:</strong></p>
+<ul>
+<li>Custom hooks prefixed <code>use</code>: <code>usePipelineStore</code>, <code>useDataTable</code>, <code>useDebounce</code></li>
+</ul>
+<h2>Code Style</h2>
+<p><strong>Formatting (Prettier 3.4.2):</strong></p>
+<ul>
+<li>Single quotes for strings: <code>&#39;use client&#39;</code>, <code>import ... from &#39;...&#39;</code></li>
+<li>No trailing commas</li>
+<li>2-space indentation</li>
+<li>No semicolons omitted (semi: true)</li>
+<li>Arrow functions always parenthesized: <code>(s) =&gt; s.applications</code></li>
+<li>LF line endings</li>
+<li>Tailwind class sorting via <code>prettier-plugin-tailwindcss</code></li>
+</ul>
+<p><strong>Linting (ESLint, <code>next/core-web-vitals</code>):</strong></p>
+<ul>
+<li><code>@typescript-eslint/no-unused-vars</code> — warn (not error)</li>
+<li><code>no-console</code> — warn (allows <code>console.error</code> in API error paths)</li>
+<li><code>react-hooks/exhaustive-deps</code> — warn</li>
+<li><code>import/no-unresolved</code> — off (path aliases handled by TS)</li>
+</ul>
+<p><strong>TypeScript:</strong></p>
+<ul>
+<li>Strict mode enabled (<code>&quot;strict&quot;: true</code> in <code>tsconfig.json</code>)</li>
+<li><code>satisfies</code> operator used to validate response shapes: <code>{ success: true, data } satisfies ApiResponse&lt;T&gt;</code></li>
+<li>Type assertions used for Drizzle enum arrays: <code>statuses as (typeof applicationStatusValues)[number][]</code></li>
+<li>Non-null assertion (<code>!</code>) used for env vars: <code>process.env.DATABASE_URL!</code></li>
+</ul>
+<h2>Import Organization</h2>
+<p><strong>Order (not enforced by tooling, but consistently applied):</strong></p>
+<ol>
+<li>React/Next.js core: <code>&#39;react&#39;</code>, <code>&#39;next/navigation&#39;</code>, <code>&#39;next/image&#39;</code></li>
+<li>Third-party packages: <code>&#39;@dnd-kit/core&#39;</code>, <code>&#39;sonner&#39;</code>, <code>&#39;zod&#39;</code></li>
+<li>Internal <code>@/</code> aliases — UI components first: <code>&#39;@/components/ui/button&#39;</code></li>
+<li>Internal <code>@/</code> aliases — lib/domain: <code>&#39;@/lib/domain/types&#39;</code>, <code>&#39;@/lib/api/errors&#39;</code></li>
+<li>Relative imports last: <code>&#39;./pipeline-column&#39;</code>, <code>&#39;../utils/store&#39;</code></li>
+</ol>
+<p><strong>Path Aliases (configured in <code>tsconfig.json</code>):</strong></p>
+<ul>
+<li><code>@/*</code> → <code>./src/*</code> (primary alias for all src imports)</li>
+<li><code>~/*</code> → <code>./public/*</code> (public assets)</li>
+<li>Drizzle schema imported as relative paths from API routes: <code>&#39;../../../../drizzle/schema&#39;</code></li>
+</ul>
+<p><strong>Type-only imports:</strong></p>
+<ul>
+<li>Use <code>import type</code> for types that are not needed at runtime:<pre><code class="language-typescript">import type { PipelineStage } from &#39;@/lib/domain/types&#39;;
+import type { DragEndEvent } from &#39;@dnd-kit/core&#39;;
+</code></pre>
+</li>
+</ul>
+<h2>Error Handling</h2>
+<p><strong>API routes — standard pattern:</strong></p>
+<pre><code class="language-typescript">export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const validated = schema.parse(body);
+    // ... db operations ...
+    return created(result);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return validationError(err.issues[0].message);
+    }
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>Helper functions (<code>src/lib/api/errors.ts</code>, <code>src/lib/api/types.ts</code>):</strong></p>
+<ul>
+<li><code>notFound(entity)</code> → 404 <code>{ success: false, error: &quot;[entity] not found&quot; }</code></li>
+<li><code>validationError(message)</code> → 400 <code>{ success: false, error: message }</code></li>
+<li><code>serverError(err)</code> → 500, logs <code>console.error(&#39;API Error:&#39;, err)</code></li>
+<li><code>success(data)</code> → 200 <code>{ success: true, data }</code></li>
+<li><code>created(data)</code> → 201 <code>{ success: true, data }</code></li>
+<li><code>paginated(data, meta)</code> → 200 <code>{ success: true, data, meta }</code></li>
+</ul>
+<p><strong>Client components — fetch pattern:</strong></p>
+<pre><code class="language-typescript">const res = await fetch(&#39;/api/...&#39;, { method: &#39;POST&#39;, ... });
+if (!res.ok) {
+  const data = await res.json();
+  throw new Error(data.error || &#39;Fallback message&#39;);
+}
+const { data } = await res.json();
+</code></pre>
+<p>User feedback via <code>toast.success()</code> / <code>toast.error()</code> (sonner) — never raw <code>alert()</code>.</p>
+<p><strong>Nested try/catch for optional async steps:</strong>
+When a sub-operation (e.g., scraping) should not abort the primary operation, a nested try/catch is used. See <code>src/app/api/job-leads/route.ts</code> POST handler.</p>
+<h2>Logging</h2>
+<p><strong>Framework:</strong> <code>console.error</code> only (no logging library)</p>
+<p><strong>Patterns:</strong></p>
+<ul>
+<li>Server errors logged in <code>serverError()</code> in <code>src/lib/api/errors.ts</code> — centralized</li>
+<li>Scrape/search failures logged inline with <code>console.error(&#39;Job page scrape failed:&#39;, err)</code></li>
+<li><code>no-console</code> ESLint rule is <code>warn</code> — <code>console.log</code> is discouraged but <code>console.error</code> is accepted</li>
+<li>No structured logging or log levels beyond error</li>
+</ul>
+<h2>Comments</h2>
+<p><strong>When to Comment:</strong></p>
+<ul>
+<li>Section headers in long files: <code>// Core info</code>, <code>// Verify company exists</code></li>
+<li>Non-obvious algorithmic decisions: <code>// Overall contact score = max of their bridge scores</code></li>
+<li>Intentional suppressions: <code>// ignore malformed JSON-LD</code>, <code>// Leave browser open for now (debug mode)</code></li>
+<li>TODO/workaround notes are present but rare</li>
+</ul>
+<p><strong>No JSDoc/TSDoc:</strong> Function signatures rely on TypeScript types for documentation.</p>
+<h2>Function Design</h2>
+<p><strong>Size:</strong> Route handlers typically 20–50 lines. Business logic helpers (<code>prioritization.ts</code>, <code>scrape-job-page.ts</code>) 30–90 lines.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li>Route handlers receive <code>(request: Request, { params })</code> where params is <code>Promise&lt;{ id: string }&gt;</code></li>
+<li>Utility functions use named parameters or options objects for multiple args</li>
+<li>Component props defined as <code>interface [Name]Props</code> and destructured in the signature</li>
+</ul>
+<p><strong>Return Values:</strong></p>
+<ul>
+<li>API routes always return a <code>Response</code> via the helper functions in <code>src/lib/api/types.ts</code> and <code>src/lib/api/errors.ts</code></li>
+<li>Business logic returns typed values or throws — never returns error objects</li>
+<li>Async functions always use <code>async/await</code>, never <code>.then()</code> chains</li>
+</ul>
+<h2>Module Design</h2>
+<p><strong>Exports:</strong></p>
+<ul>
+<li>Named exports everywhere: <code>export function</code>, <code>export const</code>, <code>export type</code></li>
+<li>Default exports only for Next.js page/layout files (<code>page.tsx</code>, <code>layout.tsx</code>) and middleware</li>
+</ul>
+<p><strong>Barrel Files:</strong></p>
+<ul>
+<li>Used selectively at <code>drizzle/schema/index.ts</code> (re-exports all schema tables)</li>
+<li>Feature-level barrel files exist only for data-table components: <code>src/features/tasks/components/task-table/index.tsx</code></li>
+<li>No <code>src/features/*/index.ts</code> barrel pattern</li>
+</ul>
+<p><strong>Server vs. Client split:</strong></p>
+<ul>
+<li><code>&#39;use client&#39;</code> directive placed at the very top of files requiring interactivity</li>
+<li>Server Components (no directive) used for all page-level data fetching</li>
+<li>Zustand stores (<code>src/features/pipeline/utils/store.ts</code>) used for client-side state shared across components</li>
+<li>No React Context for global state — Zustand is the pattern</li>
+</ul>
+<h2>Zod Schema Conventions</h2>
+<p>Zod schemas defined at the top of each API route file (not in a shared schemas directory):</p>
+<pre><code class="language-typescript">const createCompanySchema = z.object({
+  name: z.string().min(1).max(200),
+  website: z.string().url().optional().nullable(),
+  tags: z.array(z.string()).optional().nullable()
+});
+</code></pre>
+<ul>
+<li>Required fields: <code>z.string().min(1)</code> with max bounds</li>
+<li>Optional nullable fields: <code>.optional().nullable()</code></li>
+<li>Enum fields use <code>z.enum(domainValues)</code> referencing arrays from <code>src/lib/domain/types.ts</code></li>
+<li>Date fields accept both date strings and datetime strings: <code>z.union([z.string().date(), z.string().datetime()])</code></li>
+</ul>
+<h2>Drizzle ORM Conventions</h2>
+<ul>
+<li>Query builder only — no raw SQL except for <code>sql</code> template tag in complex <code>WHERE</code> conditions</li>
+<li>Column names in snake_case in DB, camelCase in TypeScript (Drizzle maps automatically)</li>
+<li>Multi-condition WHERE built by accumulating into <code>conditions[]</code> array then <code>sql.join</code>:<pre><code class="language-typescript">const conditions = [isNull(table.archivedAt)];
+if (filter) conditions.push(inArray(table.field, values));
+const where = conditions.length &gt; 1
+  ? sql`${sql.join(conditions.map(c =&gt; sql`(${c})`), sql` AND `)}`
+  : conditions[0];
+</code></pre>
+</li>
+<li>Soft deletes via <code>archivedAt</code> timestamp; never hard delete</li>
+<li><code>updatedAt: new Date()</code> always set manually on updates (Drizzle does not auto-update)</li>
+</ul>
+<hr>
+<p><em>Convention analysis: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/codebase/CONVENTIONS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>package.json</li>
+<li>package-lock.json</li>
+<li>vitest.config.ts</li>
+<li>src/test-utils/pglite.ts</li>
+<li>src/test-utils/call-route.ts
+autonomous: true
+requirements:</li>
+<li>TEST-A1
+tags:</li>
+<li>vitest</li>
+<li>pglite</li>
+<li>test-harness
+must_haves:
+  truths:<ul>
+<li>&quot;Running <code>npm test</code> from a clean checkout invokes Vitest and the runner is reachable&quot;</li>
+<li>&quot;Test files can import <code>@/lib/domain/pipeline</code> and similar <code>@/*</code> path aliases without TS errors&quot;</li>
+<li>&quot;A test using <code>createTestDb()</code> can write to and read from an in-process Postgres with the Heimdall schema applied&quot;</li>
+<li>&quot;A test using <code>callRoute()</code> can invoke a Next.js route handler (with optional <code>params</code>) and receive a parsed JSON envelope back&quot;
+artifacts:</li>
+<li>path: &quot;vitest.config.ts&quot;
+provides: &quot;Vitest configuration with node default env and @/* alias&quot;
+contains: &quot;defineConfig&quot;</li>
+<li>path: &quot;package.json&quot;
+provides: &quot;test and test:run scripts plus vitest + pglite devDependencies&quot;
+contains: &quot;&quot;test&quot;:&quot;</li>
+<li>path: &quot;src/test-utils/pglite.ts&quot;
+provides: &quot;createTestDb() — freshly-migrated PGlite-backed Drizzle instance&quot;
+exports: [&quot;createTestDb&quot;]</li>
+<li>path: &quot;src/test-utils/call-route.ts&quot;
+provides: &quot;callRoute() helper that builds a Request, awaits the handler, and returns { status, body }&quot;
+exports: [&quot;callRoute&quot;]
+key_links:</li>
+<li>from: &quot;vitest.config.ts&quot;
+to: &quot;tsconfig.json paths&quot;
+via: &quot;resolve.alias mirroring &#39;@/<em>&#39; → &#39;./src/</em>&#39;&quot;
+pattern: &quot;resolve.*alias&quot;</li>
+<li>from: &quot;src/test-utils/pglite.ts&quot;
+to: &quot;drizzle/migrations/*.sql&quot;
+via: &quot;Programmatic SQL replay applying all migration files to PGlite at bootstrap&quot;
+pattern: &quot;drizzle/migrations&quot;</li>
+<li>from: &quot;src/test-utils/pglite.ts&quot;
+to: &quot;drizzle/schema/index.ts&quot;
+via: &quot;drizzle(client, { schema }) binding so DB-backed tests get full type info&quot;
+pattern: &quot;drizzle.*schema&quot;
+decisions_honored:</li>
+<li>&quot;D-01: Vitest runner (Task 1 installs vitest)&quot;</li>
+<li>&quot;D-02: tests colocated with source via @/* path alias&quot;</li>
+<li>&quot;D-03: .test.ts naming enforced by include glob&quot;</li>
+<li>&quot;D-05: PGlite (@electric-sql/pglite) as in-process Postgres&quot;</li>
+<li>&quot;D-06: schema applied via raw SQL replay of drizzle/migrations/*.sql&quot;</li>
+<li>&quot;D-08: createTestDb() is opt-in; pure-logic tests skip it&quot;</li>
+<li>&quot;D-09: vitest.config.ts defaults environment: &#39;node&#39;&quot;</li>
+<li>&quot;D-10: single config, single npm test command, no projects mode&quot;</li>
+<li>&quot;CD-04: PGlite bootstrap = raw SQL replay (resolved discretion item)&quot;</li>
+<li>&quot;CD-05: per-call fresh PGlite instance (createTestDb returns new each time)&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Stand up the Vitest + PGlite test harness so subsequent plans can write tests against pure logic, DB-backed API routes, and the BUG-01 regression surface (per D-01, D-05, D-06, D-09, CD-04).<p>Purpose: Phase 2 cannot ship any test until the runner, path-alias resolution, in-process Postgres, and the route-call helper exist. Plans 02-02, 02-03, and 02-04 all build on this wave.</p>
+<p>Output: Installed devDependencies, <code>vitest.config.ts</code>, <code>package.json</code> test scripts, <code>src/test-utils/pglite.ts</code>, and <code>src/test-utils/call-route.ts</code>. <code>npm test</code> exits cleanly (zero tests is a passing run for Vitest in <code>run</code> mode).
+</objective></p>
+<decisions_honored>
+This plan honors the following CONTEXT.md decisions:
+- **D-01:** Test runner is Vitest (Task 1 installs `vitest`; Task 2 writes `vitest.config.ts`).
+- **D-02:** Tests are colocated with source (path-alias setup in Task 2 ensures `@/*` resolves from `src/`).
+- **D-03:** `.test.ts` naming (Task 2 sets `include: ['src/**/*.test.{ts,tsx}']`).
+- **D-05:** PGlite as in-process Postgres (Task 1 installs `@electric-sql/pglite`; Task 3 writes `createTestDb()`).
+- **D-06:** Schema applied via Drizzle migrations from `drizzle/migrations/` (Task 3 replays migration SQL into PGlite).
+- **D-08:** Pure-logic tests do NOT need PGlite (the `createTestDb()` helper is opt-in; no global setup forces it).
+- **D-09:** Single `vitest.config.ts` defaults to `environment: 'node'` (Task 2 sets this explicitly).
+- **D-10:** No projects mode, no `environmentMatchGlobs`, single `npm test` command (Task 2 enforces).
+- **CD-04:** PGlite bootstrap = raw SQL replay of `drizzle/migrations/*.sql` (resolved discretion item).
+- **CD-05:** Per-test fresh DB instance via `beforeEach` (the `createTestDb()` helper returns a new instance per call).
+</decisions_honored><execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/02-test-infrastructure/02-CONTEXT.md
+@.planning/phases/02-test-infrastructure/02-PATTERNS.md
+@CLAUDE.md
+@.planning/codebase/TESTING.md
+@.planning/codebase/STACK.md
+@tsconfig.json
+@drizzle.config.ts
+@src/lib/db/index.ts
+@drizzle/seed.ts<interfaces>
+<!-- Contracts the executor must respect. Pulled from existing source. --><p>From tsconfig.json (path aliases — must mirror these in vitest.config.ts):</p>
+<ul>
+<li>&quot;@/<em>&quot; → &quot;./src/</em>&quot;</li>
+<li>&quot;~/<em>&quot; → &quot;./public/</em>&quot;</li>
+</ul>
+<p>From src/lib/db/index.ts (current production singleton — the helper must produce a Drizzle instance with the SAME <code>{ schema }</code> binding so downstream tests can swap it in):</p>
+<pre><code>import * as schema from &#39;../../../drizzle/schema&#39;;
+const sql = neon(process.env.DATABASE_URL!);
+export const db = drizzle(sql, { schema });
+</code></pre>
+<p>From drizzle/migrations/ (files to apply to PGlite at bootstrap, in order):
+0000_luxuriant_redwing.sql, 0001_volatile_mastermind.sql, 0002_shocking_preak.sql,
+0003_neat_silver_sable.sql, 0004_bright_shen.sql, 0005_closed_cassandra_nova.sql,
+0006_add_job_leads.sql</p>
+<p>From src/app/api/applications/[id]/status/route.ts (route handler shape callRoute must support):</p>
+<pre><code>export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+)
+</code></pre>
+<p>From src/app/api/contacts/route.ts (no-params handler shape):</p>
+<pre><code>export async function GET(request: Request)
+export async function POST(request: Request)
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Install Vitest + PGlite devDependencies and add npm test scripts</name>
+  <files>package.json, package-lock.json</files>
+  <read_first>
+    - package.json (lines 1-127, full file) — confirm current `scripts` and `devDependencies` shape
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-01, D-05)
+    - .planning/codebase/STACK.md — Node 22 pinned in .nvmrc
+  </read_first>
+  <action>
+    Install the test-harness toolchain as devDependencies via `npm install --save-dev`. Add exactly these packages (use latest stable, no version pins beyond what npm resolves):
+    - `vitest`
+    - `@vitest/coverage-v8` is NOT required — do NOT install it (Deferred Ideas line "Coverage tooling / thresholds" in 02-CONTEXT.md)
+    - `@electric-sql/pglite`
+    - `@types/react` is already present; do NOT reinstall<pre><code>Also add these scripts to `package.json` under the `scripts` key, in addition to (not replacing) existing scripts:
+- `&quot;test&quot;: &quot;vitest&quot;`
+- `&quot;test:run&quot;: &quot;vitest run&quot;`
+
+Use a single `npm install --save-dev vitest @electric-sql/pglite` invocation, then edit `package.json` to add the two scripts. Do NOT modify any other field (`name`, `version`, `dependencies`, `lint-staged`, etc.).
+
+No code, no config files in this task — installation and `package.json` edits only.
+</code></pre>
+  </action>
+  <verify>
+    <automated>node -e "const p=require('./package.json'); if(p.scripts.test!=='vitest') process.exit(1); if(p.scripts['test:run']!=='vitest run') process.exit(2); if(!p.devDependencies.vitest) process.exit(3); if(!p.devDependencies['@electric-sql/pglite']) process.exit(4); console.log('OK');"</automated>
+  </verify>
+  <done>
+    `package.json` contains `"test": "vitest"` and `"test:run": "vitest run"` scripts. `package.json` devDependencies includes `vitest` and `@electric-sql/pglite`. `package-lock.json` is updated. No existing scripts or dependencies removed.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Write vitest.config.ts with node default env and @/* path alias</name>
+  <files>vitest.config.ts</files>
+  <read_first>
+    - tsconfig.json (lines 21-28) — exact path alias values to mirror
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-09, D-10)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("`vitest.config.ts` (config)" section)
+    - drizzle.config.ts (full file) — analog for `defineConfig` + dotenv pattern
+  </read_first>
+  <action>
+    Create `vitest.config.ts` at the repository root. Use `defineConfig` from `vitest/config`. The config object MUST set, exactly:<pre><code>- `test.environment` = `&#39;node&#39;` (string literal; default for every test file unless the file opts in via `// @vitest-environment jsdom` pragma per D-09 / D-10)
+- `test.globals` = `true` (so test files can use `describe`/`it`/`expect`/`vi` without per-file imports)
+- `test.include` = `[&#39;src/**/*.test.{ts,tsx}&#39;]` (colocated tests under `src/` per D-02 / D-03)
+- `resolve.alias` containing a single alias: `&#39;@&#39;` → `path.resolve(__dirname, &#39;./src&#39;)` (mirrors tsconfig `@/*` → `./src/*` per D-09 and the path-alias note in 02-PATTERNS.md &quot;Path-alias imports&quot; section). Use `import path from &#39;node:path&#39;` and `import { fileURLToPath } from &#39;node:url&#39;` + `const __dirname = path.dirname(fileURLToPath(import.meta.url))` since this file is ESM.
+
+Do NOT add `projects` mode, do NOT add a second `vitest.config.dom.ts`, do NOT set `environmentMatchGlobs` (forbidden per D-10). Do NOT add coverage configuration (Deferred Ideas).
+
+Style: single quotes, 2-space indent, no trailing commas, semicolons present (per CLAUDE.md / CONVENTIONS). Named default export via `export default defineConfig({ ... })`.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f vitest.config.ts && grep -c "environment: 'node'" vitest.config.ts | grep -q '^1$' && grep -c "globals: true" vitest.config.ts | grep -q '^1$' && grep -E "'@':" vitest.config.ts | grep -q "./src" && echo OK</automated>
+  </verify>
+  <done>
+    `vitest.config.ts` exists at repo root. `test.environment` is `'node'`. `test.globals` is `true`. `resolve.alias` maps `'@'` to the absolute path of `./src`. `npx vitest run --reporter=basic` exits 0 (no tests yet — Vitest treats zero matches as a clean pass in run mode).
+  </done>
+</task><task type="auto">
+  <name>Task 3: Write PGlite harness (createTestDb) and route-call helper (callRoute)</name>
+  <files>src/test-utils/pglite.ts, src/test-utils/call-route.ts</files>
+  <read_first>
+    - src/lib/db/index.ts (full file, 7 lines) — exact `drizzle(sql, { schema })` shape to mirror
+    - drizzle/schema/index.ts (full file) — schema barrel
+    - drizzle/seed.ts (lines 1-8) — programmatic drizzle init pattern
+    - drizzle/migrations/0000_luxuriant_redwing.sql through 0006_add_job_leads.sql (read the directory listing only, do NOT read full migration bodies — they will be replayed verbatim)
+    - node_modules/drizzle-orm/pglite/driver.d.ts (full file) — confirm the `drizzle()` export shape and call signature for the PGlite adapter (verified by orchestrator to exist; this read locks in the exact import + signature used in step 3 below)
+    - src/app/api/applications/[id]/status/route.ts (lines 15-18) — `params: Promise<{ id: string }>` shape callRoute must support
+    - src/app/api/contacts/route.ts (lines 41, 99) — no-params handler shape
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-05, D-06, D-07, D-08, CD-04, CD-05)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("`src/test-utils/pglite.ts`" and "`src/test-utils/call-route.ts`" sections)
+  </read_first>
+  <action>
+    Create two files under `src/test-utils/`. Both use named exports only (no defaults). Single quotes, 2-space indent, semicolons.<pre><code>**File A: `src/test-utils/pglite.ts`**
+
+Export one named async function: `createTestDb()`. Its contract:
+1. Instantiate a fresh in-memory PGlite: `new PGlite()` from `@electric-sql/pglite` (no path argument — pure in-memory; per CD-05 each call returns a fresh DB).
+2. Apply every migration file under `drizzle/migrations/*.sql` (NOT the `meta/` directory) in lexicographic order. Read each file with `node:fs/promises` `readFile`, then execute via `await pglite.exec(sql)`. Per CD-04 this is the &quot;raw SQL replay&quot; approach — simplest and avoids Drizzle Kit + node tooling indirection. Use `node:path` `join` and `node:fs/promises` `readdir` against an absolute path computed from `import.meta.url`. Filter to files ending in `.sql` and sort with `Array.prototype.sort()` (default lexicographic order — the `0000_` prefix guarantees correct ordering).
+3. Bind PGlite to Drizzle via the `drizzle-orm/pglite` adapter: `import { drizzle } from &#39;drizzle-orm/pglite&#39;` and `import * as schema from &#39;../../drizzle/schema&#39;` (relative path from `src/test-utils/`). Construct with `drizzle(pglite, { schema })` — matches the production shape in `src/lib/db/index.ts` so swapping in via `vi.mock(&#39;@/lib/db&#39;, () =&gt; ({ db }))` Just Works. (The adapter and its `drizzle()` export are confirmed present in `node_modules/drizzle-orm/pglite/driver.d.ts` — read that file in step 0 of `read_first` to lock the call signature.)
+4. Return the Drizzle `db` instance. Do NOT export the raw PGlite handle.
+
+Return type: infer it via `Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt;` from the call site — do NOT manually declare a `TestDb` type (mirrors the inferred-types pattern in `src/lib/domain/types.ts`).
+
+Add a brief 2-3 line top-of-file comment noting: &quot;Per D-05/D-08, only DB-touching tests should call this. Pure-logic tests skip the harness entirely.&quot;
+
+Do NOT add a `dropTestDb()` or cleanup helper — PGlite in-memory instances are garbage-collected when the holding scope ends, and per-test isolation is achieved by calling `createTestDb()` in `beforeEach` (D-05 + CD-05 default).
+
+**File B: `src/test-utils/call-route.ts`**
+
+Export one named async function: `callRoute(handler, opts)`. Its contract — these are the exact parameter shapes downstream tests will use:
+
+Type signature (TypeScript):
+```
+type RouteHandler = (
+  request: Request,
+  ctx?: { params: Promise&lt;Record&lt;string, string&gt;&gt; }
+) =&gt; Promise&lt;Response&gt;;
+
+type CallRouteOptions = {
+  method?: string;        // default &#39;GET&#39;
+  url?: string;           // default &#39;http://localhost/test&#39;
+  body?: unknown;         // JSON-serialized into request body
+  formData?: FormData;    // if provided, takes precedence over body and sets multipart
+  params?: Record&lt;string, string&gt;;          // wrapped in Promise.resolve before passing to handler
+  searchParams?: Record&lt;string, string&gt;;    // appended to url
+  headers?: Record&lt;string, string&gt;;
+};
+
+export async function callRoute&lt;T = unknown&gt;(
+  handler: RouteHandler,
+  opts: CallRouteOptions = {}
+): Promise&lt;{ status: number; body: T; response: Response }&gt;
+```
+
+Implementation requirements:
+1. Build the final URL: start from `opts.url ?? &#39;http://localhost/test&#39;`, append `opts.searchParams` as a query string using `URLSearchParams` if present.
+2. Build the `RequestInit`: method = `opts.method ?? &#39;GET&#39;`. If `opts.formData` is present, set `body: opts.formData` and do NOT set `Content-Type` (the runtime fills the multipart boundary). Otherwise if `opts.body` is present, set `body: JSON.stringify(opts.body)` and `headers: { &#39;Content-Type&#39;: &#39;application/json&#39;, ...(opts.headers ?? {}) }`.
+3. Construct `const request = new Request(url, init)`.
+4. Invoke the handler. If `opts.params` is present, pass `{ params: Promise.resolve(opts.params) }` as the second argument (mirrors Next.js 16 async-params shape). Otherwise call `handler(request)` with no second argument.
+5. Await `response.json()` to get the body. If the body is not valid JSON, fall back to `await response.text()` and return the text typed as `T` (some routes may legitimately return non-JSON — keep it tolerant).
+6. Return `{ status: response.status, body, response }`.
+
+Do NOT add framework-specific imports beyond standard web APIs (`Request`, `Response`, `FormData`, `URLSearchParams`). Do NOT depend on `next/server` — node&#39;s global `Request` is what App Router route handlers actually receive.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f src/test-utils/pglite.ts && test -f src/test-utils/call-route.ts && grep -q "export async function createTestDb" src/test-utils/pglite.ts && grep -q "export async function callRoute" src/test-utils/call-route.ts && grep -q "drizzle-orm/pglite" src/test-utils/pglite.ts && grep -q "Promise.resolve" src/test-utils/call-route.ts && echo OK</automated>
+  </verify>
+  <done>
+    `src/test-utils/pglite.ts` exports a single named `createTestDb()` that returns a Drizzle-wrapped PGlite instance with all 7 migrations applied and the schema barrel bound. `src/test-utils/call-route.ts` exports a single named `callRoute()` that accepts the documented options and returns `{ status, body, response }`. Both files compile under TS strict (verified via `npx tsc --noEmit`).
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dev-machine → no external</td>
+<td>Test harness must not reach the network. PGlite is in-process; no Neon, no Clerk runtime, no external HTTP.</td>
+</tr>
+<tr>
+<td>committed-test-code → repository</td>
+<td>Test fixtures and config must not leak credentials.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-02-01</td>
+<td>Information disclosure</td>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td>mitigate</td>
+<td>Use <code>new PGlite()</code> with no filesystem path → pure in-memory; do NOT read <code>process.env.DATABASE_URL</code>. PGlite has no network adapter, so even an accidental real-DB import is structurally impossible.</td>
+</tr>
+<tr>
+<td>T-02-02</td>
+<td>Information disclosure</td>
+<td><code>vitest.config.ts</code></td>
+<td>mitigate</td>
+<td>Do NOT load <code>.env.local</code> or <code>dotenv</code> in the vitest config. Tests run without any real secret being read.</td>
+</tr>
+<tr>
+<td>T-02-03</td>
+<td>Spoofing</td>
+<td><code>src/test-utils/call-route.ts</code></td>
+<td>accept</td>
+<td>Helper constructs synthetic <code>Request</code> objects only — no auth headers, no Clerk session. Auth-gate testing is owned by Phase 3 (SEC-A1) per 02-CONTEXT.md Deferred. Low risk in this phase.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. `npm test -- --run` (or `npm run test:run`) exits 0 on a clean checkout with zero tests collected.
+2. `npx tsc --noEmit` passes — the new test-utils files have no type errors against the existing tsconfig.
+3. A throwaway one-liner verifies the harness end-to-end:
+   `node -e "import('./src/test-utils/pglite.ts').catch(()=>{}); console.log('imports resolve')"` — this just confirms the file is reachable; the real DB exercise lands in Plan 02-03.
+4. `package.json` scripts include both `test` and `test:run` with the exact values specified in Task 1.
+</verification><success_criteria>
+- [ ] `package.json` has `"test": "vitest"` and `"test:run": "vitest run"` scripts.
+- [ ] `vitest` and `@electric-sql/pglite` appear in `devDependencies`.
+- [ ] `vitest.config.ts` sets `environment: 'node'`, `globals: true`, `include: ['src/**/*.test.{ts,tsx}']`, and a `@` → `./src` alias.
+- [ ] `src/test-utils/pglite.ts` exports `createTestDb()` which applies all 7 migrations and returns a Drizzle instance bound to the full schema barrel.
+- [ ] `src/test-utils/call-route.ts` exports `callRoute()` matching the documented signature.
+- [ ] `npm run test:run` exits 0 with "No test files found" (Vitest's normal empty-suite output).
+- [ ] No `.env.local` or secret read happens during test runs.
+</success_criteria><output>
+After completion, create `.planning/phases/02-test-infrastructure/02-01-SUMMARY.md` capturing:
+- Devdep versions actually installed (from `package.json` after install)
+- Exact path-alias config used (literal config snippet excerpt is fine in the summary, NOT in this plan)
+- The migration-replay approach chosen (raw SQL `.exec()` per CD-04) and any gotchas encountered
+- Confirmation that `npm run test:run` exits 0
+</output>
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

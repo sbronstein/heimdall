@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 02-test-infrastructure
+verified: 2026-05-12T23:10:00Z
+status: passed
+score: 3/3 roadmap success criteria verified
+overrides_applied: 0
+re_verification: null
+gaps: []
+human_verification: []</h2>
+<h1>Phase 2: Test Infrastructure Verification Report</h1>
+<p><strong>Phase Goal:</strong> A working test harness exists and pins the load-bearing logic + the BUG-01 regression
+<strong>Verified:</strong> 2026-05-12T23:10:00Z
+<strong>Status:</strong> passed
+<strong>Re-verification:</strong> No — initial verification</p>
+<hr>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>npm test</code> runs a Vitest suite and exits 0 on a clean checkout</td>
+<td>VERIFIED</td>
+<td><code>npm run test:run</code> exits 0; 79 tests pass across 10 files in 5.60s</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Tests assert <code>{success,data,error,meta}</code> envelope, <code>canTransition()</code>, <code>logTimeline()</code>, CSV parsing, and bridge-score</td>
+<td>VERIFIED</td>
+<td>All 5 surfaces covered in dedicated test files with substantive assertions</td>
+</tr>
+<tr>
+<td>3</td>
+<td>A regression test fails if the BUG-01 hydration mismatch is reintroduced</td>
+<td>VERIFIED</td>
+<td>SSR structural test (JSDOM DOM walk) + hydration DOM-shape comparison both implemented; plan regression sanity check confirmed</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 3/3 truths verified</p>
+<hr>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>vitest.config.ts</code></td>
+<td>Vitest config with node env + @/* alias</td>
+<td>VERIFIED</td>
+<td>exists; <code>environment: &#39;node&#39;</code>, <code>globals: true</code>, <code>include: [&#39;src/**/*.test.{ts,tsx}&#39;]</code>, <code>passWithNoTests: true</code>, <code>resolve.alias &#39;@&#39; -&gt; ./src</code></td>
+</tr>
+<tr>
+<td><code>package.json</code></td>
+<td><code>test</code> and <code>test:run</code> scripts + vitest + pglite devDeps</td>
+<td>VERIFIED</td>
+<td><code>&quot;test&quot;: &quot;vitest&quot;</code>, <code>&quot;test:run&quot;: &quot;vitest run&quot;</code>; devDeps: <code>vitest@^4.1.6</code>, <code>@electric-sql/pglite@^0.4.5</code>, <code>jsdom@^29.1.1</code>, <code>@faker-js/faker@^9.9.0</code></td>
+</tr>
+<tr>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td><code>createTestDb()</code> — fresh PGlite Drizzle instance</td>
+<td>VERIFIED</td>
+<td>29 lines; replays all <code>drizzle/migrations/*.sql</code> in lex order; returns <code>drizzle(pglite, { schema })</code></td>
+</tr>
+<tr>
+<td><code>src/test-utils/call-route.ts</code></td>
+<td><code>callRoute()</code> — route handler invoker</td>
+<td>VERIFIED</td>
+<td>60 lines; handles formData, body, params, searchParams; wraps params in Promise.resolve</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/pipeline.test.ts</code></td>
+<td><code>canTransition()</code> + <code>isTerminalState()</code> coverage</td>
+<td>VERIFIED</td>
+<td>13 it-blocks; iterates real <code>validTransitions</code> map; tests terminal blocking and invalid jumps</td>
+</tr>
+<tr>
+<td><code>src/lib/api/types.test.ts</code></td>
+<td>Envelope factory coverage (all 7 factories)</td>
+<td>VERIFIED</td>
+<td>9 it-blocks; covers <code>success</code>, <code>created</code>, <code>paginated</code>, <code>error</code>, <code>notFound</code>, <code>validationError</code>, <code>serverError</code>; <code>serverError</code> asserts console.error spy with exact args</td>
+</tr>
+<tr>
+<td><code>src/lib/api/filters.test.ts</code></td>
+<td><code>parseCursor</code>, <code>parseLimit</code>, <code>parseArrayParam</code></td>
+<td>VERIFIED</td>
+<td>26 it-blocks; edge cases including null, invalid, bounds-clamping</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/seniority.test.ts</code></td>
+<td><code>inferSeniority</code> rule-order regression guard</td>
+<td>VERIFIED</td>
+<td>13 it-blocks; &#39;Senior Manager&#39; rule-order guard present at line 21</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/prioritization.test.ts</code></td>
+<td><code>computeBridgeScore</code> weights + <code>buildRecommendations</code></td>
+<td>VERIFIED</td>
+<td>10 it-blocks; exact composition value 94 asserted; 50-iteration faker fuzz batch; monotonicity test</td>
+</tr>
+<tr>
+<td><code>src/app/api/applications/[id]/status/route.test.ts</code></td>
+<td>Status transition + timeline side-effect</td>
+<td>VERIFIED</td>
+<td>4 it-blocks; valid, invalid, not-found, Zod-fail; timeline row fully asserted (eventType, applicationId, metadata.from/to)</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.test.ts</code></td>
+<td>CSV import + preamble + dedup + timeline</td>
+<td>VERIFIED</td>
+<td>3 it-blocks; happy path with fixture, missing-file 400, dedup-within-import</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/__fixtures__/linkedin-connections.csv</code></td>
+<td>LinkedIn export with preamble, 3 valid rows, 1 malformed</td>
+<td>VERIFIED</td>
+<td>3 preamble lines (no &quot;First Name&quot;), blank line, header, 3 valid rows, 1 malformed row (missing First Name); all synthetic data</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/route.test.ts</code></td>
+<td>GET pagination + soft-delete filter</td>
+<td>VERIFIED</td>
+<td>4 it-blocks; cursor = oldest visible updatedAt ISO; hasMore; empty; soft-delete exclusion</td>
+</tr>
+<tr>
+<td><code>src/components/layout/app-sidebar.ssr.test.tsx</code></td>
+<td>SSR structural BUG-01 regression</td>
+<td>VERIFIED</td>
+<td>4 it-blocks; node env; JSDOM DOM parsing (not regex); no-div-in-button, UserAvatarProfile markup, mocked user data in SSR output</td>
+</tr>
+<tr>
+<td><code>src/components/layout/app-sidebar.hydration.test.tsx</code></td>
+<td>Hydration mount BUG-01 regression</td>
+<td>VERIFIED</td>
+<td><code>// @vitest-environment jsdom</code> on first line; structural DOM-shape comparison (ssrShape vs postShape); <code>onRecoverableError</code> + console.error defensive backstops</td>
+</tr>
+<tr>
+<td><code>.husky/pre-push</code></td>
+<td><code>npm run build</code> + <code>npm run test:run</code> before every push</td>
+<td>VERIFIED</td>
+<td>Both lines present; CR-01 fix confirmed (<code>bun</code> replaced by <code>npm</code>); intentional-break sanity check documented in 02-05-SUMMARY.md</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>vitest.config.ts</code></td>
+<td><code>tsconfig.json paths</code></td>
+<td><code>resolve.alias &#39;@&#39; -&gt; &#39;./src&#39;</code></td>
+<td>VERIFIED</td>
+<td>alias mirroring tsconfig <code>@/*</code> present</td>
+</tr>
+<tr>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td><code>drizzle/migrations/*.sql</code></td>
+<td><code>readdir + readFile + pglite.exec()</code> SQL replay</td>
+<td>VERIFIED</td>
+<td>reads migration dir relative to <code>import.meta.url</code>, filters <code>.sql</code>, sorts, executes each</td>
+</tr>
+<tr>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td><code>drizzle/schema/index.ts</code></td>
+<td><code>drizzle(pglite, { schema })</code></td>
+<td>VERIFIED</td>
+<td>schema barrel imported as <code>* as schema</code>, passed to drizzle constructor</td>
+</tr>
+<tr>
+<td><code>route.test.ts</code> files</td>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td><code>vi.hoisted + Proxy + createTestDb()</code></td>
+<td>VERIFIED</td>
+<td>all 3 DB-integration test files use the mandated pattern; no <code>vi.doMock</code> present</td>
+</tr>
+<tr>
+<td><code>route.test.ts</code> files</td>
+<td><code>timeline_events</code> table</td>
+<td><code>db.select().from(timelineEvents)</code> after route call</td>
+<td>VERIFIED</td>
+<td><code>logTimeline</code> never mocked; side-effect verified by querying real PGlite rows</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.test.ts</code></td>
+<td><code>__fixtures__/linkedin-connections.csv</code></td>
+<td><code>readFile(new URL(&#39;./__fixtures__/...&#39;, import.meta.url))</code></td>
+<td>VERIFIED</td>
+<td>file loaded as Buffer, wrapped in <code>File</code>, appended to <code>FormData</code></td>
+</tr>
+<tr>
+<td><code>app-sidebar.ssr.test.tsx</code></td>
+<td><code>app-sidebar.tsx</code></td>
+<td><code>renderToString(&lt;AppSidebar /&gt;)</code> + JSDOM DOM walk</td>
+<td>VERIFIED</td>
+<td><code>renderToString</code> present; JSDOM parsing with <code>querySelectorAll(&#39;button&#39;)</code> + <code>querySelector(&#39;div&#39;)</code></td>
+</tr>
+<tr>
+<td><code>app-sidebar.hydration.test.tsx</code></td>
+<td><code>app-sidebar.tsx</code></td>
+<td><code>hydrateRoot(container, &lt;AppSidebar /&gt;)</code> inside jsdom</td>
+<td>VERIFIED</td>
+<td><code>hydrateRoot</code> present with <code>act()</code> wrap; DOM-shape comparison is load-bearing assertion</td>
+</tr>
+<tr>
+<td><code>app-sidebar.*.test.tsx</code></td>
+<td><code>@clerk/nextjs</code></td>
+<td><code>vi.mock(&#39;@clerk/nextjs&#39;, ...)</code> fixed user</td>
+<td>VERIFIED</td>
+<td>both files mock Clerk; real Clerk runtime never imported (confirmed by grep)</td>
+</tr>
+<tr>
+<td><code>.husky/pre-push</code></td>
+<td><code>package.json test:run</code></td>
+<td><code>npm run test:run</code> invocation</td>
+<td>VERIFIED</td>
+<td>line 2 of pre-push is exactly <code>npm run test:run</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>All test files are test infrastructure, not components that render dynamic data from an API or store. Level 4 data-flow tracing does not apply to test files.</p>
+<p>The DB-integration tests (Plan 03) verify that real data flows from PGlite through route handlers into response envelopes — this is itself a Level 4 check on the production code&#39;s data flow.</p>
+<hr>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Full test suite exits 0</td>
+<td><code>npm run test:run</code></td>
+<td>79 tests passed (10 files), exit 0, 5.60s</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Pre-push hook has npm (not bun)</td>
+<td><code>grep -c &quot;bun&quot; .husky/pre-push</code></td>
+<td>0 (zero bun occurrences)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Hydration test first line is pragma</td>
+<td><code>head -1 app-sidebar.hydration.test.tsx</code></td>
+<td><code>// @vitest-environment jsdom</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>SSR test first line has no pragma</td>
+<td><code>head -1 app-sidebar.ssr.test.tsx</code></td>
+<td>No <code>@vitest-environment</code> — runs default node env</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Fixture CSV preamble present</td>
+<td>first 5 lines of linkedin-connections.csv</td>
+<td>3 preamble lines, blank, then header on line 5</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Timeline verified without mocking</td>
+<td><code>grep -c &quot;vi.doMock&quot; route.test.ts files</code></td>
+<td>0</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Probe Execution</h3>
+<p>No probe scripts defined for this phase. Step 7c: SKIPPED (no <code>scripts/*/tests/probe-*.sh</code> files).</p>
+<hr>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TEST-A1</td>
+<td>02-01-PLAN, 02-05-PLAN</td>
+<td>Stand up Vitest with TypeScript + Drizzle-compatible test DB harness</td>
+<td>SATISFIED</td>
+<td>vitest.config.ts, pglite.ts, call-route.ts, package.json scripts, pre-push hook all verified</td>
+</tr>
+<tr>
+<td>TEST-A2</td>
+<td>02-02-PLAN, 02-03-PLAN</td>
+<td>Cover load-bearing logic: envelope, canTransition, logTimeline, CSV parsing, bridge-score</td>
+<td>SATISFIED</td>
+<td>All 5 surfaces verified in dedicated test files with 74 tests (pure-logic + DB-integration)</td>
+</tr>
+<tr>
+<td>TEST-A3</td>
+<td>02-04-PLAN</td>
+<td>Regression test for BUG-01 hydration crash</td>
+<td>SATISFIED</td>
+<td>Two regression files: SSR structural (JSDOM DOM walk, 4 it-blocks) + hydration DOM-shape comparison (1 it-block); regression sanity check documented</td>
+</tr>
+</tbody></table>
+<p>No orphaned requirements — REQUIREMENTS.md traceability table shows TEST-A1, TEST-A2, TEST-A3 all mapped to Phase 2 with status Complete.</p>
+<hr>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No debt markers (TBD/FIXME/XXX) found in any phase-2 file</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>No blockers</td>
+</tr>
+</tbody></table>
+<p>Scan covered all 10 test files, vitest.config.ts, the two test-utils helpers, and .husky/pre-push. No unreferenced debt markers found.</p>
+<p>Note: <code>src/features/job-leads/lib/prioritization.ts</code> and <code>src/features/job-leads/lib/scrape-connections.ts</code> have pre-existing TS2802 errors (downlevel iteration on MapIterator/NodeListOf). These are in source files, not test files, were present before Phase 2, and are scheduled for Phase 5 (Job Leads Completion). Not attributable to Phase 2.</p>
+<hr>
+<h3>Code Review Findings (CR-01, CR-02) — Verified Addressed</h3>
+<p>The phase REVIEW.md identified two Critical findings. Commit <code>ed00abc</code> addressed both:</p>
+<p><strong>CR-01</strong> (pre-push hook used <code>bun</code> instead of <code>npm</code>): Fixed. <code>.husky/pre-push</code> now reads <code>npm run build</code> on line 1, <code>npm run test:run</code> on line 2. Zero <code>bun</code> occurrences remain.</p>
+<p><strong>CR-02</strong> (hydration spy was inert under React 19): Fixed. The hydration test was rewritten with a structural DOM-shape comparison strategy. The test:</p>
+<ul>
+<li>Captures SSR DOM shape via <code>normalizeShape()</code> before hydration</li>
+<li>Wraps <code>hydrateRoot</code> in <code>act()</code> (React scheduler drain)</li>
+<li>Compares post-hydration DOM shape against the SSR snapshot</li>
+<li>React silently rewrites mismatched subtrees — this assertion catches that</li>
+<li><code>onRecoverableError</code> and <code>console.error</code> spy kept as defensive backstops</li>
+</ul>
+<p>Assessment of TEST-A3 sufficiency: The SSR test deterministically catches both BUG-01 failure modes (invalid HTML nesting + SSR/CSR gating). The hydration test&#39;s DOM-shape comparison catches severe structural mismatches. Together they form a meaningful regression fence. The combination is not exhaustive (React 19 + jsdom does not surface all minor SSR/CSR divergences), but it catches the specific regression patterns from BUG-01. This level of coverage is appropriate and honest — the plan documentation acknowledges the limitation.</p>
+<hr>
+<h3>Human Verification Required</h3>
+<p>None. All phase success criteria are verifiable programmatically. The regression sanity check (introduce a <code>&lt;div&gt;</code>, observe SSR test fail, revert) was performed during plan execution and documented in 02-04-SUMMARY.md.</p>
+<hr>
+<h2>Gaps Summary</h2>
+<p>No gaps. All 3 roadmap success criteria are verified in the codebase:</p>
+<ol>
+<li><code>npm run test:run</code> exits 0 — confirmed by direct execution (79 tests, 10 files, 5.60s).</li>
+<li>All 5 mandatory test surfaces are covered — API envelope, canTransition, logTimeline side-effect, LinkedIn CSV parsing, bridge-score — plus adjacent surfaces (parseCursor/parseLimit, inferSeniority).</li>
+<li>BUG-01 regression test is implemented with two complementary strategies: SSR structural (JSDOM DOM walk, deterministic) and hydration DOM-shape comparison (structural). CR-01 and CR-02 from the code review are both addressed in commit <code>ed00abc</code>.</li>
+</ol>
+<hr>
+<p><em>Verified: 2026-05-12T23:10:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

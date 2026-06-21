@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>03-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/03-security-hardening/03-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 03-security-hardening
+plan: 02
+subsystem: auth
+tags: [auth-cleanup, starter-template, security, clerk, ssrf-shape, dead-chrome]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 00-bootstrap
+provides: Clerk auth integration with <code>&lt;SignIn&gt;</code> / <code>&lt;SignUp&gt;</code> forms (the surviving core of the auth pages)
+provides:</li>
+<li>&quot;Sign-in/sign-up pages no longer issue outbound SSR fetch to api.github.com (D-11, T4)&quot;</li>
+<li>&quot;Sign-in/sign-up pages no longer render a no-op &#39;Continue with GitHub&#39; button (D-10, T5)&quot;</li>
+<li>&quot;Sign-in/sign-up view components are stateless (no <code>stars</code> prop); page.tsx files are sync RSCs (CD-05, T6)&quot;
+affects: [04-design-overhaul, deferred-debt-A-orphan-user-auth-form]</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;When a starter-template component is dead (no-op handlers, fake auth controls), prefer outright <code>git rm</code> over leaving a stub — keeps the repo small and removes the temptation to wire it up later (CD-04 — confirmed pattern).&quot;
+    - &quot;Server Components default to sync — only mark <code>async</code> when an awaited call is genuinely needed (CD-05 reaffirmation).&quot;</p>
+<p>key-files:
+  created: []
+  modified:
+    - src/features/auth/components/user-auth-form.tsx
+    - src/features/auth/components/sign-in-view.tsx
+    - src/features/auth/components/sign-up-view.tsx
+    - src/app/auth/sign-in/[[...sign-in]]/page.tsx
+    - src/app/auth/sign-up/[[...sign-up]]/page.tsx
+  deleted:
+    - src/features/auth/components/github-auth-button.tsx</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Used <code>git rm</code> for github-auth-button.tsx (CD-04 — clean removal, no stub)&quot;</li>
+<li>&quot;Preserved orphan <code>UserAuthForm</code> component body for Phase 4 broader cleanup (D-13 boundary respected); removed only the dead GitHub button + &#39;Or continue with&#39; divider inside it&quot;</li>
+<li>&quot;Auth page.tsx files converted from <code>async function Page()</code> to sync <code>function Page()</code> per CD-05 — no remaining awaited work after the fetch was removed&quot;</li>
+<li>&quot;Preserved all non-dead auth-page chrome (Random Dude blockquote, Logo SVG, InteractiveGridPattern, Login/Sign Up top-right link, open-source/View on GitHub/Terms/Privacy <code>&lt;Link&gt;</code> blocks) per D-13 — Phase 4 owns broader cleanup&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Threat-register-driven cleanup: each STRIDE row (T4/T5/T6) maps to one or more concrete grep gates that the executor asserts post-edit (e.g., <code>! grep -rn &#39;api.github.com&#39; src</code>)&quot;</li>
+<li>&quot;Plan-checker discovery promoted to action: planning surfaced that <code>sign-in-view.tsx</code>/<code>sign-up-view.tsx</code> do NOT render <code>&lt;GithubSignInButton /&gt;</code> (contrary to CONTEXT.md); the actual rendering site was <code>user-auth-form.tsx</code>. Executor confirmed via grep before editing.&quot;</li>
+</ul>
+<p>requirements-completed: [SEC-A2]</p>
+<h1>Metrics</h1>
+<h2>duration: ~5 min
+completed: 2026-05-12</h2>
+<h1>Phase 3 Plan 02: Strip GitHub-button + api.github.com leak from auth pages — Summary</h1>
+<p><strong>Removed two starter-template residues from the auth flow: a no-op <code>GithubSignInButton</code> (UX-level fake auth control) and a server-rendered <code>await fetch(&#39;https://api.github.com/repos/...&#39;)</code> on every sign-in/sign-up page load.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~5 min</li>
+<li><strong>Started:</strong> 2026-05-13T01:04:41Z</li>
+<li><strong>Completed:</strong> 2026-05-13T01:09:48Z</li>
+<li><strong>Tasks:</strong> 2 / 2</li>
+<li><strong>Files modified:</strong> 5 (1 deleted, 4 edited)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Deleted <code>src/features/auth/components/github-auth-button.tsx</code> (<code>git rm</code>, CD-04). The no-op <code>onClick={() =&gt; console.log(&#39;continue with github clicked&#39;)}</code> is gone, and no caller anywhere in <code>src/</code> references <code>GithubSignInButton</code> (verified via grep).</li>
+<li>Removed the <code>await fetch(&#39;https://api.github.com/repos/kiranism/next-shadcn-dashboard-starter&#39;, ...)</code> block from both <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> and <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code>. Both files are now sync server components (CD-05): <code>export default function Page() { return &lt;SignInViewPage /&gt;; }</code>.</li>
+<li>Removed the <code>stars</code> prop from <code>SignInViewPage</code> and <code>SignUpViewPage</code>, deleted the <code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> chrome block, and removed the now-unused <code>GitHubLogoIcon</code> / <code>IconStar</code> imports from both view components.</li>
+<li>Preserved all in-scope chrome per D-13 (Random Dude blockquote, Logo SVG, InteractiveGridPattern, Login/Sign Up top-right link, the trailing open-source/View on GitHub/Terms/Privacy <code>&lt;Link&gt;</code> blocks) — Phase 4 territory.</li>
+<li>Closed STRIDE threats T4 (T-03-04 — Tampering/Information Disclosure SSRF-shape), T5 (T-03-05 — Spoofing UX-level fake auth control), and T6 (T-03-06 — Information Disclosure dead chrome).</li>
+<li>Closed requirement <strong>SEC-A2</strong>.</li>
+</ul>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically:</p>
+<ol>
+<li><strong>Task 1: Delete github-auth-button.tsx + remove references from user-auth-form.tsx</strong> — <code>7290ee3</code> (feat)</li>
+<li><strong>Task 2: Remove stars prop, Star-on-GitHub Link block, and api.github.com fetch from auth views + pages</strong> — <code>c55bd09</code> (feat)</li>
+</ol>
+<h2>Files Created / Modified / Deleted</h2>
+<ul>
+<li><strong>Deleted:</strong> <code>src/features/auth/components/github-auth-button.tsx</code> — no-op GitHub OAuth button, deleted via <code>git rm</code> (CD-04).</li>
+<li><strong>Modified:</strong> <code>src/features/auth/components/user-auth-form.tsx</code> — removed <code>GithubSignInButton</code> import + render + the dead &quot;Or continue with&quot; divider; preserved the orphan form body for Phase 4 broader cleanup.</li>
+<li><strong>Modified:</strong> <code>src/features/auth/components/sign-in-view.tsx</code> — removed <code>stars</code> prop, the <code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> block, and the now-unused <code>GitHubLogoIcon</code> / <code>IconStar</code> imports.</li>
+<li><strong>Modified:</strong> <code>src/features/auth/components/sign-up-view.tsx</code> — mirror of the sign-in-view edit (<code>ClerkSignUpForm</code> preserved).</li>
+<li><strong>Modified:</strong> <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> — removed <code>let stars = 3000</code> + <code>try { fetch(...) } catch { }</code> block + <code>stars={stars}</code> prop pass + <code>async</code> keyword on the default export.</li>
+<li><strong>Modified:</strong> <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code> — mirror of the sign-in page.tsx edit.</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>CD-04 honored:</strong> Used <code>git rm</code> for <code>github-auth-button.tsx</code> rather than leaving an empty file.</li>
+<li><strong>D-13 boundary respected:</strong> The orphan <code>UserAuthForm</code> component body itself was preserved — only the dead GitHub button render and the now-incoherent &quot;Or continue with&quot; divider were removed. Phase 4 (<code>DEBT-A*</code> starter-template cleanup) owns the broader decision of whether to delete the orphan form entirely.</li>
+<li><strong>CD-05 honored:</strong> Both auth page.tsx files were converted from <code>async function Page()</code> to sync <code>function Page()</code> because no awaited work remains after the fetch removal.</li>
+<li><strong>Auth-page chrome preserved:</strong> Random Dude blockquote, Logo SVG, InteractiveGridPattern, Login/Sign Up top-right link, the trailing open-source / View on GitHub / Terms / Privacy <code>&lt;Link&gt;</code> blocks all remain untouched per D-13 — these are stylistic chrome, not network or auth-control surfaces. Phase 4 may scrub them under DEBT-A*.</li>
+</ul>
+<h2>Note on CONTEXT.md / Planning Discovery</h2>
+<p>The phase context document said <code>sign-in-view.tsx</code> / <code>sign-up-view.tsx</code> rendered <code>&lt;GithubSignInButton /&gt;</code> &quot;at line ~63&quot;. A grep during planning revealed that was slightly imprecise: those two view files actually rendered the <code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> chrome block at that location (not the button). The only file that actually imported and rendered <code>GithubSignInButton</code> was <code>src/features/auth/components/user-auth-form.tsx</code>. The plan-checker surfaced this discrepancy and the plan was written to remove the button reference from <code>user-auth-form.tsx</code> (Task 1) and the Star-on-GitHub Link block from both view files (Task 2). Both targets are now resolved.</p>
+<h2>Deviations from Plan</h2>
+<p><strong>None.</strong> Plan executed exactly as written. Two atomic commits, all grep gates pass, no unplanned files touched.</p>
+<h2>Deferred Issues</h2>
+<p><strong>Pre-existing <code>npm run build</code> failure in <code>src/features/job-leads/lib/prioritization.ts:70</code></strong> — <code>Type &#39;MapIterator&lt;PrioritizedRecommendation&gt;&#39; can only be iterated through when using the &#39;--downlevelIteration&#39; flag or with a &#39;--target&#39; of &#39;es2015&#39; or higher.</code></p>
+<p>This failure exists on the baseline (verified by stashing all 03-02 edits and re-running <code>npm run build</code> — the same error reproduces). Root cause: <code>tsconfig.json</code> <code>target: &quot;es5&quot;</code> without <code>downlevelIteration</code>. Out of scope for 03-02. Logged to <code>.planning/phases/03-security-hardening/deferred-items.md</code> for Phase 4 cleanup (raise tsconfig target to ES2020 or enable <code>downlevelIteration</code>).</p>
+<p><code>npm run test:run</code> exits 0 (79 tests pass across 10 test files). The plan&#39;s other automated gates (grep assertions, file existence) all pass.</p>
+<h2>Threat Register Coverage</h2>
+<p>Plan-level threat register from PLAN.md <code>&lt;threat_model&gt;</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Disposition</th>
+<th>Status after this plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T4 (T-03-04) — SSRF-shape api.github.com fetch</td>
+<td>mitigate</td>
+<td><strong>Mitigated.</strong> <code>grep -rn &quot;api.github.com&quot; src</code> returns no matches.</td>
+</tr>
+<tr>
+<td>T5 (T-03-05) — No-op GithubSignInButton fake auth control</td>
+<td>mitigate</td>
+<td><strong>Mitigated.</strong> File deleted; <code>grep -rn &quot;GithubSignInButton&quot; src</code> returns no matches.</td>
+</tr>
+<tr>
+<td>T6 (T-03-06) — <code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> dead chrome</td>
+<td>mitigate</td>
+<td><strong>Mitigated.</strong> <code>grep -rn &quot;Star on GitHub&quot; src/features/auth</code> returns no matches; <code>stars</code> prop removed from both view components.</td>
+</tr>
+</tbody></table>
+<p><strong>Block-on-high count: 0.</strong> ASVS L1 gate clears.</p>
+<h2>Threat Flags</h2>
+<p>None — the edits in this plan only <strong>remove</strong> surface (a network fetch, a fake auth button, dead chrome). No new endpoints, no new auth paths, no new file access, no schema changes.</p>
+<h2>Self-Check</h2>
+<h3>Files claimed exist / are deleted</h3>
+<ul>
+<li><code>src/features/auth/components/github-auth-button.tsx</code> — <code>test ! -f</code> PASS (deleted)</li>
+<li><code>src/features/auth/components/user-auth-form.tsx</code> — exists, no <code>GithubSignInButton</code> reference (verified via grep)</li>
+<li><code>src/features/auth/components/sign-in-view.tsx</code> — exists, no <code>stars</code>/<code>Star on GitHub</code>/<code>api.github.com</code> (verified via grep)</li>
+<li><code>src/features/auth/components/sign-up-view.tsx</code> — exists, no <code>stars</code>/<code>Star on GitHub</code>/<code>api.github.com</code> (verified via grep)</li>
+<li><code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> — exists, no <code>async function Page</code>/<code>api.github.com</code>/<code>stars</code> (verified via grep)</li>
+<li><code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code> — exists, no <code>async function Page</code>/<code>api.github.com</code>/<code>stars</code> (verified via grep)</li>
+<li><code>.planning/phases/03-security-hardening/deferred-items.md</code> — created (logs pre-existing prioritization.ts build error)</li>
+</ul>
+<h3>Commits claimed exist</h3>
+<ul>
+<li><code>7290ee3</code> — <code>feat(03-02): delete github-auth-button and remove its references from user-auth-form</code> — present on <code>worktree-agent-a8d3ea82b1d40735a</code> (verified via <code>git log --oneline</code>)</li>
+<li><code>c55bd09</code> — <code>feat(03-02): remove api.github.com fetch and stars chrome from auth pages</code> — present on <code>worktree-agent-a8d3ea82b1d40735a</code> (verified via <code>git log --oneline</code>)</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<h2>Notes for Phase 4</h2>
+<ul>
+<li>The orphan <code>UserAuthForm</code> in <code>src/features/auth/components/user-auth-form.tsx</code> is not rendered anywhere in the app today. Phase 4&#39;s <code>DEBT-A*</code> starter-template cleanup should decide whether to delete it outright or wire it to a real flow.</li>
+<li>Surviving auth-page chrome candidates for Phase 4 scrubbing: Random Dude blockquote, generic Logo SVG, &quot;Login&quot;/&quot;Sign Up&quot; top-right link pointing to non-existent <code>/examples/authentication</code>, and the trailing open-source / &quot;View on GitHub&quot; / <code>/about</code> / <code>/terms-of-service</code> / <code>/privacy-policy</code> <code>&lt;Link&gt;</code> blocks (these targets do not exist as routes in this fork).</li>
+<li><code>tsconfig.json</code> target should be raised to ES2020 (or <code>downlevelIteration: true</code> enabled) to clear the pre-existing prioritization.ts build failure logged in deferred-items.md.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/03-security-hardening/03-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

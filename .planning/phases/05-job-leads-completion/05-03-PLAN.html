@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 03
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>.planning/REQUIREMENTS.md</li>
+<li>.planning/views/REQUIREMENTS.html
+autonomous: true
+requirements:</li>
+<li>JL-B1</li>
+<li>JL-B2</li>
+<li>JL-B3</li>
+<li>JL-B4</li>
+<li>JL-B5</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;REQUIREMENTS.md has a SUPERSEDED 2026-05-13 block above the Job Leads Completion section explaining the architectural pivot&quot;
+    - &quot;REQUIREMENTS.md defines five new requirements JL-B1..JL-B5 mapped 1:1 to ROADMAP §Phase 5 RESHAPED Success Criteria 1..5&quot;
+    - &quot;REQUIREMENTS.md Traceability table marks JL-A1..A5 as SUPERSEDED and adds JL-B1..B5 rows mapped to Phase 5 / Pending&quot;
+    - &quot;REQUIREMENTS.html companion view reflects the markdown changes per the user&#39;s global CLAUDE.md HTML-companion preference&quot;
+  artifacts:
+    - path: &quot;.planning/REQUIREMENTS.md&quot;
+      provides: &quot;Updated requirements doc with superseded JL-A1..A5 and new JL-B1..B5&quot;
+      contains: &quot;SUPERSEDED 2026-05-13&quot;
+    - path: &quot;.planning/views/REQUIREMENTS.html&quot;
+      provides: &quot;HTML companion view of the updated requirements&quot;
+      contains: &quot;JL-B1&quot;
+  key_links:
+    - from: &quot;.planning/REQUIREMENTS.md §Job Leads Completion&quot;
+      to: &quot;.planning/ROADMAP.md §Phase 5 (RESHAPED)&quot;
+      via: &quot;JL-B1..JL-B5 map 1:1 to ROADMAP Success Criteria 1..5&quot;
+      pattern: &quot;JL-B[1-5]&quot;
+    - from: &quot;.planning/REQUIREMENTS.md Traceability table&quot;
+      to: &quot;.planning/REQUIREMENTS.md §v1 Active&quot;
+      via: &quot;Every JL-B requirement appears in both the v1 Active list and the Traceability table&quot;
+  pattern: &quot;JL-B[1-5].*Phase 5&quot;
+</p>
+<hr>
+<objective>
+Update `.planning/REQUIREMENTS.md` to record the architectural pivot: mark the original JL-A1..A5 requirements as SUPERSEDED (because the code they targeted is being deleted by this phase), and define five new requirements JL-B1..JL-B5 that map 1:1 to the five Success Criteria in `ROADMAP.md §Phase 5 (RESHAPED)`. Then regenerate the `.planning/views/REQUIREMENTS.html` companion per the user's global CLAUDE.md HTML-mirror preference.<p>Purpose: The phase orchestrator&#39;s <code>&lt;files_to_read&gt;</code> block requires this update. Every other Plan in this phase&#39;s <code>requirements:</code> frontmatter field references JL-B IDs, not JL-A IDs — those IDs must exist in the requirements doc before downstream plans can be validated against the requirements gate.</p>
+<p>Output: Updated REQUIREMENTS.md with the supersession block, JL-B1..JL-B5 definitions, updated traceability rows, and a refreshed REQUIREMENTS.html.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/REQUIREMENTS.md
+@.planning/ROADMAP.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@$HOME/.claude/CLAUDE.md<interfaces>
+ROADMAP.md §Phase 5 (RESHAPED 2026-05-13) Success Criteria (lines 97–102):
+1. A Claude Code skill exists (under .claude/skills/) that accepts a job URL argument or drains unprocessed leads with no arg
+2. The skill drives vercel-labs/agent-browser to navigate job → company → employees → 2nd-degree filter and extract prospects in the same ScrapedProspect shape
+3. The skill writes results back via existing REST routes; the in-app fire-and-forget IIFE and scrape-connections.ts are deleted (with hardcoded 'point', waitForTimeout, 20+ console.log dumps)
+4. Job-lead status cleanly represents the queue: queued, searching, found, failed-with-category
+5. Job-lead detail UI surfaces a "Run scrape from Claude Code" affordance for unprocessed leads + categorized failure surface + retry that re-queues<p>JL-B1..B5 mapping (per phase context <code>&lt;files_to_read&gt;</code>):</p>
+<ul>
+<li>JL-B1 ↔ SC #1 (skill exists + accepts arg or drains queue)</li>
+<li>JL-B2 ↔ SC #2 (skill drives agent-browser through the canonical nav path)</li>
+<li>JL-B3 ↔ SC #3 (results written via REST; in-app scraper deleted)</li>
+<li>JL-B4 ↔ SC #4 (DB status model: queued / searching / found / failed)</li>
+<li>JL-B5 ↔ SC #5 (UI: copy-invocation affordance + categorized failure + retry)</li>
+</ul>
+<p>Current REQUIREMENTS.md Job Leads Completion section (lines 68–74):</p>
+<pre><code>### Job Leads Completion
+- [ ] **JL-A1**: Replace hardcoded &#39;point&#39; company name in scrape-connections.ts:62 ...
+- [ ] **JL-A2**: Tune Playwright navigation ...
+- [ ] **JL-A3**: Remove debug-mode noise ...
+- [ ] **JL-A4**: Bound the fire-and-forget search IIFE with Promise.race() timeout ...
+- [ ] **JL-A5**: Surface scrape errors to the user ...
+</code></pre>
+<p>Current Traceability table rows for Phase 5 (lines 149–153):</p>
+<pre><code>| JL-A1 | Phase 5 | Pending |
+| JL-A2 | Phase 5 | Pending |
+| JL-A3 | Phase 5 | Pending |
+| JL-A4 | Phase 5 | Pending |
+| JL-A5 | Phase 5 | Pending |
+</code></pre>
+<p>User&#39;s global CLAUDE.md HTML companion conventions (warm earth palette):</p>
+<ul>
+<li>--bg: #faf8f5, --card: #ffffff, --ink: #2a2a2a, --muted: #6b6b6b</li>
+<li>--accent: #6b8e6b (green), --accent-2: #c97a4a (orange), --warn: #b85a3a (red-orange)</li>
+<li>--line: #e4ddd2, --code-bg: #f4efe7</li>
+<li>Inline CSS only, system font stack, max-width 880–1100px</li>
+<li>Pending requirements use ☐ orange bullets (<code>.active</code> variant)</li>
+<li>Existing REQUIREMENTS.html at <code>.planning/views/REQUIREMENTS.html</code> already follows this template — adapt content only</interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto">
+  <name>Task 1: Add SUPERSEDED block + JL-B1..B5 definitions to REQUIREMENTS.md</name>
+  <read_first>
+    - .planning/REQUIREMENTS.md (full file, ~168 lines)
+    - .planning/ROADMAP.md (Phase 5 RESHAPED section, lines 93–104, for the SC list)
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md `<files_to_read>` JL-B1..JL-B5 mapping (read the orchestrator's planning_context block embedded above)
+  </read_first>
+  <files>.planning/REQUIREMENTS.md</files>
+  <action>
+    Edit `.planning/REQUIREMENTS.md` in three places:<pre><code>**Edit 1: Add SUPERSEDED block above the Job Leads Completion section (currently at line 68).** Insert a blockquote immediately after the `### Job Leads Completion` heading:
+```
+&gt; **SUPERSEDED 2026-05-13:** Phase 5 was reshaped from an in-app-scraper-fix direction to a Claude Code skill driving `vercel-labs/agent-browser`. JL-A1..A5 targeted code that is being deleted (`src/features/job-leads/lib/scrape-connections.ts`, the fire-and-forget IIFE in `/api/job-leads/[id]/search/route.ts`, the polling `SearchProgress` component, and the `Find Connections` button). The new requirement set is **JL-B1..JL-B5**, defined below and mapped 1:1 to the five Success Criteria in `ROADMAP.md §Phase 5 (RESHAPED)`. The original JL-A items remain in the list strikethrough&#39;d for audit trail; their status in the Traceability table is **SUPERSEDED**.
+```
+
+Strike through the JL-A1..A5 list items (wrap each `**JL-Ax**:` plus its body in `~~...~~` Markdown strikethrough) so the audit trail is visually marked without deleting history.
+
+**Edit 2: Append JL-B1..JL-B5 list items** immediately after the strikethrough JL-A block, before the next section (`### Security Hardening`). Each item is a checkbox unchecked (`[ ]`) with the full requirement text:
+
+```
+- [ ] **JL-B1**: A Claude Code skill at `.claude/skills/scrape-linkedin-connections/` accepts a job-lead UUID or LinkedIn URL as a positional argument, OR drains all leads with `status = &#39;queued&#39;` when invoked with no argument. Verifiable via the SKILL.md frontmatter (`argument-hint: &quot;[job-lead-id-or-url]&quot;`) and the skill prompt body&#39;s no-arg branch.
+
+- [ ] **JL-B2**: The skill drives `vercel-labs/agent-browser` through the canonical LinkedIn nav: job posting → company page → employees list → 2nd-degree filter, and extracts prospects in the existing `ScrapedProspect` shape (`{ name, title, linkedinUrl, profileSnippet, mutualConnectionNames }`). Verifiable via `.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md` documenting the nav steps and the skill prompt body invoking `agent-browser` subcommands.
+
+- [ ] **JL-B3**: The skill writes results back through `POST /api/job-leads/[id]/prospects` (new bulk-insert route) and `PATCH /api/job-leads/[id]/status` (extended state-machine). The fire-and-forget IIFE in `src/app/api/job-leads/[id]/search/route.ts` is removed; `src/features/job-leads/lib/scrape-connections.ts` (hardcoded `&#39;point&#39;`, `waitForTimeout`, 20+ `console.log` dumps) is deleted; `src/features/job-leads/components/search-progress.tsx` is deleted. Verifiable via `src/__cleanup__.test.ts` Phase 5 block + grep for `scrapeConnections` returning zero matches in `src/`.
+
+- [ ] **JL-B4**: The `job_lead_status` enum has two new values — `&#39;queued&#39;` (between `&#39;scraped&#39;` and `&#39;searching&#39;`) and `&#39;failed&#39;` (terminal-recoverable, after `&#39;archived&#39;`) — and the `job_leads` table has nullable `last_error` (text, ≤200 chars) and `last_error_at` (timestamp) columns. The state machine enforces `scraped → queued`, `queued → searching`, `searching → found | failed`, `failed → queued` (retry). Verifiable via Drizzle migration + `PATCH /api/job-leads/[id]/status` rejecting invalid transitions with `validationError(...)`.
+
+- [ ] **JL-B5**: The job-lead detail page renders: (a) on `status = &#39;queued&#39;` — a subtle badge labeled `queued for connection scrape` + a `Copy skill invocation` button that copies `claude /scrape-linkedin-connections &lt;lead-id&gt;` to the clipboard with a sonner toast confirmation; (b) on `status = &#39;failed&#39;` — a `bg-destructive/10` border-destructive/30 banner showing the error category (bold) + truncated detail + a `Retry` button that POSTs to `/api/job-leads/[id]/search` to flip back to `queued`. Verifiable via the rendered component output and a click-handler test.
+```
+
+**Edit 3: Update the Traceability table** (currently at lines 149–153). For the five JL-A rows: change the Status column from `Pending` to `SUPERSEDED`. Then append five new rows immediately after the JL-A5 row:
+```
+| JL-B1 | Phase 5 | Pending |
+| JL-B2 | Phase 5 | Pending |
+| JL-B3 | Phase 5 | Pending |
+| JL-B4 | Phase 5 | Pending |
+| JL-B5 | Phase 5 | Pending |
+```
+
+Also update the **Coverage** summary at the bottom of REQUIREMENTS.md (lines 161–163):
+- Change `v1 Active requirements: 22 total` to `v1 Active requirements: 22 total (5 superseded; net 22 active, with JL-A1..A5 replaced by JL-B1..B5)`
+- Keep `Mapped to phases: 22` and `Unmapped: 0` (count is unchanged — 5 out, 5 in)
+
+Finally bump the footer last-updated line to `2026-05-13` with a note `Last updated: 2026-05-13 — JL-A1..A5 superseded by JL-B1..B5 for the Phase 5 reshape (Claude Code skill + agent-browser direction)`.
+
+Do not modify any other section. Preserve the Validated section, the v1 Active sections for Security/Cleanup/Performance/Test, the v2 deferred section, the Out of Scope table, and all other Traceability rows.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -c "SUPERSEDED 2026-05-13" .planning/REQUIREMENTS.md | xargs -I{} test {} -ge 1 && grep -cE "^\- \[ \] \*\*JL-B[1-5]\*\*" .planning/REQUIREMENTS.md | xargs -I{} test {} -eq 5 && grep -cE "^\| JL-B[1-5] \| Phase 5 \| Pending \|$" .planning/REQUIREMENTS.md | xargs -I{} test {} -eq 5 && grep -cE "^\| JL-A[1-5] \| Phase 5 \| SUPERSEDED \|$" .planning/REQUIREMENTS.md | xargs -I{} test {} -eq 5</automated>
+  </verify>
+  <acceptance_criteria>
+    - `.planning/REQUIREMENTS.md` contains exactly one occurrence of `**SUPERSEDED 2026-05-13:**` in the Job Leads Completion section
+    - All five JL-A1..A5 list items are wrapped in `~~...~~` strikethrough
+    - All five JL-B1..JL-B5 list items appear as new `- [ ] **JL-Bx**: ...` lines under the Job Leads Completion section
+    - The Traceability table has exactly 5 rows reading `| JL-Bx | Phase 5 | Pending |` (x = 1..5)
+    - The Traceability table has exactly 5 rows reading `| JL-Ax | Phase 5 | SUPERSEDED |` (x = 1..5)
+    - Coverage summary line mentions both "22 total" and "JL-A1..A5 replaced by JL-B1..B5"
+    - Footer `Last updated` line shows `2026-05-13` and mentions the Phase 5 reshape
+    - No other section of REQUIREMENTS.md is modified (verify by diff: only the Job Leads Completion section, the 5 JL-A traceability rows, the 5 new JL-B traceability rows, the Coverage block, and the footer line change)
+  </acceptance_criteria>
+  <done>
+    `.planning/REQUIREMENTS.md` is the durable record of the architectural pivot, JL-B1..B5 are defined and traceable, and JL-A1..A5 are audit-trail-preserved as SUPERSEDED.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Regenerate REQUIREMENTS.html companion view</name>
+  <read_first>
+    - .planning/REQUIREMENTS.md (post-Task-1, the new source of truth)
+    - .planning/views/REQUIREMENTS.html (existing template — re-use structure, replace content only)
+    - $HOME/.claude/CLAUDE.md §"Planning-document HTML companions" (warm earth-tone palette, reusable conventions)
+  </read_first>
+  <files>.planning/views/REQUIREMENTS.html</files>
+  <action>
+    Re-render `.planning/views/REQUIREMENTS.html` to reflect the updated `REQUIREMENTS.md`. Preserve the existing HTML structure (inline CSS, system-font stack, max-width 880–1100px per user's global CLAUDE.md):
+    - Same palette variables (--bg #faf8f5, --card #ffffff, --ink #2a2a2a, --muted #6b6b6b, --accent #6b8e6b, --accent-2 #c97a4a, --warn #b85a3a, --line #e4ddd2, --code-bg #f4efe7)
+    - Same card-and-section layout
+    - Same `.req-list` ul styling (✓ green bullets for shipped/`.shipped`, ☐ orange bullets for active/`.active`)<pre><code>Render changes:
+- Add a small `.callout` div (use `--warn` border-color, italic text) above the Job Leads Completion `.req-list` containing the SUPERSEDED 2026-05-13 block text
+- Strike-through each JL-A1..A5 `&lt;li&gt;` entry using inline `&lt;del&gt;` tags (or a `.superseded` class with `text-decoration: line-through; color: var(--muted)`) — match the Markdown strikethrough visually
+- Add five new `&lt;li&gt;` entries for JL-B1..B5 with `.active` styling (orange ☐ bullets) — each `&lt;li&gt;` shows the bolded ID, a one-line summary (from the Markdown), and (if the existing HTML template includes detail-text below each ID) the full requirement text in a smaller font below
+- Update the Traceability table to mark JL-A1..A5 rows with the SUPERSEDED status badge (e.g., a `.badge-superseded` variant — pick a neutral tan color like `var(--muted)` background with white text, or simply italicize the cell content); add the five new JL-B1..B5 rows with the existing `.badge-pending` style
+- Update the Coverage block (if it exists in the HTML) and the footer to mirror the markdown&#39;s 2026-05-13 last-updated note + &quot;Phase 5 reshape&quot; mention
+
+Do NOT invent content not present in the markdown. The HTML is a readability companion that mirrors the markdown verbatim per the user&#39;s global CLAUDE.md (&quot;Do not invent new content during regeneration — render whatever the markdown actually says&quot;).
+
+Preserve the footer line stating that the markdown is the source of truth and the HTML may lag behind (per the user&#39;s global CLAUDE.md).
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f .planning/views/REQUIREMENTS.html && grep -c "JL-B1" .planning/views/REQUIREMENTS.html | xargs -I{} test {} -ge 1 && grep -c "JL-B5" .planning/views/REQUIREMENTS.html | xargs -I{} test {} -ge 1 && grep -c "SUPERSEDED 2026-05-13" .planning/views/REQUIREMENTS.html | xargs -I{} test {} -ge 1 && grep -cE "JL-A[1-5]" .planning/views/REQUIREMENTS.html | xargs -I{} test {} -ge 5</automated>
+  </verify>
+  <acceptance_criteria>
+    - `.planning/views/REQUIREMENTS.html` exists and is valid HTML (opens in a browser without missing-tag errors)
+    - File contains all five JL-B IDs (JL-B1, JL-B2, JL-B3, JL-B4, JL-B5) at least once each
+    - File contains the SUPERSEDED 2026-05-13 callout text
+    - File contains all five JL-A IDs (JL-A1..A5) with strikethrough or `.superseded` styling
+    - File preserves the warm earth-tone palette CSS variables (`--bg: #faf8f5`, `--accent: #6b8e6b`, etc.)
+    - File preserves the footer note about markdown being the source of truth
+    - `grep -c "JL-B" .planning/views/REQUIREMENTS.html` ≥ 5 (each ID appears in at least the list + traceability table)
+  </acceptance_criteria>
+  <done>
+    The HTML companion view reflects the updated requirements doc and follows the warm earth-tone palette established in the user's global CLAUDE.md preference.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Markdown source → HTML companion</td>
+<td>The HTML is a read-only companion; markdown is the canonical source per user&#39;s global CLAUDE.md</td>
+</tr>
+<tr>
+<td>Phase plan frontmatter <code>requirements:</code> → REQUIREMENTS.md</td>
+<td>Every Plan in this phase references JL-B IDs that MUST exist in REQUIREMENTS.md for the requirements gate to pass</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-03-01</td>
+<td>Tampering</td>
+<td>REQUIREMENTS.md audit trail</td>
+<td>mitigate</td>
+<td>JL-A1..A5 are preserved with strikethrough + SUPERSEDED status, not deleted, so the historical decision is recoverable</td>
+</tr>
+<tr>
+<td>T-05-03-02</td>
+<td>Repudiation</td>
+<td>Plan-to-requirement mapping</td>
+<td>mitigate</td>
+<td>Each plan&#39;s <code>requirements:</code> frontmatter field references JL-B IDs that exist in this file; the requirements gate in the planner orchestrator will fail-loud if any ID is missing</td>
+</tr>
+<tr>
+<td>T-05-03-03</td>
+<td>Information Disclosure</td>
+<td>HTML companion drift</td>
+<td>accept</td>
+<td>Per user&#39;s global CLAUDE.md, the HTML may lag behind the markdown and footer documents this — no functional consequence (no <code>/gsd-*</code> workflow reads HTML)</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `grep -c "JL-B[1-5]" .planning/REQUIREMENTS.md` returns at least 10 (5 in list + 5 in traceability)
+- `grep -cE "^\- \[ \] \*\*JL-B[1-5]\*\*" .planning/REQUIREMENTS.md` returns exactly 5
+- `grep -cE "^\| JL-A[1-5] \| Phase 5 \| SUPERSEDED \|$" .planning/REQUIREMENTS.md` returns exactly 5
+- `grep -c "JL-B1\|JL-B2\|JL-B3\|JL-B4\|JL-B5" .planning/views/REQUIREMENTS.html` returns at least 5
+- The Markdown's "Last updated" line matches today's date stamp (2026-05-13)
+</verification><success_criteria>
+1. REQUIREMENTS.md records the architectural pivot in a clear SUPERSEDED block above the Job Leads Completion section, with the original JL-A1..A5 list strikethrough'd (audit trail preserved).
+2. JL-B1..JL-B5 are defined as actionable, verifiable requirements mapped 1:1 to ROADMAP §Phase 5 (RESHAPED) Success Criteria 1..5.
+3. The Traceability table is updated: JL-A1..A5 status flips to SUPERSEDED; JL-B1..B5 added as Pending under Phase 5.
+4. REQUIREMENTS.html mirrors the markdown updates using the established warm earth-tone palette per the user's global CLAUDE.md.
+5. The five JL-B requirement IDs referenced by every other Plan in this phase's `requirements:` frontmatter exist in REQUIREMENTS.md and can be located by a plain grep.
+</success_criteria><output>
+After completion, create `.planning/phases/05-job-leads-completion/05-03-SUMMARY.md` recording:
+- Confirmation that JL-A1..A5 are visibly SUPERSEDED in both the list and the traceability table
+- Confirmation that JL-B1..JL-B5 are present in both the list and the traceability table
+- Whether REQUIREMENTS.html was regenerated or already up-to-date
+- One-line note on how downstream plan validators will consume the new JL-B IDs (requirements: frontmatter field)
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

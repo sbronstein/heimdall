@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>linkedin-scraper-agent-browser-evaluation</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>title: LinkedIn scraper — agent-browser evaluation
+date: 2026-05-13
+context: exploration session before spiking a replacement for Playwright-based LinkedIn scraping</h2>
+<h1>LinkedIn scraper — agent-browser evaluation</h1>
+<h2>Problem</h2>
+<p>The current Playwright-based scraper in <code>src/features/job-leads/lib/scrape-connections.ts</code> is fighting LinkedIn on two fronts:</p>
+<ol>
+<li><strong>Obfuscated DOM</strong> — LinkedIn uses randomized/obfuscated class names. The pending diff has cascaded into ~5 fallback selector strategies plus <code>page.evaluate</code> brute-force DOM scans plus hardcoded <code>waitForTimeout</code> waits. 326-line diff of defensive heuristics is unsustainable.</li>
+<li><strong>Multi-step navigation</strong> — Job posting → company page → employees list → 2nd-degree filter. Each hop has its own fragile selectors and timing.</li>
+</ol>
+<p>Even with the latest fixes, end-to-end scrapes are unreliable.</p>
+<h2>Two decoupled problems</h2>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>What fixes it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Selector brittleness (obfuscated DOM)</td>
+<td>LLM-driven browser automation that reasons over rendered DOM / a11y tree instead of CSS selectors</td>
+</tr>
+<tr>
+<td>Hosting constraint (local-dev/Docker only)</td>
+<td>Hosted browser cloud (Browserbase, Browserless, Kernel) — paid, requires CDP endpoint</td>
+</tr>
+</tbody></table>
+<p>These are independent. Production hosting is intentionally staying off-limits for now, so only the selector-brittleness problem is in scope.</p>
+<h2>Evaluated: <code>vercel-labs/agent-browser</code></h2>
+<ul>
+<li><strong>Rust CLI</strong>, not a TypeScript library. Distributed via npm but ships a native binary; no <code>main</code>/<code>exports</code> in <code>package.json</code>.</li>
+<li>Speaks Chrome DevTools Protocol directly (not Playwright).</li>
+<li>Accessibility-tree-with-stable-refs model (<code>@e1</code>, <code>@e2</code>) for LLM consumption — the right abstraction for obfuscated class names.</li>
+<li>LLM via Vercel AI Gateway, default model <code>anthropic/claude-sonnet-4.6</code>.</li>
+<li>~32.9k stars, actively maintained, Apache-2.0.</li>
+</ul>
+<p><strong>Verdict</strong>: solves the selector problem brilliantly. But integration cost from a Next.js API route is high — <code>execSync</code>-ing a Rust binary, no TS types on inputs/outputs, parsing JSON stdout. Strongest use cases are CLI/agent-driving, not &quot;called from a Next.js route handler.&quot;</p>
+<h2>Decision: spike Stagehand</h2>
+<p><code>@browserbasehq/stagehand</code> is the better fit for this codebase:</p>
+<ul>
+<li>TS-native, MIT, built on Playwright (drops in next to existing Playwright code in <code>src/features/job-leads/lib/</code>)</li>
+<li>Three LLM primitives that target the exact failure points:<ul>
+<li><code>page.act(&quot;click the employees link&quot;)</code> — natural-language action</li>
+<li><code>page.observe()</code> — enumerate actionable elements</li>
+<li><code>page.extract(schema)</code> — pull structured data from a rendered page</li>
+</ul>
+</li>
+<li>Runs against <strong>local Chromium</strong> without Browserbase (Browserbase is optional, not required)</li>
+<li>Pays only LLM tokens per scrape — no per-browser-minute fees while staying local</li>
+</ul>
+<h2>Why not agent-browser</h2>
+<p>The selector-fix benefit is comparable, but Stagehand wins on DX:</p>
+<ul>
+<li>Same Playwright <code>Page</code> object shape — minimal refactor to scrape-connections.ts</li>
+<li>Type-safe <code>extract(schema)</code> aligns with the Zod-everywhere convention in this codebase</li>
+<li>No child-process boundary, no native binary packaging concerns</li>
+</ul>
+<p>If we ever decide to unlock prod-hosted scraping (see [[prod-hosted-scraping]]), Stagehand&#39;s Browserbase path is also the natural extension — same library, swap the runtime.</p>
+<h2>Next step</h2>
+<p>Spike Stagehand on one scrape path. Likely <code>scrape-connections.ts</code> because multi-step nav is where Playwright breaks worst — proves the a11y-tree-with-refs approach on the hardest case. Spike should capture:</p>
+<ul>
+<li>Does it actually navigate job → company → employees end-to-end?</li>
+<li>LLM token cost per scrape (target: comparable to or below current Playwright runtime cost)</li>
+<li>Reliability across 5–10 runs against different companies</li>
+<li>Whether the existing logged-in-Chrome session (<code>BROWSER_CDP_ENDPOINT</code>) flow still works</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

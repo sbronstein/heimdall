@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/01-critical-bug-fix/01-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 1: Critical Bug Fix - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-12
+<strong>Phase:</strong> 1-critical-bug-fix
+<strong>Areas discussed:</strong> Sweep scope, Verification approach, Pre-existing edits, Dirty-tree handling</p>
+<hr>
+<h2>Sweep scope</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Two files only</td>
+<td>Fix only user-avatar-profile.tsx:31 and user-nav.tsx:38 — the two unsafe emailAddresses[0] sites grep already found. Smallest surface, matches REQUIREMENTS exactly.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Email sweep</td>
+<td>Also grep for any other unguarded Clerk user.* property chains (firstName, primaryEmailAddress, etc.) and fix any unsafe ones found.</td>
+<td></td>
+</tr>
+<tr>
+<td>Full hydration audit</td>
+<td>Two files + grep for any other useUser()/useAuth() conditional renders that could cause SSR/CSR mismatches anywhere in the sidebar or layout chrome.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Two files only
+<strong>Notes:</strong> Phase scope is intentionally narrow. Wider sweeps belong in a different audit phase if needed.</p>
+<hr>
+<h2>Verification approach</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Smoke + targeted</td>
+<td>Start dev server, load /dashboard/overview and /dashboard/networking, confirm no React hydration warnings + sidebar links navigate. Don&#39;t need to repro the 1500-import.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Repro the broken state</td>
+<td>Reproduce the original crash by manually invoking a no-email Clerk user state (mock or DevTools override) and confirm UserAvatarProfile renders cleanly.</td>
+<td></td>
+</tr>
+<tr>
+<td>Trust the fix</td>
+<td>Structural fix is mechanical. No browser verification — ship it. Phase 2 will add the regression test anyway.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Smoke + targeted
+<strong>Notes:</strong> Regression test (TEST-A3) is owned by Phase 2 — this phase is verified by hand.</p>
+<hr>
+<h2>Pre-existing edits</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Audit then accept</td>
+<td>Read the current state of user-avatar-profile.tsx and app-sidebar.tsx, confirm the <span> migration and guard removal match the fix bug.md prescribed, then keep them. Commit them as part of Phase 1 alongside the BUG-02 guards.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Revert and redo</td>
+<td>Git restore the two files, then re-apply the full fix from scratch in a controlled Phase 1 plan. Cleaner history; throws away working changes.</td>
+<td></td>
+</tr>
+<tr>
+<td>Trust and complete</td>
+<td>Don&#39;t re-audit — assume the working-tree edits are correct, just add the BUG-02 guards and commit everything together.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Audit then accept
+<strong>Notes:</strong> Cheap insurance — a quick read confirms the existing edits match the bug.md prescription before they ride into a commit.</p>
+<hr>
+<h2>Dirty-tree handling</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Surgical commits</td>
+<td>Phase 1 only stages and commits the BUG-01/BUG-02 files. Leave the others untouched in the working tree for now — they belong to Phase 5 (Job Leads) and other phases. Use targeted <code>git add &lt;file&gt;</code> per file.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Stash unrelated</td>
+<td>git stash push the unrelated files before Phase 1 work, do the fix and commit cleanly, then git stash pop after.</td>
+<td></td>
+</tr>
+<tr>
+<td>Commit unrelated first</td>
+<td>Make a separate WIP commit on the dirty Job Leads / package changes first (or stash them), then start Phase 1.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Surgical commits
+<strong>Notes:</strong> Phase 5 (Job Leads) owns the scrape-related dirty files; package.json/lock and docs/summary.md are unclear ownership but stay untouched this phase.</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<ul>
+<li>Commit message wording.</li>
+<li>Whether to combine BUG-01 and BUG-02 into one commit or split (recommended: split per requirement for clean revert).</li>
+<li>Order of edits within the patch.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Codebase-wide hydration audit of <code>useUser()</code> / <code>useAuth()</code> conditional renders.</li>
+<li>Codebase-wide unsafe Clerk-property sweep (firstName, primaryEmailAddress, etc.).</li>
+<li>Programmatic no-email user repro harness for Phase 2 testing.</li>
+<li>Hydration regression test (TEST-A3) — owned by Phase 2.</li>
+<li>Unrelated dirty files: Job Leads scrape work (Phase 5), package.json/lock changes (owner TBD), docs/summary.md, .planning/config.json.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/01-critical-bug-fix/01-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

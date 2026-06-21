@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 5: Job Leads Completion - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in <code>05-CONTEXT.md</code> — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-13 (post-reshape)
+<strong>Phase:</strong> 05-job-leads-completion
+<strong>Reshape note:</strong> This phase was reshaped from &quot;fix the in-app scraper&quot; to &quot;delete the in-app scraper and replace with a Claude Code skill on <code>vercel-labs/agent-browser</code>.&quot; The prior discussion log (covering the original 4 gray areas: error-surfacing model, timeout budget, browser lifecycle, debug-log cleanup) is preserved at <code>05-DISCUSSION-LOG-superseded-in-app-scraper.md</code>.
+<strong>Areas discussed (this session):</strong> skill location, agent-browser invocation pattern, queue+status model, no-arg drain mode, in-app code removal scope, web UI affordance, API write-back contract</p>
+<hr>
+<h2>Skill location</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Project-local <code>.claude/skills/scrape-linkedin-connections/</code></td>
+<td>Checked into the repo; ships with Heimdall; anyone with the codebase + Claude Code can run it. Co-located with <code>.planning/</code> docs the skill needs to read.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>User-global <code>~/.claude/skills/scrape-linkedin-connections/</code></td>
+<td>Personal Claude Code config; doesn&#39;t ship with the repo.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Project-local (recommended)
+<strong>Notes:</strong> Skill is Heimdall-specific (knows the API, knows the prospect schema). Shipping with the repo is the right call.</p>
+<hr>
+<h2>agent-browser invocation pattern</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Interactive <code>agent-browser ai chat</code></td>
+<td>Claude (in Claude Code) reasons step-by-step over agent-browser&#39;s snapshot+refs model. Best handles LinkedIn&#39;s unpredictable DOM. Cost = existing Claude Code session, no separate LLM bill.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Scripted CLI calls + JSON parsing</td>
+<td>Skill shells out to specific <code>agent-browser</code> subcommands and parses JSON. More deterministic but defeats the &quot;LLM reasons over a11y tree&quot; point.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Interactive <code>ai chat</code> mode (recommended)
+<strong>Notes:</strong> Locks the architectural reasoning behind the entire pivot — the value of agent-browser is the LLM reasoning, not its CDP plumbing.</p>
+<hr>
+<h2>Queue + status model</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Add 2 enum values: <code>queued</code> and <code>failed</code> + reuse existing columns</td>
+<td>Single source of truth via the status enum; explicit <code>queued</code> marker for the skill to pick up. Migration: 2 enum values + 2 columns (<code>last_error</code>, <code>last_error_at</code>).</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Keep enum as-is; track queue state via new boolean/timestamp columns</td>
+<td>More columns, more flexibility, but queue state is implied by column combos.</td>
+<td></td>
+</tr>
+<tr>
+<td>Use existing <code>searching</code>/<code>found</code> + add only <code>failed</code> + <code>last_error</code></td>
+<td>Minimal migration; skill picks up <code>scraped</code> leads. Fragile — relies on absence of state.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Add <code>queued</code> + <code>failed</code> (recommended)
+<strong>Notes:</strong> Status enum stays the source of truth for the lifecycle state. The skill claims leads by flipping <code>queued → searching</code>; race-safety via optimistic update (CONTEXT D-11).</p>
+<hr>
+<h2>No-arg drain mode</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>List queue, then process one-at-a-time with confirmation</td>
+<td>Skill prints the queue, walks each lead with Claude narrating, allows user to interrupt/skip. Matches human-in-the-loop ethos; failures visible.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Batch through all unprocessed leads autonomously</td>
+<td>Faster for large queues; harder to recover from a bad run because errors cascade silently.</td>
+<td></td>
+</tr>
+<tr>
+<td>Process the next single lead and exit</td>
+<td>Each invocation handles one lead; simplest skill, most ceremonial.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> List queue, walk one-at-a-time with user prompts (recommended)
+<strong>Notes:</strong> Failures don&#39;t abort the batch — skill captures <code>failed</code> and moves to the next lead (CONTEXT D-10).</p>
+<hr>
+<h2>In-app code removal scope</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Delete the IIFE + <code>scrape-connections.ts</code>; keep <code>linkedin-browser.ts</code> + <code>scrape-job-page.ts</code></td>
+<td>Targeted deletion. The connection-scrape code goes; the job-page-scrape (cheerio, in-app on submit) stays; profile-setup helpers stay (skill may reuse). Convert <code>/search</code> route to a thin status-flip endpoint.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Burn it all — delete every scraper file under <code>src/features/job-leads/lib/</code></td>
+<td>Skill handles job-page scrape too. Cleaner separation; doubles skill responsibility.</td>
+<td></td>
+</tr>
+<tr>
+<td>Keep everything; just disable the IIFE</td>
+<td>Lowest risk; leaves cruft.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Targeted deletion (recommended)
+<strong>Notes:</strong> <code>scrape-job-page.ts</code> is a different concern (cheerio + fetch, in-app on lead create) — keeping it is correct. <code>linkedin-browser.ts</code> may still own the <code>~/.heimdall/linkedin-profile/</code> invariants even if the skill ends up not importing it directly.</p>
+<hr>
+<h2>Web UI affordance</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>queued</code> status badge + copy-skill-invocation button</td>
+<td>Lead detail page shows queued badge + a button that copies <code>claude /scrape-linkedin-connections &lt;id&gt;</code> to clipboard. Failed leads show categorized error banner.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Just the badge — no copy button</td>
+<td>User memorizes/types the skill invocation. One less thing to build.</td>
+<td></td>
+</tr>
+<tr>
+<td>Badge + webhook back so the web UI shows a real-time toast</td>
+<td>Adds websocket/polling infra; YAGNI for single-user.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Badge + copy button (recommended)
+<strong>Notes:</strong> Web UI never triggers a live scrape — it captures URLs and shows results. Explicit boundary preserved.</p>
+<hr>
+<h2>API write-back contract</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clerk session via curl + <code>~/.heimdall/api-token</code> bearer token</td>
+<td>Long-lived token at <code>~/.heimdall/api-token</code>; middleware accepts as service-token bypass for the single-user lock. Skill calls existing routes via REST.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Reuse Clerk session cookie from the local Chrome</td>
+<td>No new auth path; fragile if cookie rotates mid-run; ties skill to a specific browser profile.</td>
+<td></td>
+</tr>
+<tr>
+<td>Skill talks to DB directly via <code>DATABASE_URL</code></td>
+<td>Fastest; skips API envelope + <code>logTimeline()</code> side effects.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Bearer token via middleware bypass (recommended)
+<strong>Notes:</strong> Preserves the REST + Zod + timeline-event invariants the project depends on. Token validation: SHA-256 hash in <code>.env.local</code>; single-user-locked at the middleware layer (CONTEXT D-19, D-21).</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>The following items were captured in CONTEXT.md <code>&lt;decisions&gt;</code> § &quot;Claude&#39;s Discretion&quot; rather than asked, because they&#39;re implementation details the planner should pick based on the codebase:</p>
+<ul>
+<li><strong>CD-01:</strong> Whether to commit the working-tree state before deletion (recommended: yes; preserves &quot;we tried this before pivoting&quot; history)</li>
+<li><strong>CD-02:</strong> Whether error-write folds into <code>PATCH /status</code> or a separate <code>POST /error</code> route (recommended: folded — always co-emitted)</li>
+<li><strong>CD-03:</strong> Per-step skill API calls vs batched (recommended: per-step for debug-ability)</li>
+<li><strong>CD-04:</strong> Whether to drop Playwright from <code>package.json</code> entirely (depends on whether <code>scrape-job-page.ts</code> uses it)</li>
+<li><strong>CD-05:</strong> Cleanup of leftover <code>~/.heimdall/linkedin-profile/storage-state.json</code> (recommended: leave)</li>
+<li><strong>CD-06:</strong> Bulk-prospects route naming (<code>POST /prospects</code> vs <code>POST /scrape-result</code>)</li>
+<li><strong>CD-07:</strong> Skill prompt depth (recommended: detailed first version, trim later)</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<p>Captured to CONTEXT.md <code>&lt;deferred&gt;</code> section. Highlights:</p>
+<ul>
+<li>JL-A1..A5 entire requirement set — superseded by the architectural pivot</li>
+<li>Webhook/notification on skill completion — YAGNI for single-user</li>
+<li><code>heimdall-linkedin-login</code> sibling skill — useful if Chrome profile expires; spike later if friction warrants</li>
+<li>Multi-tenant deployment — deferred indefinitely (project is single-user by design)</li>
+<li>Skill output as audit log — YAGNI for now</li>
+<li>Folding job-page scrape into the skill too — only revisit if cheerio path breaks</li>
+</ul>
+<h2>Notes on the discussion</h2>
+<p>This was a streamlined discussion — all seven gray areas picked the recommended option in two batched <code>AskUserQuestion</code> rounds (4 + 3). The recommendations were strongly informed by the prior <code>/gsd-explore</code> conversation that led into this reshape, where the architectural rationale was already aligned with the user.</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

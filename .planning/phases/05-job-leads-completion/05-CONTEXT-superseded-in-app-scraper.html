@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-CONTEXT-superseded-in-app-scraper</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 5: Job Leads Completion - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-13
+<strong>Status:</strong> Ready for planning
+<strong>Mode:</strong> <code>discuss</code> (interactive — 4 gray areas selected from analysis, each deep-dived; log appended at bottom)</p>
+<domain>
+## Phase Boundary<p>The LinkedIn job-leads scraper runs cleanly end-to-end. Hardcoded debug strings are replaced with the lead&#39;s actual company name. Heavy LinkedIn pages load reliably with <code>waitUntil: &#39;domcontentloaded&#39;</code> + targeted <code>waitForSelector</code>, not fixed <code>waitForTimeout</code>. A scrape that hangs or fails is bounded by a 90-second wall-clock timeout and reverts the lead from <code>searching</code> back to <code>scraped</code>. Errors are surfaced to the UI via a new <code>lastError</code> / <code>lastErrorAt</code> column on <code>job_leads</code> AND a <code>job_lead_search_failed</code> timeline event. The detail page renders the last error in an inline banner with a Retry button. Debug noise is trimmed to ~5 navigation-breadcrumb log lines. Browser context is closed after successful scrapes in remote (CDP/WS) mode.</p>
+<p><strong>In scope (JL-A1..A5 verbatim):</strong></p>
+<ul>
+<li><strong>JL-A1</strong>: Replace hardcoded <code>&#39;point&#39;</code> company name in <code>src/features/job-leads/lib/scrape-connections.ts:62</code> with the lead&#39;s actual <code>companyName</code> (passed through <code>scrapeConnections(companyName, ...)</code> already; just propagate into the <code>page.evaluate(..., &#39;point&#39;)</code> call).</li>
+<li><strong>JL-A2</strong>: Tune Playwright navigation on heavy LinkedIn pages — keep <code>waitUntil: &#39;domcontentloaded&#39;</code> on <code>page.goto</code>, replace the fixed <code>page.waitForTimeout(5000)</code> / <code>waitForTimeout(3000)</code> / <code>waitForTimeout(2000)</code> sleeps with targeted <code>page.waitForSelector(...)</code> calls that wait for the actual element the next step depends on.</li>
+<li><strong>JL-A3</strong>: Remove debug-mode noise — drop the ~15 noisy <code>console.log</code> JSON-dump calls (DOM-dump arrays, link inventories) in <code>scrape-connections.ts</code>; keep ~5 navigation-breadcrumb log lines for server-log signal. Restore <code>await context.close()</code> in the search-route success path (currently commented out). See D-12 for closure semantics by mode.</li>
+<li><strong>JL-A4</strong>: Bound the fire-and-forget IIFE in <code>src/app/api/job-leads/[id]/search/route.ts:39</code> with <code>Promise.race()</code> against a 90-second wall-clock timer. On timeout: revert lead status to <code>scraped</code>, write a categorized <code>lastError</code> (&quot;Timeout: scrape exceeded 90s&quot;), write a <code>job_lead_search_failed</code> timeline event. The Playwright work is allowed to dangle (D-10).</li>
+<li><strong>JL-A5</strong>: Surface scrape errors to the UI — add <code>last_error: text</code> and <code>last_error_at: timestamp</code> columns to <code>job_leads</code>; update <code>/api/job-leads/[id]/status</code> to return them; update <code>job-lead-detail.tsx</code> to render an inline banner above the Find Connections button with the error category + raw tail and a Retry button that clears the error and re-POSTs to <code>/search</code>.</li>
+</ul>
+<p><strong>In scope by transitive necessity (will not satisfy SC otherwise):</strong></p>
+<ul>
+<li><strong>Drizzle migration</strong> for the two new <code>job_leads</code> columns (<code>last_error: text</code>, <code>last_error_at: timestamp</code>) + the corresponding schema edit in <code>drizzle/schema/job-leads.ts</code>.</li>
+<li><strong><code>/api/job-leads/[id]/status</code> response shape</strong> must include <code>lastError</code> and <code>lastErrorAt</code> so the polling <code>SearchProgress</code> and <code>JobLeadDetail</code> components can read them without a second fetch.</li>
+<li><strong>Error categorizer</strong> — a small helper (probably colocated in <code>scrape-connections.ts</code> or a new <code>src/features/job-leads/lib/scrape-errors.ts</code>) that maps a raw <code>err</code> / <code>err.message</code> / <code>err.name</code> to one of: <code>Timeout</code> / <code>LinkedIn navigation failed</code> / <code>No prospects found</code> / <code>Browser unavailable</code> / <code>Unknown error</code>. Output format: <code>&lt;category&gt;: &lt;first 200 chars of err.message&gt;</code>.</li>
+<li><strong>Inline-banner UI</strong> — a small component (e.g., <code>src/features/job-leads/components/scrape-error-banner.tsx</code>) consumed by <code>job-lead-detail.tsx</code>. Renders only when <code>lastError</code> is set. Retry button calls a new helper that PATCHes/DELETEs the error fields then POSTs to <code>/search</code>.</li>
+<li><strong>Retry endpoint behavior</strong> — <code>POST /api/job-leads/[id]/search</code> should clear <code>lastError</code> / <code>lastErrorAt</code> to NULL on every fresh invocation (whether the previous attempt succeeded or failed); this keeps the banner from sticking after a retry-success.</li>
+</ul>
+<p><strong>Out of scope (deferred to other phases, captured in <code>&lt;deferred&gt;</code> below):</strong></p>
+<ul>
+<li>N+1 prospect inserts in the search route (PERF-A1 — Phase 6 owns).</li>
+<li>N+1 bridge inserts in <code>match-connections.ts</code> (PERF-A2 — Phase 6 owns).</li>
+<li><code>playwright</code> package classification from <code>dependencies</code> → <code>devDependencies</code> (JL2-02 — v2-deferred).</li>
+<li>Captcha / rate-limit detection with backoff (JL2-03 — v2-deferred).</li>
+<li>Pagination beyond first results page (JL2-04 — v2-deferred). Current scraper already does up to <code>maxPages = 10</code> via the Next button; the limit is &quot;what LinkedIn renders,&quot; not the code.</li>
+<li>LinkedIn session credentials on filesystem (<code>~/.heimdall/linkedin-profile/storage-state.json</code>) — Phase 3 deferred this; not a network leak, local-dev only, no change in Phase 5 unless the planner spots a concrete risk.</li>
+<li>Decoupling the scrape worker from the API route (JL2-01 — v2-deferred). The fire-and-forget IIFE pattern stays; we just bound it.</li>
+<li><code>navigateToEmployeeList</code> strategy reorder / fragile-fallback strip — see CD-04. JL-A1 only fixes the hardcoded <code>&#39;point&#39;</code>; whether to also strip the <code>employeeLinkSelectors</code> fallback chain is Claude&#39;s discretion during planning.</li>
+<li>The <code>recommendation-list.tsx</code> / <code>recommendation-card.tsx</code> UI — <code>JL-V3</code> shipped; not under modification here.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Critical Pre-Discovery (anchor the whole phase here)</h3>
+<ul>
+<li><p><strong>PD-01:</strong> The working tree (uncommitted) contains 87 commits worth of cleanup-phase work AND ~457 lines of mid-refactor scraper changes against <code>linkedin-browser.ts</code>, <code>scrape-connections.ts</code>, <code>scrape-job-page.ts</code>, and <code>src/app/api/job-leads/[id]/search/route.ts</code>. Phase 1 explicitly left these dirty files for Phase 5 to own (01-CONTEXT.md §D-10). The uncommitted diff is the immediate phase surface — <strong>planner should treat the working-tree state as the starting point, not HEAD</strong>. Key uncommitted changes:</p>
+<ul>
+<li><code>scrape-connections.ts</code>: completely rewritten from the old <code>resolveCompanyId</code> search-based approach to a <code>navigateToEmployeeList</code> job→company→employees flow. <strong>Introduces the hardcoded <code>&#39;point&#39;</code> debug literal (line 62) and the 15+ <code>console.log</code> dumps that Phase 5 must clean up.</strong> The current scraper IS the JL-A1/JL-A2/JL-A3 problem — pre-rewrite code did not have these issues.</li>
+<li><code>linkedin-browser.ts</code>: adds remote CDP / WS endpoint support (~125 new lines). This is good infra, not bug fix; keep it.</li>
+<li><code>search/route.ts</code>: passes <code>{ jobUrl: lead.linkedinJobUrl }</code> to <code>scrapeConnections</code> (correct), but comments out <code>await context.close()</code> in the success path (&quot;Leave browser open for now (debug mode)&quot;) — <strong>the JL-A3 / SC #3 violation lives in this diff</strong>.</li>
+<li><code>scrape-job-page.ts</code>: minor — only 24 lines changed (probably title-tag fallback work); irrelevant to Phase 5 scope.</li>
+</ul>
+</li>
+<li><p><strong>PD-02:</strong> <code>job_leads</code> schema (<code>drizzle/schema/job-leads.ts</code>) currently has columns: <code>id, linkedinJobUrl, roleTitle, companyName, companyId, applicationId, status, scrapedData, prospectCount, createdAt, updatedAt, archivedAt</code>. <strong>No error column exists</strong>. The <code>status</code> enum (<code>pending|scraping|scraped|searching|found|ready|actioned|archived</code>) has no <code>failed</code> value, and the ROADMAP SC #2 explicitly mandates revert to <code>scraped</code> on failure — so the design constraint is &quot;carry the error in side data, not in the status enum.&quot; This locks the answer to &quot;Error storage = column + timeline event&quot; (D-01).</p>
+</li>
+<li><p><strong>PD-03:</strong> Phase 3 activated middleware on <code>/api/*</code>. Every API route Phase 5 touches is auth-locked at the edge; <strong>no per-route <code>auth()</code> calls are needed</strong>. The new <code>/api/job-leads/[id]/search</code> retry POST already inherits the lock. CLI parity: the CLI hits the same envelope, including the new <code>lastError</code> / <code>lastErrorAt</code> fields in <code>/status</code>.</p>
+</li>
+<li><p><strong>PD-04:</strong> <code>SearchProgress</code> (the polling component in <code>src/features/job-leads/components/search-progress.tsx</code>) polls <code>/status</code> every 3s and calls <code>onComplete(status, prospectCount)</code> when <code>status !== &#39;searching&#39;</code>. It does <strong>not</strong> read or pass an <code>error</code> field today. JL-A5 requires either (a) extending the <code>onComplete</code> signature to also pass <code>lastError</code>, or (b) letting <code>JobLeadDetail</code> re-fetch the lead on poll completion to pick up <code>lastError</code>. Recommended: extend <code>/status</code> to return <code>{ status, prospectCount, lastError, lastErrorAt, updatedAt }</code> and have <code>SearchProgress</code> pass the error through. This keeps the polling round-trip count flat (1 per 3s).</p>
+</li>
+</ul>
+<h3>Error Surfacing Model (JL-A5)</h3>
+<ul>
+<li><p><strong>D-01:</strong> <strong>Both column + timeline event.</strong> Add <code>last_error: text</code> and <code>last_error_at: timestamp</code> columns to the <code>job_leads</code> table. Also write a <code>job_lead_search_failed</code> <code>timeline_events</code> row on every failure (with category + raw error in <code>metadata</code>). The column is the fast &quot;what is the current state of this lead&quot; read; the timeline event is the durable audit trail.</p>
+</li>
+<li><p><strong>D-02:</strong> <strong>Inline banner on the detail page + Retry button</strong> is the UI surface. No toast on poll completion (option rejected) — banner-only keeps signal-to-noise tight; the user is on the detail page anyway when starting a scrape. The banner sits above the Find Connections button. The Retry button (a) clears <code>lastError</code>/<code>lastErrorAt</code> to NULL, (b) re-POSTs to <code>/search</code>. If the banner persists in the DB but the user navigates away, on return it still shows — durable signal.</p>
+</li>
+<li><p><strong>D-03:</strong> <strong>Error message format = <code>&lt;category&gt;: &lt;first 200 chars of err.message&gt;</code>.</strong> Categories (closed set, 5 values):</p>
+<ol>
+<li><code>Timeout</code> — Promise.race timer fired</li>
+<li><code>LinkedIn navigation failed</code> — <code>navigateToEmployeeList</code> returned <code>false</code> (couldn&#39;t find company / employees link)</li>
+<li><code>No prospects found</code> — navigation succeeded but <code>scrapeResultsPage</code> returned 0 results across all pages</li>
+<li><code>Browser unavailable</code> — <code>getContext()</code> threw (CDP endpoint unreachable, Playwright launch failure, etc.)</li>
+<li><code>Unknown error</code> — anything else thrown in the IIFE catch block</li>
+</ol>
+<p>The category is what the user sees prominently in the banner; the raw tail is for debugging when the user expands. Single column, one string, parsed by colon. No second column needed (rejected option D — <code>errorCategory</code> + <code>errorDetail</code> is over-structured for the use case).</p>
+</li>
+<li><p><strong>D-04:</strong> <strong><code>lastError</code>/<code>lastErrorAt</code> are cleared on every fresh <code>/search</code> POST.</strong> On retry-success the banner naturally disappears (column is NULL); on retry-failure it gets overwritten with the new error. No separate &quot;dismiss&quot; UI action — the only way to clear an error is to retry.</p>
+</li>
+<li><p><strong>D-05:</strong> <strong><code>/api/job-leads/[id]/status</code> returns <code>lastError</code> and <code>lastErrorAt</code></strong> alongside <code>status</code>, <code>prospectCount</code>, <code>updatedAt</code>. Single round-trip per poll tick (<code>SearchProgress</code> already polls every 3s; no new endpoint).</p>
+</li>
+</ul>
+<h3>Timeout Budget + Revert Behavior (JL-A4)</h3>
+<ul>
+<li><p><strong>D-06:</strong> <strong>Wall-clock budget = 90 seconds</strong> for the entire fire-and-forget IIFE. Captured via <code>Promise.race([scrapeWork, timeoutPromise(90_000)])</code>. The 90s figure: current per-step Playwright timeouts (30s <code>page.goto</code> + 15s <code>waitForSelector</code> + several 5s/3s sleeps that JL-A2 will tighten) sum to ~60s for a clean run; 90s leaves ~30s of headroom for slow LinkedIn responses without letting a hung browser block the lead for minutes. No env-var override (rejected — one knob is more than enough).</p>
+</li>
+<li><p><strong>D-07:</strong> <strong>Timeout label = <code>Timeout: scrape exceeded 90s</code>.</strong> Written to <code>lastError</code> exactly. Also emits a timeline event of type <code>job_lead_search_failed</code> with <code>metadata.category = &#39;Timeout&#39;</code> and <code>metadata.elapsedMs</code> if measurable.</p>
+</li>
+<li><p><strong>D-08:</strong> <strong>Status revert on timeout = <code>searching</code> → <code>scraped</code></strong> (per ROADMAP SC #2). Not <code>pending</code>, not <code>failed</code> (no such enum value), not <code>archived</code>. The lead remains visible in the UI in a usable state from which Retry is possible.</p>
+</li>
+<li><p><strong>D-09:</strong> <strong>Same revert flow applies to non-timeout failures.</strong> Any <code>err</code> thrown inside the scrape IIFE (catch block at <code>route.ts:89</code>) also writes <code>lastError</code> (category + tail per D-03), writes a <code>job_lead_search_failed</code> timeline event, and reverts status to <code>scraped</code>. The existing <code>catch (err) { console.error(&#39;Connection search failed:&#39;, err); await db.update(...).set({ status: &#39;scraped&#39;, ... }) }</code> is the right pattern — Phase 5 just adds the error-write + timeline write to it.</p>
+</li>
+<li><p><strong>D-10:</strong> <strong>Promise.race + leave Playwright dangling on timeout.</strong> No <code>AbortController</code>, no <code>context.close()</code> on the timeout path. The Playwright work is allowed to complete or error out in the background and be GC&#39;d. <strong>Tension flag for the planner:</strong> SC #3 says &quot;no leaked browser instance open after completion&quot; — interpretation here is &quot;successful completion closes the browser; timeout-abort releases ownership of the context promise and lets it eventually GC; SC #3 is about the successful-path leak only.&quot; Planner verifies this interpretation against the SC wording during plan-checker. If SC #3 is interpreted strictly (any termination must close), upgrade to option 2 from the discussion (Promise.race + close context after timer fires, accept that in-flight Playwright calls will throw uncaught).</p>
+</li>
+<li><p><strong>D-11:</strong> <strong>Timeout helper colocation.</strong> Put the timeout-wrapper logic inside <code>src/app/api/job-leads/[id]/search/route.ts</code> itself — it&#39;s a one-time pattern (one call site), not worth extracting to a util. Inline <code>Promise.race([scrapeWork, new Promise((_, reject) =&gt; setTimeout(() =&gt; reject(new ScrapeTimeoutError(...)), 90_000))])</code> plus a category check in the catch block. Custom error class <code>ScrapeTimeoutError</code> so the catch block can distinguish <code>Timeout</code> from other failures and label accordingly (D-03 category mapping).</p>
+</li>
+</ul>
+<h3>Browser Lifecycle (JL-A3 / SC #3)</h3>
+<ul>
+<li><p><strong>D-12:</strong> <strong>Close context in remote (CDP/WS) mode only.</strong></p>
+<ul>
+<li>In remote mode (<code>BROWSER_CDP_ENDPOINT</code> or <code>BROWSER_WS_ENDPOINT</code> set): <code>await context.close()</code> after every successful scrape. In CDP mode this disconnects from the host browser (the host stays alive); in WS mode it closes the temporary context but leaves the Playwright server running. Either way: no leaked browser instance on the heimdall-app side.</li>
+<li>In local mode (<code>chromium.launchPersistentContext</code> with no env vars): <strong>do NOT call <code>context.close()</code></strong>. Closing the persistent context shuts the entire Chromium process and the next scrape pays a 3–5s relaunch cost. Local-dev is a single-user persistent session; leaving the persistent context alive between scrapes is the expected pattern for <code>launchPersistentContext</code>.</li>
+<li>Detection: re-export an <code>isRemote()</code> helper from <code>linkedin-browser.ts</code> (already exists internally, line 47) so <code>scrapeConnections</code> or the search route can decide whether to close.</li>
+</ul>
+</li>
+<li><p><strong>D-13:</strong> <strong>Failed-scrape close behavior matches success path</strong> in remote mode. Whether the IIFE completes successfully, throws, or times out, the close decision is the same: if remote, close; if local, don&#39;t. This eliminates a branch in the catch block.</p>
+</li>
+<li><p><strong>D-14:</strong> <strong>Signature change to <code>scrapeConnections</code> is acceptable.</strong> Currently returns <code>{ prospects, context }</code>. Phase 5 changes the return to just <code>{ prospects }</code> and pushes context lifecycle entirely inside the function (it opens, scrapes, closes per D-12). The search route no longer needs to know about <code>context</code> — cleaner API surface, one less footgun. Acceptable because there&#39;s only one caller (<code>src/app/api/job-leads/[id]/search/route.ts</code>).</p>
+</li>
+</ul>
+<h3>Debug-Log Cleanup Scope (JL-A3 / SC #3)</h3>
+<ul>
+<li><p><strong>D-15:</strong> <strong>Keep navigation breadcrumbs (~5 lines), drop DOM dumps.</strong> Keep:</p>
+<ol>
+<li><code>console.log(&#39;Navigating to job posting...&#39;)</code> (line ~25)</li>
+<li><code>console.log(&#39;On company page:&#39;, page.url())</code> (line ~78)</li>
+<li><code>console.log(&#39;Navigated to people search: ...&#39;)</code> or <code>&#39;Clicked employees link&#39;</code> (one of, depending on which fallback fired) (line ~118 / ~137)</li>
+<li><code>console.log(&#39;Scraping page N...&#39;)</code> (line ~321)</li>
+<li><code>console.log(&#39;Scraping complete. Found X prospects at &lt;company&gt;&#39;)</code> (line ~339)</li>
+</ol>
+<p>Drop:</p>
+<ul>
+<li><code>console.log(&#39;Links on job page:&#39;, JSON.stringify(pageLinks, null, 2))</code> (~line 39) — 30-element JSON dump</li>
+<li><code>console.log(&#39;Employee-related links found:&#39;, JSON.stringify(allLinks, null, 2))</code> (~line 88) — 10-element JSON dump</li>
+<li>All <code>console.log(&#39;Extracted X people from page&#39;)</code> / <code>console.log(&#39;Total prospects so far: X&#39;)</code> mid-loop (lines 246, 330) — noisy per-page chatter</li>
+<li><code>console.log(&#39;Could not find company link on job page&#39;)</code> / <code>console.log(&#39;Could not find employees link on company page&#39;)</code> (lines 72, 153) → replaced by <code>console.error</code> + an <code>Error</code> thrown so the IIFE catch block can categorize as <code>LinkedIn navigation failed</code> (D-03).</li>
+<li><code>console.log(&#39;Clicked company link (href match)&#39;)</code> / <code>console.log(&#39;Navigated to company via text match&#39;)</code> (lines 48, 67) — strategy-debug, drop.</li>
+<li><code>console.log(&#39;Timed out waiting for results to render&#39;)</code> (line 168) → replaced by <code>console.error</code> + thrown <code>Error</code>.</li>
+</ul>
+</li>
+<li><p><strong>D-16:</strong> <strong><code>console.error</code> stays unconditional in catch paths.</strong> <code>console.error(&#39;Connection search failed:&#39;, err)</code> (route.ts:90) and <code>console.error(&#39;Scrape error:&#39;, err)</code> (scrape-connections.ts:341) are kept. These are real failures, not debug noise.</p>
+</li>
+<li><p><strong>D-17:</strong> <strong>No env-flag gating.</strong> Rejected <code>DEBUG_SCRAPE=1</code> env-flag option in favor of permanent slim breadcrumbs. If the user needs more verbose output during a future debug session, temporary <code>console.log</code> is fine — don&#39;t ship debug code behind a flag.</p>
+</li>
+</ul>
+<h3>Verification Strategy (Phase 5 SC #1–4)</h3>
+<ul>
+<li><p><strong>D-18:</strong> <strong>Three verification layers, all required:</strong></p>
+<ol>
+<li><strong>Pure-logic tests</strong> (Vitest, node env, no PGlite needed):<ul>
+<li><code>src/features/job-leads/lib/scrape-errors.test.ts</code> (or inline in <code>scrape-connections.test.ts</code>) — categorizer function: given various error inputs (<code>Error(&#39;navigation timeout&#39;)</code>, <code>new ScrapeTimeoutError(...)</code>, <code>new Error(&#39;Failed to connect to CDP&#39;)</code>, etc.), assert the correct category prefix is produced.</li>
+<li>Existing <code>prioritization.test.ts</code> and <code>seniority.test.ts</code> are not under modification; do not retest.</li>
+</ul>
+</li>
+<li><strong>API-route integration test</strong> (PGlite, simulates the IIFE timeout path):<ul>
+<li><code>src/app/api/job-leads/[id]/search/route.test.ts</code> — POST <code>/search</code> for a lead, mock <code>scrapeConnections</code> to return a never-resolving promise, advance the Promise.race timer (vitest&#39;s <code>vi.useFakeTimers()</code>), assert: (a) lead status reverts to <code>scraped</code>, (b) <code>lastError</code> starts with <code>Timeout:</code>, (c) a <code>timeline_events</code> row of type <code>job_lead_search_failed</code> exists with <code>metadata.category = &#39;Timeout&#39;</code>.</li>
+<li>Same file: test the categorized non-timeout path — mock <code>scrapeConnections</code> to throw <code>new Error(&#39;No prospects found&#39;)</code>, assert <code>lastError</code> starts with <code>No prospects found:</code>.</li>
+</ul>
+</li>
+<li><strong>Manual smoke</strong> (dev server, real LinkedIn):<ul>
+<li>Paste a real LinkedIn job URL, trigger scrape, confirm prospects populate (SC #1) and no <code>&#39;point&#39;</code> literal remains.</li>
+<li>Watch server logs during a scrape — confirm exactly 5 navigation-breadcrumb log lines, no JSON dumps (SC #3).</li>
+<li>Force a hang (disconnect from CDP mid-scrape or scrape a known-bad URL) — confirm lead reverts within 90s and banner appears (SC #2).</li>
+<li>Check <code>npm run dev</code>&#39;s console after a successful scrape — confirm no leaked Chromium process via <code>ps aux | grep -i chromium</code> (SC #3) when running in CDP mode.</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p><strong>D-19:</strong> <strong>Filesystem-level assertion on <code>&#39;point&#39;</code> removal</strong> (mirrors Phase 4 D-16): grep-style assertion in the test suite — read <code>src/features/job-leads/lib/scrape-connections.ts</code> as UTF-8, <code>expect(content).not.toMatch(/&#39;point&#39;/)</code>. Cheap deterministic check that the most-named bug from REQUIREMENTS is gone.</p>
+</li>
+</ul>
+<h3>Plan Grouping (informs the planner, not a hard rule)</h3>
+<ul>
+<li><p><strong>D-20:</strong> <strong>Recommended plan breakdown — five plans, two waves</strong>, mirroring Phase 4&#39;s grouping pattern. Planner has final authority.</p>
+<p><strong>Wave 1 (parallel — disjoint file sets):</strong></p>
+<ul>
+<li><strong>05-01-PLAN.md (JL-A1)</strong> — Fix hardcoded <code>&#39;point&#39;</code> in <code>scrape-connections.ts:62</code>. One-line change (<code>&#39;point&#39;</code> → <code>companyName</code>) plus the function signature already accepts a <code>companyName</code> param at the outer level; the inner <code>page.evaluate</code> callback just needs to be parameterized. Add the regression test from D-19. Atomic commit.</li>
+<li><strong>05-02-PLAN.md (JL-A2)</strong> — Replace fixed <code>waitForTimeout</code> calls with <code>waitForSelector</code>. Targeted edits in <code>scrape-connections.ts</code>: after <code>page.goto(jobUrl)</code>, wait for <code>a[href*=&quot;/company/&quot;]</code> instead of 5000ms; after company-page goto, wait for the employees/people link instead of 5000ms; after people-search goto, wait for <code>a[href*=&quot;/in/&quot;]</code> instead of 3000ms. Atomic commit.</li>
+<li><strong>05-03-PLAN.md (JL-A3)</strong> — Debug-log cleanup per D-15/D-16/D-17 + restore <code>await context.close()</code> in remote mode only per D-12/D-13/D-14. Touches <code>scrape-connections.ts</code> and <code>search/route.ts</code> and <code>linkedin-browser.ts</code> (export <code>isRemote()</code>). Atomic commit.</li>
+</ul>
+<p><strong>Wave 2 (blocked on Wave 1 — schema-dependent):</strong></p>
+<ul>
+<li><strong>05-04-PLAN.md (JL-A4)</strong> — Schema migration (add <code>last_error</code> / <code>last_error_at</code> columns + <code>drizzle/schema/job-leads.ts</code> edit) + 90s <code>Promise.race()</code> wrapper around the IIFE + categorizer helper + <code>ScrapeTimeoutError</code> class. Touches schema + <code>search/route.ts</code>. Adds the integration tests from D-18. <strong>Sequenced after Wave 1 because the cleaned-up <code>scrape-connections.ts</code> is what gets wrapped.</strong> Atomic commit (or 2-3 commits: schema migration → wrapper → tests).</li>
+<li><strong>05-05-PLAN.md (JL-A5)</strong> — <code>/status</code> endpoint returns <code>lastError</code>/<code>lastErrorAt</code>; <code>SearchProgress</code> passes them through; new <code>ScrapeErrorBanner</code> component; <code>JobLeadDetail</code> renders it with Retry. Touches <code>status/route.ts</code>, <code>search-progress.tsx</code>, <code>job-lead-detail.tsx</code>, new <code>scrape-error-banner.tsx</code>. <strong>Sequenced after JL-A4 because the columns must exist before the UI can read them.</strong> Atomic commit.</li>
+</ul>
+<p><strong>Why this ordering:</strong> Wave 1 is &quot;clean up the scraper as it stands&quot; (no schema dependency); Wave 2 is &quot;add the error-surfacing infrastructure that requires the new columns.&quot; The schema migration is the wave boundary.</p>
+</li>
+<li><p><strong>D-21:</strong> <strong>Atomic commits per requirement.</strong> Each JL-Ax gets its own commit so <code>git log</code> reads cleanly. Phase 3 / Phase 4 set the pattern. If the planner finds 05-04 too big (schema + wrapper + tests), split it — but commits stay per-requirement-or-finer, never wider.</p>
+</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><p><strong>CD-01:</strong> <strong>Whether to fold the existing working-tree changes into Wave 1 commits or commit them separately first.</strong> The working tree has 457 lines of uncommitted scraper work that introduced exactly the JL-A1/JL-A3 bugs Phase 5 fixes. Two options:</p>
+<ul>
+<li><strong>A:</strong> Commit the working tree first as &quot;feat(jl): switch scraper to job→company→employees flow (introduces JL-A1/A3 issues, fixed in Phase 5)&quot; with a clear message that the next 5 commits resolve the issues. Then Wave 1 fixes apply on top.</li>
+<li><strong>B:</strong> Stash the working tree, branch off HEAD, replay only the keepable parts (remote browser support in <code>linkedin-browser.ts</code>, the <code>jobUrl</code> param threading) as Wave 0 commits, then do Phase 5 Wave 1 on top — i.e., never commit the buggy intermediate state.</li>
+</ul>
+<p>Recommended: <strong>A</strong> — the working-tree state is the actual development history; rewriting it to be &quot;clean&quot; is busywork that hides the timeline. Phase 5&#39;s purpose is to ship the fixes, not to retcon the history. Planner verifies during plan-checker.</p>
+</li>
+<li><p><strong>CD-02:</strong> <strong>Whether the regression test for <code>&#39;point&#39;</code> removal (D-19) lives as a filesystem grep or as a behavioral test.</strong> Filesystem grep is bulletproof and fast (&lt;10ms); behavioral test would require mocking Playwright and checking <code>companyName</code> actually flows into the <code>page.evaluate</code> second-arg. Recommended: <strong>filesystem grep</strong> per D-19 — the bug is a literal string; the test should be a literal-string assertion. Behavioral coverage of the scraper is OOS per Phase 2 D-13.</p>
+</li>
+<li><p><strong>CD-03:</strong> <strong>Whether to lift the existing <code>ScrapedJobData</code> / <code>ScrapedProspect</code> types into a shared <code>src/features/job-leads/lib/types.ts</code></strong> to avoid the existing import-from-internal pattern. Recommended: <strong>skip</strong> — premature factoring. The types are used in 2 files; barrel/refactor adds noise without value. Defer.</p>
+</li>
+<li><p><strong>CD-04:</strong> <strong>Whether to also reorder or strip the <code>navigateToEmployeeList</code> fallback chain</strong> (the 3 strategies: direct href, text match, employee-link selectors). Currently strategy 2 is where <code>&#39;point&#39;</code> lives; after JL-A1 fix it becomes a real text-match strategy. The fallback chain may be over-engineered (most LinkedIn job pages have a direct <code>/company/</code> href and never fall through to strategy 2 or 3). Recommended: <strong>defer / leave as-is</strong> — JL-A1 only asks for the literal fix; broader refactoring of fragile fallbacks is its own phase. If the planner finds strategy 3 (<code>employeeLinkSelectors</code>) is provably dead during a manual smoke, ship a one-line <code>git rm</code> of the loop — otherwise leave.</p>
+</li>
+<li><p><strong>CD-05:</strong> <strong>Whether the inline banner shows <code>lastErrorAt</code> (&quot;5 min ago&quot;) via <code>date-fns</code></strong> or just the message. <code>date-fns</code> is already a dep. Recommended: <strong>show &quot;5 min ago&quot;</strong> — cheap, makes &quot;is this a fresh error or stale?&quot; visible. Use <code>formatDistanceToNow(new Date(lastErrorAt), { addSuffix: true })</code>.</p>
+</li>
+<li><p><strong>CD-06:</strong> <strong>Whether the Retry button uses optimistic UI</strong> (set status to <code>searching</code>, clear <code>lastError</code> client-side, then POST) <strong>or waits for the server</strong>. Recommended: <strong>optimistic</strong> — matches the existing <code>handleFindConnections</code> in <code>job-lead-detail.tsx</code> (line 26–34) which already sets <code>isSearching = true</code> before the POST resolves. Consistent UX.</p>
+</li>
+<li><p><strong>CD-07:</strong> <strong>Whether to add a <code>job_lead_search_complete</code> timeline event count toward the same <code>metadata.category</code> taxonomy</strong> as failures. Today the success path emits <code>job_lead_search_complete</code> with <code>prospectCount</code> etc.; the failure side adds <code>job_lead_search_failed</code> with <code>category</code>. They&#39;re disjoint event types, so no naming collision. Recommended: <strong>keep them disjoint</strong> — different event types for different outcomes is clearer in the timeline feed.</p>
+</li>
+<li><p><strong>CD-08:</strong> <strong>Whether the new test files use the <code>callRoute</code> helper</strong> (Phase 2 <code>src/test-utils/call-route.ts</code>) <strong>or hand-construct <code>Request</code> objects.</strong> Recommended: <strong><code>callRoute</code></strong> — Phase 2 D-09 established the pattern; consistent with existing API tests.</p>
+</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Requirements &amp; Roadmap</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;Job Leads Completion&quot; — JL-A1..A5 verbatim acceptance criteria.</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 5: Job Leads Completion&quot; (lines 93–101) — Goal + 4 success criteria. SC #2 explicitly mandates revert to <code>scraped</code> (locks status enum choice).</li>
+<li><code>.planning/PROJECT.md</code> §&quot;Active&quot; lines 45–46 — JL-A1, JL-A2 phrased slightly differently from REQUIREMENTS; PROJECT.md groups them as a single concern. REQUIREMENTS.md is the canonical contract.</li>
+<li><code>.planning/PROJECT.md</code> §&quot;Key Decisions&quot; — Job Leads scraping via Playwright + CDP (⚠️ Revisit — scraper is brittle, hardcoded <code>&#39;point&#39;</code> debug artifact still present). Phase 5 closes this revisit.</li>
+</ul>
+<h3>Codebase Maps (read before planning)</h3>
+<ul>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Fragile Areas → LinkedIn Scraper — Entire Feature Is Brittle&quot; — Names every bug Phase 5 must fix, including line-level pointers to the hardcoded <code>&#39;point&#39;</code> (line 62), the leaked browser comment (lines 344–346), and the fixed <code>waitForTimeout</code> antipatterns.</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Fragile Areas → Fire-and-Forget Async Pattern with No Timeout&quot; — JL-A4 source.</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Fragile Areas → <code>scrape-connections.ts</code> Debug Code in Production&quot; — JL-A3 source.</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Performance Bottlenecks → N+1 Prospect Inserts&quot; — <strong>OOS for Phase 5</strong> (PERF-A1 / Phase 6); note for the planner so they don&#39;t accidentally bundle it.</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns → Async fire-and-forget&quot; — Architectural context for D-04 / D-10.</li>
+<li><code>.planning/codebase/STACK.md</code> — Playwright 1.58.2, cheerio 1.2, Drizzle 0.45.1, Neon serverless HTTP driver, Next.js 16 App Router.</li>
+</ul>
+<h3>Prior Phase Context (decisions to carry forward)</h3>
+<ul>
+<li><code>.planning/phases/01-critical-bug-fix/01-CONTEXT.md</code> §&quot;D-10&quot; — Phase 1 explicitly handed the dirty job-leads files to Phase 5. Working-tree state at the start of Phase 5 is the expected starting point.</li>
+<li><code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> §&quot;D-09, §&quot;D-13&quot; — Vitest harness + colocated <code>*.test.ts</code> pattern; explicitly deferred Job Leads scraper coverage to Phase 5. D-09 confirms PGlite-backed Drizzle is available for the IIFE-timeout integration test. <code>src/test-utils/{pglite,call-route}.ts</code> are the reusable helpers.</li>
+<li><code>.planning/phases/03-security-hardening/03-CONTEXT.md</code> §&quot;deferred → LinkedIn cookie file&quot; — Phase 3 explicitly deferred LinkedIn session file handling to Phase 5 if any work was needed. Phase 5 does <strong>not</strong> revisit it (no concrete risk identified; local-dev only path) — captured in <code>&lt;deferred&gt;</code> below.</li>
+<li><code>.planning/phases/04-starter-template-cleanup/04-CONTEXT.md</code> §&quot;D-19, D-18&quot; — Atomic commits per requirement + parallel-on-disjoint-file-sets plan pattern. Phase 5 follows both.</li>
+</ul>
+<h3>Source Files (under modification)</h3>
+<ul>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code> — Largest target. JL-A1 (line 62 <code>&#39;point&#39;</code>), JL-A2 (lines 29/77/117/144/289 fixed <code>waitForTimeout</code> calls), JL-A3 (lines 25/39/48/67/72/78/88/118/137/153/168/246/321/325/330/339/341 console.log/error), plus signature change per D-14.</li>
+<li><code>src/features/job-leads/lib/linkedin-browser.ts</code> — Export <code>isRemote()</code> so the search route / scrape-connections can branch close behavior. No other changes needed (the remote CDP/WS infrastructure from the working-tree diff is correct as-is).</li>
+<li><code>src/features/job-leads/lib/scrape-job-page.ts</code> — <strong>Not modified by Phase 5.</strong> The working-tree diff (24 lines) appears to be unrelated title-tag-fallback work; planner should commit it separately (CD-01).</li>
+<li><code>src/app/api/job-leads/[id]/search/route.ts</code> — JL-A4 (Promise.race + 90s timer), JL-A3 (restore <code>context.close()</code> in remote mode), JL-A5 (write <code>lastError</code>/<code>lastErrorAt</code> in catch block, write timeline event on failure, clear error on every fresh POST).</li>
+<li><code>src/app/api/job-leads/[id]/status/route.ts</code> — JL-A5 (return <code>lastError</code>/<code>lastErrorAt</code> in the response payload).</li>
+<li><code>src/features/job-leads/components/search-progress.tsx</code> — JL-A5 (extend <code>onComplete</code> to pass <code>lastError</code>; or have it not handle that and let <code>JobLeadDetail</code> re-fetch — D-PD-04 / planner picks).</li>
+<li><code>src/features/job-leads/components/job-lead-detail.tsx</code> — JL-A5 (render the new <code>ScrapeErrorBanner</code> above Find Connections; pipe <code>lastError</code> from poll into state).</li>
+<li><code>src/features/job-leads/components/scrape-error-banner.tsx</code> — <strong>New file.</strong> Banner + Retry button per D-02.</li>
+<li><code>drizzle/schema/job-leads.ts</code> — Add <code>last_error: text</code> + <code>last_error_at: timestamp</code>. Drizzle migration generated via <code>npm run db:generate</code>.</li>
+<li><code>drizzle/migrations/</code> — New migration file (auto-named) for the schema change.</li>
+</ul>
+<h3>Tooling / Build / Test</h3>
+<ul>
+<li><code>vitest.config.ts</code> — No edits. Phase 2 config supports both node + jsdom; new tests are node-only.</li>
+<li><code>src/test-utils/pglite.ts</code> + <code>src/test-utils/call-route.ts</code> — Reusable per Phase 2 D-09. New <code>search/route.test.ts</code> uses both.</li>
+<li><code>package.json</code> — No new dependencies expected. <code>date-fns</code> already present (CD-05).</li>
+<li><code>drizzle.config.ts</code> — Migration target dir.</li>
+</ul>
+<h3>Coding Conventions</h3>
+<ul>
+<li><code>CLAUDE.md</code> — TypeScript strict, named exports, REST API (no server actions), Zod on all routes, <code>{ success, data, error, meta }</code> envelope. New <code>Retry</code> POST inherits the existing <code>/search</code> route&#39;s POST handler (just clears <code>lastError</code> before scraping).</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files; banner component file = <code>scrape-error-banner.tsx</code>.</li>
+</ul>
+<h3>External References (Playwright / LinkedIn)</h3>
+<ul>
+<li>Playwright docs: <code>page.waitForSelector</code> (replacing <code>waitForTimeout</code>), <code>context.close()</code> semantics in <code>connectOverCDP</code> vs <code>launchPersistentContext</code>. Planner/researcher to confirm exact close semantics in CDP mode for D-12.</li>
+<li>No LinkedIn API docs — scraper is selector-driven. JL-A1/A2 don&#39;t require deeper LinkedIn knowledge than what&#39;s already in <code>scrape-connections.ts</code>.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong>Phase 2 PGlite harness</strong> (<code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code>) — Reused for the JL-A4 integration test (D-18 layer 2). PGlite handles <code>text</code> and <code>timestamp</code> column types natively; no harness changes.</li>
+<li><strong><code>getContext()</code> / <code>isRemote()</code> in <code>linkedin-browser.ts</code></strong> — <code>isRemote()</code> is currently a private function (line 47); Phase 5 needs to either export it or duplicate the env-var check elsewhere. Export is cleaner.</li>
+<li><strong><code>logTimeline()</code></strong> — Already imported by <code>search/route.ts</code>; reused for the new <code>job_lead_search_failed</code> event type. No new helper needed.</li>
+<li><strong><code>date-fns</code> <code>formatDistanceToNow</code></strong> — For CD-05&#39;s &quot;5 min ago&quot; timestamp in the banner.</li>
+<li><strong>Existing <code>SearchProgress</code> poll loop</strong> — Polls <code>/status</code> every 3s; needs no architectural change, just signature extension to pass <code>lastError</code> through <code>onComplete</code>.</li>
+<li><strong>The current uncommitted working-tree state</strong> — IS the starting point per CD-01. Don&#39;t rewrite history; commit it and fix forward.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>Fire-and-forget IIFE pattern</strong> in <code>search/route.ts:39-96</code> — Stays as-is, just wrapped in <code>Promise.race()</code>. JL2-01 (decouple to sidecar) is OOS / v2-deferred.</li>
+<li><strong><code>logTimeline()</code> after every write</strong> — JL-A5 adds two new event types: <code>job_lead_search_failed</code> (on every failure / timeout), distinct from existing <code>job_lead_search_complete</code> (on success). Both follow the standard <code>{ eventType, title, companyId, metadata }</code> shape.</li>
+<li><strong>Cursor pagination on <code>updated_at</code></strong> — Not relevant this phase, but the <code>updatedAt</code> column gets bumped on every error-write so polling cursors stay correct.</li>
+<li><strong>Drizzle schema migration via <code>npm run db:generate</code></strong> — Standard pattern; the new migration file will be auto-named by Drizzle Kit. Planner should NOT hand-write the SQL.</li>
+<li><strong>Atomic commits per requirement</strong> (Phase 3 D-12, Phase 4 D-19) — Phase 5 inherits.</li>
+<li><strong>Parallel plans on disjoint file sets</strong> (Phase 4 D-18) — Wave 1&#39;s three plans touch different files; Wave 2&#39;s two plans are sequenced because of the schema dependency.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong><code>/api/job-leads/[id]/search</code> → <code>scrapeConnections()</code></strong> — Currently passes <code>lead.companyName</code> and <code>{ jobUrl: lead.linkedinJobUrl }</code>. After Phase 5, also clears <code>lastError</code>/<code>lastErrorAt</code> on entry (D-04).</li>
+<li><strong><code>SearchProgress</code> → <code>/api/job-leads/[id]/status</code></strong> — Polls every 3s. After Phase 5, the response shape includes <code>lastError</code>/<code>lastErrorAt</code> and <code>SearchProgress.onComplete</code> passes them up to <code>JobLeadDetail</code>.</li>
+<li><strong><code>JobLeadDetail</code> → <code>ScrapeErrorBanner</code> (new)</strong> — When <code>lead.lastError</code> is non-null, banner renders above the Find Connections button. Banner&#39;s Retry button calls a new <code>handleRetry</code> that mirrors <code>handleFindConnections</code> but uses the same <code>/search</code> POST endpoint (the endpoint itself clears the error on entry).</li>
+<li><strong><code>scrapeConnections()</code> → context lifecycle</strong> — Currently returns <code>{ prospects, context }</code>; after Phase 5 returns just <code>{ prospects }</code> (D-14). Caller signature updates accordingly.</li>
+<li><strong><code>timeline_events</code> table → activity feed</strong> — A new event type <code>job_lead_search_failed</code> joins the existing event vocabulary. The activity-feed component reads them generically (no per-type rendering today); planner verifies the feed surface still looks reasonable with a <code>failed</code> row.</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Whether to add a <code>failed</code> enum value to <code>jobLeadStatusEnum</code> (PD-02 / D-08 lock: NO — revert to <code>scraped</code>).</li>
+<li>Where to put the error text (D-01 locks: <code>last_error: text</code> column + <code>timeline_events</code> row).</li>
+<li>Wall-clock budget (D-06 locks: 90s, no env override).</li>
+<li>Close-on-success policy (D-12 locks: remote mode only).</li>
+<li>Whether to gate logs behind a flag (D-17 locks: no flag, permanent slim breadcrumbs).</li>
+<li>Whether to extract a timeout-helper util (D-11 locks: inline).</li>
+<li>Whether to test the categorizer (D-18 locks: yes, layer 1).</li>
+<li>Whether <code>&#39;point&#39;</code> removal needs a behavioral test (CD-02 locks: filesystem grep is sufficient).</li>
+</ul>
+<h3>What the Planner DOES Need to Research / Decide</h3>
+<ul>
+<li><strong>Exact Playwright <code>context.close()</code> behavior</strong> in CDP mode (does it disconnect from the host browser cleanly without sending a <code>Browser.close</code> message?) and WS mode. The planner / researcher confirms via Playwright docs before locking D-12 in code. If WS-mode <code>close()</code> is destructive in a way that breaks the next scrape, the policy may need to be CDP-only.</li>
+<li><strong>Whether <code>vi.useFakeTimers()</code> correctly advances <code>setTimeout</code> inside the IIFE</strong> when the route handler is invoked via <code>callRoute</code>. The integration test in D-18 layer 2 depends on this — if vitest&#39;s fake timers don&#39;t fire inside the unawaited IIFE, the test needs <code>vi.advanceTimersByTime(90_000)</code> + <code>await flushPromises()</code> or a similar pattern. Planner verifies during plan-checker.</li>
+<li><strong>Exact <code>waitForSelector</code> targets</strong> for each replaced <code>waitForTimeout</code> (JL-A2). Researcher / planner picks the right selector per nav step:<ul>
+<li>After job-posting goto → <code>a[href*=&quot;/company/&quot;]</code> (already exists in the file at line 44; reused).</li>
+<li>After company-page goto → <code>a[href*=&quot;currentCompany&quot;]</code> or <code>a:has-text(&quot;employees&quot;)</code> (the existing fallback selectors give the menu of candidates).</li>
+<li>After people-search goto → <code>a[href*=&quot;/in/&quot;]</code> (already exists at line 166; reused).</li>
+</ul>
+</li>
+<li><strong>Whether the existing 24-line <code>scrape-job-page.ts</code> diff</strong> in the working tree is JL-related Phase 5 work or unrelated cleanup. Quick inspection: lines look like title-tag fallback enhancements unrelated to JL-A1..A5. Commit separately as part of CD-01.</li>
+<li><strong>Whether <code>npm run db:migrate</code> is idempotent</strong> if the migration runs in dev twice. Standard Drizzle Kit behavior says yes (uses <code>_journal.json</code> to track applied migrations), but worth a quick sanity check before plan-execute.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><p><strong>The banner copy</strong> should read something like: <code>Last search failed: Timeout: scrape exceeded 90s — 5 min ago</code> with the category in bold and a <code>Retry</code> button on the right. Use <code>bg-destructive/10</code> + <code>border-destructive/30</code> for the banner styling (matches the existing destructive-variant pattern in shadcn/ui). Look at how the existing <code>ScrapeResults</code> component shows the scraped job summary for layout cues — banner sits in the same vertical stack just above the Find Connections button.</p>
+</li>
+<li><p><strong>The <code>ScrapeTimeoutError</code> class</strong> can be a one-liner: <code>class ScrapeTimeoutError extends Error { constructor(ms: number) { super(</code>scrape exceeded ${ms}ms<code>); this.name = &#39;ScrapeTimeoutError&#39;; } }</code>. Inline in <code>search/route.ts</code>. The catch block checks <code>err.name === &#39;ScrapeTimeoutError&#39;</code> to pick the <code>Timeout</code> category.</p>
+</li>
+<li><p><strong>The categorizer</strong> can be ~15 lines:</p>
+<pre><code class="language-ts">function categorizeError(err: unknown): string {
+  if (err instanceof ScrapeTimeoutError) return `Timeout: ${err.message}`;
+  const msg = err instanceof Error ? err.message : String(err);
+  const tail = msg.slice(0, 200);
+  if (/navigat|company link|employees link/i.test(msg)) return `LinkedIn navigation failed: ${tail}`;
+  if (/no prospects|0 prospects|no results/i.test(msg)) return `No prospects found: ${tail}`;
+  if (/CDP|WS|connect|launch|Chromium|browser/i.test(msg)) return `Browser unavailable: ${tail}`;
+  return `Unknown error: ${tail}`;
+}
+</code></pre>
+<p>Test cases in D-18 layer 1 cover each branch.</p>
+</li>
+<li><p><strong>For the integration test</strong> (D-18 layer 2), use <code>vi.useFakeTimers({ shouldAdvanceTime: true })</code> and call <code>vi.advanceTimersByTimeAsync(90_000)</code> after triggering the POST. Then <code>await new Promise(r =&gt; setImmediate(r))</code> to flush microtasks, then assert the DB row state. Pattern reference: search Vitest docs for &quot;async fake timers&quot; if the planner is unsure.</p>
+</li>
+<li><p><strong>The <code>last_error</code> column should be NULLABLE</strong> with no default. NULL = &quot;no error to surface&quot;; a non-null value = &quot;the most recent scrape failed with this category + tail.&quot; Same for <code>last_error_at</code>.</p>
+</li>
+<li><p><strong>Index considerations:</strong> No new indexes required for Phase 5&#39;s columns. The <code>/status</code> lookup is by <code>id</code> primary key; banner reads are by primary key. Phase 6 (PERF-A4) covers index strategy globally.</p>
+</li>
+<li><p><strong>Migration name suggestion:</strong> <code>add_last_error_to_job_leads</code> or similar — Drizzle Kit will auto-generate but the planner can pass a name via <code>npm run db:generate -- --name=...</code>.</p>
+</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<p>These came up during analysis but are out of Phase 5 scope. Captured so future phases don&#39;t lose them.</p>
+<ul>
+<li><strong>PERF-A1 (Phase 6)</strong> — N+1 prospect inserts in the search route IIFE (<code>for (const sp of scrapedProspects) { await db.insert(prospects).values({...}) }</code>). Phase 6 (Performance) owns; Phase 5 does NOT touch the loop even though it&#39;s in the same file.</li>
+<li><strong>PERF-A2 (Phase 6)</strong> — N+1 bridge inserts in <code>match-connections.ts</code>. Same as above.</li>
+<li><strong>JL2-01 (v2)</strong> — Decouple scrape worker from the API route (move to a sidecar / remote browser service). The fire-and-forget IIFE pattern is being bounded, not removed.</li>
+<li><strong>JL2-02 (v2)</strong> — Move <code>playwright</code> from <code>dependencies</code> to <code>devDependencies</code> (or <code>serverExternalPackages</code>). Heimdall doesn&#39;t deploy the scraper to Vercel currently; this is a future deploy-config question.</li>
+<li><strong>JL2-03 (v2)</strong> — Captcha / rate-limit detection with exponential backoff. Phase 5&#39;s categorizer surfaces &quot;Browser unavailable&quot; or &quot;LinkedIn navigation failed&quot; today; recognizing a captcha specifically + backing off is its own feature.</li>
+<li><strong>JL2-04 (v2)</strong> — Pagination beyond page 10 (current <code>maxPages</code> cap). LinkedIn&#39;s results page is the source of truth; not a Phase 5 concern.</li>
+<li><strong>Phase 3 deferred — LinkedIn cookie file handling</strong> (<code>~/.heimdall/linkedin-profile/storage-state.json</code>). Phase 3 03-CONTEXT.md <code>&lt;deferred&gt;</code> flagged this for Phase 5 if any work was needed. Phase 5 finds no concrete production risk (local-dev / Docker only, file is on local FS not in repo, Vercel can&#39;t reach <code>homedir()</code> anyway). <strong>Decision: leave as-is.</strong> Document in 05-CONTEXT.md (here) and consider closed. A future phase can revisit if Heimdall ever ships scraping to a multi-tenant runtime.</li>
+<li><strong>navigateToEmployeeList fallback reorder / dead-fallback strip</strong> (CD-04) — Strategy 3 (<code>employeeLinkSelectors</code>) may be dead given that LinkedIn always renders the people-search <code>currentCompany</code> link. Stripping it would simplify the file but isn&#39;t in scope. Defer to a follow-on scraper-hardening phase or v2.</li>
+<li><strong>Captcha-aware error category</strong> — If &quot;Browser unavailable&quot; turns out to be the most common failure category in production, the planner may want to split it into &quot;CDP unreachable&quot; vs &quot;LinkedIn captcha detected.&quot; For now, the 5-category taxonomy is intentionally coarse — wait until usage data justifies more granularity.</li>
+<li><strong>Persisting scrape duration</strong> — Could write <code>metadata.elapsedMs</code> on every <code>job_lead_search_complete</code> and <code>job_lead_search_failed</code> event for an &quot;average scrape duration&quot; metric later. Phase 5 includes <code>elapsedMs</code> in the failed-event metadata (D-07) but doesn&#39;t add it to the success path. Could be a future polish task.</li>
+<li><strong>The 24-line <code>scrape-job-page.ts</code> working-tree diff</strong> — Appears to be unrelated title-tag-fallback enhancements. Commit separately per CD-01; not part of any JL-A requirement. If this turns out to introduce a regression in <code>JL-V1</code> job-page scraping, that&#39;s a separate bug to file.</li>
+<li><strong><code>org-switcher.tsx</code>, <code>demo-form.tsx</code>, <code>user-auth-form.tsx</code>, profile route chrome</strong> — Phase 4 deferred-section items. Not Phase 5&#39;s problem.</li>
+<li><strong>Architecture-doc rewrites</strong> — <code>.planning/codebase/ARCHITECTURE.md</code> and <code>.planning/codebase/CONCERNS.md</code> will need a sweep after Phase 5 to mark the JL fragility as resolved. Doc-update task, not Phase 5 implementation.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no project-level todos cross-referenced this phase via <code>gsd-sdk query todo.match-phase</code>.</p>
+</deferred><hr>
+<h2>Discussion Log</h2>
+<p>For each gray area surfaced during analysis, the user picked one option per sub-question. Default mode — 4 areas, multiple sub-questions per area, no <code>--auto</code>.</p>
+<h3>Area 1: Error surfacing model</h3>
+<ul>
+<li><strong>Q:</strong> &quot;Where should the scrape-failure error live so the UI can render it?&quot; → <strong>Selected: Both — column + timeline event</strong> (D-01).</li>
+<li><strong>Q:</strong> &quot;What does the user see when a scrape fails?&quot; → <strong>Selected: Inline banner on job-lead detail + Retry button</strong> (D-02). Toast rejected — banner-only signal.</li>
+<li><strong>Q:</strong> &quot;What error message gets stored — raw or normalized?&quot; → <strong>Selected: Categorized + short raw tail</strong> (D-03). 5-category taxonomy.</li>
+</ul>
+<h3>Area 2: Timeout budget + revert behavior</h3>
+<ul>
+<li><strong>Q:</strong> &quot;What&#39;s the wall-clock budget for a single scrape before the IIFE is killed and the lead reverts to <code>scraped</code>?&quot; → <strong>Selected: 90 seconds</strong> (D-06). No env-var override.</li>
+<li><strong>Q:</strong> &quot;When the 90s timeout fires, how do we clean up the in-flight Playwright work?&quot; → <strong>Selected: Promise.race + leave Playwright dangling</strong> (D-10). Tension flag against SC #3 captured for plan-checker — interpretation is &quot;successful completion closes the browser; timeout-abort releases ownership and lets it GC.&quot;</li>
+</ul>
+<h3>Area 3: Browser lifecycle</h3>
+<ul>
+<li><strong>Q:</strong> &quot;How should the browser context be closed after a successful scrape?&quot; → <strong>Selected: Close in remote (CDP/WS) mode only</strong> (D-12). Local <code>launchPersistentContext</code> stays alive between scrapes (relaunch cost).</li>
+</ul>
+<h3>Area 4: Debug-log cleanup scope</h3>
+<ul>
+<li><strong>Q:</strong> &quot;How aggressive should the console.log cleanup be in scrape-connections.ts?&quot; → <strong>Selected: Keep navigation breadcrumbs (~5 lines), drop DOM dumps</strong> (D-15). No env-flag gating (D-17).</li>
+</ul>
+<h3>Skipped gray area (5th, not selected)</h3>
+<ul>
+<li><strong>navigateToEmployeeList resilience</strong> — The fallback-chain reorder / dead-fallback strip question wasn&#39;t picked. Captured as CD-04 / <code>&lt;deferred&gt;</code> — Claude&#39;s discretion during planning, with a recommendation to leave as-is.</li>
+</ul>
+<hr>
+<p><em>Phase: 05-Job Leads Completion</em>
+<em>Context gathered: 2026-05-13</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

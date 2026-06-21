@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 5: Job Leads Completion - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-13 (post-reshape)
+<strong>Status:</strong> Ready for planning
+<strong>Reshape note:</strong> The original Phase 5 context (363 lines for the in-app-scraper-fix direction) is preserved at <code>05-CONTEXT-superseded-in-app-scraper.md</code>. This file is the fresh context for the skill-based pivot.</p>
+<domain>
+## Phase Boundary<p>LinkedIn connection scraping moves <strong>out of the Heimdall app</strong> entirely. The flow becomes:</p>
+<ol>
+<li>A job-lead URL enters Heimdall via the web UI <strong>or</strong> Claude Code (DB insert; the existing <code>pending → scraped</code> job-page-scrape pipeline runs as today).</li>
+<li>Once the job page is scraped, the lead transitions to a new <code>queued</code> status — explicit &quot;this lead needs connections scraped.&quot;</li>
+<li>The user runs a Claude Code skill at <code>.claude/skills/scrape-linkedin-connections/</code> either with <code>&lt;job-lead-id&gt;</code> arg or with no arg to drain the <code>queued</code> queue.</li>
+<li>The skill drives <code>vercel-labs/agent-browser</code> in its <code>ai chat</code> mode — Claude Code (the active model in the session) reasons step-by-step over the accessibility-tree-with-refs to navigate job → company → employees → 2nd-degree filter and extract prospects.</li>
+<li>The skill writes prospects back to the DB via the existing <code>/api/*</code> surface using a long-lived API token (<code>~/.heimdall/api-token</code>).</li>
+<li>Lead status flips to <code>searching</code> (skill claimed it) → <code>found</code> (success) or <code>failed</code> (skill writes back categorized error). The web UI surfaces <code>queued</code> / <code>failed</code> with a copy-skill-invocation button and a categorized error banner.</li>
+</ol>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>New skill at <code>.planning/</code>-checked-in path: <code>.claude/skills/scrape-linkedin-connections/</code> (per-project, ships with the repo).</li>
+<li>Schema additions to <code>job_leads</code>: enum values <code>queued</code> and <code>failed</code>; new columns <code>last_error: text</code> (nullable) and <code>last_error_at: timestamp</code> (nullable).</li>
+<li>New API: bulk prospects write (POST <code>/api/job-leads/[id]/prospects</code>) and a thin <code>mark-queued</code> endpoint to flip status without triggering an in-app scrape.</li>
+<li>Middleware update: accept a long-lived bearer token from <code>~/.heimdall/api-token</code> as a service-token bypass for the single-user-locked <code>/api/*</code> surface. The token is per-machine, not committed.</li>
+<li>Delete: the fire-and-forget IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code>, the entire <code>src/features/job-leads/lib/scrape-connections.ts</code>, the <code>SearchProgress</code> polling component, the <code>Find Connections</code> button in <code>job-lead-detail.tsx</code>, and references to <code>scrapeConnections</code> from the job-leads feature.</li>
+<li>Keep: <code>linkedin-browser.ts</code> (the skill may reuse the <code>~/.heimdall/linkedin-profile/</code> setup helpers); <code>scrape-job-page.ts</code> (the cheerio-based job-page scrape on submit is a separate concern from connection scraping and remains in-app).</li>
+<li>Convert <code>/api/job-leads/[id]/search</code> from the fire-and-forget IIFE to a thin status-flip endpoint (or remove it entirely; planner picks based on caller analysis).</li>
+<li>UI updates: <code>queued</code> and <code>failed</code> status badges; copy-to-clipboard button on the lead detail page that yields the skill invocation; categorized error banner reused/adapted from the prior context&#39;s D-02 design.</li>
+<li>Tests: skill behavior is exercised in dev (the skill drives a real browser; we don&#39;t unit-test agent-browser itself). Server side: API tests for the new bulk-prospects route, the status-flip behavior, and the service-token middleware bypass.</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li>All of JL-A1..A5 in <code>.planning/REQUIREMENTS.md</code> (mark superseded; the code they target is being deleted).</li>
+<li>Production-hosted scraping (<code>.planning/seeds/prod-hosted-scraping.md</code> captures the future trigger).</li>
+<li>Webhook back from skill → web UI (toast/notification on scrape completion). Polling the DB on lead refresh is sufficient for a single-user app.</li>
+<li>Stagehand / other LLM-driven browser libraries — agent-browser is locked.</li>
+<li>Captcha detection / rate-limit backoff (carry-forward from JL2-03 — v2-deferred).</li>
+<li>Pagination beyond page 10 in the people-search (carry-forward from JL2-04 — v2-deferred).</li>
+<li>N+1 elimination in prospect writes (PERF-A1 — Phase 6 owns; the new bulk endpoint may incidentally satisfy it, but optimization isn&#39;t the goal).</li>
+<li>Migrating away from the <code>~/.heimdall/linkedin-profile/</code> local profile pattern (still works; out-of-scope).</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Skill Location and Shape</h3>
+<ul>
+<li><p><strong>D-01:</strong> <strong>Skill lives at <code>.claude/skills/scrape-linkedin-connections/</code></strong> — per-project, checked into the repo. Anyone with the codebase + Claude Code can run it. Co-located with <code>.planning/</code> docs the skill needs to read (REQUIREMENTS, CONTEXT for the current phase, schema files for prospect shape). User-global location rejected — the skill is project-specific (knows Heimdall&#39;s API, knows the prospect schema) and should ship with the repo.</p>
+</li>
+<li><p><strong>D-02:</strong> <strong>Skill name = <code>scrape-linkedin-connections</code>.</strong> Invoked as <code>claude /scrape-linkedin-connections</code> (no arg → drain queue) or <code>claude /scrape-linkedin-connections &lt;job-lead-id-or-url&gt;</code> (process one). The skill internally accepts either a UUID job-lead ID (preferred — looks up the URL from DB) or a raw LinkedIn job URL (one-shot mode that creates a lead first, then scrapes).</p>
+</li>
+<li><p><strong>D-03:</strong> <strong>Skill structure</strong> follows the Claude Code skill convention:</p>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — frontmatter (name, description, args) + the prompt body that walks Claude through the steps</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/</code> — supporting docs the skill prompt links to: a <code>linkedin-navigation.md</code> cheat-sheet (the job → company → employees → 2nd-degree path), a <code>heimdall-api.md</code> summary (the endpoints + auth pattern), a <code>troubleshooting.md</code> for known LinkedIn anti-bot patterns</li>
+<li>Optionally a <code>helpers/</code> dir with small shell/node scripts the skill invokes (e.g., a <code>fetch-queued-leads.sh</code> that hits the GET API; a <code>post-prospects.sh</code> that does the bulk write). Planner decides whether helpers reduce skill-prompt size enough to justify them.</li>
+</ul>
+</li>
+</ul>
+<h3>agent-browser Invocation Pattern</h3>
+<ul>
+<li><p><strong>D-04:</strong> <strong>Interactive <code>agent-browser ai chat</code> mode.</strong> The skill prompt asks Claude (in Claude Code) to drive agent-browser through the navigation step-by-step using the snapshot + ref model. Claude calls <code>agent-browser snapshot</code> (or equivalent) to get the a11y tree, picks the ref to click, calls <code>agent-browser click @e&lt;n&gt;</code>, repeats. Cost = the user&#39;s existing Claude Code session (no separate LLM bill). Rejected: scripted CLI calls + JSON parsing — defeats the &quot;LLM reasons over a11y tree&quot; point and reverts to brittle pre-determined paths.</p>
+</li>
+<li><p><strong>D-05:</strong> <strong>agent-browser attaches to the existing <code>~/.heimdall/linkedin-profile/</code> Chrome</strong> so the LinkedIn session persists across scrapes (and is shared with <code>linkedin-browser.ts</code>&#39;s remaining job-page-scrape flow). The exact attach mechanism (launch Chrome with <code>--remote-debugging-port</code>, or have agent-browser launch its own Chromium pointed at the user-data-dir) is left to the planner based on agent-browser&#39;s current CLI flags. <strong>Planner research item.</strong> If no agent-browser support for re-using a user-data-dir exists, the skill prompt instructs the user to ensure LinkedIn is signed in in the visible Chrome window before continuing.</p>
+</li>
+</ul>
+<h3>Queue and Status Model</h3>
+<ul>
+<li><p><strong>D-06:</strong> <strong>Add two enum values to <code>jobLeadStatusEnum</code></strong>: <code>queued</code> and <code>failed</code>. Migration uses Postgres <code>ALTER TYPE ... ADD VALUE ... AFTER ...</code>. New full enum (in order): <code>pending</code> → <code>scraping</code> → <code>scraped</code> → <code>queued</code> → <code>searching</code> → <code>found</code> → <code>ready</code> → <code>actioned</code> → <code>archived</code>, plus <code>failed</code> (terminal-recoverable; from <code>queued</code> or <code>searching</code>, recoverable back to <code>queued</code> on retry).</p>
+</li>
+<li><p><strong>D-07:</strong> <strong>Add two columns to <code>job_leads</code></strong>: <code>last_error: text</code> (nullable, default NULL) and <code>last_error_at: timestamp with time zone</code> (nullable, default NULL). NULL = no error to surface; non-null = the most recent scrape attempt failed with this categorized error. Same shape decided in the superseded context&#39;s D-01; mechanism preserved, writer changes (skill, not in-app catch).</p>
+</li>
+<li><p><strong>D-08:</strong> <strong>Status transitions</strong> (state machine):</p>
+<ul>
+<li><code>pending → scraping → scraped</code> — existing job-page-scrape flow (unchanged)</li>
+<li><code>scraped → queued</code> — new: the existing <code>/api/job-leads/[id]/search</code> endpoint becomes a thin &quot;mark queued for connection scrape&quot; flip, returning immediately. No fire-and-forget IIFE.</li>
+<li><code>queued → searching</code> — skill writes this when it claims a lead (start of scrape)</li>
+<li><code>searching → found</code> — skill writes this on success along with prospect data and clears <code>last_error</code>/<code>last_error_at</code></li>
+<li><code>searching → failed</code> — skill writes this on failure with <code>last_error</code> (category + tail) and <code>last_error_at</code></li>
+<li><code>failed → queued</code> — retry path: clearing <code>last_error</code> flips back to <code>queued</code>. Triggered from the UI&#39;s retry button.</li>
+<li><code>found → ready/actioned/archived</code> — existing downstream transitions (unchanged).</li>
+</ul>
+</li>
+<li><p><strong>D-09:</strong> <strong>Error category taxonomy</strong> carries forward from the superseded context&#39;s D-03. Five categories: <code>Timeout</code> / <code>LinkedIn navigation failed</code> / <code>No prospects found</code> / <code>Browser unavailable</code> / <code>Unknown error</code>. Storage: single <code>last_error</code> column with format <code>&lt;category&gt;: &lt;first 200 chars of detail&gt;</code>. The skill writes these via the API; the API accepts the formatted string and persists.</p>
+</li>
+</ul>
+<h3>No-Arg Drain Mode Semantics</h3>
+<ul>
+<li><p><strong>D-10:</strong> <strong>Skill in no-arg mode</strong>:</p>
+<ol>
+<li>Fetches all leads with <code>status = &#39;queued&#39;</code> (sorted by <code>updated_at</code> ASC, oldest first) via GET <code>/api/job-leads?status=queued</code></li>
+<li>Prints the queue as a table to the user (id, company name, role title, queued-since-ago)</li>
+<li>Asks: &quot;Process all N? Process the first one then ask again? Skip and exit?&quot; (Claude Code surfaces this as a question to the user)</li>
+<li>For each lead processed: walks the same path as the URL-arg mode (claim → scrape → write back), narrating each step</li>
+<li>On any failure: status flips to <code>failed</code> with the error captured; skill continues to the next lead (does NOT abort the batch)</li>
+<li>At the end: prints a summary (N processed, M succeeded, K failed)</li>
+</ol>
+</li>
+<li><p><strong>D-11:</strong> <strong>Concurrent-skill-run safety.</strong> Skill claims a lead by flipping it <code>queued → searching</code> before scraping. The GET that filters by <code>status = &#39;queued&#39;</code> naturally excludes leads already in-flight. If two skill instances run simultaneously (uncommon for single-user), the second one&#39;s claim PATCH may race — acceptable; the second instance sees the lead already in <code>searching</code> and skips it (existing concurrency-safe pattern from <code>/api</code> envelope&#39;s optimistic update). No locking needed.</p>
+</li>
+</ul>
+<h3>In-App Code Removal Scope</h3>
+<ul>
+<li><p><strong>D-12:</strong> <strong>Delete entirely:</strong></p>
+<ul>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code> — the brittle Playwright path the skill replaces</li>
+<li><code>src/features/job-leads/components/search-progress.tsx</code> — polling UI for an in-app scrape that no longer exists</li>
+<li><code>src/features/job-leads/components/find-connections-button.tsx</code> (or the equivalent button in <code>job-lead-detail.tsx</code>) — replaced by the queue badge + copy-invocation button (D-16)</li>
+<li>All imports of <code>scrapeConnections</code> from <code>src/app/api/job-leads/[id]/search/route.ts</code></li>
+<li>The fire-and-forget IIFE block in <code>src/app/api/job-leads/[id]/search/route.ts:39</code> and its catch block</li>
+</ul>
+</li>
+<li><p><strong>D-13:</strong> <strong>Convert <code>/api/job-leads/[id]/search</code> to a thin status-flip endpoint</strong> rather than deleting the route, since callers exist. Behavior post-change: validates Clerk auth, finds the lead, flips <code>scraped → queued</code> (or <code>failed → queued</code> on retry), clears <code>last_error</code>/<code>last_error_at</code>, writes a <code>job_lead_search_queued</code> timeline event, returns success envelope. Synchronous; no IIFE; sub-100ms. If the planner finds the route has no remaining callers after UI changes (D-16), delete it instead.</p>
+</li>
+<li><p><strong>D-14:</strong> <strong>Keep:</strong></p>
+<ul>
+<li><code>src/features/job-leads/lib/linkedin-browser.ts</code> — its profile-setup helpers may be reused by an optional <code>claude /heimdall-linkedin-login</code> skill (deferred); even if not reused, it&#39;s small and the <code>~/.heimdall/linkedin-profile/</code> invariants are documented there</li>
+<li><code>src/features/job-leads/lib/scrape-job-page.ts</code> — cheerio-based; runs on initial lead-create to populate <code>roleTitle</code>/<code>companyName</code>. Unrelated to the connection-scrape problem.</li>
+<li>The Playwright dependency in <code>package.json</code> — still needed by <code>scrape-job-page.ts</code>? <strong>Planner verifies</strong> by checking whether <code>scrape-job-page.ts</code> actually uses Playwright; if it&#39;s pure cheerio + fetch, Playwright drops to <code>devDependencies</code> (or out entirely).</li>
+</ul>
+</li>
+<li><p><strong>D-15:</strong> <strong>Working-tree handling.</strong> The current uncommitted diff in <code>scrape-connections.ts</code> (and adjacent files) is the <em>exact</em> code being deleted. Planner can either:</p>
+<ul>
+<li><strong>A:</strong> Commit the working tree first as a &quot;feat(jl): switch scraper to job→company→employees flow (will be deleted in Phase 5)&quot; then delete in a subsequent commit. Cleaner audit trail.</li>
+<li><strong>B:</strong> Delete from the working tree directly without committing the intermediate state. Shorter git log.</li>
+<li><strong>Recommended: A</strong> — preserves the intent that &quot;this was the brittle path we replaced.&quot;</li>
+</ul>
+</li>
+</ul>
+<h3>UI Affordances</h3>
+<ul>
+<li><p><strong>D-16:</strong> <strong><code>queued</code> status badge + copy-skill-invocation button</strong> on the lead detail page.</p>
+<ul>
+<li>Badge: subtle background (<code>bg-secondary</code>), label <code>queued for connection scrape</code></li>
+<li>Button: <code>Copy skill invocation</code> — copies <code>claude /scrape-linkedin-connections &lt;lead-id&gt;</code> to clipboard. Helper text below: &quot;Paste in Claude Code (this directory) to run.&quot;</li>
+<li>On <code>failed</code> status: the existing-design categorized error banner from the superseded D-02 (<code>bg-destructive/10</code> border-destructive/30), labeled with the category in bold, the truncated tail, and a Retry button that calls the existing <code>/search</code> endpoint (which flips back to <code>queued</code> per D-13) — same button position as before, just a different downstream action.</li>
+</ul>
+</li>
+<li><p><strong>D-17:</strong> <strong>No real-time notification when the skill completes.</strong> Web UI picks up the state change on next view/refresh. Polling on the lead detail page (or a generic <code>last-updated</code> revalidation) is sufficient. Webhook/websocket/SSE is YAGNI for a single-user app.</p>
+</li>
+<li><p><strong>D-18:</strong> <strong>List-view representation.</strong> On the job-leads index page, the <code>queued</code> and <code>failed</code> statuses get their own column-filter values and status-pill colors. No special &quot;queued&quot; tab; the existing status filter UI absorbs them.</p>
+</li>
+</ul>
+<h3>API Write-Back Contract</h3>
+<ul>
+<li><p><strong>D-19:</strong> <strong>Auth: long-lived bearer token from <code>~/.heimdall/api-token</code>.</strong> Generated by a one-time dev script (<code>scripts/generate-api-token.ts</code> or a fresh <code>npm run</code> target). 32-byte random hex, persisted to <code>~/.heimdall/api-token</code> (machine-local, chmod 600). The middleware in <code>src/middleware.ts</code> (Phase 3) is extended to accept <code>Authorization: Bearer &lt;token&gt;</code> as an alternative to Clerk session cookies; tokens are validated against a hash stored in env (<code>API_TOKEN_HASH</code> in <code>.env.local</code>) — never against a DB row. Single-user app: one token, one hash.</p>
+</li>
+<li><p><strong>D-20:</strong> <strong>Routes the skill calls</strong> (all under existing Clerk-locked <code>/api/*</code>):</p>
+<ul>
+<li><code>GET /api/job-leads?status=queued&amp;limit=50</code> — fetch the queue (uses existing list endpoint; planner verifies it accepts a status filter; if not, extends it)</li>
+<li><code>PATCH /api/job-leads/[id]/status</code> — flip <code>queued → searching</code> (claim) and <code>searching → found|failed</code> (terminal). <strong>New endpoint or extension of existing <code>/status</code></strong> — planner decides.</li>
+<li><code>POST /api/job-leads/[id]/prospects</code> — <strong>new bulk-insert endpoint.</strong> Body: array of <code>ScrapedProspect</code>. Single DB insert (incidentally helps PERF-A1 in Phase 6, but optimization isn&#39;t this phase&#39;s goal). On success: writes <code>job_lead_search_complete</code> timeline event with <code>prospectCount</code>. On schema validation failure: 400 with the offending row index.</li>
+<li><code>POST /api/job-leads/[id]/error</code> (or a field on <code>PATCH /status</code>) — writes <code>last_error</code> + <code>last_error_at</code> + <code>job_lead_search_failed</code> timeline event. <strong>Planner picks the cleanest shape</strong> — probably folded into <code>PATCH /status</code> since they&#39;re co-emitted.</li>
+</ul>
+</li>
+<li><p><strong>D-21:</strong> <strong>Single-user middleware bypass.</strong> The bearer-token bypass is gated by an explicit check that <code>process.env.SINGLE_USER_EMAIL === &#39;steve@bronstein.org&#39;</code> (matching the existing Clerk middleware lock). Multi-tenant deployments would refuse the bypass. Keeps the architectural assumption of single-user explicit at the auth layer.</p>
+</li>
+<li><p><strong>D-22:</strong> <strong>Schema validation in the bulk-prospects route uses Zod.</strong> Per project convention. Schema (kept in sync with <code>ScrapedProspect</code>):</p>
+<pre><code class="language-ts">const prospectSchema = z.object({
+  name: z.string().min(1).max(200),
+  title: z.string().max(300).nullable(),
+  linkedinUrl: z.string().url().nullable(),
+  mutualConnectionNames: z.array(z.string().max(200)).max(50)
+});
+const bulkBody = z.object({ prospects: z.array(prospectSchema).max(200) });
+</code></pre>
+</li>
+</ul>
+<h3>Schema Migration</h3>
+<ul>
+<li><p><strong>D-23:</strong> <strong>Migration name suggestion:</strong> <code>add_queued_failed_status_and_error_columns</code>. Drizzle Kit auto-generates the migration when the <code>enums.ts</code> and <code>job-leads.ts</code> schema changes are made; planner runs <code>npm run db:generate -- --name=add_queued_failed_status_and_error_columns</code>. <strong>One Drizzle Kit gotcha:</strong> Postgres <code>ALTER TYPE ADD VALUE</code> is non-transactional — Drizzle Kit may emit raw SQL. Planner verifies the generated migration is sane and applies cleanly to the existing prod data; if Drizzle Kit struggles, hand-edit the migration to use explicit <code>ALTER TYPE ... ADD VALUE IF NOT EXISTS &#39;queued&#39; AFTER &#39;scraped&#39;</code> and <code>... &#39;failed&#39; AFTER &#39;archived&#39;</code>.</p>
+</li>
+<li><p><strong>D-24:</strong> <strong>No data migration needed.</strong> Existing leads keep their current status; new statuses only apply to new lifecycle paths. Leads currently stuck in <code>searching</code> (from the buggy in-app scraper) should be manually flipped to <code>queued</code> post-deploy — a one-line <code>UPDATE</code> recorded in a runbook entry, not a code migration.</p>
+</li>
+</ul>
+<h3>Testing Strategy</h3>
+<ul>
+<li><p><strong>D-25:</strong> <strong>Three layers:</strong></p>
+<ol>
+<li><strong>API tests</strong> (PGlite + <code>callRoute</code>, Phase 2 pattern):<ul>
+<li><code>GET /api/job-leads?status=queued</code> returns only <code>queued</code> leads</li>
+<li><code>POST /api/job-leads/[id]/prospects</code> validates the Zod schema, bulk-inserts prospects, writes a <code>job_lead_search_complete</code> timeline event, returns the inserted count</li>
+<li><code>PATCH /api/job-leads/[id]/status</code> enforces the state machine (e.g., can&#39;t go <code>pending → found</code>)</li>
+<li>Middleware: bearer-token bypass works with valid token, 401s with invalid or absent token, falls back to Clerk for browser sessions</li>
+</ul>
+</li>
+<li><strong>Schema migration test:</strong> PGlite-backed test that the generated migration applies cleanly to an empty DB.</li>
+<li><strong>Skill smoke (manual):</strong> invoke the skill on a real queued lead in dev, walk through agent-browser, verify prospects land in DB via the web UI. Not automatable in CI without mocking agent-browser, which defeats the purpose.</li>
+</ol>
+</li>
+<li><p><strong>D-26:</strong> <strong>No tests for <code>scrape-connections.ts</code> deletion</strong> — the file is being removed, not refactored. A grep-style filesystem-existence test (mirroring Phase 4&#39;s <code>__cleanup__.test.ts</code>) confirms <code>src/features/job-leads/lib/scrape-connections.ts</code> no longer exists post-Phase-5.</p>
+</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><p><strong>CD-01:</strong> <strong>Whether to commit the working-tree state before deletion</strong> (D-15). Recommended A (commit the intermediate scraper rewrite first, then delete) — preserves the &quot;we tried this path before pivoting&quot; history. Planner picks B if the diff has nothing valuable to attribute (e.g., it&#39;s only the bugs Phase 5 was originally going to fix).</p>
+</li>
+<li><p><strong>CD-02:</strong> <strong>Whether to fold the error-write into <code>PATCH /status</code> or a separate <code>POST /error</code> route</strong> (D-20). Recommended: folded into <code>PATCH /status</code> — they&#39;re always co-emitted, and a single endpoint is simpler. Planner has discretion if there&#39;s a routing reason to split.</p>
+</li>
+<li><p><strong>CD-03:</strong> <strong>Whether the skill emits its own per-step Heimdall API calls or batches them.</strong> Per-step: status flip → scrape → bulk insert. Batched: scrape → single API call that handles status transition + prospect insert atomically. Recommended: per-step — debug-ability wins over slightly more chattiness for a single-user CLI tool.</p>
+</li>
+<li><p><strong>CD-04:</strong> <strong>Whether to drop Playwright entirely from <code>package.json</code></strong> (D-14). Planner checks whether <code>scrape-job-page.ts</code> actually uses Playwright. If pure cheerio + fetch, Playwright can move to <code>devDependencies</code> or out entirely.</p>
+</li>
+<li><p><strong>CD-05:</strong> <strong>Whether to clean up the <code>~/.heimdall/linkedin-profile/storage-state.json</code> artifact</strong> that the superseded path produced. Planner decides during cleanup; probably leave (local file, no harm).</p>
+</li>
+<li><p><strong>CD-06:</strong> <strong>Naming of the bulk-prospects route.</strong> Recommended: <code>POST /api/job-leads/[id]/prospects</code>. Alternatives: <code>POST /api/job-leads/[id]/scrape-result</code> (more semantic). Planner picks based on naming consistency with the rest of <code>/api/</code>.</p>
+</li>
+<li><p><strong>CD-07:</strong> <strong>Skill prompt body — depth of LinkedIn-navigation instructions.</strong> The skill walks Claude through agent-browser; the cheat-sheet at <code>references/linkedin-navigation.md</code> describes the canonical path (job → company → employees → 2nd-degree filter). Should the cheat-sheet be detailed (one paragraph per nav step) or brief (one-line summary)? Recommended: detailed for the first version (Claude has less guesswork), trim later if it bloats the prompt.</p>
+</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Phase 5 reshape trail</h3>
+<ul>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 5: Job Leads Completion — RESHAPED 2026-05-13&quot; — locked goal + 5 success criteria</li>
+<li><code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code> — original library evaluation (Stagehand vs agent-browser); the trail leading to the skill pivot</li>
+<li><code>.planning/spikes/MANIFEST.md</code> — superseded Stagehand-in-the-app spikes; explains why the agent-browser-CLI-in-skill direction is correct</li>
+<li><code>.planning/seeds/prod-hosted-scraping.md</code> — prod-hosted scraping deferred; trigger conditions captured</li>
+<li><code>.planning/phases/05-job-leads-completion/05-CONTEXT-superseded-in-app-scraper.md</code> — prior (in-app-scraper-fix) context; useful for the error-taxonomy and the failure-banner UI patterns that survive</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>.planning/PROJECT.md</code> §&quot;Key Decisions → Job Leads scraping&quot; — flagged for revisit; this phase closes that revisit</li>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;Job Leads Completion&quot; — JL-A1..A5 to be <strong>marked superseded</strong> by the planner during plan-phase (write a note above the section); the new requirement set will be JL-B* defined during planning</li>
+<li><code>.planning/STATE.md</code> — phase progress</li>
+</ul>
+<h3>Codebase maps (read before planning)</h3>
+<ul>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns → Async fire-and-forget&quot; — the architectural debt this phase pays off</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Fragile Areas → LinkedIn Scraper — Entire Feature Is Brittle&quot; — concrete pointers to the code being deleted</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, named exports, API envelope shape; the new skill helpers and API routes follow these</li>
+<li><code>.planning/codebase/STACK.md</code> — Drizzle 0.45.1, Neon serverless, Zod 4, Next.js 16 App Router</li>
+</ul>
+<h3>Prior phase context</h3>
+<ul>
+<li><code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> §&quot;D-09&quot; — Vitest + PGlite + <code>callRoute</code> pattern; reused for the new API tests</li>
+<li><code>.planning/phases/03-security-hardening/03-CONTEXT.md</code> §&quot;03-01-PLAN&quot; — middleware-locks-<code>/api/*</code> work; the bearer-token bypass extends this middleware</li>
+<li><code>.planning/phases/04-starter-template-cleanup/04-CONTEXT.md</code> §&quot;D-19&quot; — filesystem-existence test pattern (<code>__cleanup__.test.ts</code>); D-26 mirrors this for the <code>scrape-connections.ts</code> removal</li>
+</ul>
+<h3>Source files (under modification)</h3>
+<ul>
+<li><code>src/middleware.ts</code> — extend to accept <code>Authorization: Bearer &lt;token&gt;</code> as Clerk-bypass (D-19, D-21)</li>
+<li><code>src/app/api/job-leads/[id]/search/route.ts</code> — convert to thin status-flip or delete (D-13)</li>
+<li><code>src/app/api/job-leads/[id]/status/route.ts</code> — extend to enforce state-machine + accept <code>last_error</code> write (D-20)</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.ts</code> — <strong>new</strong>; bulk write per D-20/D-22</li>
+<li><code>src/app/api/job-leads/route.ts</code> — extend GET to accept <code>status</code> query filter (D-20; verify it doesn&#39;t already)</li>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code> — <strong>delete</strong> (D-12)</li>
+<li><code>src/features/job-leads/components/search-progress.tsx</code> — <strong>delete</strong> (D-12)</li>
+<li><code>src/features/job-leads/components/job-lead-detail.tsx</code> — replace <code>Find Connections</code> with <code>Copy skill invocation</code> + queued-badge + error banner (D-16)</li>
+<li><code>drizzle/schema/enums.ts</code> — add <code>queued</code> and <code>failed</code> to <code>jobLeadStatusEnum</code> (D-06)</li>
+<li><code>drizzle/schema/job-leads.ts</code> — add <code>last_error: text</code> and <code>last_error_at: timestamp</code> columns (D-07)</li>
+<li><code>drizzle/migrations/&lt;auto&gt;</code> — new migration (D-23)</li>
+</ul>
+<h3>New artifacts (created by this phase)</h3>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — skill entry point</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> — nav cheat-sheet (D-03, CD-07)</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> — endpoint summary</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code> — known issues</li>
+<li><code>scripts/generate-api-token.ts</code> (or equivalent) — one-time token generation (D-19)</li>
+<li>Updated <code>env.example.txt</code> with <code>API_TOKEN_HASH</code> placeholder</li>
+</ul>
+<h3>External references</h3>
+<ul>
+<li><strong><code>vercel-labs/agent-browser</code></strong> — <a href="https://github.com/vercel-labs/agent-browser">https://github.com/vercel-labs/agent-browser</a>. Planner researches: current binary install method, the <code>ai chat</code> subcommand flags, whether it supports attaching to a <code>userDataDir</code>-backed Chrome, how the snapshot-with-refs output is formatted.</li>
+<li><strong>Claude Code skill conventions</strong> — Planner researches: SKILL.md frontmatter format, args parsing, how to invoke other tools (Bash, Read) from inside a skill.</li>
+<li><strong>Clerk middleware customization</strong> — Planner verifies that <code>clerkMiddleware</code> from <code>@clerk/nextjs</code> allows a pre-check for bearer-token bypass without breaking the Clerk session path. Next.js 16 App Router compatible.</li>
+<li><strong>Postgres <code>ALTER TYPE ADD VALUE</code></strong> — D-23; non-transactional in some Postgres versions; planner confirms Neon serverless behavior.</li>
+</ul>
+<h3>Coding conventions</h3>
+<ul>
+<li><code>CLAUDE.md</code> — TS strict, named exports, REST API (no server actions), Zod on routes, <code>{ success, data, error, meta }</code> envelope; skill helpers (if written in TS) follow these</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, <code>import type</code> for type-only imports, the api-helper functions in <code>src/lib/api/</code></li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>logTimeline()</code></strong> in <code>src/lib/db/timeline.ts</code> — reused for the new event types <code>job_lead_search_queued</code> (D-13), <code>job_lead_search_complete</code> (already exists, written from the bulk-prospects route on success), <code>job_lead_search_failed</code> (D-20).</li>
+<li><strong>Phase 2 test harness</strong> (<code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code>) — used for the API tests in D-25 layer 1.</li>
+<li><strong>Phase 3 middleware</strong> (<code>src/middleware.ts</code>) — extended to accept the bearer-token bypass (D-19). The existing pattern of explicit <code>auth()</code> checks per-route stays; the bypass is a middleware-layer alternative session source.</li>
+<li><strong><code>~/.heimdall/linkedin-profile/</code></strong> — local Chrome user-data-dir. The skill reuses this so the LinkedIn login persists across both <code>scrape-job-page.ts</code> (in-app, on lead create) and the agent-browser-driven connection scrape (skill).</li>
+<li><strong><code>/api/job-leads/[id]/status</code> PATCH route</strong> — extended to enforce state-machine transitions + accept <code>last_error</code> writes (D-20).</li>
+<li><strong><code>ScrapedProspect</code> type</strong> — survives unchanged in the API contract even though <code>scrape-connections.ts</code> (its current home) is deleted; planner moves the type into <code>src/features/job-leads/lib/types.ts</code> or <code>src/lib/domain/types.ts</code> so the bulk-prospects route can import it without touching the dead file.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>REST mutations only, no server actions</strong> (CLAUDE.md) — the skill calling REST API routes IS the orthodoxy here; this phase doubles down on it</li>
+<li><strong>Soft delete via <code>archived_at</code></strong> — unchanged; not used for failed scrapes (they revert to <code>queued</code> via retry, never archive on failure)</li>
+<li><strong>Timeline event after every write</strong> — every status flip + every error write emits one (D-08, D-20)</li>
+<li><strong>Atomic commits per requirement</strong> (Phase 3 / Phase 4 D-19) — Phase 5 inherits. Expected commit sequence: working-tree commit (CD-01 option A) → schema migration → middleware bypass → API routes → skill files → UI updates → in-app deletions → tests</li>
+<li><strong><code>{ success, data, error, meta }</code> envelope</strong> — every new route follows; Zod validates inbound, satisfies-typed responses</li>
+<li><strong>Inline error banner pattern</strong> — survives from the superseded D-02 with the same destructive-variant styling; just consumed via the new <code>last_error</code> column on the lead, written by the skill</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Skill ↔ Heimdall API</strong>: bearer token from <code>~/.heimdall/api-token</code> → <code>Authorization: Bearer &lt;token&gt;</code> header → middleware bypass → REST routes. Token rotation is manual (regenerate the file, update <code>API_TOKEN_HASH</code> in <code>.env.local</code>).</li>
+<li><strong>Skill ↔ agent-browser</strong>: skill prompt instructs Claude (the active model) to call <code>agent-browser</code> subcommands via Bash. Claude reasons about the a11y-tree output and picks refs to interact with.</li>
+<li><strong>Skill ↔ Chrome</strong>: agent-browser attaches to (or launches against) the existing <code>~/.heimdall/linkedin-profile/</code> profile so the LinkedIn session is shared.</li>
+<li><strong>Web UI ↔ skill</strong>: indirect, via DB. UI shows <code>queued</code> badge + copy-skill-invocation button; skill writes <code>searching</code>/<code>found</code>/<code>failed</code> which the UI surfaces on next render.</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Whether to use Stagehand or another LLM-browser lib (D-04: locked to agent-browser)</li>
+<li>Whether to add <code>failed</code> as an enum value (D-06: yes)</li>
+<li>Where the error text lives (D-07: <code>last_error</code> column + timeline event)</li>
+<li>Auth path for the skill (D-19: bearer token from <code>~/.heimdall/api-token</code>)</li>
+<li>Skill location (D-01: <code>.claude/skills/scrape-linkedin-connections/</code>)</li>
+<li>Whether to delete <code>scrape-connections.ts</code> (D-12: yes)</li>
+<li>Whether to keep <code>scrape-job-page.ts</code> (D-14: yes)</li>
+<li>Whether to add a webhook/notification on completion (D-17: no)</li>
+</ul>
+<h3>What the Planner DOES Need to Research / Decide</h3>
+<ul>
+<li><strong>agent-browser current API</strong>: latest binary install method (npm? brew? curl install script?), exact subcommand names (the README will say; the <code>ai chat</code> mode in particular), output format of <code>snapshot</code> (the a11y tree representation), whether <code>userDataDir</code> attach is supported. This dictates the skill&#39;s prompt body.</li>
+<li><strong>Claude Code skill conventions</strong>: SKILL.md frontmatter shape (<code>description</code>, <code>args</code>, <code>requires-tools</code>?), how to declare which tools the skill needs (Bash + Read minimum, possibly Edit if the skill writes back to local files), how skill args (<code>&lt;job-lead-id&gt;</code> vs <code>--all</code>) get parsed.</li>
+<li><strong><code>clerkMiddleware</code> bypass compatibility</strong>: does Clerk&#39;s middleware allow a pre-check that short-circuits to a custom auth path without breaking Clerk&#39;s own flow? Or do we need to wrap <code>clerkMiddleware</code> in a custom middleware function that checks bearer first? Next.js 16 App Router compatibility check.</li>
+<li><strong>Drizzle Kit + <code>ALTER TYPE ADD VALUE</code></strong>: does <code>drizzle-kit generate</code> emit a sane migration for adding enum values? Or does it bork? Planner runs <code>npm run db:generate -- --name=add_queued_failed_status_and_error_columns</code> and inspects the output; hand-edits if necessary.</li>
+<li><strong>Existing <code>/api/job-leads</code> GET filter shape</strong>: does it already accept a <code>status</code> query param? (Likely yes — check the route handler.) If not, extend it.</li>
+<li><strong>Polling/refresh on the lead detail page</strong>: how does the existing page detect that a scrape completed? <code>revalidatePath</code> on a tag? SWR? Plain Server Component re-fetch on navigation? Planner reads the existing code to pick the right approach for D-17&#39;s &quot;next view/refresh&quot; behavior.</li>
+<li><strong><code>scrape-job-page.ts</code> Playwright dependency</strong>: planner confirms whether the file actually uses Playwright. If pure cheerio + fetch, Playwright can be dropped (CD-04).</li>
+<li><strong>Token-hash strategy</strong>: SHA-256 of the token vs <code>bcrypt</code>? Recommended SHA-256 (32-byte token, plenty of entropy, no need for bcrypt&#39;s slowness against a known-length token). Planner confirms.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><p><strong>The copy-skill-invocation button</strong> uses the existing shadcn/ui <code>Button</code> with <code>variant=&quot;secondary&quot;</code> and a <code>Copy</code> icon from <code>@tabler/icons-react</code>. Click handler uses <code>navigator.clipboard.writeText(&#39;claude /scrape-linkedin-connections &#39; + lead.id)</code>. Toast on copy via <code>sonner</code> (already in deps): <code>toast.success(&#39;Skill invocation copied — paste in Claude Code&#39;)</code>.</p>
+</li>
+<li><p><strong>The queued badge</strong> uses a <code>Badge</code> component variant. Style hint: <code>bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200</code> for <code>queued</code>; the existing <code>bg-destructive/10</code> for <code>failed</code>. Match the visual weight of the existing status pills in the data table.</p>
+</li>
+<li><p><strong>Skill SKILL.md frontmatter draft:</strong></p>
+<pre><code class="language-yaml">---
+name: scrape-linkedin-connections
+description: Scrape 2nd-degree LinkedIn connections at a target company. Drives vercel-labs/agent-browser through job → company → employees → 2nd-degree filter, extracts prospects, writes them back to Heimdall. Accepts a job-lead ID/URL or runs with no arg to drain the queued queue.
+args: [job-lead-id-or-url?]
+requires-tools: [Bash, Read]
+---
+</code></pre>
+</li>
+<li><p><strong>The bulk-prospects API route</strong> at <code>src/app/api/job-leads/[id]/prospects/route.ts</code>:</p>
+<pre><code class="language-ts">// POST
+// 1. Auth: Clerk session OR bearer token (middleware handles)
+// 2. Validate params.id is a UUID
+// 3. Validate body matches bulkBody Zod schema (D-22)
+// 4. Verify the lead exists and is in &#39;searching&#39; status
+// 5. Single bulk insert via Drizzle: db.insert(prospects).values(rows)
+// 6. Update lead: status = &#39;found&#39;, prospectCount = rows.length, updatedAt = now
+// 7. Write timeline event: { eventType: &#39;job_lead_search_complete&#39;, metadata: { prospectCount }}
+// 8. Return 201 { success: true, data: { insertedCount: rows.length } }
+</code></pre>
+</li>
+<li><p><strong>Token generation script</strong> (<code>scripts/generate-api-token.ts</code>):</p>
+<pre><code class="language-ts">// 1. Generate 32-byte random hex via crypto.randomBytes
+// 2. SHA-256 hash
+// 3. Print: token to clipboard or stdout; hash to stdout with instructions to add to .env.local
+// 4. Also write the token to ~/.heimdall/api-token (chmod 600)
+// 5. Print: &quot;Token written to ~/.heimdall/api-token. Add API_TOKEN_HASH=&lt;hash&gt; to .env.local.&quot;
+</code></pre>
+</li>
+<li><p><strong>Middleware bypass logic</strong> (<code>src/middleware.ts</code>):</p>
+<pre><code class="language-ts">// Inside clerkMiddleware: before the Clerk session check, look at Authorization header.
+// If &quot;Bearer &lt;token&gt;&quot; present and SHA256(token) === process.env.API_TOKEN_HASH and SINGLE_USER_EMAIL is set:
+//   short-circuit: allow the request, attach a fake auth context (or set NextResponse.next() directly).
+// Otherwise: fall through to Clerk&#39;s normal session flow.
+</code></pre>
+</li>
+<li><p><strong>Skill prompt body sketch:</strong> lead the prompt with &quot;You are scraping LinkedIn 2nd-degree connections for Heimdall. Read <code>references/linkedin-navigation.md</code> for the canonical nav steps and <code>references/heimdall-api.md</code> for the API contract.&quot; Then arg parsing, then the nav flow with explicit calls to <code>agent-browser</code> subcommands.</p>
+</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>JL-A1..A5 superseded</strong> — the entire prior requirement set targets code being deleted. Planner adds a <code>&gt; **SUPERSEDED 2026-05-13:** ...</code> block above the JL-A section in REQUIREMENTS.md and defines JL-B* requirements that match the new SCs.</li>
+<li><strong>PERF-A1 / PERF-A2 (Phase 6)</strong> — bulk-insert optimizations. The new <code>/prospects</code> route incidentally uses a single bulk insert (PERF-A1&#39;s goal), but Phase 6 owns the explicit optimization audit + index strategy.</li>
+<li><strong>Webhook / notification on skill completion</strong> (rejected as D-17) — if usage data later shows the user is heavily relying on context-switch between Claude Code and the web, revisit.</li>
+<li><strong>Captcha detection / rate-limit backoff</strong> (JL2-03) — still v2-deferred. The skill should gracefully fail with the <code>LinkedIn navigation failed</code> category if it hits a captcha; backoff/retry strategy is its own future feature.</li>
+<li><strong><code>heimdall-linkedin-login</code> skill</strong> — a sibling skill that explicitly walks the user through signing into LinkedIn in the visible Chrome window. Useful if <code>~/.heimdall/linkedin-profile/</code> cookies expire. Not required for Phase 5; spike it later if friction warrants.</li>
+<li><strong>Multi-tenant deployment</strong> — the bearer-token bypass is single-user-locked (D-21). Multi-tenant Heimdall is its own project; defer indefinitely.</li>
+<li><strong>Skill output as a verifiable artifact</strong> — could write a structured skill-run log to <code>.planning/scrape-runs/&lt;date&gt;.md</code> for audit. YAGNI for single-user; deferred.</li>
+<li><strong>Job-page scrape moves to the skill too</strong> — <code>scrape-job-page.ts</code> stays in-app per D-14. If LinkedIn changes job-page DOM in a way that breaks cheerio, this becomes a candidate to fold into the skill. Out of scope for now.</li>
+<li><strong>Concurrent-skill safety beyond optimistic flips</strong> — D-11 accepts the race; if it ever becomes a real problem (it won&#39;t for single-user), revisit with a proper lock column or Postgres advisory lock.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — <code>gsd-sdk query todo.match-phase 5</code> returned no matches.</p>
+</deferred><hr>
+<p><em>Phase: 05-Job Leads Completion (reshaped)</em>
+<em>Context gathered: 2026-05-13 (post-reshape)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

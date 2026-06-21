@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/12-api-routes/12-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 12: API Routes - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-06-20
+<strong>Files analyzed:</strong> 10 (9 new, 1 modified)
+<strong>Analogs found:</strong> 10 / 10</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/outreach-campaigns/route.ts</code></td>
+<td>controller</td>
+<td>CRUD + cursor-pagination</td>
+<td><code>src/app/api/job-leads/route.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/route.ts</code></td>
+<td>controller</td>
+<td>CRUD + soft-delete</td>
+<td><code>src/app/api/contacts/[id]/route.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code></td>
+<td>controller</td>
+<td>CRUD + bulk-dedup-insert</td>
+<td><code>src/app/api/job-leads/route.ts</code> (GET) + <code>src/app/api/contacts/import/route.ts</code> (POST)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code></td>
+<td>controller</td>
+<td>CRUD + hard-delete</td>
+<td><code>src/app/api/contacts/[id]/route.ts</code></td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code></td>
+<td>controller</td>
+<td>state-machine-guarded update</td>
+<td><code>src/app/api/job-leads/[id]/status/route.ts</code></td>
+<td>exact</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code></td>
+<td>controller</td>
+<td>write-back (request-response)</td>
+<td><code>src/app/api/job-leads/[id]/status/route.ts</code> (update+timeline shape)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code></td>
+<td>controller</td>
+<td>write-back (request-response)</td>
+<td><code>src/app/api/job-leads/[id]/status/route.ts</code> (update+timeline shape)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code></td>
+<td>controller</td>
+<td>write-back (request-response)</td>
+<td><code>src/app/api/job-leads/[id]/status/route.ts</code> (update+timeline shape)</td>
+<td>role-match</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/generation-context/route.ts</code></td>
+<td>controller</td>
+<td>aggregated-read (join + parallel)</td>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.ts</code></td>
+<td>partial-match</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/route.ts</code></td>
+<td>controller</td>
+<td>CRUD + cursor-pagination + filter-accum</td>
+<td>self (file being modified)</td>
+<td>self</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>src/app/api/outreach-campaigns/route.ts</code> (controller, CRUD + cursor-pagination)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/job-leads/route.ts</code></p>
+<p><strong>Imports pattern</strong> (job-leads/route.ts lines 1-14):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachCampaigns, outreachEmails } from &#39;../../../../drizzle/schema&#39;;
+import { and, count, desc, isNull, lt, sql, eq } from &#39;drizzle-orm&#39;;
+import { created, paginated, success } from &#39;@/lib/api/types&#39;;
+import { serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { parseCursor, parseLimit } from &#39;@/lib/api/filters&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+import { outreachCampaignStatusValues } from &#39;@/lib/domain/types&#39;;
+</code></pre>
+<p>Note: <code>count</code> and <code>outreachEmails</code> are needed for CD-01 per-campaign email counts via grouped aggregate (see CD-01 pattern below).</p>
+<p><strong>GET list pattern — conditions[] + sql.join + paginated()</strong> (job-leads/route.ts lines 24-88):</p>
+<pre><code class="language-typescript">export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseLimit(searchParams.get(&#39;limit&#39;));
+    const cursor = parseCursor(searchParams.get(&#39;cursor&#39;));
+
+    const conditions = [isNull(outreachCampaigns.archivedAt)];
+
+    if (cursor) {
+      conditions.push(lt(outreachCampaigns.updatedAt, cursor));
+    }
+
+    const where =
+      conditions.length &gt; 1
+        ? sql`${sql.join(conditions.map((c) =&gt; sql`(${c})`), sql` AND `)}`
+        : conditions[0];
+
+    // CD-01: per-campaign email counts via a single GROUP BY subquery joined in,
+    // not N+1 per campaign. Use count() FILTER (WHERE status = ...) or group-by-status.
+    const results = await db
+      .select({
+        id: outreachCampaigns.id,
+        name: outreachCampaigns.name,
+        goalInstruction: outreachCampaigns.goalInstruction,
+        status: outreachCampaigns.status,
+        createdAt: outreachCampaigns.createdAt,
+        updatedAt: outreachCampaigns.updatedAt,
+        archivedAt: outreachCampaigns.archivedAt,
+        emailCounts: sql&lt;string&gt;`
+          json_build_object(
+            &#39;pending&#39;,   count(*) FILTER (WHERE ${outreachEmails.status} = &#39;pending&#39;),
+            &#39;generated&#39;, count(*) FILTER (WHERE ${outreachEmails.status} = &#39;generated&#39;),
+            &#39;edited&#39;,    count(*) FILTER (WHERE ${outreachEmails.status} = &#39;edited&#39;),
+            &#39;approved&#39;,  count(*) FILTER (WHERE ${outreachEmails.status} = &#39;approved&#39;),
+            &#39;drafted&#39;,   count(*) FILTER (WHERE ${outreachEmails.status} = &#39;drafted&#39;),
+            &#39;failed&#39;,    count(*) FILTER (WHERE ${outreachEmails.status} = &#39;failed&#39;)
+          )`
+      })
+      .from(outreachCampaigns)
+      .leftJoin(outreachEmails, eq(outreachEmails.campaignId, outreachCampaigns.id))
+      .where(where)
+      .groupBy(outreachCampaigns.id)
+      .orderBy(desc(outreachCampaigns.updatedAt))
+      .limit(limit + 1);
+
+    const hasMore = results.length &gt; limit;
+    const data = hasMore ? results.slice(0, limit) : results;
+
+    return paginated(data, {
+      cursor: data.length &gt; 0 ? data[data.length - 1].updatedAt.toISOString() : null,
+      hasMore
+    });
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>POST create pattern</strong> (job-leads/route.ts lines 99-242, simplified):</p>
+<pre><code class="language-typescript">const createCampaignSchema = z.object({
+  name: z.string().min(1).max(200),
+  goalInstruction: z.string().min(1)
+});
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const validated = createCampaignSchema.parse(body);
+
+    const [campaign] = await db
+      .insert(outreachCampaigns)
+      .values({ name: validated.name, goalInstruction: validated.goalInstruction })
+      .returning();
+
+    await logTimeline({
+      eventType: &#39;outreach_campaign_created&#39;,
+      title: `Campaign created: ${campaign.name}`,
+      metadata: { campaignId: campaign.id }
+    });
+
+    return created(campaign);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return validationError(err.issues[0].message);
+    }
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/route.ts</code> (controller, CRUD + soft-delete)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/contacts/[id]/route.ts</code></p>
+<p><strong>Imports pattern</strong> (contacts/[id]/route.ts lines 1-13):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachCampaigns, outreachEmails } from &#39;../../../../../drizzle/schema&#39;;
+import { eq, isNull, count, sql } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+import { outreachCampaignStatusValues } from &#39;@/lib/domain/types&#39;;
+</code></pre>
+<p><strong>GET single pattern</strong> (contacts/[id]/route.ts lines 43-55):</p>
+<pre><code class="language-typescript">export async function GET(
+  _request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    // Also include emailCounts (same CD-01 GROUP BY approach as the list route)
+    const [campaign] = await db.select().from(outreachCampaigns)
+      .where(eq(outreachCampaigns.id, id))
+      .limit(1);
+    if (!campaign) return notFound(&#39;Campaign&#39;);
+    return success(campaign);
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>PATCH update pattern</strong> (contacts/[id]/route.ts lines 57-95):</p>
+<pre><code class="language-typescript">const updateCampaignSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  goalInstruction: z.string().min(1).optional(),
+  status: z.enum(outreachCampaignStatusValues).optional()
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = updateCampaignSchema.parse(body);
+
+    const [campaign] = await db
+      .update(outreachCampaigns)
+      .set({ ...validated, updatedAt: new Date() })   // updatedAt ALWAYS set manually
+      .where(eq(outreachCampaigns.id, id))
+      .returning();
+
+    if (!campaign) return notFound(&#39;Campaign&#39;);
+
+    await logTimeline({
+      eventType: &#39;outreach_campaign_updated&#39;,
+      title: `Campaign updated: ${campaign.name}`,
+      metadata: { campaignId: id }
+    });
+
+    return success(campaign);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>DELETE soft pattern</strong> (contacts/[id]/route.ts lines 97-121 — adapt to soft delete, matching campaign schema which has <code>archivedAt</code>):</p>
+<pre><code class="language-typescript">export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const [campaign] = await db
+      .update(outreachCampaigns)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(eq(outreachCampaigns.id, id))
+      .returning();
+
+    if (!campaign) return notFound(&#39;Campaign&#39;);
+
+    await logTimeline({
+      eventType: &#39;outreach_campaign_archived&#39;,
+      title: `Campaign archived: ${campaign.name}`,
+      metadata: { campaignId: id }
+    });
+
+    return new Response(null, { status: 204 });
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code> (controller, CRUD + bulk-dedup-insert)</h3>
+<p><strong>Analog (GET):</strong> <code>src/app/api/job-leads/route.ts</code> lines 24-88 (cursor pagination with campaign filter)
+<strong>Analog (POST):</strong> <code>src/app/api/contacts/import/route.ts</code> lines 160-196 (onConflictDoNothing + inserted/skipped count)</p>
+<p><strong>Imports pattern:</strong></p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachEmails, outreachCampaigns, contacts } from &#39;../../../../../../drizzle/schema&#39;;
+import { and, desc, eq, isNull, lt, sql } from &#39;drizzle-orm&#39;;
+import { created, paginated, success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { parseArrayParam, parseCursor, parseLimit } from &#39;@/lib/api/filters&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+import { outreachEmailStatusValues } from &#39;@/lib/domain/types&#39;;
+</code></pre>
+<p><strong>GET list pattern — campaign-scoped pagination with contact join + optional ?status= filter:</strong></p>
+<pre><code class="language-typescript">export async function GET(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const limit = parseLimit(searchParams.get(&#39;limit&#39;));
+    const cursor = parseCursor(searchParams.get(&#39;cursor&#39;));
+    const statuses = parseArrayParam(searchParams.get(&#39;status&#39;));
+
+    const conditions = [eq(outreachEmails.campaignId, id)];   // always scope to campaign
+
+    if (statuses) {
+      conditions.push(
+        inArray(outreachEmails.status, statuses as (typeof outreachEmailStatusValues)[number][])
+      );
+    }
+    if (cursor) {
+      conditions.push(lt(outreachEmails.updatedAt, cursor));
+    }
+
+    const where = sql`${sql.join(conditions.map((c) =&gt; sql`(${c})`), sql` AND `)}`;
+
+    const results = await db
+      .select({ email: outreachEmails, contact: contacts })
+      .from(outreachEmails)
+      .leftJoin(contacts, eq(outreachEmails.contactId, contacts.id))
+      .where(where)
+      .orderBy(desc(outreachEmails.updatedAt))
+      .limit(limit + 1);
+
+    const hasMore = results.length &gt; limit;
+    const data = hasMore ? results.slice(0, limit) : results;
+
+    return paginated(data, {
+      cursor: data.length &gt; 0 ? data[data.length - 1].email.updatedAt.toISOString() : null,
+      hasMore
+    });
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>POST bulk-add pattern — onConflictDoNothing + inserted/skipped</strong> (contacts/import/route.ts lines 160-200):</p>
+<pre><code class="language-typescript">const bulkAddEmailsSchema = z.object({
+  contactIds: z.array(z.string().uuid()).min(1).max(500)
+});
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = bulkAddEmailsSchema.parse(body);
+
+    // Verify campaign exists
+    const [campaign] = await db.select().from(outreachCampaigns)
+      .where(eq(outreachCampaigns.id, id)).limit(1);
+    if (!campaign) return notFound(&#39;Campaign&#39;);
+
+    const rows = validated.contactIds.map((contactId) =&gt; ({
+      campaignId: id,
+      contactId,
+      status: &#39;pending&#39; as const
+    }));
+
+    // onConflictDoNothing leverages the UNIQUE (campaign_id, contact_id) constraint (CAMP-07)
+    const inserted = await db
+      .insert(outreachEmails)
+      .values(rows)
+      .onConflictDoNothing()
+      .returning({ id: outreachEmails.id });
+
+    const insertedCount = inserted.length;
+    const skipped = validated.contactIds.length - insertedCount;
+
+    // D-04: bulk-add is ONE timeline event carrying the count — not one per contact
+    await logTimeline({
+      eventType: &#39;outreach_emails_added&#39;,
+      title: `Added ${insertedCount} contacts to ${campaign.name}`,
+      metadata: { campaignId: id, inserted: insertedCount, skipped }
+    });
+
+    return created({ inserted: insertedCount, skipped });
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code> (controller, CRUD + hard-delete)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/contacts/[id]/route.ts</code></p>
+<p><strong>Imports pattern:</strong></p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachEmails } from &#39;../../../../../../../drizzle/schema&#39;;
+import { and, eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+</code></pre>
+<p><strong>PATCH inline-edit pattern</strong> (contacts/[id]/route.ts lines 57-95, adapted):</p>
+<pre><code class="language-typescript">const inlineEditSchema = z.object({
+  editedSubject: z.string().max(500).optional().nullable(),
+  editedBody: z.string().optional().nullable(),
+  recipientEmail: z.string().email().optional().nullable()
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  try {
+    const { id, emailId } = await params;
+    const body = await request.json();
+    const validated = inlineEditSchema.parse(body);
+
+    // CD-06: verify email belongs to this campaign
+    const [existing] = await db.select().from(outreachEmails)
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .limit(1);
+    if (!existing) return notFound(&#39;Email&#39;);
+
+    // CD-02: auto-transition generated → edited when editedSubject/editedBody written
+    const isEdit = validated.editedSubject !== undefined || validated.editedBody !== undefined;
+    const shouldTransitionToEdited =
+      isEdit &amp;&amp; (existing.status === &#39;generated&#39; || existing.status === &#39;approved&#39;);
+
+    const [email] = await db
+      .update(outreachEmails)
+      .set({
+        ...validated,
+        ...(shouldTransitionToEdited ? { status: &#39;edited&#39; } : {}),
+        updatedAt: new Date()   // ALWAYS set manually
+      })
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .returning();
+
+    await logTimeline({
+      eventType: &#39;outreach_email_edited&#39;,
+      title: `Email edited`,
+      metadata: { campaignId: id, emailId }
+    });
+
+    return success(email);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>DELETE hard pattern</strong> (CD-04 — outreach_emails has NO archivedAt column):</p>
+<pre><code class="language-typescript">export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  try {
+    const { id, emailId } = await params;
+
+    // Hard delete — outreach_emails has no archivedAt (CD-04)
+    const [deleted] = await db
+      .delete(outreachEmails)
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .returning();
+
+    if (!deleted) return notFound(&#39;Email&#39;);
+
+    await logTimeline({
+      eventType: &#39;outreach_email_deleted&#39;,
+      title: `Email removed from campaign`,
+      metadata: { campaignId: id, emailId }
+    });
+
+    return new Response(null, { status: 204 });
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code> (controller, state-machine-guarded update)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/job-leads/[id]/status/route.ts</code> — copy this file&#39;s shape verbatim, swapping:</p>
+<ul>
+<li><code>canJobLeadTransition</code> → <code>canEmailTransition</code> from <code>@/features/outreach/lib/email-status</code></li>
+<li><code>jobLeads</code> → <code>outreachEmails</code>, <code>jobLeadStatusValues</code> → <code>outreachEmailStatusValues</code></li>
+<li><code>eventTypeFor()</code> → inline <code>outreach_email_status_changed</code> (or per-status mapping per D-04)</li>
+<li>Add D-05 reset logic when <code>newStatus === &#39;pending&#39;</code></li>
+</ul>
+<p><strong>Imports pattern</strong> (job-leads/[id]/status/route.ts lines 1-9, adapted):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachEmails } from &#39;../../../../../../../drizzle/schema&#39;;
+import { and, eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { canEmailTransition } from &#39;@/features/outreach/lib/email-status&#39;;
+import { outreachEmailStatusValues } from &#39;@/lib/domain/types&#39;;
+import { z } from &#39;zod&#39;;
+</code></pre>
+<p><strong>Core PATCH pattern</strong> (job-leads/[id]/status/route.ts lines 58-119, adapted with D-05):</p>
+<pre><code class="language-typescript">const statusChangeSchema = z.object({
+  status: z.enum(outreachEmailStatusValues),
+  lastError: z.string().max(500).nullable().optional()
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  try {
+    const { id, emailId } = await params;
+    const body = await request.json();
+    const validated = statusChangeSchema.parse(body);
+    const newStatus = validated.status;
+
+    // CD-06: verify email belongs to campaign
+    const [email] = await db.select().from(outreachEmails)
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .limit(1);
+    if (!email) return notFound(&#39;Email&#39;);
+
+    // State machine guard — canEmailTransition from email-status.ts
+    if (!canEmailTransition(email.status, newStatus)) {
+      return validationError(`Invalid transition: ${email.status} -&gt; ${newStatus}`);
+    }
+
+    // CD-03: guard → approved only when content exists
+    if (newStatus === &#39;approved&#39;) {
+      const subject = email.editedSubject ?? email.generatedSubject;
+      const body = email.editedBody ?? email.generatedBody;
+      if (!subject || !body) {
+        return validationError(&#39;Cannot approve: email has no content&#39;);
+      }
+    }
+
+    // Build update — D-05 reset semantics when transitioning → pending
+    const update: Record&lt;string, unknown&gt; = {
+      status: newStatus,
+      updatedAt: new Date()
+    };
+    if (newStatus === &#39;pending&#39;) {
+      // D-05: clear edited* + error fields; keep generated* (shown greyed-out)
+      update.editedSubject = null;
+      update.editedBody = null;
+      update.lastError = null;
+      update.lastErrorAt = null;
+      update.generatedAt = null;
+      // generatedSubject / generatedBody intentionally NOT cleared
+    } else if (newStatus === &#39;failed&#39;) {
+      update.lastError = validated.lastError ?? null;
+      update.lastErrorAt = new Date();
+    } else if (newStatus === &#39;approved&#39;) {
+      update.approvedAt = new Date();
+    }
+
+    const [updated] = await db
+      .update(outreachEmails)
+      .set(update)
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .returning();
+
+    await logTimeline({
+      eventType: &#39;outreach_email_status_changed&#39;,
+      title: `Email: ${email.status} -&gt; ${newStatus}`,
+      metadata: { campaignId: id, emailId, from: email.status, to: newStatus }
+    });
+
+    return success(updated);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code> (controller, write-back)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/job-leads/[id]/status/route.ts</code> (update + logTimeline shape, no state-machine check here — generation skill uses <code>/status</code> for transitions, this route just writes content)</p>
+<p><strong>Full PATCH pattern:</strong></p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachEmails } from &#39;../../../../../../../../drizzle/schema&#39;;
+import { and, eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+
+const generationWriteBackSchema = z.object({
+  generatedSubject: z.string().min(1).max(500),
+  generatedBody: z.string().min(1)
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  try {
+    const { id, emailId } = await params;
+    const body = await request.json();
+    const validated = generationWriteBackSchema.parse(body);
+
+    // CD-06: verify email belongs to campaign
+    const [email] = await db
+      .update(outreachEmails)
+      .set({
+        generatedSubject: validated.generatedSubject,
+        generatedBody: validated.generatedBody,
+        generatedAt: new Date(),
+        updatedAt: new Date()   // always manual
+      })
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .returning();
+
+    if (!email) return notFound(&#39;Email&#39;);
+
+    await logTimeline({
+      eventType: &#39;outreach_email_generated&#39;,
+      title: `Email content generated`,
+      metadata: { campaignId: id, emailId }
+    });
+
+    return success(email);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code> (controller, write-back)</h3>
+<p><strong>Analog:</strong> Same write-back shape as <code>/generation</code>. Key difference: conditional null on <code>channel=&#39;linkedin_message&#39;</code> (Phase 11 D-08 discovery model, CD-06).</p>
+<p><strong>Full PATCH pattern:</strong></p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachEmails } from &#39;../../../../../../../../drizzle/schema&#39;;
+import { and, eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+import { outreachChannelValues } from &#39;@/lib/domain/types&#39;;
+
+const recipientWriteBackSchema = z.object({
+  channel: z.enum(outreachChannelValues),
+  recipientEmail: z.string().email().optional().nullable()
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  try {
+    const { id, emailId } = await params;
+    const body = await request.json();
+    const validated = recipientWriteBackSchema.parse(body);
+
+    // CD-06 + Phase 11 D-08: linkedin_message channel forces recipientEmail = null
+    const recipientEmail =
+      validated.channel === &#39;linkedin_message&#39; ? null : (validated.recipientEmail ?? null);
+
+    const [email] = await db
+      .update(outreachEmails)
+      .set({
+        channel: validated.channel,
+        recipientEmail,
+        updatedAt: new Date()
+      })
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .returning();
+
+    if (!email) return notFound(&#39;Email&#39;);
+
+    await logTimeline({
+      eventType: &#39;outreach_email_recipient_set&#39;,
+      title: `Email recipient set (channel: ${validated.channel})`,
+      metadata: { campaignId: id, emailId, channel: validated.channel }
+    });
+
+    return success(email);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code> (controller, write-back)</h3>
+<p><strong>Analog:</strong> Same write-back shape. Writes <code>gmailDraftId</code>, sets <code>draftedAt</code>.</p>
+<p><strong>Full PATCH pattern:</strong></p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachEmails } from &#39;../../../../../../../../drizzle/schema&#39;;
+import { and, eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+
+const draftWriteBackSchema = z.object({
+  gmailDraftId: z.string().min(1)
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  try {
+    const { id, emailId } = await params;
+    const body = await request.json();
+    const validated = draftWriteBackSchema.parse(body);
+
+    const [email] = await db
+      .update(outreachEmails)
+      .set({
+        gmailDraftId: validated.gmailDraftId,
+        draftedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+      .returning();
+
+    if (!email) return notFound(&#39;Email&#39;);
+
+    await logTimeline({
+      eventType: &#39;outreach_email_drafted&#39;,
+      title: `Gmail draft created`,
+      metadata: { campaignId: id, emailId, gmailDraftId: validated.gmailDraftId }
+    });
+
+    return success(email);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3><code>src/app/api/outreach-campaigns/[id]/generation-context/route.ts</code> (controller, aggregated-read)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/job-leads/[id]/recommendations/route.ts</code> (verify entity exists → joined SELECT → assemble shaped response). No exact match exists — the multi-table join + lowContext flag is novel to this phase.</p>
+<p><strong>Pattern: verify campaign → fetch pending emails with contact join → fetch recent interactions per contact → assemble D-02 payload</strong></p>
+<p>Key patterns borrowed:</p>
+<ul>
+<li><code>recommendations/route.ts</code> lines 13-24: verify parent entity, return <code>notFound</code> early</li>
+<li><code>recommendations/route.ts</code> lines 32-40: <code>db.select({ a: tableA, b: tableB }).from(tableA).innerJoin(tableB, ...)</code> shaped select</li>
+<li><code>contacts/[id]/interactions/route.ts</code> lines 7-23: interactions fetched by contactId ordered by <code>occurredAt desc</code></li>
+<li>D-02 <code>lowContext</code> flag: <code>interactions.length &lt; 2</code></li>
+</ul>
+<p><strong>Imports pattern:</strong></p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { outreachCampaigns, outreachEmails, contacts, interactions } from &#39;../../../../../../drizzle/schema&#39;;
+import { and, desc, eq, inArray } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError } from &#39;@/lib/api/errors&#39;;
+</code></pre>
+<p><strong>Core GET pattern</strong> (D-01/D-02):</p>
+<pre><code class="language-typescript">export async function GET(
+  _request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+
+    // Verify campaign exists (recommendations/route.ts lines 20-24 pattern)
+    const [campaign] = await db.select().from(outreachCampaigns)
+      .where(eq(outreachCampaigns.id, id)).limit(1);
+    if (!campaign) return notFound(&#39;Campaign&#39;);
+
+    // Fetch all pending emails with contact join (one query — no N+1)
+    const emailRows = await db
+      .select({ email: outreachEmails, contact: contacts })
+      .from(outreachEmails)
+      .innerJoin(contacts, eq(outreachEmails.contactId, contacts.id))
+      .where(and(eq(outreachEmails.campaignId, id), eq(outreachEmails.status, &#39;pending&#39;)));
+
+    if (emailRows.length === 0) {
+      return success({ goalInstruction: campaign.goalInstruction, emails: [] });
+    }
+
+    // Fetch recent interactions for all contact IDs — one query, not N+1
+    const contactIds = emailRows.map((r) =&gt; r.contact.id);
+    const allInteractions = await db
+      .select()
+      .from(interactions)
+      .where(inArray(interactions.contactId, contactIds))
+      .orderBy(desc(interactions.occurredAt));
+
+    // Group interactions by contactId
+    const interactionsByContact = allInteractions.reduce&lt;Record&lt;string, typeof allInteractions&gt;&gt;(
+      (acc, i) =&gt; {
+        if (!acc[i.contactId!]) acc[i.contactId!] = [];
+        acc[i.contactId!].push(i);
+        return acc;
+      },
+      {}
+    );
+
+    // Assemble D-02 payload per pending email
+    const emails = emailRows.map(({ email, contact }) =&gt; {
+      const recentInteractions = (interactionsByContact[contact.id] ?? []).slice(0, 3);
+      return {
+        emailId: email.id,
+        contactId: contact.id,
+        contact: {
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          howMet: contact.howMet,
+          companyAtConnection: contact.companyAtConnection,
+          roleAtConnection: contact.roleAtConnection,
+          currentCompany: contact.currentCompany,
+          title: contact.title,
+          closeness: contact.closeness,
+          recipientEmail: email.recipientEmail
+        },
+        interactions: recentInteractions.map((i) =&gt; ({
+          type: i.type,
+          summary: i.notes,
+          occurredAt: i.occurredAt
+        })),
+        lowContext: recentInteractions.length &lt; 2   // D-02 anti-hallucination flag
+      };
+    });
+
+    return success({ goalInstruction: campaign.goalInstruction, emails });
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>Implementation note:</strong> <code>interactions.notes</code> is the nearest analog for the &quot;summary&quot; field — confirm the exact column name against <code>drizzle/schema/interactions.ts</code> before filing. The <code>inArray</code> + <code>reduce</code> group approach avoids N+1 while staying in the Drizzle query builder (no raw SQL).</p>
+<hr>
+<h3><code>src/app/api/contacts/route.ts</code> (MODIFY — add D-07 filter params)</h3>
+<p><strong>Analog:</strong> Self — the file being modified. Slot three new filter blocks into the <code>GET</code> handler&#39;s <code>conditions[]</code> accumulation section (contacts/route.ts lines 53-79), after the existing <code>outreachStatusFilter</code> block and before the <code>search</code> block.</p>
+<p><strong>Addition: new imports</strong> — add <code>gte</code>, <code>lte</code> to the existing drizzle-orm import line (line 3):</p>
+<pre><code class="language-typescript">import { desc, isNull, inArray, ilike, lt, sql, gte, lte } from &#39;drizzle-orm&#39;;
+</code></pre>
+<p><strong>Addition: new query-param reads</strong> — after line 51 (<code>const search = searchParams.get(&#39;search&#39;);</code>):</p>
+<pre><code class="language-typescript">const howMet = searchParams.get(&#39;howMet&#39;);
+const connectionYearStart = searchParams.get(&#39;connectionYearStart&#39;);
+const connectionYearEnd = searchParams.get(&#39;connectionYearEnd&#39;);
+</code></pre>
+<p><strong>Addition: three new conditions</strong> — insert after the <code>outreachStatusFilter</code> block (after line 65) and before the <code>search</code> block:</p>
+<pre><code class="language-typescript">if (howMet) {
+  // ilike wraps in % both sides — matches the search pattern used for firstName/lastName
+  conditions.push(ilike(contacts.howMet, `%${howMet}%`));
+}
+if (connectionYearStart) {
+  // D-07: gte on Jan 1 of the start year
+  conditions.push(gte(contacts.linkedinConnectionDate, new Date(`${connectionYearStart}-01-01`)));
+}
+if (connectionYearEnd) {
+  // D-07: lte on Dec 31 23:59:59 of the end year
+  conditions.push(lte(contacts.linkedinConnectionDate, new Date(`${connectionYearEnd}-12-31T23:59:59`)));
+}
+</code></pre>
+<p>No other changes to the file. The <code>conditions[]</code> + <code>sql.join</code> assembly (lines 76-79) handles the new predicates automatically.</p>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>Envelope helpers</h3>
+<p><strong>Source:</strong> <code>src/lib/api/types.ts</code> (all 38 lines)
+<strong>Apply to:</strong> Every route file in this phase</p>
+<pre><code class="language-typescript">// success(data)       → 200 { success: true, data }
+// created(data)       → 201 { success: true, data }
+// paginated(data, meta) → 200 { success: true, data, meta: { cursor, hasMore } }
+import { created, paginated, success } from &#39;@/lib/api/types&#39;;
+</code></pre>
+<h3>Error factories</h3>
+<p><strong>Source:</strong> <code>src/lib/api/errors.ts</code> (all 22 lines)
+<strong>Apply to:</strong> Every route file in this phase</p>
+<pre><code class="language-typescript">// notFound(entity)      → 404 { success: false, error: &quot;&lt;entity&gt; not found&quot; }
+// validationError(msg)  → 400 { success: false, error: msg }
+// serverError(err)      → 500 logs console.error(&#39;API Error:&#39;, err)
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+</code></pre>
+<h3>Pagination helpers</h3>
+<p><strong>Source:</strong> <code>src/lib/api/filters.ts</code> (all 20 lines)
+<strong>Apply to:</strong> <code>outreach-campaigns/route.ts</code>, <code>outreach-campaigns/[id]/emails/route.ts</code></p>
+<pre><code class="language-typescript">// parseCursor(param) → Date | null
+// parseLimit(param, max?)  → number (default 20, cap 100)
+// parseArrayParam(param)   → string[] | null (comma-split)
+import { parseArrayParam, parseCursor, parseLimit } from &#39;@/lib/api/filters&#39;;
+</code></pre>
+<h3>Timeline logger</h3>
+<p><strong>Source:</strong> <code>src/lib/db/timeline.ts</code> (all 23 lines)
+<strong>Apply to:</strong> Every route file with a write operation in this phase</p>
+<pre><code class="language-typescript">await logTimeline({
+  eventType: &#39;outreach_campaign_created&#39;,    // D-04: distinct string per operation
+  title: &#39;Human-readable description&#39;,
+  metadata: { campaignId, emailId, ... }     // entityIds + relevant counts
+});
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+</code></pre>
+<h3>conditions[] + sql.join filter accumulation</h3>
+<p><strong>Source:</strong> <code>src/app/api/contacts/route.ts</code> lines 53-79; <code>src/app/api/job-leads/route.ts</code> lines 31-49
+<strong>Apply to:</strong> <code>outreach-campaigns/route.ts</code>, <code>outreach-campaigns/[id]/emails/route.ts</code>, <code>contacts/route.ts</code> (modification)</p>
+<pre><code class="language-typescript">const conditions = [isNull(table.archivedAt)];   // or eq(table.campaignId, id)
+// ... push additional predicates ...
+if (cursor) { conditions.push(lt(table.updatedAt, cursor)); }
+
+const where =
+  conditions.length &gt; 1
+    ? sql`${sql.join(conditions.map((c) =&gt; sql`(${c})`), sql` AND `)}`
+    : conditions[0];
+</code></pre>
+<h3>updatedAt manual set on every UPDATE</h3>
+<p><strong>Source:</strong> <code>src/app/api/contacts/[id]/route.ts</code> line 66; <code>src/app/api/job-leads/[id]/status/route.ts</code> line 84
+<strong>Apply to:</strong> Every PATCH/update in this phase — Drizzle does NOT auto-update this column</p>
+<pre><code class="language-typescript">.set({ ...validated, updatedAt: new Date() })
+</code></pre>
+<h3>Zod error handling</h3>
+<p><strong>Source:</strong> <code>src/app/api/job-leads/[id]/status/route.ts</code> lines 114-116; <code>src/app/api/contacts/route.ts</code> lines 133-136
+<strong>Apply to:</strong> All routes with POST/PATCH and a Zod schema</p>
+<pre><code class="language-typescript">} catch (err) {
+  if (err instanceof z.ZodError) {
+    return validationError(err.issues[0].message);
+  }
+  return serverError(err);
+}
+</code></pre>
+<h3>canEmailTransition guard</h3>
+<p><strong>Source:</strong> <code>src/features/outreach/lib/email-status.ts</code> (all 22 lines)
+<strong>Apply to:</strong> <code>outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code> only</p>
+<pre><code class="language-typescript">import { canEmailTransition } from &#39;@/features/outreach/lib/email-status&#39;;
+// ...
+if (!canEmailTransition(email.status, newStatus)) {
+  return validationError(`Invalid transition: ${email.status} -&gt; ${newStatus}`);
+}
+</code></pre>
+<h3>Route handler param shape (Next.js App Router)</h3>
+<p><strong>Source:</strong> Every existing route file — e.g., <code>src/app/api/job-leads/[id]/status/route.ts</code> lines 11-13, 58-62
+<strong>Apply to:</strong> All [id]/* routes (params is a Promise in Next.js 16)</p>
+<pre><code class="language-typescript">export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string; emailId: string }&gt; }
+) {
+  const { id, emailId } = await params;
+</code></pre>
+<hr>
+<h2>No Analog Found</h2>
+<p>All 10 files have usable analogs. The <code>generation-context</code> endpoint has no exact match but can be composed cleanly from the recommendations route (join pattern) + interactions route (contact-scoped fetch) + <code>inArray</code> grouping.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong> <code>src/app/api/</code>, <code>src/lib/api/</code>, <code>src/lib/db/</code>, <code>src/features/outreach/lib/</code>, <code>drizzle/schema/</code>
+<strong>Files scanned:</strong> 14
+<strong>Pattern extraction date:</strong> 2026-06-20</p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/12-api-routes/12-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

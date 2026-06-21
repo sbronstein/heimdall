@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-06-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-06-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 06
+subsystem: claude-code-skill</p>
+<p>tags: [claude-code-skill, agent-browser, linkedin-scraping, rest-api, bearer-token, prompt-engineering]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 05-job-leads-completion
+plan: 02
+provides: bearer-token middleware bypass + ~/.heimdall/api-token convention</li>
+<li>phase: 05-job-leads-completion
+plan: 04
+provides: PATCH /status state machine, POST /prospects (5-field ScrapedProspect), POST /search thin status-flip, GET /job-leads?status= filter
+provides:</li>
+<li>.claude/skills/scrape-linkedin-connections/SKILL.md — Claude Code skill entry point (frontmatter + prompt body for drain mode AND single-lead mode)</li>
+<li>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md — canonical job → company → employees → 2nd-degree filter nav cheat-sheet (4 steps + pagination)</li>
+<li>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md — bearer-token auth + 4 endpoints + response envelope + state-machine table + curl examples</li>
+<li>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md — all 5 D-09 categories with triggers + manual recovery checklist
+affects: [05-05, 05-07, phase-6]</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;First in-repo .claude/skills/* asset — establishes the SKILL.md frontmatter+prompt-body convention (name, description, argument-hint, allowed-tools: Read+Bash) and the references/ doc-co-location pattern.&quot;
+    - &quot;Skill prompt deliberately does NOT pin agent-browser subcommand names — frontmatter and prompt body both point to the installed agent-browser README so the skill survives version bumps (D-04 + CONTEXT.md <code>&lt;code_context&gt;</code> &#39;needs research&#39;).&quot;
+    - &quot;5-field ScrapedProspect contract (name, title, linkedinUrl, profileSnippet, mutualConnectionNames) propagated end-to-end into the prompt body — matches the Plan 05-04 Zod schema field-for-field.&quot;
+    - &quot;Bearer-token auth pattern is <code>$(cat ~/.heimdall/api-token)</code> inline in curl — resolved value never appears in shell history (depending on shell).&quot;
+    - &quot;D-09 failure taxonomy (Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error) carried verbatim into both SKILL.md and troubleshooting.md as <code>&lt;Category&gt;: &lt;detail&gt;</code> strings written to PATCH /status.&quot;</p>
+<p>key-files:
+  created:
+    - .claude/skills/scrape-linkedin-connections/SKILL.md
+    - .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md
+    - .claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+    - .planning/phases/05-job-leads-completion/05-06-SUMMARY.md
+  modified: []</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;agent-browser subcommands left unpinned. The SKILL.md <code>## Setup</code> and step 2 of <code>## Single-lead mode</code> both say &#39;consult the installed agent-browser README&#39; — the skill does NOT hard-code <code>snapshot</code>/<code>click @e&lt;n&gt;</code>/<code>ai chat</code> because those names shift between versions (D-04 + CONTEXT.md flagged this as a planner-research item).&quot;</li>
+<li>&quot;Body trimmed to 7.3 KB (under the plan&#39;s 8 KB acceptance bound and the action note&#39;s 6 KB target). Initial draft was 9.1 KB — verbose prose was tightened without dropping the seven mandatory sections (overview, setup, argument parsing, drain mode, single-lead mode, error handling, constraints).&quot;</li>
+<li>&quot;Selector hints in linkedin-navigation.md are explicitly marked &#39;hints, not guarantees&#39;. LinkedIn DOM shifts every few weeks; the prompt prefers a11y-tree text/role matching first, falls back to selectors second, and treats genuinely-absent elements as <code>LinkedIn navigation failed</code> (D-09).&quot;</li>
+<li>&quot;heimdall-api.md documents POST /search even though the skill does not call it. The context matters: the UI&#39;s Retry button POSTs there, putting a <code>&#39;failed&#39;</code> lead back into <code>&#39;queued&#39;</code>, where the next drain-mode skill run picks it up. Documented so the skill author understands the round-trip.&quot;</li>
+<li>&quot;No HTML companion files. Per user-global CLAUDE.md, the <code>.planning/views/*.html</code> mirror rule applies to <code>.planning/</code>-only; <code>.claude/skills/</code> is out of that contract (and PATTERNS.md <code>&lt;NEW references/&gt;</code> explicitly notes &#39;these are referenced by Claude, not rendered as HTML companions&#39;).&quot;</li>
+<li>&quot;Plaintext token is NEVER in any skill file — only the <code>$(cat ~/.heimdall/api-token)</code> template appears (verified via <code>grep -nE &#39;[0-9a-f]{32,}&#39;</code> returning zero matches across all four skill files).&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Skill prompt body structure: Overview → Setup → Argument parsing → Drain mode → Single-lead mode → Error handling → Constraints. Each mode section is a numbered procedure; the Constraints section is a &#39;do NOT&#39; bullet list. Future Heimdall skills follow this shape.&quot;</li>
+<li>&quot;References/ docs as on-demand expansions: SKILL.md links to references/<name>.md via Markdown links; the LLM reads them only when it hits a navigation/API/failure question. Reduces prompt-body bloat (CD-07).&quot;</li>
+</ul>
+<p>requirements-completed: [JL-B1, JL-B2]</p>
+<h1>Metrics</h1>
+<h2>duration: ~10min
+completed: 2026-05-14</h2>
+<h1>Phase 05 Plan 06: Claude Code Skill Assets — SKILL.md + references/ Summary</h1>
+<p><strong>Created the project-checked-in Claude Code skill at <code>.claude/skills/scrape-linkedin-connections/</code> — entry-point SKILL.md (frontmatter + prompt body covering drain mode and single-lead mode) plus three reference docs (canonical LinkedIn nav cheat-sheet, Heimdall API contract, error-category troubleshooting + manual recovery) — that drives <code>vercel-labs/agent-browser</code> through the four-step LinkedIn navigation and writes 5-field ScrapedProspect results back via the Plan 04 REST routes.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~10 min (worktree branch check → SKILL.md draft → tighten to fit size budget → three references docs → verification → SUMMARY)</li>
+<li><strong>Started:</strong> 2026-05-14T08:24Z</li>
+<li><strong>Tasks:</strong> 2 (no TDD — both are pure-content markdown authoring; no test infrastructure applies)</li>
+<li><strong>Files created:</strong> 4 (1 SKILL.md, 3 references/*.md) + this SUMMARY</li>
+<li><strong>Files modified:</strong> 0</li>
+<li><strong>Commits:</strong> 2 atomic task commits</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><strong><code>SKILL.md</code></strong> (7.3 KB, 110 lines) at <code>.claude/skills/scrape-linkedin-connections/SKILL.md</code>:<ul>
+<li>Frontmatter: <code>name</code>, multi-line <code>description</code>, <code>argument-hint: &#39;[job-lead-id-or-url]&#39;</code>, <code>allowed-tools: [Read, Bash]</code>.</li>
+<li>Body covers: Overview → Setup (user prerequisites: api-token, env vars, dev server, agent-browser, LinkedIn signed in) → Argument parsing (UUID vs URL vs no-arg routing) → Drain mode (queue fetch, table render, batch processing, summary) → Single-lead mode (claim via PATCH /status, navigate via agent-browser, extract 5 fields, paginate to page 10 cap, write via POST /prospects or PATCH /status failed) → Error handling (5 D-09 categories explicitly named with <code>&lt;Category&gt;: &lt;detail&gt;</code> format) → Constraints (no DB direct, no token logging, 5-min per-lead budget, no batch-claim).</li>
+<li>Links to all three reference docs via Markdown links (<code>references/linkedin-navigation.md</code>, <code>references/heimdall-api.md</code>, <code>references/troubleshooting.md</code>).</li>
+</ul>
+</li>
+<li><strong><code>references/linkedin-navigation.md</code></strong> (8.0 KB): five-section cheat-sheet (Step 1 open job → Step 2 click company → Step 3 click employees → Step 4 apply 2nd-degree filter → Step 5 paginate + extract). Each step has goal / action / selector hints / expected outcome / failure modes. Closing table of historically-stable selectors (<code>a[href*=&quot;/in/&quot;]</code>, <code>a[href*=&quot;/company/&quot;]</code>, <code>button[aria-label=&quot;Next&quot;]</code>, mutual-connections text) marked &quot;hints, not guarantees.&quot;</li>
+<li><strong><code>references/heimdall-api.md</code></strong> (9.1 KB): bearer-token auth section (SHA-256(token) === API_TOKEN_HASH invariant + SINGLE_USER_EMAIL gate); response envelope section ({success, data, error, meta} shape + status codes); four endpoint sections (GET /job-leads?status=, PATCH /status with full state-machine transition table, POST /prospects with 5-field ScrapedProspect Zod schema, POST /search as context-for-skill-author); curl examples for claim and failure-write; error-envelope cheat-sheet table mapping status codes to skill actions.</li>
+<li><strong><code>references/troubleshooting.md</code></strong> (7.4 KB): five sections (one per D-09 category) each with common triggers + skill behavior; manual recovery section (sign-in check, manual nav check, dev server liveness, escalation to selector updates); v1-deferred list (rate-limit backoff, page-10+ pagination, captcha auto-solve, multi-instance coordination).</li>
+</ul>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1: SKILL.md entry point + prompt body</strong> — <code>fb110c4</code> (feat)</li>
+<li><strong>Task 2: Three references/ docs</strong> — <code>51dd18b</code> (docs)</li>
+</ol>
+<h2>Plan Output Spec — Per-Bullet Confirmation</h2>
+<ol>
+<li><strong>Final SKILL.md size (KB) and line count:</strong> 7.3 KB / 110 lines. (Plan acceptance bound: 2–8 KB. Plan action target: &lt;6 KB; tightened from 9.1 KB initial draft to 7.3 KB — readability over absolute minimum; all seven sections preserved.)</li>
+<li><strong>D-09 category occurrence counts in troubleshooting.md:</strong><ul>
+<li><code>Timeout</code>: 3</li>
+<li><code>LinkedIn navigation failed</code>: 2</li>
+<li><code>No prospects found</code>: 2</li>
+<li><code>Browser unavailable</code>: 2</li>
+<li><code>Unknown error</code>: 2</li>
+<li>(verification grep ≥5 — all 5 categories present, passes.)</li>
+</ul>
+</li>
+<li><strong>agent-browser subcommand pinning:</strong> NOT pinned. SKILL.md Setup section (line 31): &quot;Subcommand names (<code>snapshot</code>, <code>click @e&lt;n&gt;</code>, <code>ai chat</code>, etc.) shift between versions — consult the installed agent-browser README for current verbs; this skill does NOT pin a version.&quot; Step 2 of single-lead mode (line 63): &quot;Subcommands depend on the installed version (consult its README).&quot; This matches the CONTEXT.md <code>&lt;code_context&gt;</code> &quot;Planner DOES Need to Research&quot; instruction to leave the exact subcommand names floating.</li>
+<li><strong>No plaintext token in any skill file:</strong> Verified — <code>grep -nE &#39;[0-9a-f]{32,}&#39;</code> across all four files returns zero matches. The template <code>$(cat ~/.heimdall/api-token)</code> appears in SKILL.md (3 times), heimdall-api.md (6 times), and troubleshooting.md (1 time — in the manual-recovery curl example).</li>
+</ol>
+<h2>Plan Verification Block — Confirmation</h2>
+<ul>
+<li><code>test -d .claude/skills/scrape-linkedin-connections</code> — <strong>PASS</strong></li>
+<li><code>test -d .claude/skills/scrape-linkedin-connections/references</code> — <strong>PASS</strong></li>
+<li><code>ls .claude/skills/scrape-linkedin-connections/</code> returns <code>SKILL.md</code> and <code>references/</code> — <strong>PASS</strong></li>
+<li><code>ls .claude/skills/scrape-linkedin-connections/references/</code> returns three <code>.md</code> files (heimdall-api, linkedin-navigation, troubleshooting) — <strong>PASS</strong></li>
+<li><code>grep -lE &quot;^name: scrape-linkedin-connections$&quot; .claude/skills/scrape-linkedin-connections/SKILL.md</code> matches — <strong>PASS</strong></li>
+<li>Manual smoke (acknowledged D-25 layer 3): not run here; the skill loads when the user invokes <code>claude /scrape-linkedin-connections</code> in their Claude Code session.</li>
+</ul>
+<h2>Acceptance Criteria — Per-Task Confirmation</h2>
+<h3>Task 1 (SKILL.md)</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>File <code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> exists</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Starts with <code>---</code> YAML frontmatter fence</td>
+<td>PASS (line 1)</td>
+</tr>
+<tr>
+<td>Frontmatter <code>name: scrape-linkedin-connections</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Frontmatter non-empty <code>description:</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Frontmatter <code>argument-hint: &#39;[job-lead-id-or-url]&#39;</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Frontmatter <code>allowed-tools:</code> with Read + Bash</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Body covers: overview, setup, arg parsing, drain mode, single-lead mode, error mapping, constraints</td>
+<td>PASS (7 sections in order)</td>
+</tr>
+<tr>
+<td>Body links to all three companion docs by relative path</td>
+<td>PASS (5 link occurrences in SKILL.md)</td>
+</tr>
+<tr>
+<td>All 5 D-09 categories mentioned</td>
+<td>PASS (Timeout: 4, LinkedIn navigation failed: 2, No prospects found: 2, Browser unavailable: 1, Unknown error: 1)</td>
+</tr>
+<tr>
+<td>Body documents PATCH <code>/status</code> body shape <code>{ status: failed, lastError }</code></td>
+<td>PASS (curl example in Error handling section)</td>
+</tr>
+<tr>
+<td>File size 2–8 KB</td>
+<td>PASS (7.3 KB)</td>
+</tr>
+</tbody></table>
+<h3>Task 2 (references/*.md)</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All three files exist under <code>references/</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>nav.md documents four-step nav (job → company → employees → 2nd-degree filter) in order</td>
+<td>PASS (<code>## Step 1</code> through <code>## Step 4</code> headings)</td>
+</tr>
+<tr>
+<td>nav.md lists four selector hints with hint disclaimer</td>
+<td>PASS (closing &quot;Historically-stable selectors&quot; table + disclaimer paragraph)</td>
+</tr>
+<tr>
+<td>api.md documents all 4 endpoints</td>
+<td>PASS (GET /job-leads, PATCH /status, POST /prospects, POST /search — each as its own <code>### N.</code> section)</td>
+</tr>
+<tr>
+<td>api.md documents bearer-token + SHA-256 invariant</td>
+<td>PASS (Auth section: &quot;SHA-256(<bearer token>) === process.env.API_TOKEN_HASH&quot;)</td>
+</tr>
+<tr>
+<td>api.md documents <code>{ success, data, error, meta }</code> envelope</td>
+<td>PASS (dedicated Response envelope section)</td>
+</tr>
+<tr>
+<td>ts.md covers all 5 D-09 categories</td>
+<td>PASS (one section per category, plus manual recovery + deferred-items section)</td>
+</tr>
+<tr>
+<td>ts.md has manual recovery section</td>
+<td>PASS (<code>## Manual recovery (when the skill repeatedly fails)</code> with 4-step checklist)</td>
+</tr>
+<tr>
+<td>No YAML frontmatter in reference files</td>
+<td>PASS (line 1 of each is <code># &lt;title&gt;</code>, not <code>---</code>)</td>
+</tr>
+<tr>
+<td>Each file 1–12 KB</td>
+<td>PASS (nav 8.0 KB, api 9.1 KB, ts 7.4 KB)</td>
+</tr>
+</tbody></table>
+<h2>Files Created/Modified</h2>
+<h3>Created</h3>
+<ul>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> — skill entry point (frontmatter + prompt body)</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> — nav cheat-sheet</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> — API contract</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code> — failure taxonomy</li>
+<li><code>.planning/phases/05-job-leads-completion/05-06-SUMMARY.md</code> — this file</li>
+</ul>
+<h3>Modified</h3>
+<p>None.</p>
+<h2>Decisions Made</h2>
+<ol>
+<li><strong>Tightened the prompt body to 7.3 KB.</strong> First draft was 9.1 KB; the plan&#39;s acceptance criterion is 2–8 KB and the action target is &lt;6 KB. Trimmed verbose prose (consolidated narration, dropped redundant context paragraphs) while preserving all seven mandatory sections and all D-09 category names. The references/ docs absorb the detail — that is exactly the SKILL.md ↔ references/ split CD-07 was designed for.</li>
+<li><strong>agent-browser subcommands NOT pinned.</strong> The skill points to &quot;the installed agent-browser README&quot; twice (Setup section and single-lead mode step 2). This is deliberate per D-04 and the CONTEXT.md &quot;needs research&quot; list: agent-browser&#39;s CLI shifts between versions, and pinning specific verbs in the skill would create a maintenance burden every time the user upgrades. The trade-off is the LLM has to read the README at invocation time; that&#39;s acceptable for a skill that already requires a real Chrome window and a signed-in LinkedIn session.</li>
+<li><strong>POST /search documented even though the skill does not call it.</strong> The plan acceptance criteria explicitly required this endpoint in heimdall-api.md. Surfaced it as a &quot;Not called by the skill in the normal flow — documented for context&quot; subsection, explaining that the UI&#39;s Retry button hits /search and re-queues failed leads for the next drain run. This closes the loop for a future maintainer reading the skill.</li>
+<li><strong>Selector hints marked &quot;hints, not guarantees.&quot;</strong> Both the per-step selector blocks and the closing table say LinkedIn DOM shifts; the LLM should prefer a11y-tree text/role matching first. Pinning brittle selectors would have the same problem as pinning agent-browser subcommands — the skill would rot.</li>
+<li><strong>No HTML companion mirror.</strong> The user-global CLAUDE.md HTML-companion rule applies to <code>.planning/</code> only; <code>.claude/skills/</code> is out of contract (PATTERNS.md explicitly notes this). Plain markdown is the right output for files the LLM will read at runtime.</li>
+</ol>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<p>The initial draft was longer than the plan&#39;s 6 KB target / 8 KB acceptance bound, but trimming verbose prose during verification was anticipated by the plan&#39;s action note (&quot;trim later if it bloats the prompt&quot;) and is not a deviation. All seven mandatory sections, all 5 D-09 categories, all selector hints, all four endpoint sections, and the manual recovery checklist survived the trim.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><strong><code>.claude/settings.local.json</code> showed up untracked at commit time.</strong> Not part of this plan&#39;s scope; ignored. It&#39;s a Claude Code local-config file the agent runtime writes — <code>.gitignore</code> likely catches it but the <code>?? .claude/settings.local.json</code> line appeared in <code>git status --short</code>. Did not stage it; only added the four skill files.</li>
+<li><strong>Husky pre-commit hook was not executable.</strong> <code>hint: The &#39;/Users/sbronstein/Github/heimdall/.husky/pre-commit&#39; hook was ignored because it&#39;s not set as executable.</code> Pre-existing infrastructure observation, not a plan-caused issue. Both commits succeeded without the hook running. Not a blocker.</li>
+</ul>
+<h2>Threat Model Verification</h2>
+<p>Per the plan&#39;s <code>&lt;threat_model&gt;</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Disposition</th>
+<th>How it was mitigated in this plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-06-01 (info disclosure — bearer token in shell history)</td>
+<td>mitigate</td>
+<td>Every curl example in SKILL.md and heimdall-api.md uses <code>$(cat ~/.heimdall/api-token)</code> inline; the SKILL.md <code>## Constraints</code> section explicitly says &quot;do NOT log the bearer token. Use <code>$(cat ~/.heimdall/api-token)</code> inline in curl so the resolved value never appears in shell history.&quot; Plaintext token is grep-zero across all four skill files (verified).</td>
+</tr>
+<tr>
+<td>T-05-06-02 (tampering — reference doc drift from API contract)</td>
+<td>mitigate</td>
+<td>heimdall-api.md is the single source of truth for the skill&#39;s API calls and lives next to SKILL.md; if Plan 04 routes change in a future phase, this file is the one place the developer notices the contract drift. The 5-field ScrapedProspect, the state-machine transitions, the curl examples, and the error envelopes all match Plan 05-04 exactly.</td>
+</tr>
+<tr>
+<td>T-05-06-03 (spoofing — skill against wrong Heimdall instance)</td>
+<td>accept</td>
+<td>heimdall-api.md pins the URL to <code>http://localhost:4000</code>; the user controls both <code>~/.heimdall/api-token</code> and the <code>API_TOKEN_HASH</code> in <code>.env.local</code>. Multi-instance scenarios are explicitly out of scope (per CONTEXT.md <code>&lt;out_of_scope&gt;</code>).</td>
+</tr>
+<tr>
+<td>T-05-06-04 (repudiation — skill failures not surfaced)</td>
+<td>mitigate</td>
+<td>Every failure path in SKILL.md writes a categorized error via PATCH /status; the Plan 05-05 UI surfaces this to the user; the Plan 05-04 API emits a <code>job_lead_search_failed</code> timeline event for the audit trail. The plan&#39;s failure flow is enforced by the skill prompt body&#39;s <code>## Error handling</code> section.</td>
+</tr>
+</tbody></table>
+<h2>Threat Flags</h2>
+<p>None — no new trust boundaries or attack surface introduced beyond what the plan&#39;s <code>&lt;threat_model&gt;</code> enumerated. The skill is a markdown-only artifact that the user invokes inside Claude Code; its only outbound communication is via the bearer-authenticated REST routes (already enumerated in Plan 05-02&#39;s threat model) and via agent-browser to LinkedIn (the same boundary the deleted Playwright path crossed).</p>
+<h2>User Setup Required</h2>
+<p>Before invoking <code>claude /scrape-linkedin-connections</code>:</p>
+<ol>
+<li>Run <code>npm run token:generate</code> once (from Plan 05-02) to write <code>~/.heimdall/api-token</code> and get the SHA-256 hash for <code>.env.local</code>.</li>
+<li>Set <code>API_TOKEN_HASH=&lt;hash&gt;</code> and <code>SINGLE_USER_EMAIL=steve@bronstein.org</code> in <code>.env.local</code> (per Plan 05-02 setup).</li>
+<li>Install <code>vercel-labs/agent-browser</code> per its README.</li>
+<li>Open Chrome at <code>~/.heimdall/linkedin-profile/</code> and sign into LinkedIn (one-time, persists across runs).</li>
+<li>Run <code>npm run dev</code> to start Heimdall on port 4000.</li>
+<li>From the project root in Claude Code, invoke either:<ul>
+<li><code>claude /scrape-linkedin-connections</code> (drain mode — process all <code>queued</code> leads)</li>
+<li><code>claude /scrape-linkedin-connections &lt;job-lead-uuid&gt;</code> (single-lead mode by ID)</li>
+<li><code>claude /scrape-linkedin-connections https://www.linkedin.com/jobs/view/&lt;n&gt;</code> (single-lead mode from URL — creates the lead first)</li>
+</ul>
+</li>
+</ol>
+<p>The skill loads SKILL.md as its prompt, parses <code>$ARGUMENTS</code>, and walks the LLM through the drain or single-lead flow, reading the references/ docs on demand.</p>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li><strong>Plan 05-05 (UI):</strong> Unaffected. The skill is invoked outside the web app; UI changes for <code>queued</code> / <code>failed</code> badges and the copy-skill-invocation button can land independently.</li>
+<li><strong>Plan 05-07 (deletion of <code>scrape-connections.ts</code> + <code>search-progress.tsx</code>):</strong> Unblocked. The skill is the replacement for the deleted Playwright path; with the skill in place, the in-app scraper can be deleted.</li>
+<li><strong>Phase 6 (perf):</strong> No interaction. The bulk-prospects route already does a single-statement insert (Plan 05-04 incidentally satisfies PERF-A1 for prospects); the skill is upstream of that route.</li>
+</ul>
+<h2>Self-Check</h2>
+<p>Verified before this SUMMARY was committed:</p>
+<ul>
+<li>File <code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> exists — <strong>FOUND</strong>.</li>
+<li>File <code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> exists — <strong>FOUND</strong>.</li>
+<li>File <code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> exists — <strong>FOUND</strong>.</li>
+<li>File <code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code> exists — <strong>FOUND</strong>.</li>
+<li>SKILL.md <code>^name: scrape-linkedin-connections$</code> — <strong>FOUND</strong> (line 2).</li>
+<li>SKILL.md <code>argument-hint:</code> — <strong>FOUND</strong> (line 4).</li>
+<li>SKILL.md 5 D-09 categories — <strong>FOUND</strong> (all five present in body).</li>
+<li>SKILL.md links to all 3 references — <strong>FOUND</strong> (5 link occurrences).</li>
+<li>nav.md 4-step nav headings — <strong>FOUND</strong> (<code>## Step 1</code> through <code>## Step 4</code>).</li>
+<li>nav.md <code>2nd-degree</code> mentions — <strong>FOUND</strong> (4 occurrences).</li>
+<li>api.md <code>POST /api/job-leads/[id]/prospects</code> — <strong>FOUND</strong>.</li>
+<li>api.md <code>API_TOKEN_HASH</code> + <code>SHA-256</code> — <strong>FOUND</strong> (auth section).</li>
+<li>api.md all 4 endpoints — <strong>FOUND</strong> (4 grep hits).</li>
+<li>ts.md all 5 categories — <strong>FOUND</strong> (counts ≥1 each).</li>
+<li>ts.md manual recovery section — <strong>FOUND</strong>.</li>
+<li>No YAML frontmatter in reference files — <strong>CONFIRMED</strong> (line 1 of each is <code># &lt;title&gt;</code>).</li>
+<li>No plaintext 64-char hex token in any skill file — <strong>CONFIRMED</strong> (grep returns 0 matches).</li>
+<li>Commit <code>fb110c4</code> (Task 1 SKILL.md) — <strong>FOUND</strong> in <code>git log</code>.</li>
+<li>Commit <code>51dd18b</code> (Task 2 references) — <strong>FOUND</strong> in <code>git log</code>.</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<hr>
+<p><em>Phase: 05-job-leads-completion</em>
+<em>Plan: 06</em>
+<em>Completed: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-06-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

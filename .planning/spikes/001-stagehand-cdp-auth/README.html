@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>README</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/spikes/001-stagehand-cdp-auth/README.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>spike: 001
+name: stagehand-cdp-auth
+type: standard
+validates: &quot;Given an ANTHROPIC_API_KEY and either a headed Chromium with persistent profile (default) or a BROWSER_CDP_ENDPOINT, when Stagehand initializes and navigates to LinkedIn /feed, then it either signs in silently from the persisted session or pauses for an interactive login and resumes once /feed is reached.&quot;
+verdict: SUPERSEDED
+related: []
+tags: [stagehand, auth, headed, superseded]</h2>
+<h1>Spike 001: stagehand-cdp-auth</h1>
+<blockquote>
+<p><strong>SUPERSEDED 2026-05-13.</strong> Architectural pivot — scraping is moving out of the app into a Claude Code skill on <code>vercel-labs/agent-browser</code>. See <code>../MANIFEST.md</code> &quot;Status&quot; section. This spike was never executed.</p>
+</blockquote>
+<h2>What This Validates</h2>
+<p><strong>Given</strong> <code>ANTHROPIC_API_KEY</code> is set and either:</p>
+<ul>
+<li><code>BROWSER_CDP_ENDPOINT</code> is set (CDP attach path — matches the project&#39;s prod-style flow), or</li>
+<li>it isn&#39;t (headed-launch path — default; uses persistent profile at <code>~/.heimdall/linkedin-profile/</code>),</li>
+</ul>
+<p><strong>when</strong> the spike runs (<code>npm run spike:001</code>),
+<strong>then</strong> Stagehand initializes, opens (or attaches to) Chrome, signs in interactively if needed, reaches <code>/feed</code>, and <code>observe()</code> returns at least one candidate element — proving the LLM primitives are wired up.</p>
+<p>This is <strong>gating</strong>: if Stagehand can&#39;t init or reach an authenticated LinkedIn page, the entire approach is off the table.</p>
+<h2>Research</h2>
+<p>See <code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code> for the full library comparison. Key facts pulled into this spike:</p>
+<ul>
+<li>Stagehand 3.4.0 (May 2026) supports <code>env: &quot;LOCAL&quot;</code> with either <code>cdpUrl</code> (attach to existing Chrome) or <code>headless: false</code> + <code>userDataDir</code> (launch new persistent Chromium)</li>
+<li>Reuses the same <code>~/.heimdall/linkedin-profile/</code> dir as <code>src/features/job-leads/lib/linkedin-browser.ts</code>, so an existing LinkedIn login is inherited automatically</li>
+<li><code>cdpUrl</code> must be the <strong>WebSocket</strong> URL (<code>ws://...</code>); the helper at <code>_pkg/lib/cdp.ts</code> resolves it from <code>BROWSER_CDP_ENDPOINT</code>&#39;s HTTP form via <code>/json/version</code></li>
+<li>Model: <code>anthropic/claude-sonnet-4-5</code> (reads <code>ANTHROPIC_API_KEY</code>)</li>
+</ul>
+<h2>How to Run</h2>
+<pre><code class="language-bash">cd .planning/spikes/_pkg
+npm install                       # first time only
+npx playwright install chromium   # first time only — Chromium for headed mode
+npm run spike:001
+</code></pre>
+<p>A Chrome window will open. If you&#39;re not signed into LinkedIn yet, the spike will print a banner and wait up to 5 minutes for you to sign in. Once you reach <code>/feed</code>, the spike resumes automatically. The login is saved in the persistent profile so subsequent runs are silent.</p>
+<h2>What to Expect</h2>
+<p>Console output ending with one of:</p>
+<ul>
+<li><code>[verdict] PASS — Stagehand launched, attached, reached an authenticated LinkedIn /feed, and observe() returned candidates.</code> (exit 0)</li>
+<li><code>[error] &lt;stack&gt;</code> followed by <code>[done]</code> (exit 1)</li>
+</ul>
+<p>Followed by a <code>[metrics]</code> block with token counts. For this spike, only one <code>observe()</code> call runs so <code>observePromptTokens</code> should be small (typically &lt;2k). <code>actPromptTokens</code> should be 0.</p>
+<h2>Observability</h2>
+<p>The spike logs every step with elapsed ms (<code>[+NNNNms] [tag] message</code>). Tags:</p>
+<ul>
+<li><code>init</code> — Stagehand config + setup</li>
+<li><code>auth</code> — login state check, interactive-login banner, login detected</li>
+<li><code>observe</code> — single observe() probe to confirm primitives are live</li>
+<li><code>verdict</code> — PASS line</li>
+<li><code>metrics</code> — final token accounting</li>
+<li><code>error</code> — any thrown exception with stack</li>
+<li><code>done</code> — total elapsed time</li>
+</ul>
+<h2>Investigation Trail</h2>
+<p><em>To be filled in after first run. Capture: launch behavior, what the persistent profile looked like, surprises during the interactive-login flow, any anti-bot challenges, attached-context page count.</em></p>
+<h2>Results</h2>
+<ul>
+<li><strong>Verdict:</strong> PENDING</li>
+<li><strong>Mode:</strong> (headed-launch or CDP-attach)</li>
+<li><strong>Interactive login required:</strong> (yes/no on first run)</li>
+<li><strong>Token cost for the observe() probe:</strong></li>
+<li><strong>Surprises:</strong></li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/spikes/001-stagehand-cdp-auth/README.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

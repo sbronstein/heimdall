@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: 02
+subsystem: api
+tags: [transactions, drizzle, neon-http, bulk-insert, atomicity, pglite, vitest]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 06-01
+provides: partial UNIQUE index on contacts(linkedin_url) + 4 btree indexes + migration 0008 applied</li>
+</ul>
+<p>provides:</p>
+<ul>
+<li>&quot;POST /api/job-leads/[id]/prospects wrapped in db.transaction() — prospects insert + bridge insert + status flip commit or roll back atomically&quot;</li>
+<li>&quot;matchConnections(tx, jobLeadId, scrapedProspects) — narrowed contacts SELECT keyed on name tokens, single bulk bridge insert with onConflictDoNothing()&quot;</li>
+<li>&quot;PGlite-backed tests: bridges happy path, rollback-on-failure (zero timeline event invariant), idempotency under retry&quot;</li>
+<li>&quot;ROADMAP SC #1 wording corrected to name /api/job-leads/[id]/prospects as the prospect-insert path&quot;</li>
+</ul>
+<p>affects: [06-03, 06-04, 06-05, triage-page, recommendations-page]</p>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;db.transaction(async (tx) =&gt; {...}) — first use of Drizzle neon-http transaction in codebase; all writes in callback use tx, never db singleton&quot;
+    - &quot;Structural tx type alias: Parameters&lt;Parameters<typeof db.transaction>[0]&gt;[0] — fallback when NeonHttpTransaction not exported by drizzle-orm v0.45.1&quot;
+    - &quot;sql.join(tokens.map(t =&gt; sql<code>${t}</code>), sql<code>, </code>) — parameterized IN-list pattern for narrowed SELECT; no sql.raw, no injection surface&quot;
+    - &quot;logTimeline placed after await db.transaction() for post-commit-only semantics (WARNING 3 fix)&quot;
+    - &quot;vi.spyOn + mockRejectedValueOnce + spy.mockRestore() — minimal-blast-radius failure injection for rollback test&quot;</p>
+<p>key-files:
+  created:
+    - .planning/phases/06-performance/06-02-SUMMARY.md
+  modified:
+    - src/features/job-leads/lib/match-connections.ts
+    - src/app/api/job-leads/[id]/prospects/route.ts
+    - src/app/api/job-leads/[id]/prospects/route.test.ts
+    - .planning/ROADMAP.md
+    - .planning/views/ROADMAP.html
+    - vitest.config.ts</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Structural type alias chosen for tx parameter (NeonHttpTransaction not exported from drizzle-orm v0.45.1)&quot;</li>
+<li>&quot;logTimeline placed OUTSIDE db.transaction() — post-commit-only guarantees no spurious timeline events on rollback&quot;</li>
+<li>&quot;Task 4 (ROADMAP wording refresh) folded into Task 2&#39;s commit per D-18&quot;</li>
+<li>&quot;hookTimeout and testTimeout increased to 60s in vitest.config.ts to fix pre-existing PGlite test flakiness&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Transaction wrapping pattern: db.transaction(async (tx) =&gt; { insert + lib-call(tx, ...) + update }) with logTimeline post-transaction&quot;</li>
+<li>&quot;Narrowed contacts SELECT: tokens extracted from input strings, parameterized sql.join IN-list, soft-delete filter preserved&quot;</li>
+</ul>
+<p>requirements-completed: [PERF-A1, PERF-A2]</p>
+<h1>Metrics</h1>
+<h2>duration: 65min
+completed: 2026-05-14</h2>
+<h1>Phase 6 Plan 02: Performance — Transactional Prospects + Bridge Bulk Insert Summary</h1>
+<p><strong>Restored bridges-building flow: POST /prospects now wraps prospect insert + matchConnections + status flip in db.transaction(), replacing the orphaned per-row bridge loop with a single bulk onConflictDoNothing() insert and a token-keyed contacts SELECT</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~65 min</li>
+<li><strong>Started:</strong> 2026-05-14T15:45:00Z</li>
+<li><strong>Completed:</strong> 2026-05-14T16:20:00Z</li>
+<li><strong>Tasks:</strong> 4 (Tasks 1, 2, 3, 4 — Task 4 folded into Task 2 commit)</li>
+<li><strong>Files modified:</strong> 6</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><code>matchConnections</code> signature changed from <code>(jobLeadId, scrapedProspects)</code> to <code>(tx, jobLeadId, scrapedProspects)</code> — tx typed as structural neon-http transaction alias; all internal db calls use tx, zero runtime singleton-db usage</li>
+<li><code>POST /api/job-leads/[id]/prospects</code> wraps the entire write set (prospect insert + matchConnections + jobLeads status flip) in <code>db.transaction()</code> — atomicity invariant holds; rollback-on-failure verified by Test 8</li>
+<li>Contacts SELECT narrowed from full-table scan to token-keyed subset (lower(first_name) IN (...) OR lower(last_name) IN (...)) using parameterized sql.join bindings — no SQL injection surface</li>
+<li>Bridge insert replaced from N+1 per-row loop (with swallowed exceptions) to a single <code>tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code> — idempotency guaranteed by prospect_bridge_unique constraint</li>
+<li>3 new PGlite-backed tests pin the bridges happy path, rollback invariant (zero timeline events!), and idempotency under retry</li>
+</ul>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1: matchConnections refactor</strong> — <code>527668d</code> (refactor)</li>
+<li><strong>Task 2: Route transaction wrap + Task 4: ROADMAP wording</strong> — <code>e96ca7b</code> (feat)</li>
+<li><strong>Task 3: Test extension</strong> — <code>c736282</code> (test)</li>
+<li><strong>Task 4: ROADMAP SC #1 wording</strong> — folded into Task 2 commit <code>e96ca7b</code></li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>src/features/job-leads/lib/match-connections.ts</code> — New signature (tx, jobLeadId, scrapedProspects), narrowed SELECT, bulk bridge insert</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.ts</code> — Transaction wrap, inline matchConnections call, logTimeline post-commit</li>
+<li><code>src/app/api/job-leads/[id]/prospects/route.test.ts</code> — 3 new tests (bridges, rollback, idempotency); imports prospectBridges + contacts from schema barrel</li>
+<li><code>.planning/ROADMAP.md</code> — SC #1 wording updated to name /api/job-leads/[id]/prospects (D-18)</li>
+<li><code>.planning/views/ROADMAP.html</code> — SC #1 HTML companion updated to match</li>
+<li><code>vitest.config.ts</code> — hookTimeout and testTimeout raised to 60s (pre-existing flakiness fix)</li>
+</ul>
+<h2>Output Spec Answers</h2>
+<p>Per the plan&#39;s <code>&lt;output&gt;</code> section:</p>
+<ol>
+<li><p><strong>Tx type alias chosen:</strong> Structural fallback <code>Parameters&lt;Parameters&lt;typeof db.transaction&gt;[0]&gt;[0]</code> — <code>NeonHttpTransaction</code> is NOT exported by drizzle-orm v0.45.1 (only <code>NeonTransaction</code> is exported from the session module). The structural alias resolves to the same type at the call site.</p>
+</li>
+<li><p><strong>Narrowed SELECT predicate exact form:</strong></p>
+<pre><code class="language-typescript">sql`(lower(${contacts.firstName}) IN (${sql.join(tokens.map((t) =&gt; sql`${t}`), sql`, `)}) OR lower(${contacts.lastName}) IN (${sql.join(tokens.map((t) =&gt; sql`${t}`), sql`, `)}))`
+</code></pre>
+<p>Each token is a separate bound parameter via <code>sql\</code>${t}`` — NOT sql.raw. Security invariant T-06-05 satisfied.</p>
+</li>
+<li><p><strong>Mock strategy used in Test 8:</strong> <code>vi.spyOn(matchConnectionsModule, &#39;matchConnections&#39;).mockRejectedValueOnce(new Error(&#39;forced rollback&#39;))</code> with <code>spy.mockRestore()</code> in <code>finally</code>. No <code>vi.mock</code>, no <code>vi.hoisted</code>, no <code>vi.doMock</code>, no <code>vi.resetModules</code>. Single chosen pattern per BLOCKER 2 fix.</p>
+</li>
+<li><p><strong>Duplicate bridge entries dropped by onConflictDoNothing (Test 9):</strong> Zero — Test 9&#39;s second call is rejected at the lead status guard (<code>&#39;found&#39; !== &#39;searching&#39;</code>) before reaching the transaction. The <code>onConflictDoNothing()</code> idempotency is exercised if the same route call is retried on a lead that is still &#39;searching&#39;, but Test 9 proves the status guard prevents duplicate state.</p>
+</li>
+</ol>
+<h2>Decisions Made</h2>
+<ul>
+<li>Structural type alias over named <code>NeonHttpTransaction</code> — named export doesn&#39;t exist in v0.45.1</li>
+<li><code>logTimeline</code> placement OUTSIDE transaction — post-commit semantics guaranteed by neon-http&#39;s HTTP-coalesced transaction model; Test 8 asserts zero timeline events after forced rollback</li>
+<li>Task 4 folded into Task 2 commit per D-18 (documents the same code change)</li>
+<li><code>vi.spyOn</code> chosen over <code>vi.mock</code>/<code>vi.doMock</code> for Test 8 failure injection — minimal blast radius, preserves real implementation for Tests 1, 7, 9</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] Named NeonHttpTransaction import unavailable in drizzle-orm v0.45.1</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 (matchConnections refactor)</li>
+<li><strong>Issue:</strong> Plan specified <code>import type { NeonHttpTransaction } from &#39;drizzle-orm/neon-http&#39;</code> as the primary option. The export does not exist — only <code>NeonTransaction</code> is in the session module&#39;s type declarations.</li>
+<li><strong>Fix:</strong> Used the structural fallback alias as the plan specified: <code>Parameters&lt;Parameters&lt;typeof db.transaction&gt;[0]&gt;[0]</code>. The plan explicitly anticipated this and documented the fallback.</li>
+<li><strong>Files modified:</strong> src/features/job-leads/lib/match-connections.ts</li>
+<li><strong>Verification:</strong> <code>npx tsc --noEmit</code> exits 0 (only pre-existing prioritization.ts errors remain)</li>
+<li><strong>Committed in:</strong> 527668d (Task 1 commit)</li>
+</ul>
+<p><strong>2. [Rule 1 - Bug] Pre-existing PGlite hookTimeout/testTimeout flakiness exposed by adding new tests</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 (test extension)</li>
+<li><strong>Issue:</strong> Adding 3 new tests to the route.test.ts file (which already had borderline timing) pushed later tests past vitest&#39;s 10s hook timeout and 5s test timeout defaults. Tests 5 and 6 were ALREADY flaking in the main repo with the original 7 tests.</li>
+<li><strong>Fix:</strong> Added <code>hookTimeout: 60000</code> and <code>testTimeout: 60000</code> to vitest.config.ts. This fixes the pre-existing flakiness for all PGlite-backed test files.</li>
+<li><strong>Files modified:</strong> vitest.config.ts</li>
+<li><strong>Verification:</strong> All 138 tests pass in the full suite run from the worktree directory.</li>
+<li><strong>Committed in:</strong> c736282 (Task 3 commit)</li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 2 auto-fixed (1 named-export fallback, 1 pre-existing timeout bug)
+<strong>Impact on plan:</strong> Both auto-fixes were anticipated or necessary for correctness. No scope creep.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><code>vi.spyOn(matchConnectionsModule, &#39;matchConnections&#39;)</code> works correctly because vitest runs from the worktree directory and the local <code>vitest.config.ts</code> resolves <code>@/*</code> to the worktree&#39;s <code>src/</code>. Running with <code>--config /path/to/main-repo/vitest.config.ts</code> would resolve to the main repo&#39;s unchanged files — a gotcha that caused initial test confusion.</li>
+<li>PGlite&#39;s <code>db.transaction()</code> uses <code>PgliteTransaction</code> at runtime, which is structurally compatible with the neon-http tx type used in <code>matchConnections</code>. No cast needed at runtime; TypeScript&#39;s structural typing ensures compatibility.</li>
+</ul>
+<h2>Threat Surface Scan</h2>
+<p>No new security-relevant surface introduced beyond what the plan&#39;s threat model covers. The narrowed SELECT IN-list uses parameterized bindings (T-06-05 mitigated). The transaction wrap eliminates partial-state observability (T-06-06 mitigated). The post-commit logTimeline placement eliminates spurious timeline events on rollback (T-06-07 mitigated).</p>
+<h2>Known Stubs</h2>
+<p>None. The bridges flow is now fully wired: <code>POST /prospects</code> → <code>matchConnections(tx, ...)</code> → bridges inserted → <code>/triage</code> and <code>/recommendations</code> pages will return real data.</p>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>PERF-A1 (bridges half) and PERF-A2 are complete</li>
+<li>Wave 2 parallel plans (06-03, 06-04, 06-05) can proceed — disjoint file sets confirmed</li>
+<li><code>/triage</code> and <code>/recommendations</code> pages start showing real bridge data after this lands; no UI change needed</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<p>All key files found. All commit hashes verified. No unexpected file deletions.</p>
+<hr>
+<p><em>Phase: 06-performance</em>
+<em>Completed: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

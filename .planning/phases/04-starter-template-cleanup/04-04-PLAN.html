@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-04-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-04-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 04
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/job-leads/[id]/search/route.ts
+autonomous: true
+requirements:</li>
+<li>DEBT-A5
+tags:</li>
+<li>cleanup</li>
+<li>unused-import</li>
+<li>job-leads</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;The line <code>import { computeBridgeScore } from &#39;@/features/job-leads/lib/prioritization&#39;;</code> no longer exists in src/app/api/job-leads/[id]/search/route.ts (SC #4)&quot;
+    - &quot;The symbol <code>computeBridgeScore</code> is not referenced anywhere in src/app/api/job-leads/[id]/search/route.ts (SC #4)&quot;
+    - &quot;computeBridgeScore export from src/features/job-leads/lib/prioritization.ts is still intact (used by recommendations route + tests)&quot;
+    - &quot;npm run build exits 0 with no unused-import warnings for computeBridgeScore (SC #4)&quot;
+    - &quot;D-15: one-line edit — remove line 10 of src/app/api/job-leads/[id]/search/route.ts; export and other consumers (recommendations route, prioritization.test.ts) untouched&quot;
+    - &quot;D-19: atomic commit per DEBT-Ax preserved (one commit for DEBT-A5)&quot;
+  artifacts:
+    - path: &quot;.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-04-SUMMARY.md&quot;
+      provides: &quot;Plan completion record&quot;
+  key_links:
+    - from: &quot;src/app/api/job-leads/[id]/search/route.ts:10&quot;
+      to: &quot;(line removed)&quot;
+      via: &quot;single-line delete edit&quot;
+  pattern: &quot;! grep -c &#39;computeBridgeScore&#39; src/app/api/job-leads/[id]/search/route.ts&quot;
+</p>
+<hr>
+<objective>
+Execute DEBT-A5 — remove the single unused `computeBridgeScore` import on line 10 of `src/app/api/job-leads/[id]/search/route.ts`. This is the smallest plan in Phase 4: one line edit, one verification grep, one atomic commit.<p>Per D-15 in CONTEXT.md and CONCERNS.md §&quot;Tech Debt → <code>computeBridgeScore</code> Imported But Unused in Search Route&quot;, <code>computeBridgeScore</code> is imported by <code>search/route.ts:10</code> but never invoked anywhere in the file body. The symbol is genuinely used elsewhere — verified by scout:</p>
+<ul>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> lines 13 and 46 (live consumer)</li>
+<li><code>src/features/job-leads/lib/prioritization.test.ts</code> (Phase 2 test coverage from TEST-A2)</li>
+<li><code>src/features/job-leads/lib/prioritization.ts</code> line 55 (self-reference inside <code>buildRecommendations</code>)</li>
+</ul>
+<p>So this is purely a dead import on one route — the export and all other consumers are untouched.</p>
+<p>Purpose: Clean import surface for the search route; eliminate the latent risk that someone will assume the search route uses bridge scoring and write tests against it. Satisfies ROADMAP SC #4 (&quot;<code>npm run build</code> succeeds with no unused-import warnings for <code>computeBridgeScore</code> in the job-leads search route&quot;).</p>
+<p>Output: One edited file (line 10 deleted), one atomic commit.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/04-starter-template-cleanup/04-CONTEXT.md
+@.planning/codebase/CONCERNS.md
+@CLAUDE.md
+@src/app/api/job-leads/[id]/search/route.ts<interfaces>
+<!-- Current state of search/route.ts (top of file, line 10 to be removed): -->
+Lines 1-11 of src/app/api/job-leads/[id]/search/route.ts BEFORE this plan:
+  import { db } from '@/lib/db';
+  import { jobLeads, prospects } from '../../../../../../drizzle/schema';
+  import { eq } from 'drizzle-orm';
+  import { success } from '@/lib/api/types';
+  import { notFound, serverError } from '@/lib/api/errors';
+  import { logTimeline } from '@/lib/db/timeline';
+  import { scrapeConnections } from '@/features/job-leads/lib/scrape-connections';
+  import { matchConnections } from '@/features/job-leads/lib/match-connections';
+  import { inferSeniority } from '@/features/job-leads/lib/seniority';
+  import { computeBridgeScore } from '@/features/job-leads/lib/prioritization';   <-- LINE 10, REMOVE
+  (blank line)<p>AFTER this plan:
+  import { db } from &#39;@/lib/db&#39;;
+  import { jobLeads, prospects } from &#39;../../../../../../drizzle/schema&#39;;
+  import { eq } from &#39;drizzle-orm&#39;;
+  import { success } from &#39;@/lib/api/types&#39;;
+  import { notFound, serverError } from &#39;@/lib/api/errors&#39;;
+  import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+  import { scrapeConnections } from &#39;@/features/job-leads/lib/scrape-connections&#39;;
+  import { matchConnections } from &#39;@/features/job-leads/lib/match-connections&#39;;
+  import { inferSeniority } from &#39;@/features/job-leads/lib/seniority&#39;;
+  (blank line)</p>
+<!-- Symbol consumers OUTSIDE this file (verified by scout — DO NOT TOUCH any of these): -->
+<p>  src/app/api/job-leads/[id]/recommendations/route.ts:13  — imports and uses <code>computeBridgeScore</code>
+  src/app/api/job-leads/[id]/recommendations/route.ts:46  — calls <code>computeBridgeScore(row.prospect, row.contact)</code>
+  src/features/job-leads/lib/prioritization.ts:34         — declares <code>export function computeBridgeScore(...)</code>
+  src/features/job-leads/lib/prioritization.ts:55         — internal call inside <code>buildRecommendations</code>
+  src/features/job-leads/lib/prioritization.test.ts       — Phase 2 test suite from TEST-A2 (multiple references)</p>
+<!-- After this plan, `computeBridgeScore` will appear ONLY in those locations (not in search/route.ts). -->
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Delete unused computeBridgeScore import + atomic commit (DEBT-A5)</name>
+  <files>
+    src/app/api/job-leads/[id]/search/route.ts
+  </files>
+  <action>
+    Per D-15 in CONTEXT.md:<pre><code>1. Open `src/app/api/job-leads/[id]/search/route.ts`.
+2. Confirm `computeBridgeScore` is referenced EXACTLY ONCE in the file (at line 10, the import). Run `grep -c &quot;computeBridgeScore&quot; src/app/api/job-leads/[id]/search/route.ts` — it must return `1`. If it returns &gt;1, the symbol is actually in use and this requirement is mis-specified; STOP and flag.
+3. Delete the entire line `import { computeBridgeScore } from &#39;@/features/job-leads/lib/prioritization&#39;;` (currently line 10). Leave all other imports and the blank line that follows intact.
+4. Confirm post-edit:
+   - `grep -c &quot;computeBridgeScore&quot; src/app/api/job-leads/[id]/search/route.ts` returns `0`.
+   - The other 9 imports at the top of the file are unchanged.
+   - The export usage from `prioritization.ts` is still intact across the codebase: `grep -rn &quot;computeBridgeScore&quot; src/` returns hits ONLY in `recommendations/route.ts`, `prioritization.ts`, and `prioritization.test.ts`.
+5. Run `npm run build` — MUST exit 0 with no warnings naming `computeBridgeScore`. This satisfies ROADMAP SC #4.
+6. Optionally run `npm run test:run` — the existing `prioritization.test.ts` (Phase 2 TEST-A2 coverage) MUST still pass since we did not touch the export. (Pre-push husky hook will run this anyway on commit.)
+7. Commit DEBT-A5 atomically per D-19:
+   ```
+   git add src/app/api/job-leads/[id]/search/route.ts
+   git commit -m &quot;feat(04): DEBT-A5 — drop unused computeBridgeScore import in search route&quot;
+   ```
+   (Match Phase 3&#39;s commit style.)
+</code></pre>
+  </action>
+  <verify>
+    <automated>! grep -q "computeBridgeScore" src/app/api/job-leads/[id]/search/route.ts &amp;&amp; grep -q "computeBridgeScore" src/app/api/job-leads/[id]/recommendations/route.ts &amp;&amp; npm run build &amp;&amp; git log -1 --oneline | grep -q "DEBT-A5"</automated>
+  </verify>
+  <done>
+    `computeBridgeScore` does not appear in `src/app/api/job-leads/[id]/search/route.ts`. The symbol is still present and used in `recommendations/route.ts` (sanity check that we didn't damage the export). `npm run build` exits 0. One atomic commit with `DEBT-A5` in the subject.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(n/a)</td>
+<td>No new trust boundary. One-line cleanup edit.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-04-09</td>
+<td>Information Disclosure</td>
+<td><code>src/app/api/job-leads/[id]/search/route.ts</code> import graph</td>
+<td>mitigate</td>
+<td>Reduces dependency-audit surface by one transitive import edge. Smaller import graph = fewer false signals when scanning for the prioritization module&#39;s reachability from the search route.</td>
+</tr>
+<tr>
+<td>T-04-10</td>
+<td>Tampering</td>
+<td><code>computeBridgeScore</code> export in <code>prioritization.ts</code></td>
+<td>accept</td>
+<td>Export is preserved (used by recommendations route + tests). No change to the export&#39;s reachability or signature.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+After the task:
+- `grep "computeBridgeScore" src/app/api/job-leads/[id]/search/route.ts` returns nothing.
+- `grep -rn "computeBridgeScore" src/` returns hits only in `recommendations/route.ts`, `prioritization.ts`, and `prioritization.test.ts` (three files).
+- `npm run build` exits 0 with no warning matching `computeBridgeScore`.
+- `npm run test:run` still passes the `prioritization.test.ts` suite (Phase 2 TEST-A2 regression).
+- `git log -1 --oneline` shows a single atomic commit with `DEBT-A5` in the subject.
+</verification><success_criteria>
+Plan is complete when:
+1. Line 10 of the previous state of `src/app/api/job-leads/[id]/search/route.ts` is gone (the file is now 9 imports instead of 10).
+2. `computeBridgeScore` is absent from the search route file.
+3. `computeBridgeScore` export is still intact in `prioritization.ts` and still used by `recommendations/route.ts`.
+4. `npm run build` exits 0.
+5. One atomic git commit with `DEBT-A5` in the subject.
+</success_criteria><output>
+After completion, create `.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-04-SUMMARY.md` covering: the one-line deletion, confirmation that the export survives untouched, and the SC #4 build-warning check.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-04-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/proxy.ts</li>
+<li>src/proxy.test.ts</li>
+<li>scripts/generate-api-token.ts</li>
+<li>env.example.txt</li>
+<li>package.json
+autonomous: true
+requirements:</li>
+<li>JL-B3</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;Requests to /api/* with a valid Bearer token (matching SHA-256 of API_TOKEN_HASH) and SINGLE_USER_EMAIL set pass through without invoking Clerk auth&quot;
+    - &quot;Requests with an invalid Bearer token fall through to the existing Clerk 401 envelope&quot;
+    - &quot;Requests with no Bearer header retain the existing Clerk-only behavior unchanged&quot;
+    - &quot;Multi-tenant safety: bearer bypass refuses when SINGLE_USER_EMAIL env is unset&quot;
+    - &quot;scripts/generate-api-token.ts produces a 64-char hex hash and a chmod-600 token file at <del>/.heimdall/api-token&quot;
+    - &quot;env.example.txt documents API_TOKEN_HASH and SINGLE_USER_EMAIL placeholders without leaking real values&quot;
+  artifacts:
+    - path: &quot;src/proxy.ts&quot;
+      provides: &quot;Clerk middleware extended with bearer-token bypass for /api/*&quot;
+      contains: &quot;API_TOKEN_HASH&quot;
+    - path: &quot;scripts/generate-api-token.ts&quot;
+      provides: &quot;One-time token generation script&quot;
+      contains: &quot;randomBytes(32)&quot;
+    - path: &quot;env.example.txt&quot;
+      provides: &quot;API_TOKEN_HASH and SINGLE_USER_EMAIL placeholders&quot;
+      contains: &quot;API_TOKEN_HASH=&quot;
+    - path: &quot;src/proxy.test.ts&quot;
+      provides: &quot;Four new test cases covering bearer-token bypass paths&quot;
+      contains: &quot;Bearer&quot;
+  key_links:
+    - from: &quot;scripts/generate-api-token.ts&quot;
+      to: &quot;src/proxy.ts&quot;
+      via: &quot;SHA-256 hash written to .env.local as API_TOKEN_HASH consumed by middleware&quot;
+      pattern: &quot;API_TOKEN_HASH&quot;
+    - from: &quot;</del>/.heimdall/api-token&quot;
+      to: &quot;src/proxy.ts&quot;
+      via: &quot;Authorization: Bearer header hashed and compared to process.env.API_TOKEN_HASH&quot;
+  pattern: &quot;Bearer&quot;
+</p>
+<hr>
+<objective>
+Extend the existing Clerk middleware in `src/proxy.ts` (the file is at `proxy.ts`, NOT `middleware.ts` — Phase 3 did not land the rename) to accept a long-lived bearer token from `~/.heimdall/api-token` as an alternative session source for `/api/*` requests, gated by `process.env.SINGLE_USER_EMAIL === 'steve@bronstein.org'` (matching the existing hardcoded `ALLOWED_EMAIL` lock). Also produce the one-time token-generation script the user will run before invoking the skill.<p>Purpose: D-19 and D-21 — the Claude Code skill (Plan 06) writes back to <code>/api/*</code> via REST. Without this bypass, the skill cannot authenticate (Clerk sessions are browser-bound). The single-user-lock check ensures the bypass cannot be enabled on a multi-tenant deployment.</p>
+<p>Output: An updated middleware that accepts <code>Authorization: Bearer &lt;token&gt;</code>, a token-generation script invokable via npx tsx, and the env example documenting both new variables.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@.planning/phases/05-job-leads-completion/05-PATTERNS.md
+@.planning/codebase/CONVENTIONS.md
+@CLAUDE.md<interfaces>
+Existing middleware shape in src/proxy.ts (full file, 51 lines) — extend the isApiPath branch BEFORE the await auth() call. Preserve the `/dashboard/*` path completely.<p>From src/proxy.ts (lines 4–32):</p>
+<pre><code class="language-typescript">const ALLOWED_EMAIL = &#39;steve@bronstein.org&#39;;
+const isProtectedRoute = createRouteMatcher([&#39;/dashboard(.*)&#39;, &#39;/api/(.*)&#39;]);
+
+export default clerkMiddleware(async (auth, req: NextRequest) =&gt; {
+  if (!isProtectedRoute(req)) return;
+  const isApiPath = req.nextUrl.pathname.startsWith(&#39;/api/&#39;);
+  if (isApiPath) {
+    const { userId, sessionClaims } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: &#39;Unauthorized&#39; },
+        { status: 401 }
+      );
+    }
+    // ... email lock check ...
+    return;
+  }
+  // ... dashboard path ...
+});
+</code></pre>
+<p>Existing test pattern in src/proxy.test.ts uses vi.hoisted + Proxy mock of @clerk/nextjs/server. The mockAuthReturn variable is module-scoped (line 9–12) and tests set it in beforeEach. Bearer-token tests must set request headers via <code>new NextRequest(new URL(url), { headers: { authorization: &#39;Bearer &lt;token&gt;&#39; } })</code>.</p>
+<p>Existing script pattern in scripts/import-linkedin.ts (lines 1–11):</p>
+<pre><code class="language-typescript">import { config } from &#39;dotenv&#39;;
+config({ path: &#39;.env.local&#39; });
+import * as fs from &#39;fs&#39;;
+import * as path from &#39;path&#39;;
+</code></pre>
+<p>Top-level main() + main().catch(...) with process.exit pattern at lines 30 and 131.</p>
+<p>Existing env.example.txt structure: section headers with <code># =====</code> rules and <code>KEY=  # Example: value</code> lines.</p>
+<p>Web Crypto SHA-256 (Edge-compatible, no Node crypto in middleware):</p>
+<pre><code class="language-typescript">async function sha256Hex(input: string): Promise&lt;string&gt; {
+  const buf = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest(&#39;SHA-256&#39;, buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) =&gt; b.toString(16).padStart(2, &#39;0&#39;))
+    .join(&#39;&#39;);
+}
+</code></pre>
+<p>Node crypto (for the script, runs in Node — not Edge):</p>
+<pre><code class="language-typescript">import { randomBytes, createHash } from &#39;crypto&#39;;
+const token = randomBytes(32).toString(&#39;hex&#39;); // 64-char hex
+const hash = createHash(&#39;sha256&#39;).update(token).digest(&#39;hex&#39;); // 64-char hex
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: Extend middleware with bearer-token bypass</name>
+  <read_first>
+    - src/proxy.ts (full file, 51 lines)
+    - src/proxy.test.ts (full file, ~199 lines, for the vi.hoisted + Proxy mock pattern and existing test categories A–E)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"MOD src/proxy.ts" (lines 202–260 of PATTERNS for the exact bypass placement)
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md §D-19, §D-21 (the auth contract)
+  </read_first>
+  <behavior>
+    - Test 1: GET /api/companies with `Authorization: Bearer <valid-token>` header AND `API_TOKEN_HASH=<sha256(valid-token)>` AND `SINGLE_USER_EMAIL=steve@bronstein.org` → returns undefined (pass-through), and `mockAuthReturn`'s Clerk auth() is NOT invoked
+    - Test 2: GET /api/companies with `Authorization: Bearer wrong-token` and a valid hash env var → falls through to Clerk; returns the 401 envelope (`{ success: false, error: 'Unauthorized' }`) when no Clerk session
+    - Test 3: GET /api/companies with no Authorization header → existing Clerk-only behavior is preserved exactly (401 envelope on no session)
+    - Test 4: GET /api/companies with valid Bearer token BUT `SINGLE_USER_EMAIL` env unset → bypass rejected; falls through to Clerk (multi-tenant safety per D-21)
+    - Test 5: /dashboard/* with `Authorization: Bearer <valid-token>` → bearer header is IGNORED on dashboard paths (the bypass is /api/*-only); auth.protect() is still invoked
+  </behavior>
+  <files>src/proxy.ts, src/proxy.test.ts</files>
+  <action>
+    Add an Edge-compatible `sha256Hex` helper at the top of `src/proxy.ts` using `crypto.subtle.digest('SHA-256', ...)` (Web Crypto, available in Next.js middleware runtime; do NOT import Node's `crypto` module which fails on Edge).<pre><code>Inside the existing `isApiPath` branch, BEFORE the `await auth()` call on line 19, insert a bearer-token bypass block:
+1. Read `req.headers.get(&#39;authorization&#39;)` — if not present or does not start with `&#39;Bearer &#39;`, fall through to the existing Clerk path unchanged.
+2. Slice the token from the header; compute `sha256Hex(token)`.
+3. Compare to `process.env.API_TOKEN_HASH` AND verify `process.env.SINGLE_USER_EMAIL === ALLOWED_EMAIL` (the existing `&#39;steve@bronstein.org&#39;` constant from line 4).
+4. If BOTH match: `return;` (Next middleware contract: returning undefined lets the request through without further auth).
+5. If either does not match: do NOT 401 here — fall through to the existing Clerk session check below (so a stale or missing token still presents the same 401 envelope the browser path would).
+
+Keep all other lines of `src/proxy.ts` unchanged. Do not rename the file (Phase 3 noted the rename to `middleware.ts` was deferred; out of scope).
+
+Then extend `src/proxy.test.ts` with a new `describe(&#39;proxy (F): bearer-token bypass for /api/* skill traffic&#39;, ...)` block covering the five behaviors above. Use `vi.stubEnv(&#39;API_TOKEN_HASH&#39;, ...)` and `vi.stubEnv(&#39;SINGLE_USER_EMAIL&#39;, &#39;steve@bronstein.org&#39;)` inside each test (and `vi.unstubAllEnvs()` in afterEach) — these are vitest 4 standard env-mock helpers and avoid mutating `process.env` directly. Compute the test token&#39;s SHA-256 hash inline via the same `crypto.subtle.digest` API (or `node:crypto` since the test runs in Node) — the assertion is &quot;what the middleware does,&quot; not &quot;how it hashes.&quot;
+
+Do not log the token or hash in middleware output. The middleware short-circuits silently on success.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/proxy.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/proxy.ts` contains a function `sha256Hex` using `crypto.subtle.digest('SHA-256', ...)`
+    - File `src/proxy.ts` reads `req.headers.get('authorization')` inside the `isApiPath` branch BEFORE the existing `await auth()` call on what was line 19
+    - File `src/proxy.ts` compares hashed token to `process.env.API_TOKEN_HASH` and gates on `process.env.SINGLE_USER_EMAIL === ALLOWED_EMAIL`
+    - File `src/proxy.ts` does NOT import from `'crypto'` (Node) — only `crypto.subtle` (Edge Web Crypto)
+    - File `src/proxy.test.ts` contains the new `describe('proxy (F): ...)` block with at least 5 `it(...)` cases
+    - `npm run test:run -- src/proxy.test.ts` passes all proxy tests (A, B, C, D, E from before + new F suite)
+    - `grep -c "Bearer" src/proxy.ts | xargs -I{} test {} -ge 1` succeeds (the word "Bearer" appears at least once in the middleware)
+    - `grep -c "console.log\|console.warn" src/proxy.ts | xargs -I{} test {} -eq 0` succeeds (no token logging)
+  </acceptance_criteria>
+  <done>
+    The middleware accepts `Authorization: Bearer <token>` as a single-user-only Clerk bypass on `/api/*` paths, with full test coverage of the four bypass-or-fallthrough decision paths.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Token generation script + env example + package.json script entry</name>
+  <read_first>
+    - scripts/import-linkedin.ts (lines 1–40, for the dotenv + top-level main() + process.exit pattern)
+    - env.example.txt (full file, for section header + KEY= line convention)
+    - package.json (lines 8–26 for scripts block style)
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md §D-19 (token-generation contract)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"NEW scripts/generate-api-token.ts" (lines 127–166)
+  </read_first>
+  <files>scripts/generate-api-token.ts, env.example.txt, package.json</files>
+  <action>
+    Create `scripts/generate-api-token.ts` with these responsibilities (full code shape in PATTERNS.md §"NEW scripts/generate-api-token.ts"):
+    1. Import `randomBytes` and `createHash` from Node `'crypto'` (this is a CLI script, not middleware — Node crypto is fine here).
+    2. Import `fs`, `path`, `os` from Node stdlib.
+    3. Top-level `async function main()` that: generates 32 random bytes hex-encoded (yielding a 64-char hex token), computes the SHA-256 of that token (also 64 hex chars), creates `~/.heimdall/` if missing (mode 0o700), writes the raw token to `~/.heimdall/api-token` with `fs.writeFileSync(tokenPath, token, { mode: 0o600 })`, then prints to stdout:
+       - The path where the token was written
+       - The line `API_TOKEN_HASH=<hash>` for the user to paste into `.env.local`
+       - The line `SINGLE_USER_EMAIL=steve@bronstein.org` reminder (with the user's actual email if `process.env.SINGLE_USER_EMAIL` is already set in `.env.local`)
+    4. `main().catch((err) => { console.error('Fatal error:', err); process.exit(1); });` at the bottom, matching `scripts/import-linkedin.ts` shape.<pre><code>DO NOT print the raw token to stdout — the file at `~/.heimdall/api-token` is the only place the plaintext token lives. Per D-19, the env var is the SHA-256 hash, never the plaintext token.
+
+Update `env.example.txt` per Pattern Map §&quot;MOD env.example.txt&quot; — add a `# Heimdall Service-Token Bypass (Phase 5)` section at the end (matching existing section-header style with `# =====` rules) with these two lines:
+```
+API_TOKEN_HASH=     # Example: 64-char hex SHA-256 of the raw token at ~/.heimdall/api-token
+SINGLE_USER_EMAIL=  # Example: steve@bronstein.org (must match ALLOWED_EMAIL in src/proxy.ts)
+```
+
+Update `package.json` scripts block (lines 9–25) to add `&quot;token:generate&quot;: &quot;tsx scripts/generate-api-token.ts&quot;`. Match the existing `&quot;db:seed&quot;: &quot;npx tsx ...&quot;` style — npx prefix per the project&#39;s existing pattern.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f scripts/generate-api-token.ts && grep -c "randomBytes(32)" scripts/generate-api-token.ts | xargs -I{} test {} -ge 1 && grep -c "createHash('sha256')" scripts/generate-api-token.ts | xargs -I{} test {} -ge 1 && grep -c "API_TOKEN_HASH=" env.example.txt | xargs -I{} test {} -ge 1 && grep -c "SINGLE_USER_EMAIL=" env.example.txt | xargs -I{} test {} -ge 1 && grep -c '"token:generate"' package.json | xargs -I{} test {} -ge 1</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `scripts/generate-api-token.ts` exists
+    - File imports `randomBytes` and `createHash` from `'crypto'`
+    - File contains `randomBytes(32).toString('hex')` (yields 64-char hex)
+    - File writes to `path.join(os.homedir(), '.heimdall', 'api-token')` with mode `0o600`
+    - File creates `~/.heimdall/` with `mkdirSync({ recursive: true, mode: 0o700 })` if absent
+    - File does NOT print the plaintext token to stdout (`grep -c "console.log.*token[^_h]" scripts/generate-api-token.ts | xargs -I{} test {} -eq 0` — token text never appears on a line that logs `token` outside of `path` references; sanity check)
+    - File ends with `main().catch((err) => { ... process.exit(1); });` pattern
+    - `env.example.txt` contains `API_TOKEN_HASH=` and `SINGLE_USER_EMAIL=` placeholder lines under a new section header
+    - `package.json` `scripts` object contains `"token:generate": "tsx scripts/generate-api-token.ts"`
+  </acceptance_criteria>
+  <done>
+    The user can run `npm run token:generate` (or `npx tsx scripts/generate-api-token.ts`) to produce a per-machine token and the SHA-256 hash to paste into `.env.local`. The env example documents the two new variables.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Code (skill) → /api/*</td>
+<td>Untrusted-by-default header; bearer token from <code>~/.heimdall/api-token</code> crosses into the Next.js middleware</td>
+</tr>
+<tr>
+<td>Filesystem → process</td>
+<td><code>~/.heimdall/api-token</code> (chmod 600) is the canonical token storage; readable only by the owning user</td>
+</tr>
+<tr>
+<td><code>.env.local</code> → process.env</td>
+<td><code>API_TOKEN_HASH</code> (hash, never plaintext) and <code>SINGLE_USER_EMAIL</code> reach the middleware via environment loading</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-02-01</td>
+<td>Spoofing</td>
+<td>Bearer token bypass on /api/*</td>
+<td>mitigate</td>
+<td>SHA-256 hash compared via <code>crypto.subtle.digest</code> (timing-attack resistance is acceptable here — single-user deployment, no concurrent attackers); plaintext token never stored on disk in repo or env (only the hash)</td>
+</tr>
+<tr>
+<td>T-05-02-02</td>
+<td>Spoofing</td>
+<td>Multi-tenant deployment misuse</td>
+<td>mitigate</td>
+<td>Explicit <code>process.env.SINGLE_USER_EMAIL === ALLOWED_EMAIL</code> gate refuses the bypass on any deployment where SINGLE_USER_EMAIL is unset or differs (per D-21)</td>
+</tr>
+<tr>
+<td>T-05-02-03</td>
+<td>Information Disclosure</td>
+<td>Token in logs</td>
+<td>mitigate</td>
+<td>Middleware short-circuits silently on bypass success; the generation script does not print the plaintext token to stdout (only the hash and the file path); token file is chmod 600 (owner-read-only); .env.local is gitignored</td>
+</tr>
+<tr>
+<td>T-05-02-04</td>
+<td>Elevation of Privilege</td>
+<td>Token replay</td>
+<td>accept</td>
+<td>Single-user app on a Vercel deployment + local Chrome; threat model accepts the long-lived token as a per-machine secret. Rotation is manual (regenerate file + update env var). YAGNI for revocation/expiry per CONTEXT.md <code>&lt;deferred&gt;</code></td>
+</tr>
+<tr>
+<td>T-05-02-05</td>
+<td>Tampering</td>
+<td>env.example.txt accidental real-secret commit</td>
+<td>mitigate</td>
+<td>env.example.txt contains placeholder text (<code>API_TOKEN_HASH=</code>) with <code># Example:</code> comments, never real values; <code>.env.local</code> is gitignored (preserved from prior phases)</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npm run test:run -- src/proxy.test.ts` passes all proxy tests (A, B, C, D, E from prior phases + new F suite for bearer bypass)
+- `npm run test:run` (full suite) passes (no regression in any other test)
+- `test -f scripts/generate-api-token.ts && test -x` is not required (script is run via tsx, not as an executable); but the file is syntactically valid TypeScript (`npx tsx --check scripts/generate-api-token.ts` exits 0 if available)
+- A manual dry-run of `npm run token:generate` from the project root writes a file to `~/.heimdall/api-token` with mode 600 and prints the hash to stdout (manual smoke; not automated to avoid clobbering an existing token)
+- `grep -E "^API_TOKEN_HASH|^SINGLE_USER_EMAIL" env.example.txt | wc -l` returns at least 2
+</verification><success_criteria>
+1. `/api/*` requests with `Authorization: Bearer <plaintext>` where SHA-256(plaintext) matches `process.env.API_TOKEN_HASH` AND `SINGLE_USER_EMAIL === 'steve@bronstein.org'` pass through the middleware without invoking Clerk's `auth()`.
+2. The same bearer header is IGNORED on `/dashboard/*` paths (bypass is api-only).
+3. Bearer tokens with the wrong hash, or missing SINGLE_USER_EMAIL, fall through to the existing 401 envelope path — no new error code, no new response shape.
+4. `scripts/generate-api-token.ts` exists and runs idempotently via `npm run token:generate`, writing a chmod-600 token file and printing the SHA-256 hash for the user to paste into `.env.local`.
+5. `env.example.txt` documents both `API_TOKEN_HASH=` and `SINGLE_USER_EMAIL=` with placeholder values only.
+</success_criteria><output>
+After completion, create `.planning/phases/05-job-leads-completion/05-02-SUMMARY.md` recording:
+- Confirmation that `npm run test:run -- src/proxy.test.ts` passes
+- The new test count delta (existing 5 describe blocks A–E + new F block; total `it()` count before/after)
+- Confirmation that the manual `npm run token:generate` smoke ran cleanly (or "skipped to preserve existing token") and the hash was written to `.env.local`
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

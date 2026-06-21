@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/components/layout/page-container.tsx</li>
+<li>src/components/ui/heading.tsx</li>
+<li>src/app/dashboard/exclusive/page.tsx</li>
+<li>src/app/dashboard/workspaces/page.tsx</li>
+<li>src/app/dashboard/workspaces/team/[[...rest]]/page.tsx</li>
+<li>src/app/dashboard/billing/page.tsx</li>
+<li>src/components/layout/info-sidebar.tsx</li>
+<li>src/components/ui/info-button.tsx</li>
+<li>src/config/infoconfig.ts</li>
+<li>src/app/dashboard/layout.tsx</li>
+<li>src/components/ui/infobar.tsx
+autonomous: true
+requirements:</li>
+<li>DEBT-A2
+tags:</li>
+<li>cleanup</li>
+<li>starter-template</li>
+<li>deletion</li>
+<li>infobar</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;src/app/dashboard/exclusive/ no longer exists (SC #1, SC #2)&quot;
+    - &quot;src/app/dashboard/workspaces/ no longer exists (SC #1, SC #2)&quot;
+    - &quot;src/app/dashboard/billing/ no longer exists (SC #1, SC #2)&quot;
+    - &quot;src/components/ui/infobar.tsx (805 lines) no longer exists (SC #2)&quot;
+    - &quot;src/components/ui/info-button.tsx no longer exists&quot;
+    - &quot;src/components/layout/info-sidebar.tsx no longer exists&quot;
+    - &quot;src/config/infoconfig.ts no longer exists&quot;
+    - &quot;InfobarProvider and InfoSidebar are no longer referenced in src/app/dashboard/layout.tsx&quot;
+    - &quot;infoContent prop no longer exists on PageContainer or Heading&quot;
+    - &quot;grep for &#39;infoContent&#39; across src/ returns zero hits&quot;
+    - &quot;npm run build exits 0 after all edits and deletions&quot;
+    - &quot;D-04: Transitive removal — infobar.tsx + info-button.tsx + info-sidebar.tsx + infoconfig.ts deleted; InfobarProvider + InfoSidebar stripped from dashboard/layout.tsx; infoContent prop dropped from PageContainer and Heading&quot;
+    - &quot;D-05: Every infoContent={...} call site swept; post-edit grep returns zero&quot;
+    - &quot;D-06: No replacement slot for InfoSidebar in dashboard layout (feature work out of scope)&quot;
+    - &quot;D-11: src/app/dashboard/exclusive, workspaces, workspaces/team, billing all deleted&quot;
+    - &quot;D-12: No edits to src/config/nav-config.ts (already clean of starter entries)&quot;
+    - &quot;D-19: atomic commit per DEBT-Ax preserved (one commit for DEBT-A2)&quot;
+  artifacts:
+    - path: &quot;.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-02-SUMMARY.md&quot;
+      provides: &quot;Plan completion record&quot;
+  key_links:
+    - from: &quot;src/app/dashboard/layout.tsx&quot;
+      to: &quot;(no InfobarProvider)&quot;
+      via: &quot;edit to remove InfobarProvider + InfoSidebar wrapper&quot;
+      pattern: &quot;grep -c &#39;InfobarProvider\|InfoSidebar&#39; src/app/dashboard/layout.tsx == 0&quot;
+    - from: &quot;src/components/layout/page-container.tsx&quot;
+      to: &quot;(no infoContent prop)&quot;
+      via: &quot;edit to drop the prop + the call site passing it to Heading&quot;
+  pattern: &quot;grep -c &#39;infoContent&#39; src/components/layout/page-container.tsx == 0&quot;
+</p>
+<hr>
+<objective>
+Execute DEBT-A2 — delete the four starter dashboard routes (`exclusive`, `workspaces`, `workspaces/team`, `billing`) AND the entire Infobar UI machinery that was wired into the dashboard layout. The 805-line `infobar.tsx` cannot be deleted in isolation: it's wired into `dashboard/layout.tsx` via `InfobarProvider` and `<InfoSidebar />`, and its `InfobarContent` type flows through the `infoContent` prop on `PageContainer` and `Heading`. Per D-04, this is a **transitive** removal — surgical deletion of `infobar.tsx` alone breaks the build.<p>Purpose: The four starter routes are Clerk-org / billing / workspace demo pages with no relationship to the Heimdall job-search CRM (verified by CONCERNS.md §&quot;Starter Template Infobar / Workspaces / Billing / Exclusive Pages&quot;). The Infobar machinery exists solely to support these four routes&#39; contextual right-side help panel — scout confirmed every <code>infoContent={...}</code> call site is one of these four pages. After this plan lands, the dashboard layout simplifies to <code>&lt;KBar&gt;&lt;SidebarProvider&gt;&lt;AppSidebar /&gt;&lt;SidebarInset&gt;...&lt;/SidebarInset&gt;&lt;/SidebarProvider&gt;&lt;SearchCommand /&gt;&lt;/KBar&gt;</code> (per D-06: no replacement panel).</p>
+<p>Output: 4 deleted route directories, 4 deleted machinery files (<code>infobar.tsx</code>, <code>info-button.tsx</code>, <code>info-sidebar.tsx</code>, <code>infoconfig.ts</code>), 3 edited files (<code>dashboard/layout.tsx</code>, <code>page-container.tsx</code>, <code>heading.tsx</code>).</p>
+<p><strong>Edit ordering is load-bearing</strong> — see Task 1 — the build will go red mid-plan if the order is wrong.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/04-starter-template-cleanup/04-CONTEXT.md
+@.planning/codebase/CONCERNS.md
+@.planning/codebase/ARCHITECTURE.md
+@CLAUDE.md
+@src/app/dashboard/layout.tsx
+@src/components/layout/page-container.tsx
+@src/components/ui/heading.tsx<interfaces>
+<!-- Current state of dashboard layout (will be stripped to remove InfobarProvider + InfoSidebar): -->
+src/app/dashboard/layout.tsx imports BEFORE this plan:
+  import { InfoSidebar } from '@/components/layout/info-sidebar';
+  import { InfobarProvider } from '@/components/ui/infobar';<p>Layout structure BEFORE this plan (lines 28-44):
+  <KBar>
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <InfobarProvider defaultOpen={false}>
+        <AppSidebar />
+        <SidebarInset>
+          <Header />
+          {children}
+        </SidebarInset>
+        <InfoSidebar side='right' />
+      </InfobarProvider>
+    </SidebarProvider>
+    <SearchCommand />
+  </KBar></p>
+<p>Layout structure AFTER this plan (D-06 — no replacement):
+  <KBar>
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <AppSidebar />
+      <SidebarInset>
+        <Header />
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+    <SearchCommand />
+  </KBar></p>
+<!-- Current PageContainer prop signature (will lose infoContent): -->
+<p>src/components/layout/page-container.tsx BEFORE this plan:</p>
+<ul>
+<li>imports <code>import type { InfobarContent } from &#39;@/components/ui/infobar&#39;;</code></li>
+<li>prop <code>infoContent?: InfobarContent</code> on the params object</li>
+<li>passes <code>infoContent={infoContent}</code> to <code>&lt;Heading&gt;</code> in BOTH the scrollable branch (line 63) and the non-scrollable branch (line 76)</li>
+</ul>
+<!-- Current Heading prop signature (will lose infoContent + InfoButton): -->
+<p>src/components/ui/heading.tsx BEFORE this plan:</p>
+<ul>
+<li>imports <code>import { InfoButton } from &#39;@/components/ui/info-button&#39;;</code></li>
+<li>imports <code>import type { InfobarContent } from &#39;@/components/ui/infobar&#39;;</code></li>
+<li>prop <code>infoContent?: InfobarContent</code> on HeadingProps</li>
+<li>renders <code>{infoContent &amp;&amp; &lt;div className=&#39;pt-1&#39;&gt;&lt;InfoButton content={infoContent} /&gt;&lt;/div&gt;}</code> block (lines 20-24)</li>
+</ul>
+<!-- The 4 starter pages being deleted are the ONLY infoContent call sites (verified by `grep -rn "infoContent" src/`): -->
+<p>src/app/dashboard/product/page.tsx:34 — <code>infoContent={productInfoContent}</code> (deleted in plan 04-01 — DO NOT touch from here)
+src/app/dashboard/workspaces/page.tsx:17 — <code>infoContent={workspacesInfoContent}</code> (deleted in this plan)
+src/app/dashboard/workspaces/team/[[...rest]]/page.tsx:17 — <code>infoContent={teamInfoContent}</code> (deleted in this plan)
+src/app/dashboard/billing/page.tsx:35 — <code>infoContent={billingInfoContent}</code> (deleted in this plan)
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Drop infoContent prop from PageContainer and Heading (build goes red — drives the next deletions)</name>
+  <files>
+    src/components/layout/page-container.tsx,
+    src/components/ui/heading.tsx
+  </files>
+  <action>
+    Per the load-bearing edit ordering in CONTEXT.md `<specifics>`: dropping the prop FIRST surfaces every call site as a TS error, which then drives Task 2's deletions deterministically.<pre><code>**In `src/components/layout/page-container.tsx`:**
+1. Remove the line `import type { InfobarContent } from &#39;@/components/ui/infobar&#39;;` (top of file).
+2. Remove the prop `infoContent?: InfobarContent` from the destructured params (line 29) AND from the type annotation (line 39).
+3. Remove the `infoContent={infoContent}` prop pass to `&lt;Heading&gt;` in BOTH branches (the scrollable branch around line 63 AND the non-scrollable branch around line 76). The `&lt;Heading title=... description=... /&gt;` invocation should pass only those two props.
+
+**In `src/components/ui/heading.tsx`:**
+1. Remove the line `import { InfoButton } from &#39;@/components/ui/info-button&#39;;`.
+2. Remove the line `import type { InfobarContent } from &#39;@/components/ui/infobar&#39;;`.
+3. Remove the `infoContent?: InfobarContent` field from the `HeadingProps` interface.
+4. Remove the `infoContent` parameter from the destructured component signature.
+5. Remove the entire `{infoContent &amp;&amp; (&lt;div className=&#39;pt-1&#39;&gt;&lt;InfoButton content={infoContent} /&gt;&lt;/div&gt;)}` JSX block (lines 20-24).
+
+Verify the build now reports TS errors ONLY at `infoContent={...}` call sites in the four starter routes (`product/page.tsx`, `workspaces/page.tsx`, `workspaces/team/[[...rest]]/page.tsx`, `billing/page.tsx`). If errors appear in any OTHER file (e.g., a Heimdall feature page), STOP — that means a new `infoContent` consumer slipped in and the scout was incomplete. Confirm with `grep -rn &quot;infoContent&quot; src/`.
+
+Per CLAUDE.md: TypeScript strict mode is on; remove imports cleanly (no unused-import warnings).
+</code></pre>
+  </action>
+  <verify>
+    <automated>! grep -n "infoContent" src/components/layout/page-container.tsx &amp;&amp; ! grep -n "infoContent" src/components/ui/heading.tsx</automated>
+  </verify>
+  <done>
+    `infoContent` does not appear in `page-container.tsx` or `heading.tsx`. `InfoButton` and `InfobarContent` are no longer imported. `npm run build` is allowed to report errors at this point — those errors must be ONLY in the four starter route files (product, workspaces, workspaces/team, billing) — they will be fixed by deletion in Task 2.<pre><code>**DO NOT COMMIT after Task 1 or Task 2** — the build will fail with TS errors until Task 3 deletes the consumers. Atomic commit per D-19 happens only at the end of Task 3.
+</code></pre>
+  </done>
+</task><task type="auto">
+  <name>Task 2: Delete four starter route directories (exclusive, workspaces, billing)</name>
+  <files>
+    src/app/dashboard/exclusive/page.tsx,
+    src/app/dashboard/workspaces/page.tsx,
+    src/app/dashboard/workspaces/team/[[...rest]]/page.tsx,
+    src/app/dashboard/billing/page.tsx
+  </files>
+  <action>
+    Per D-11 in CONTEXT.md: delete the three starter dashboard route directories outright. (The `product` route was deleted in plan 04-01 — do not touch.)<pre><code>1. `git rm -r src/app/dashboard/exclusive/`
+2. `git rm -r src/app/dashboard/workspaces/` (this removes both `workspaces/page.tsx` and `workspaces/team/[[...rest]]/page.tsx` in one operation since `team` is a subdirectory)
+3. `git rm -r src/app/dashboard/billing/`
+
+Verify zero remaining references to these routes in the codebase:
+- `grep -rn &quot;/dashboard/exclusive\|/dashboard/workspaces\|/dashboard/billing&quot; src/` MUST return zero hits.
+  Note: per CONTEXT.md `&lt;deferred&gt;`, `src/components/org-switcher.tsx` may contain a `router.push(&#39;/dashboard/workspaces&#39;)` reference, but that component is orphan (no callers) and is NOT named in DEBT-A2; leave it for a future cleanup phase. If grep returns ONLY a hit in `org-switcher.tsx`, that is acceptable (deferred per scope). If grep returns hits in any OTHER file, STOP and investigate.
+- `grep -rn &quot;infoContent&quot; src/` MUST now return zero hits (Task 1 stripped the prop; Task 2 deleted the call sites).
+
+Do NOT touch `src/config/nav-config.ts` — D-12 confirmed it has zero entries for these routes already. Do NOT add a custom `not-found.tsx` — CD-02 says rely on Next.js default 404.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test ! -d src/app/dashboard/exclusive &amp;&amp; test ! -d src/app/dashboard/workspaces &amp;&amp; test ! -d src/app/dashboard/billing &amp;&amp; ! grep -rn "infoContent" src/</automated>
+  </verify>
+  <done>
+    Three route directories deleted. `grep -rn "infoContent" src/` returns zero hits. `npm run build` may still report errors at this point (Task 3 strips the remaining Infobar machinery) but if there are TS errors related to `infoContent`, Task 1 was incomplete.
+  </done>
+</task><task type="auto">
+  <name>Task 3: Delete Infobar machinery files + strip wrapper from dashboard layout + atomic commit</name>
+  <files>
+    src/components/layout/info-sidebar.tsx,
+    src/components/ui/info-button.tsx,
+    src/config/infoconfig.ts,
+    src/app/dashboard/layout.tsx,
+    src/components/ui/infobar.tsx
+  </files>
+  <action>
+    Per D-04, D-06, and the edit ordering in CONTEXT.md `<specifics>`: delete the supporting machinery files first, then strip the wrapper from layout.tsx, then delete the largest file (`infobar.tsx`) last so every consumer is gone before the providing module disappears.<pre><code>1. `git rm src/components/layout/info-sidebar.tsx`
+2. `git rm src/components/ui/info-button.tsx`
+3. `git rm src/config/infoconfig.ts`
+4. Edit `src/app/dashboard/layout.tsx`:
+   - Remove the line `import { InfoSidebar } from &#39;@/components/layout/info-sidebar&#39;;`
+   - Remove the line `import { InfobarProvider } from &#39;@/components/ui/infobar&#39;;`
+   - Replace the JSX block (currently lines 29-43) so the structure matches the `&lt;interfaces&gt;` &quot;AFTER&quot; diagram: remove the `&lt;InfobarProvider defaultOpen={false}&gt;` opening/closing tags AND the `&lt;InfoSidebar side=&#39;right&#39; /&gt;` line. The result:
+     ```jsx
+     &lt;KBar&gt;
+       &lt;SidebarProvider defaultOpen={defaultOpen}&gt;
+         &lt;AppSidebar /&gt;
+         &lt;SidebarInset&gt;
+           &lt;Header /&gt;
+           {children}
+         &lt;/SidebarInset&gt;
+       &lt;/SidebarProvider&gt;
+       &lt;SearchCommand /&gt;
+     &lt;/KBar&gt;
+     ```
+   - Keep the existing `cookies()`-based `defaultOpen` logic. Keep `KBar`, `SidebarProvider`, `AppSidebar`, `Header`, `SidebarInset`, `SearchCommand` imports — those are all live Heimdall chrome.
+5. `git rm src/components/ui/infobar.tsx` — this is the 805-line file named in DEBT-A2. By this point every consumer (PageContainer prop, Heading import, InfoButton, InfoSidebar, infoconfig, four starter pages, layout wrapper) is gone.
+6. Verify final state:
+   - `grep -rn &quot;Infobar\|InfoSidebar\|InfoButton\|infoConfig&quot; src/` MUST return zero hits.
+   - `npm run build` MUST exit 0 — the build was red after Task 1, should now be green.
+7. Commit DEBT-A2 atomically per D-19:
+   ```
+   git add src/components/layout/page-container.tsx src/components/ui/heading.tsx \
+           src/app/dashboard/exclusive/ src/app/dashboard/workspaces/ src/app/dashboard/billing/ \
+           src/components/layout/info-sidebar.tsx src/components/ui/info-button.tsx \
+           src/config/infoconfig.ts src/app/dashboard/layout.tsx src/components/ui/infobar.tsx
+   git commit -m &quot;feat(04): DEBT-A2 — delete starter routes + Infobar machinery&quot;
+   ```
+   (Use `git status` first; the deleted files appear as &quot;deleted&quot; entries. Match Phase 3&#39;s commit style.)
+</code></pre>
+  </action>
+  <verify>
+    <automated>test ! -f src/components/ui/infobar.tsx &amp;&amp; test ! -f src/components/ui/info-button.tsx &amp;&amp; test ! -f src/components/layout/info-sidebar.tsx &amp;&amp; test ! -f src/config/infoconfig.ts &amp;&amp; ! grep -rn "Infobar\|InfoSidebar\|InfoButton" src/ &amp;&amp; npm run build &amp;&amp; git log -1 --oneline | grep -q "DEBT-A2"</automated>
+  </verify>
+  <done>
+    All four machinery files deleted. `dashboard/layout.tsx` no longer imports or renders any Infobar/InfoSidebar component. `npm run build` exits 0. One atomic commit exists with `DEBT-A2` in the subject.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(n/a)</td>
+<td>No new trust boundary. Pure deletion of starter chrome.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-04-03</td>
+<td>Information Disclosure</td>
+<td><code>src/app/dashboard/exclusive/</code> (Clerk org Pro-plan gating demo)</td>
+<td>mitigate</td>
+<td>Reduces attack surface by removing a starter route that displayed Clerk Pro-plan upsell UI unrelated to Heimdall. Post-deletion, the route returns 404 by Next.js framework default.</td>
+</tr>
+<tr>
+<td>T-04-04</td>
+<td>Information Disclosure</td>
+<td><code>src/app/dashboard/billing/</code>, <code>src/app/dashboard/workspaces/</code></td>
+<td>mitigate</td>
+<td>Reduces attack surface by removing two starter routes that exposed billing/workspace placeholders. Post-deletion, the routes return 404.</td>
+</tr>
+<tr>
+<td>T-04-05</td>
+<td>Tampering</td>
+<td><code>src/components/ui/infobar.tsx</code> (805 lines of dead UI)</td>
+<td>mitigate</td>
+<td>Removes a large unmonitored UI surface from the bundle. Smaller bundle = smaller dependency-audit surface = fewer transitive vulnerabilities to triage.</td>
+</tr>
+<tr>
+<td>T-04-06</td>
+<td>Denial of Service</td>
+<td><code>infoConfig</code> (805-line static config + 805-line bar component)</td>
+<td>accept</td>
+<td>Bundle bloat is a performance concern, not a DoS vector for a single-user app. Removing it improves baseline, but no real DoS risk was present.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+After all three tasks:
+- All four route directories (`exclusive`, `workspaces`, `workspaces/team`, `billing`) absent from `src/app/dashboard/`.
+- All four machinery files (`infobar.tsx`, `info-button.tsx`, `info-sidebar.tsx`, `infoconfig.ts`) absent from their paths.
+- `grep -rn "Infobar\|InfoSidebar\|InfoButton\|infoContent\|infoConfig" src/` returns zero hits.
+- `grep -rn "/dashboard/exclusive\|/dashboard/billing" src/` returns zero hits. `grep -rn "/dashboard/workspaces" src/` returns hits ONLY in `src/components/org-switcher.tsx` (deferred orphan, acceptable).
+- `npm run build` exits 0.
+- `git log -1 --oneline` shows a single atomic commit with `DEBT-A2` in the subject.
+</verification><success_criteria>
+Plan is complete when:
+1. None of `src/app/dashboard/{exclusive,workspaces,billing}` exist.
+2. None of `src/components/ui/infobar.tsx`, `src/components/ui/info-button.tsx`, `src/components/layout/info-sidebar.tsx`, `src/config/infoconfig.ts` exist.
+3. `src/app/dashboard/layout.tsx` matches the "AFTER" diagram in `<interfaces>` — no InfobarProvider, no InfoSidebar.
+4. `src/components/layout/page-container.tsx` and `src/components/ui/heading.tsx` have no `infoContent` prop, no Infobar imports.
+5. `grep -rn "Infobar\|InfoSidebar\|InfoButton\|infoContent" src/` returns zero hits.
+6. `npm run build` exits 0.
+7. One atomic git commit with `DEBT-A2` in the subject.
+</success_criteria><output>
+After completion, create `.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-02-SUMMARY.md` covering: the four route deletions, the Infobar machinery deletions, the layout simplification, and confirmation that no Heimdall feature page was affected (every `infoContent` call site was owned by the four starter routes).
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

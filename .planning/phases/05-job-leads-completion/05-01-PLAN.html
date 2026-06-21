@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>drizzle/schema/enums.ts</li>
+<li>drizzle/schema/job-leads.ts</li>
+<li>src/lib/domain/types.ts</li>
+<li>src/features/job-leads/lib/types.ts</li>
+<li>src/features/job-leads/lib/match-connections.ts</li>
+<li>drizzle/migrations/<auto>_add_queued_failed_status_and_error_columns.sql</li>
+<li>drizzle/migrations/meta/_journal.json
+autonomous: true
+requirements:</li>
+<li>JL-B4</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;jobLeadStatusEnum has &#39;queued&#39; between &#39;scraped&#39; and &#39;searching&#39;&quot;
+    - &quot;jobLeadStatusEnum has &#39;failed&#39; as the final value&quot;
+    - &quot;job_leads table has nullable last_error (text) and last_error_at (timestamp with time zone) columns&quot;
+    - &quot;src/lib/domain/types.ts jobLeadStatusValues matches the enum order exactly&quot;
+    - &quot;ScrapedProspect type lives in src/features/job-leads/lib/types.ts and is imported by match-connections.ts&quot;
+    - &quot;Drizzle migration applies cleanly to the live DB via npm run db:migrate&quot;
+  artifacts:
+    - path: &quot;drizzle/schema/enums.ts&quot;
+      provides: &quot;jobLeadStatusEnum with &#39;queued&#39; and &#39;failed&#39; added&quot;
+      contains: &quot;&#39;queued&#39;&quot;
+    - path: &quot;drizzle/schema/job-leads.ts&quot;
+      provides: &quot;job_leads table with last_error and last_error_at columns (last_error_at is withTimezone per D-07)&quot;
+      contains: &quot;lastError: text(&#39;last_error&#39;)&quot;
+    - path: &quot;src/lib/domain/types.ts&quot;
+      provides: &quot;jobLeadStatusValues kept in lockstep with enum&quot;
+      contains: &quot;&#39;queued&#39;&quot;
+    - path: &quot;src/features/job-leads/lib/types.ts&quot;
+      provides: &quot;ScrapedProspect type relocated out of scrape-connections.ts&quot;
+      contains: &quot;export type ScrapedProspect&quot;
+    - path: &quot;drizzle/migrations/meta/_journal.json&quot;
+      provides: &quot;Drizzle migrations journal updated with new migration&quot;
+      contains: &quot;add_queued_failed_status_and_error_columns&quot;
+  key_links:
+    - from: &quot;drizzle/schema/enums.ts&quot;
+      to: &quot;src/lib/domain/types.ts&quot;
+      via: &quot;jobLeadStatusValues array mirrors jobLeadStatusEnum literal order&quot;
+      pattern: &quot;&#39;pending&#39;.<em>&#39;scraping&#39;.</em>&#39;scraped&#39;.<em>&#39;queued&#39;.</em>&#39;searching&#39;.<em>&#39;found&#39;.</em>&#39;ready&#39;.<em>&#39;actioned&#39;.</em>&#39;archived&#39;.*&#39;failed&#39;&quot;
+    - from: &quot;src/features/job-leads/lib/match-connections.ts&quot;
+      to: &quot;src/features/job-leads/lib/types.ts&quot;
+      via: &quot;import type { ScrapedProspect } from &#39;./types&#39;&quot;
+  pattern: &quot;from &#39;\./types&#39;&quot;
+</p>
+<hr>
+<objective>
+Add the `queued` and `failed` statuses plus error columns to the `job_leads` schema, relocate the `ScrapedProspect` type out of `scrape-connections.ts` (which will be deleted in Plan 07), and apply the Drizzle migration. This is the foundation Wave 1 plan — every downstream plan (API routes, UI, skill, tests, deletions) depends on this schema being live.<p>Purpose: D-06 / D-07 establish the queue model that JL-B4 requires; the type relocation breaks the only remaining external dependency on the soon-to-be-deleted scraper file so Plan 07 can delete it cleanly.</p>
+<p>Output: Updated schema files, an updated domain types file, a new TS module holding <code>ScrapedProspect</code>, the auto-generated migration, and a live DB that reflects the new shape.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@.planning/phases/05-job-leads-completion/05-PATTERNS.md
+@.planning/codebase/CONVENTIONS.md
+@CLAUDE.md<interfaces>
+Existing enum and types contract that must stay synchronized.<p>From drizzle/schema/enums.ts (line 160):</p>
+<pre><code class="language-typescript">export const jobLeadStatusEnum = pgEnum(&#39;job_lead_status&#39;, [
+  &#39;pending&#39;, &#39;scraping&#39;, &#39;scraped&#39;, &#39;searching&#39;, &#39;found&#39;, &#39;ready&#39;, &#39;actioned&#39;, &#39;archived&#39;
+]);
+</code></pre>
+<p>From src/lib/domain/types.ts (line 205):</p>
+<pre><code class="language-typescript">export const jobLeadStatusValues = [
+  &#39;pending&#39;, &#39;scraping&#39;, &#39;scraped&#39;, &#39;searching&#39;, &#39;found&#39;, &#39;ready&#39;, &#39;actioned&#39;, &#39;archived&#39;
+] as const;
+</code></pre>
+<p>From drizzle/schema/job-leads.ts (lines 36–39):</p>
+<pre><code class="language-typescript">createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull(),
+updatedAt: timestamp(&#39;updated_at&#39;).defaultNow().notNull(),
+archivedAt: timestamp(&#39;archived_at&#39;)
+</code></pre>
+<p>ScrapedProspect type currently in src/features/job-leads/lib/scrape-connections.ts (line 4):</p>
+<pre><code class="language-typescript">export type ScrapedProspect = {
+  name: string;
+  title: string | null;
+  linkedinUrl: string | null;
+  profileSnippet: string | null;
+  mutualConnectionNames: string[];
+};
+</code></pre>
+<p>Sole consumer in src/features/job-leads/lib/match-connections.ts (line 4):</p>
+<pre><code class="language-typescript">import type { ScrapedProspect } from &#39;./scrape-connections&#39;;
+</code></pre>
+<p>Migration analog (drizzle/migrations/0002_shocking_preak.sql, full content):</p>
+<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;contact_closeness&quot; ADD VALUE &#39;career_contact&#39; BEFORE &#39;acquaintance&#39;;
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Relocate ScrapedProspect type</name>
+  <read_first>
+    - src/features/job-leads/lib/scrape-connections.ts (lines 1–10, for the type definition)
+    - src/features/job-leads/lib/match-connections.ts (lines 1–10, for the import)
+    - .planning/codebase/CONVENTIONS.md (named-export and `import type` conventions)
+  </read_first>
+  <files>src/features/job-leads/lib/types.ts, src/features/job-leads/lib/match-connections.ts</files>
+  <action>
+    Create `src/features/job-leads/lib/types.ts` with a single named export `ScrapedProspect` whose shape mirrors the current definition in `scrape-connections.ts` line 4 (per Pattern Map §"DELETE `scrape-connections.ts`" planner-verification step). Do not import from `scrape-connections.ts` — the new file must be self-contained so `scrape-connections.ts` can be deleted in Plan 07 without cascading breakage. Use single-quote string literals and 2-space indentation per CONVENTIONS.md.<pre><code>Then update `src/features/job-leads/lib/match-connections.ts` line 4 to import `ScrapedProspect` from `&#39;./types&#39;` instead of `&#39;./scrape-connections&#39;`. Keep the `import type` qualifier (CONVENTIONS.md: type-only imports use `import type`). Do not touch any other import or function in this file.
+
+Do NOT yet remove the export from `scrape-connections.ts` — the file is still in-tree at this stage and will be deleted in Plan 07. Leaving the duplicate export momentarily is safe because the new consumer points at the new file.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -v "prioritization.ts:70" | grep -E "error TS" ; test $? -ne 0</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `src/features/job-leads/lib/types.ts` exists
+    - File contains exactly one exported type alias named `ScrapedProspect`
+    - The five field names (`name`, `title`, `linkedinUrl`, `profileSnippet`, `mutualConnectionNames`) and their types match scrape-connections.ts line 4 byte-for-byte
+    - `src/features/job-leads/lib/match-connections.ts` line 4 reads `import type { ScrapedProspect } from './types';`
+    - No new TypeScript errors introduced (compare against the known pre-existing `prioritization.ts:70` MapIterator error — that one must stay the only failure)
+    - `grep -n "from './scrape-connections'" src/features/job-leads/lib/match-connections.ts` returns 0 matches
+  </acceptance_criteria>
+  <done>
+    The `ScrapedProspect` type has a permanent home that does not depend on the soon-to-be-deleted scraper file, and `match-connections.ts` consumes the new path.
+  </done>
+</task><task type="auto" tdd="false">
+  <name>Task 2: Add 'queued' and 'failed' enum values plus error columns</name>
+  <read_first>
+    - drizzle/schema/enums.ts (full file, ~182 lines)
+    - drizzle/schema/job-leads.ts (full file, ~83 lines)
+    - src/lib/domain/types.ts (lines 195–220)
+    - drizzle/migrations/0002_shocking_preak.sql (analog for non-transactional ALTER TYPE)
+    - drizzle/migrations/0001_volatile_mastermind.sql (analog for ALTER TABLE ADD COLUMN)
+  </read_first>
+  <files>drizzle/schema/enums.ts, drizzle/schema/job-leads.ts, src/lib/domain/types.ts</files>
+  <action>
+    Modify `drizzle/schema/enums.ts` line 160's `jobLeadStatusEnum` literal array to insert `'queued'` between `'scraped'` and `'searching'`, and append `'failed'` after `'archived'`. The resulting order is exactly: pending, scraping, scraped, queued, searching, found, ready, actioned, archived, failed (per D-06).<pre><code>Modify `drizzle/schema/job-leads.ts`: between `prospectCount` (line 34) and `createdAt` (line 37) append two new column declarations:
+- `lastError: text(&#39;last_error&#39;)` (modeled on `roleTitle: text(&#39;role_title&#39;)` line 20 — nullable text, no default)
+- `lastErrorAt: timestamp(&#39;last_error_at&#39;, { withTimezone: true })` (per D-07 — Postgres `timestamp with time zone`. The other timestamps in this table do NOT use withTimezone, but D-07 was explicit about the bit for the error column; the cost is one line and matches the recorded decision.)
+
+Modify `src/lib/domain/types.ts` line 205&#39;s `jobLeadStatusValues` array to mirror the enum exactly: pending, scraping, scraped, queued, searching, found, ready, actioned, archived, failed. This array is consumed by Zod (`z.enum(jobLeadStatusValues)`) and UI select options per CONVENTIONS.md — order/spelling drift between this file and `enums.ts` breaks both runtime validation and TypeScript inference.
+
+Do NOT generate the migration here — that is Task 3&#39;s job and the `[BLOCKING]` migration task lives there to keep the schema-edit step reviewable independently from the SQL.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -E "^\s*'queued'" drizzle/schema/enums.ts | grep -v '^#' | grep -c queued | xargs -I{} test {} -eq 1 && grep -E "^\s*'failed'" drizzle/schema/enums.ts | grep -v '^#' | grep -c failed | xargs -I{} test {} -eq 1 && grep -c "lastError: text('last_error')" drizzle/schema/job-leads.ts | xargs -I{} test {} -eq 1 && grep -c "lastErrorAt: timestamp('last_error_at', { withTimezone: true })" drizzle/schema/job-leads.ts | xargs -I{} test {} -eq 1</automated>
+  </verify>
+  <acceptance_criteria>
+    - `drizzle/schema/enums.ts` `jobLeadStatusEnum` literal array contains both `'queued'` (between `'scraped'` and `'searching'`) and `'failed'` (after `'archived'`)
+    - `drizzle/schema/job-leads.ts` declares both `lastError: text('last_error')` and `lastErrorAt: timestamp('last_error_at', { withTimezone: true })` between `prospectCount` and `createdAt`
+    - `src/lib/domain/types.ts` `jobLeadStatusValues` array has exactly 10 elements in the same order as the enum
+    - The `withTimezone: true` on `lastErrorAt` is the ONLY use of that option in `job-leads.ts` (other timestamps remain bare); intentional per D-07.
+    - Pre-existing `prioritization.ts:70` TypeScript error remains the only TS error (no new ones introduced by the schema edits)
+  </acceptance_criteria>
+  <done>
+    Schema files and the domain types array are aligned on the new 10-value enum and the two error columns are declared (last_error_at as timestamp with time zone per D-07).
+  </done>
+</task><task type="auto">
+  <name>Task 3: [BLOCKING] Generate and apply Drizzle migration</name>
+  <read_first>
+    - drizzle.config.ts (for migrations directory path)
+    - drizzle/migrations/0002_shocking_preak.sql (analog: single-statement non-transactional ALTER TYPE)
+    - drizzle/migrations/0001_volatile_mastermind.sql (analog: ALTER TABLE ADD COLUMN with `--> statement-breakpoint` markers)
+    - drizzle/migrations/meta/_journal.json (will be updated by drizzle-kit)
+    - package.json (lines 19–20 for db:generate and db:migrate script definitions)
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md §D-23 (non-transactional ALTER TYPE caveat)
+  </read_first>
+  <files>drizzle/migrations/&lt;auto&gt;_add_queued_failed_status_and_error_columns.sql, drizzle/migrations/meta/_journal.json, drizzle/migrations/meta/&lt;n&gt;_snapshot.json</files>
+  <action>
+    Run `npm run db:generate -- --name=add_queued_failed_status_and_error_columns` and let Drizzle Kit emit the new migration. The expected SQL (per Pattern Map §"NEW drizzle/migrations/&lt;auto&gt;") is four statements separated by `--> statement-breakpoint`:
+    - `ALTER TYPE "public"."job_lead_status" ADD VALUE 'queued' BEFORE 'searching';` (drizzle-kit may emit this with or without an `AFTER 'scraped'` clause — both forms are valid Postgres; preserve whatever drizzle-kit emits)
+    - `ALTER TYPE "public"."job_lead_status" ADD VALUE 'failed';` (appended at end — drizzle-kit typically omits any positional clause when appending to the tail; if it emits `AFTER 'archived'`, preserve that too)
+    - `ALTER TABLE "job_leads" ADD COLUMN "last_error" text;`
+    - `ALTER TABLE "job_leads" ADD COLUMN "last_error_at" timestamp with time zone;`<pre><code>Per D-23: Postgres `ALTER TYPE ADD VALUE` is non-transactional and CANNOT run inside an explicit `BEGIN; ... COMMIT;` block. Hand-edit the generated file ONLY if drizzle-kit wraps the statements in `BEGIN;` / `COMMIT;` (the 0002 analog confirms drizzle-kit does NOT wrap in Heimdall — but if a future drizzle-kit version starts wrapping, this is the only failure mode that requires intervention).
+
+**Hand-edit fallback rules — IF and ONLY IF the generated file contains `BEGIN;` or `COMMIT;`:**
+1. Strip the `BEGIN;` and `COMMIT;` lines so the ALTER TYPE statements run outside a transaction
+2. Preserve any `AFTER &#39;&lt;value&gt;&#39;` or `BEFORE &#39;&lt;value&gt;&#39;` clauses on the `ADD VALUE` statements — both positional forms are valid and the migration semantics depend on the value&#39;s position in the enum order
+3. Change the two `ALTER TYPE` statements to use `ADD VALUE IF NOT EXISTS` (idempotency guard for safe re-runs)
+4. Ensure the two ALTER TYPE statements appear at the top of the file with `--&gt; statement-breakpoint` between each statement
+
+Do NOT strip `AFTER` / `BEFORE` clauses as a routine cleanup — those clauses are not the problem D-23 warns about. The actual problem D-23 names is non-transactional execution (BEGIN/COMMIT wrapping). Both `ADD VALUE &#39;queued&#39; BEFORE &#39;searching&#39;` and `ADD VALUE &#39;queued&#39; AFTER &#39;scraped&#39;` are valid Postgres and produce the same enum order; whichever form drizzle-kit emits should be left as-is.
+
+After inspecting (and optionally hand-editing) the generated file, run `npm run db:migrate` and confirm exit code 0. This is the BLOCKING gate per the orchestrator&#39;s `&lt;schema_push_requirement&gt;` — without applying the migration, the rest of the phase passes TypeScript checks (Drizzle types come from schema files, not the live DB) but every downstream API write to `last_error` or status `&#39;queued&#39;` / `&#39;failed&#39;` will fail at runtime.
+
+The migration touches the live development Neon database (per `DATABASE_URL` in `.env.local`). This is single-developer / single-user infrastructure — no staging step needed per D-24 (no data migration required; existing rows keep their current status).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run db:migrate 2>&1 | tee /tmp/heimdall-migrate.log; grep -E "(error|failed|rejected)" /tmp/heimdall-migrate.log ; test $? -ne 0 && ls drizzle/migrations/*_add_queued_failed_status_and_error_columns.sql 1>/dev/null 2>&1</automated>
+  </verify>
+  <acceptance_criteria>
+    - File matching `drizzle/migrations/*_add_queued_failed_status_and_error_columns.sql` exists
+    - File content contains `ALTER TYPE "public"."job_lead_status" ADD VALUE 'queued'` (with or without an `AFTER`/`BEFORE` clause — both are valid)
+    - File content contains `ALTER TYPE "public"."job_lead_status" ADD VALUE 'failed'` (with or without a positional clause)
+    - File content contains `ALTER TABLE "job_leads" ADD COLUMN "last_error" text`
+    - File content contains `ALTER TABLE "job_leads" ADD COLUMN "last_error_at" timestamp with time zone`
+    - File content does NOT contain `BEGIN;` or `COMMIT;` (non-transactional requirement per D-23 — hand-edit if present)
+    - `npm run db:migrate` exits 0
+    - `drizzle/migrations/meta/_journal.json` has a new entry referencing `add_queued_failed_status_and_error_columns`
+    - Post-migration, a `psql $DATABASE_URL -c "SELECT unnest(enum_range(NULL::job_lead_status))"` would return 10 values (skip if no psql; the journal entry + clean migrate exit are the primary gate)
+  </acceptance_criteria>
+  <done>
+    The live development DB accepts the new enum values and has the two new columns (last_error_at as `timestamp with time zone`), so downstream API routes and the skill can write `'queued'`, `'searching'`, `'found'`, `'failed'`, and `last_error` values without runtime failures.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Schema → DB</td>
+<td>Drizzle migration runs DDL against Neon Postgres; the live DB is single-user (Heimdall dev DB)</td>
+</tr>
+<tr>
+<td>TS source → runtime</td>
+<td><code>jobLeadStatusValues</code> array drives Zod validation and UI option lists; drift from the DB enum causes silent validation gaps</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-01-01</td>
+<td>Tampering</td>
+<td>DB schema (job_lead_status enum)</td>
+<td>mitigate</td>
+<td>Migration is non-transactional ALTER TYPE per D-23; uses ADD VALUE (additive only) — no destructive ALTER, no data loss path</td>
+</tr>
+<tr>
+<td>T-05-01-02</td>
+<td>Information Disclosure</td>
+<td><code>last_error</code> column</td>
+<td>mitigate</td>
+<td>Column is bounded at 200 chars via Zod validation downstream (D-09 / Plan 04); React auto-escapes when rendered in Plan 05 — no dangerouslySetInnerHTML path planned</td>
+</tr>
+<tr>
+<td>T-05-01-03</td>
+<td>Repudiation</td>
+<td>Status enum drift</td>
+<td>mitigate</td>
+<td><code>jobLeadStatusValues</code> in domain/types.ts MUST match the pgEnum literal order; verified by acceptance criteria (10 elements, same order) — drift would silently accept invalid statuses at the Zod boundary</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npm run db:migrate` exits 0 (idempotent — re-running is a no-op once the migration is in the journal)
+- `npx tsc --noEmit` produces only the pre-existing `prioritization.ts:70` MapIterator error and no new errors
+- `grep -c "'queued'" drizzle/schema/enums.ts src/lib/domain/types.ts` shows at least 1 occurrence in each file
+- `grep -c "ScrapedProspect" src/features/job-leads/lib/types.ts src/features/job-leads/lib/match-connections.ts` shows at least 1 occurrence in each file
+- `grep -c "withTimezone: true" drizzle/schema/job-leads.ts` returns 1 (the new last_error_at column — per D-07)
+- `cat drizzle/migrations/meta/_journal.json | grep add_queued_failed_status_and_error_columns` returns at least one match
+</verification><success_criteria>
+1. The live DB enum `job_lead_status` accepts both `'queued'` and `'failed'` (verifiable by attempting an UPDATE on any seeded lead row after migration).
+2. The live DB `job_leads` table has nullable `last_error` (text) and `last_error_at` (`timestamp with time zone`) columns.
+3. `import type { ScrapedProspect } from '@/features/job-leads/lib/types'` resolves at compile time — the type's permanent home is established before Plan 07 deletes `scrape-connections.ts`.
+4. `jobLeadStatusValues` in `src/lib/domain/types.ts` is byte-identical to the enum literal in `drizzle/schema/enums.ts` (10 elements, same order).
+5. No TypeScript errors are introduced (the pre-existing `prioritization.ts:70` error remains the only one, per `.planning/phases/04-starter-template-cleanup/deferred-items.md`).
+</success_criteria><output>
+After completion, create `.planning/phases/05-job-leads-completion/05-01-SUMMARY.md` recording:
+- Final migration filename (drizzle-kit auto-numbers it; record for Plan 04 reference)
+- Whether the migration needed hand-editing (D-23 fallback — note any BEGIN/COMMIT wrapping observed, and whether AFTER/BEFORE clauses were present in the emitted file)
+- Output of `npm run db:migrate` (PASS / row count if any)
+- The new `ScrapedProspect` location confirmed by Plan 07's deletion-test in advance
+- Confirmation that `lastErrorAt` was declared with `{ withTimezone: true }` per D-07
+</output>
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

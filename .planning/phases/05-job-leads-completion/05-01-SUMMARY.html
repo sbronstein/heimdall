@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 01
+subsystem: database</p>
+<p>tags: [drizzle, postgres, neon, schema-migration, job-leads, enum]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: prior-job-leads-foundation
+provides: existing job_lead_status enum (8 values) and job_leads table
+provides:</li>
+<li>jobLeadStatusEnum extended with &#39;queued&#39; (between &#39;scraped&#39; and &#39;searching&#39;) and &#39;failed&#39; (terminal)</li>
+<li>job_leads.last_error (text, nullable) and last_error_at (timestamp with time zone, nullable) columns</li>
+<li>jobLeadStatusValues in src/lib/domain/types.ts synchronized with the DB enum (10 values, same order)</li>
+<li>ScrapedProspect type permanent home at src/features/job-leads/lib/types.ts</li>
+<li>migration 0007_add_queued_failed_status_and_error_columns applied to the live Neon dev DB
+affects: [05-02, 05-03, 05-04, 05-05, 05-06, 05-07]</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;Hand-edit drizzle-kit generated SQL when meta-snapshot drift produces a non-incremental diff&quot;
+    - &quot;Use ALTER TYPE ADD VALUE IF NOT EXISTS as idempotency guard for enum-additive migrations (D-23 fallback)&quot;</p>
+<p>key-files:
+  created:
+    - src/features/job-leads/lib/types.ts
+    - drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql
+    - drizzle/migrations/meta/0007_snapshot.json
+  modified:
+    - src/features/job-leads/lib/match-connections.ts
+    - drizzle/schema/enums.ts
+    - drizzle/schema/job-leads.ts
+    - src/lib/domain/types.ts
+    - drizzle/migrations/meta/_journal.json</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Hand-edited the generated 0007 SQL to contain only the four ALTER statements (the actual delta), because the missing drizzle/migrations/meta/0006_snapshot.json caused drizzle-kit to diff against 0005 and re-emit 0006&#39;s CREATE TABLE statements&quot;</li>
+<li>&quot;Added IF NOT EXISTS guards to both ADD VALUE statements per D-23 fallback rules (idempotency for safe re-runs)&quot;</li>
+<li>&quot;Preserved the BEFORE &#39;searching&#39; positional clause on the &#39;queued&#39; ADD VALUE per the plan&#39;s explicit instruction (both AFTER/BEFORE are valid Postgres; the position determines enum-order semantics)&quot;</li>
+<li>&quot;Used { withTimezone: true } on last_error_at per D-07 — intentionally divergent from the other timestamps in the table, which remain bare&quot;</li>
+<li>&quot;Did NOT reconstruct the missing 0006_snapshot.json — out of scope for this plan; deferred to follow-up so future migration-generation works correctly&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;jobLeadStatusValues array in src/lib/domain/types.ts is kept in lockstep with jobLeadStatusEnum order — drift here breaks Zod validation at the API boundary and UI option lists silently&quot;</li>
+<li>&quot;ScrapedProspect type lives at src/features/job-leads/lib/types.ts (no dependency on scrape-connections.ts, which Plan 07 will delete)&quot;</li>
+</ul>
+<p>requirements-completed: [JL-B4]</p>
+<h1>Metrics</h1>
+<h2>duration: ~20min
+completed: 2026-05-14</h2>
+<h1>Phase 05 Plan 01: Schema Foundation Summary</h1>
+<p><strong>Added queued/failed statuses and last_error/last_error_at columns to job_leads, relocated ScrapedProspect type to its permanent home, and applied migration 0007 to the live Neon dev DB.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~20 min</li>
+<li><strong>Tasks:</strong> 3</li>
+<li><strong>Files modified:</strong> 8 (4 source, 1 new type module, 1 new migration SQL, 1 new snapshot, 1 journal update)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><code>jobLeadStatusEnum</code> now carries all 10 values in the order <code>pending → scraping → scraped → queued → searching → found → ready → actioned → archived → failed</code> — matching D-06 exactly.</li>
+<li><code>job_leads</code> table has nullable <code>last_error</code> (text) and <code>last_error_at</code> (timestamp with time zone) columns for surfacing the latest skill-failure category in the UI per D-07.</li>
+<li><code>jobLeadStatusValues</code> in <code>src/lib/domain/types.ts</code> mirrors the enum byte-for-byte, keeping Zod validation and UI option lists in sync.</li>
+<li><code>ScrapedProspect</code> type relocated to <code>src/features/job-leads/lib/types.ts</code> so Plan 07 can delete <code>scrape-connections.ts</code> without cascading breakage.</li>
+<li>Migration <code>0007_add_queued_failed_status_and_error_columns.sql</code> applied cleanly to the live Neon dev DB; idempotent re-run verified (second <code>npm run db:migrate</code> was a no-op).</li>
+</ul>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically on branch <code>worktree-agent-adb9b2af0d87d1d97</code>:</p>
+<ol>
+<li><strong>Task 1: Relocate ScrapedProspect type</strong> — <code>29b1d1a</code> (refactor)</li>
+<li><strong>Task 2: Add &#39;queued&#39; and &#39;failed&#39; enum values plus error columns</strong> — <code>eec431b</code> (feat)</li>
+<li><strong>Task 3: [BLOCKING] Generate and apply Drizzle migration</strong> — <code>79f8b1c</code> (feat)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>src/features/job-leads/lib/types.ts</code> — <strong>new</strong>; permanent home for <code>ScrapedProspect</code> (self-contained, no imports)</li>
+<li><code>src/features/job-leads/lib/match-connections.ts</code> — import path updated to <code>./types</code></li>
+<li><code>drizzle/schema/enums.ts</code> — <code>jobLeadStatusEnum</code> extended with <code>&#39;queued&#39;</code> and <code>&#39;failed&#39;</code></li>
+<li><code>drizzle/schema/job-leads.ts</code> — added <code>lastError: text(&#39;last_error&#39;)</code> and <code>lastErrorAt: timestamp(&#39;last_error_at&#39;, { withTimezone: true })</code> between <code>prospectCount</code> and <code>createdAt</code></li>
+<li><code>src/lib/domain/types.ts</code> — <code>jobLeadStatusValues</code> mirrors the enum (10 elements)</li>
+<li><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> — <strong>new</strong>; 4 hand-edited ALTER statements (see Deviations below)</li>
+<li><code>drizzle/migrations/meta/0007_snapshot.json</code> — <strong>new</strong>; correct post-migration schema snapshot</li>
+<li><code>drizzle/migrations/meta/_journal.json</code> — appended <code>0007_add_queued_failed_status_and_error_columns</code> entry</li>
+</ul>
+<h2>Migration details (per plan output spec)</h2>
+<ul>
+<li><strong>Final migration filename:</strong> <code>0007_add_queued_failed_status_and_error_columns.sql</code></li>
+<li><strong>Hand-editing required:</strong> YES — but <strong>NOT</strong> for the D-23 reason the plan anticipated. The generated SQL did not contain <code>BEGIN;</code>/<code>COMMIT;</code> wrapping (D-23&#39;s stated concern was not the actual failure mode). Instead, the generated file contained a full re-emission of <code>0006</code>&#39;s <code>CREATE TABLE</code> statements because <code>drizzle/migrations/meta/0006_snapshot.json</code> is missing from the repo (it was never committed when <code>0006_add_job_leads</code> shipped). drizzle-kit therefore diffed the current schema against <code>0005_snapshot.json</code> (the last snapshot it could find) and produced a non-incremental SQL that would have failed against the live DB (tables already exist).</li>
+<li><strong>Hand-edit applied:</strong> Replaced the generated SQL with the actual delta — the four ALTER statements per the plan&#39;s Pattern Map. Added <code>IF NOT EXISTS</code> to both <code>ADD VALUE</code> statements per D-23 fallback rule 3 (idempotency guard).</li>
+<li><strong>AFTER/BEFORE clauses:</strong> drizzle-kit emitted the post-state snapshot only (no AFTER/BEFORE clauses in the original SQL since it was a CREATE TYPE). The hand-edit uses <code>BEFORE &#39;searching&#39;</code> on <code>queued</code> (matches plan instructions) and no positional clause on <code>failed</code> (appended).</li>
+<li><strong><code>npm run db:migrate</code> result:</strong> PASS — exit 0, applied successfully. Live DB verified post-migrate: 10 enum values, both columns present and nullable.</li>
+<li><strong><code>lastErrorAt</code> <code>withTimezone</code> confirmation:</strong> YES — declared with <code>{ withTimezone: true }</code>, only such use in <code>job-leads.ts</code> (other timestamps remain bare per D-07).</li>
+<li><strong><code>ScrapedProspect</code> new location verification:</strong> <code>src/features/job-leads/lib/types.ts</code> exists, exports the type, and <code>match-connections.ts</code> line 4 reads <code>import type { ScrapedProspect } from &#39;./types&#39;;</code>. Plan 07&#39;s deletion-test gate (filesystem-existence check) will pass once <code>scrape-connections.ts</code> is removed in Plan 07.</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>Hand-edit instead of regenerate.</strong> Reconstructing the missing <code>0006_snapshot.json</code> to make drizzle-kit produce a clean diff would have been the &quot;by-the-book&quot; fix, but it requires synthesizing the post-0006 schema state and is out of scope for a Wave-1 schema foundation plan. The hand-edited SQL is the correct delta and matches the Pattern Map&#39;s expectation; this is the simpler, lower-risk path.</li>
+<li><strong><code>IF NOT EXISTS</code> on ADD VALUE.</strong> Plan&#39;s D-23 fallback rule 3 calls for this only when stripping <code>BEGIN;</code>/<code>COMMIT;</code>. The generated SQL had no transaction wrap, so the rule did not strictly trigger, but the guard is cheap and matches the recorded decision intent (safe re-runs). Kept in for idempotency.</li>
+<li><strong>Position of <code>failed</code> in the enum.</strong> Plan says <code>failed</code> at the end. drizzle-kit&#39;s CREATE TYPE emitted the values in that order; the hand-edited ALTER TYPE appended <code>failed</code> with no AFTER/BEFORE clause. Postgres appends to the tail by default — produces the correct order.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Rule 3 - Blocking issue auto-fixed</h3>
+<p><strong>1. [Rule 3 - Blocking] Hand-edited the generated migration SQL because drizzle-kit produced a non-incremental diff</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 (Generate and apply Drizzle migration)</li>
+<li><strong>Issue:</strong> <code>npm run db:generate</code> produced a migration that included a full re-creation of <code>job_leads</code>, <code>prospects</code>, <code>prospect_bridges</code>, and the <code>job_lead_status</code> / <code>seniority_level</code> ENUM types — not just the delta. Root cause: <code>drizzle/migrations/meta/0006_snapshot.json</code> is missing from the repo (never committed when <code>0006_add_job_leads</code> shipped). drizzle-kit diffed the current schema against <code>0005_snapshot.json</code> (the last snapshot it could find) and re-emitted everything between <code>0005</code> and the current state. The plan anticipated a D-23-style hand-edit for <code>BEGIN;</code>/<code>COMMIT;</code> wrapping; the actual hand-edit reason was meta-snapshot drift.</li>
+<li><strong>Fix:</strong> Replaced the generated SQL with the four ALTER statements per the plan&#39;s Pattern Map expectation:<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;queued&#39; BEFORE &#39;searching&#39;;
+ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE IF NOT EXISTS &#39;failed&#39;;
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error&quot; text;
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error_at&quot; timestamp with time zone;
+</code></pre>
+Kept the auto-generated <code>0007_snapshot.json</code> (correct post-state) and <code>_journal.json</code> update unchanged — the snapshot is correct as a forward-baseline; only the SQL was wrong.</li>
+<li><strong>Files modified:</strong> <code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> (rewritten before commit)</li>
+<li><strong>Verification:</strong><ol>
+<li>Pre-migration DB inspection (via <code>@neondatabase/serverless</code> ad-hoc script): confirmed the tables already exist and the enum had 8 values without <code>queued</code>/<code>failed</code>.</li>
+<li><code>npm run db:migrate</code> exit 0 with the hand-edited SQL.</li>
+<li>Post-migration DB inspection: enum has all 10 values in correct order; both new columns present.</li>
+<li>Re-running <code>npm run db:migrate</code> was a no-op (idempotency).</li>
+</ol>
+</li>
+<li><strong>Committed in:</strong> <code>79f8b1c</code> (Task 3 commit)</li>
+</ul>
+<p><strong>2. [Rule 3 - Blocking] Set up <code>.env.local</code> and <code>node_modules</code> inside the worktree</strong></p>
+<ul>
+<li><strong>Found during:</strong> Pre-Task-3 environment check</li>
+<li><strong>Issue:</strong> The worktree was spawned without <code>.env.local</code> (gitignored) or <code>node_modules</code> (gitignored). Both are required for <code>npm run db:generate</code> and <code>npm run db:migrate</code> to function.</li>
+<li><strong>Fix:</strong> Copied <code>.env.local</code> from the main repo (it stays gitignored — verified via <code>git check-ignore</code>) and symlinked <code>node_modules</code> from the main repo into the worktree (also gitignored). No tracked-file impact, no commit.</li>
+<li><strong>Files modified:</strong> None tracked. (Both target paths covered by <code>.gitignore</code> patterns <code>/node_modules</code> and <code>.env*.local</code>.)</li>
+<li><strong>Verification:</strong> <code>npm run db:generate</code> and <code>npm run db:migrate</code> both ran successfully; <code>git status --short</code> shows neither file as untracked.</li>
+<li><strong>Committed in:</strong> N/A (environment-only fix)</li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 2 auto-fixed (both Rule 3 - blocking).
+<strong>Impact on plan:</strong> No scope creep. The hand-edit was anticipated by the plan (D-23 fallback exists for this exact situation, just for a different proximate cause); the env+node_modules setup is a worktree-mode necessity. The plan&#39;s deliverables and BLOCKING gate (clean <code>db:migrate</code> exit) are fully satisfied.</p>
+<h2>Deferred Issues</h2>
+<p><strong>Missing <code>drizzle/migrations/meta/0006_snapshot.json</code>.</strong> This is a pre-existing repo-state bug from when <code>0006_add_job_leads</code> was committed — the snapshot file for that migration was never tracked. The <code>_journal.json</code> entry exists but the snapshot file is absent. drizzle-kit will continue to produce wrong diffs on future migrations (it&#39;ll compute the delta from <code>0005</code> or now <code>0007</code>, missing whatever shape <code>0006</code> introduced) until reconstructed. Reconstruction options for follow-up:</p>
+<ol>
+<li>Run <code>drizzle-kit introspect</code> against the live DB to regenerate a snapshot from the actual schema, then manually re-derive the <code>0006_snapshot.json</code> as the post-0005-pre-0007 state.</li>
+<li>Or, simpler: since <code>0007_snapshot.json</code> now correctly captures the full schema state and is committed, future migrations will diff from <code>0007</code> and won&#39;t trip on the missing <code>0006</code> snapshot. Effectively, the issue is self-mitigating going forward — but a backfilled <code>0006_snapshot.json</code> would still be ideal for historical correctness.</li>
+</ol>
+<p>Recommendation: option 2 is sufficient for Phase 05&#39;s needs. Logged here for visibility.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><strong>drizzle-kit non-incremental diff:</strong> see Deviation #1 above. Resolved via hand-edit.</li>
+<li><strong>Worktree missing <code>.env.local</code> and <code>node_modules</code>:</strong> see Deviation #2 above. Resolved via copy + symlink.</li>
+<li><strong>Pre-existing TypeScript errors:</strong> <code>prioritization.ts</code> (4) and <code>scrape-connections.ts</code> (3) errors are pre-existing and out of scope per <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code>. Confirmed unchanged before and after this plan via diff of <code>tsc --noEmit</code> output.</li>
+</ul>
+<h2>User Setup Required</h2>
+<p>None — no external service configuration required. The migration applied to the live dev DB; downstream plans can write <code>&#39;queued&#39;</code>, <code>&#39;failed&#39;</code>, and the error columns immediately.</p>
+<h2>Next Phase Readiness</h2>
+<p>Plan 05-01 unblocks every downstream Plan in Phase 05:</p>
+<ul>
+<li><strong>Plan 05-02:</strong> API routes that read/write the new statuses and <code>last_error*</code> columns.</li>
+<li><strong>Plan 05-03:</strong> Middleware bearer-token bypass (no schema dependency, but its API tests rely on this schema).</li>
+<li><strong>Plan 05-04, 05-05:</strong> Bulk-prospects API + skill — both write <code>&#39;searching&#39;</code>/<code>&#39;found&#39;</code>/<code>&#39;failed&#39;</code> and prospect data; schema is in place.</li>
+<li><strong>Plan 05-06:</strong> UI updates — <code>queued</code> and <code>failed</code> badges + error banner consume the new columns.</li>
+<li><strong>Plan 05-07:</strong> Deletion of <code>scrape-connections.ts</code> — <code>ScrapedProspect</code>&#39;s new home is verified; <code>match-connections.ts</code> no longer references the soon-to-be-deleted file.</li>
+</ul>
+<p>No blockers for Wave 2.</p>
+<h2>Self-Check</h2>
+<p>Verified before commit:</p>
+<ul>
+<li><code>src/features/job-leads/lib/types.ts</code> exists (FOUND)</li>
+<li><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> exists (FOUND)</li>
+<li><code>drizzle/migrations/meta/0007_snapshot.json</code> exists (FOUND)</li>
+<li>Commit <code>29b1d1a</code> (Task 1) — FOUND in <code>git log</code></li>
+<li>Commit <code>eec431b</code> (Task 2) — FOUND in <code>git log</code></li>
+<li>Commit <code>79f8b1c</code> (Task 3) — FOUND in <code>git log</code></li>
+<li><code>npm run db:migrate</code> exit 0 — VERIFIED twice (first apply + idempotent re-run)</li>
+<li>Live DB has 10 enum values + both new columns — VERIFIED via ad-hoc Neon query</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<hr>
+<p><em>Phase: 05-job-leads-completion</em>
+<em>Completed: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

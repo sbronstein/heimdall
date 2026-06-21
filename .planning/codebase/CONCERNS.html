@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CONCERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/codebase/CONCERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Codebase Concerns</h1>
+<p><strong>Analysis Date:</strong> 2026-05-12</p>
+<hr>
+<h2>Known Bugs</h2>
+<p><strong>React Hydration Crash — Kills All Navigation (ACTIVE, documented in <code>bug.md</code>):</strong></p>
+<ul>
+<li>Symptoms: After LinkedIn import of ~1500 contacts, sidebar nav links become unclickable; React hydration error crashes the client-side tree; user is stuck on Networking page</li>
+<li>Files: <code>src/components/layout/app-sidebar.tsx</code> (lines 148–154, 166–172), <code>src/components/user-avatar-profile.tsx</code> (line 19)</li>
+<li>Trigger: <code>useUser()</code> from Clerk returns <code>undefined</code> on the server and a user object on the client; the <code>{user &amp;&amp; &lt;UserAvatarProfile /&gt;}</code> guard causes a server/client HTML mismatch; <code>UserAvatarProfile</code> was also wrapping content in a <code>&lt;div&gt;</code> inside a <code>&lt;button&gt;</code> (invalid HTML), though <code>user-avatar-profile.tsx</code> now uses <code>&lt;span&gt;</code></li>
+<li>Current state: <code>user-avatar-profile.tsx</code> root element has been changed to <code>&lt;span&gt;</code>, but <code>app-sidebar.tsx</code> still conditionally renders <code>user &amp;&amp; ...</code> at lines 148 and 166 — the root hydration guard is unresolved</li>
+<li>Fix: Remove the <code>{user &amp;&amp; ...}</code> guard in <code>app-sidebar.tsx</code> and render <code>UserAvatarProfile</code> unconditionally (it already handles <code>user === null</code> via optional chaining)</li>
+</ul>
+<p><strong>Unsafe <code>emailAddresses[0]</code> Array Access:</strong></p>
+<ul>
+<li>Symptoms: Runtime crash if a Clerk user object has no email addresses (edge case: SSO-only accounts)</li>
+<li>Files: <code>src/components/user-avatar-profile.tsx</code> (line 31), <code>src/components/layout/user-nav.tsx</code> (line 38)</li>
+<li>Trigger: <code>user?.emailAddresses[0].emailAddress</code> — optional chaining protects <code>user</code> but not the <code>[0]</code> access</li>
+<li>Fix: Change to <code>user?.emailAddresses[0]?.emailAddress || &#39;&#39;</code></li>
+</ul>
+<hr>
+<h2>Security Considerations</h2>
+<p><strong>No Authentication on Any API Route:</strong></p>
+<ul>
+<li>Risk: All <code>/app/api/</code> routes are publicly accessible — no <code>auth()</code> / <code>getAuth()</code> / <code>currentUser()</code> call exists in any route handler; there is also no <code>middleware.ts</code> to protect routes at the Next.js layer</li>
+<li>Files: All 31 route files under <code>src/app/api/</code> — confirmed by grep finding zero auth imports in route handlers; no <code>src/middleware.ts</code> or <code>middleware.ts</code> exists</li>
+<li>Current mitigation: None. This is a personal single-user app on a private Vercel deployment, which reduces exposure, but the database is fully accessible to anyone who can reach the deployment URL</li>
+<li>Recommendation: Add a <code>middleware.ts</code> using Clerk&#39;s <code>clerkMiddleware()</code> to protect all <code>/api/*</code> and <code>/dashboard/*</code> routes; alternatively add <code>auth()</code> checks to routes that mutate data</li>
+</ul>
+<p><strong>LinkedIn Session Credentials Stored on Filesystem:</strong></p>
+<ul>
+<li>Risk: The LinkedIn Playwright scraping flow saves browser cookies/storage as <code>~/.heimdall/linkedin-profile/storage-state.json</code> — this file contains LinkedIn session cookies that would allow impersonation if leaked</li>
+<li>Files: <code>src/features/job-leads/lib/linkedin-browser.ts</code> (lines 69–70, 86–87, 120–123)</li>
+<li>Current mitigation: File is on local filesystem (not in the repo), but Vercel/serverless deployment would not have access to <code>homedir()</code> anyway — see Vercel incompatibility concern below</li>
+<li>Recommendation: Acknowledge and document that this feature is local-dev only; add a <code>.gitignore</code> entry for <code>~/.heimdall/</code> if scripts ever reference it</li>
+</ul>
+<p><strong>Starter Template GitHub Auth Button Is a No-Op:</strong></p>
+<ul>
+<li>Risk: <code>GithubSignInButton</code> renders a &quot;Continue with Github&quot; button that only calls <code>console.log()</code> — if a user tries this on the sign-in page they receive no feedback and no auth occurs; could mislead users about available auth methods</li>
+<li>Files: <code>src/features/auth/components/github-auth-button.tsx</code> (line 16), rendered in <code>src/features/auth/components/sign-in-view.tsx</code> (line 63) and <code>sign-up-view.tsx</code></li>
+<li>Recommendation: Remove the button or implement proper Clerk OAuth for GitHub</li>
+</ul>
+<p><strong>External Fetch on Auth Pages (Starter Template Residue):</strong></p>
+<ul>
+<li>Risk: Sign-in and sign-up pages make an outbound fetch to <code>https://api.github.com/repos/kiranism/next-shadcn-dashboard-starter</code> on every server render to display a star count for a third-party repo; this is pure starter template noise and adds latency to auth page rendering</li>
+<li>Files: <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code> (lines 10–26), <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code> (lines 10–26)</li>
+<li>Recommendation: Remove the <code>stars</code> fetch; remove the <code>stars</code> prop from <code>SignInViewPage</code> / <code>SignUpViewPage</code></li>
+</ul>
+<hr>
+<h2>Tech Debt</h2>
+<p><strong>Entire Starter Template Product Feature Unreferenced by App:</strong></p>
+<ul>
+<li>Issue: <code>src/features/products/</code> (product listing, product form, demo data) exists from the Next.js Shadcn dashboard starter and has nothing to do with the job-search CRM; <code>src/app/dashboard/product/</code> routes and <code>src/app/dashboard/overview/</code> parallel routes are also starter artifacts</li>
+<li>Files: <code>src/features/products/</code>, <code>src/app/dashboard/product/</code>, <code>src/app/dashboard/overview/</code>, <code>src/features/auth/components/demo-form.tsx</code>, <code>src/features/auth/components/user-auth-form.tsx</code></li>
+<li>Impact: Dead code increases bundle size, confuses navigation, and pollutes the codebase mental model</li>
+<li>Fix approach: Run <code>node __CLEANUP__/scripts/cleanup.js kanban</code> (for kanban) and manually remove product/overview routes; or simply delete <code>src/features/products/</code> and the corresponding pages</li>
+</ul>
+<p><strong><code>__CLEANUP__</code> Directory Not Yet Removed:</strong></p>
+<ul>
+<li>Issue: <code>__CLEANUP__/</code> exists at the repo root and is intended to be deleted after optional features are stripped (per <code>__CLEANUP__/cleanup.md</code> line 33: &quot;Once you&#39;ve finished cleaning up features you don&#39;t need, delete the <code>__CLEANUP__</code> folder&quot;)</li>
+<li>Files: <code>/Users/sbronstein/Github/heimdall/__CLEANUP__/</code> — contains <code>clerk/</code>, <code>kanban/</code>, <code>sentry/</code>, <code>scripts/</code></li>
+<li>Impact: Misleading to contributors; scripts could accidentally be run and remove real code</li>
+<li>Fix approach: Decide which features to keep/strip, run cleanup scripts if desired, then <code>rm -rf __CLEANUP__</code></li>
+</ul>
+<p><strong>Starter Template Infobar / Workspaces / Billing / Exclusive Pages:</strong></p>
+<ul>
+<li>Issue: Several dashboard pages are starter template scaffolding with no Heimdall-specific content: <code>src/app/dashboard/exclusive/page.tsx</code> (Clerk org Pro plan gating demo), <code>src/app/dashboard/billing/page.tsx</code>, <code>src/app/dashboard/workspaces/</code>, <code>src/config/infoconfig.ts</code> (805-line <code>infobar.tsx</code> component, workspace/billing info content)</li>
+<li>Files: <code>src/components/ui/infobar.tsx</code> (805 lines), <code>src/config/infoconfig.ts</code>, <code>src/app/dashboard/exclusive/</code>, <code>src/app/dashboard/workspaces/</code>, <code>src/app/dashboard/billing/</code></li>
+<li>Impact: Reachable routes that display placeholder/demo content to the app owner; infobar.tsx is a large bundle contribution for unused UX</li>
+<li>Fix approach: Remove pages and routes not used in the job-search workflow</li>
+</ul>
+<p><strong><code>computeBridgeScore</code> Imported But Unused in Search Route:</strong></p>
+<ul>
+<li>Issue: <code>src/app/api/job-leads/[id]/search/route.ts</code> imports <code>computeBridgeScore</code> (line 10) but never calls it in the file body — score computation happens in <code>recommendations/route.ts</code> and <code>prioritization.ts</code></li>
+<li>Files: <code>src/app/api/job-leads/[id]/search/route.ts</code></li>
+<li>Impact: Dead import; TypeScript does not catch it because the symbol is used elsewhere</li>
+<li>Fix approach: Remove the import</li>
+</ul>
+<p><strong><code>any</code> Types in KBar Search Component:</strong></p>
+<ul>
+<li>Issue: <code>src/components/kbar/index.tsx</code> uses <code>any[]</code> for <code>entityActions</code> state and <code>any</code> for each entity type in <code>.forEach()</code> callbacks (lines 21, 39, 42, 52, 62, 72) — loses type safety for the command palette</li>
+<li>Files: <code>src/components/kbar/index.tsx</code></li>
+<li>Impact: Refactors to entity types will silently break command palette actions</li>
+<li>Fix approach: Define typed interfaces matching the API search response shape and replace <code>any</code></li>
+</ul>
+<p><strong><code>any</code> in Weekly Snapshot Form:</strong></p>
+<ul>
+<li>Issue: <code>src/features/metrics/components/weekly-snapshot-form.tsx</code> line 18 uses <code>any</code> for the <code>onSaved</code> metric callback</li>
+<li>Files: <code>src/features/metrics/components/weekly-snapshot-form.tsx</code></li>
+<li>Fix approach: Import or define the <code>SearchMetric</code> type from the schema</li>
+</ul>
+<hr>
+<h2>Performance Bottlenecks</h2>
+<p><strong>N+1 Prospect Inserts After LinkedIn Scrape:</strong></p>
+<ul>
+<li>Problem: <code>src/app/api/job-leads/[id]/search/route.ts</code> (lines 48–57) inserts each scraped prospect individually in a <code>for</code> loop: <code>for (const sp of scrapedProspects) { await db.insert(prospects).values({...}) }</code> — for a 10-page scrape yielding ~100 prospects this is 100 sequential round-trips to Neon Postgres</li>
+<li>Files: <code>src/app/api/job-leads/[id]/search/route.ts</code></li>
+<li>Cause: Sequential <code>await</code> inside <code>for...of</code> instead of batch insert</li>
+<li>Improvement path: Replace with a single <code>db.insert(prospects).values([...scrapedProspects.map(...)])</code> call</li>
+</ul>
+<p><strong>N+1 Bridge Inserts in <code>matchConnections</code>:</strong></p>
+<ul>
+<li>Problem: <code>src/features/job-leads/lib/match-connections.ts</code> (lines 104–111) inserts prospect bridges one at a time in a loop, wrapping each in a try/catch for conflict handling</li>
+<li>Files: <code>src/features/job-leads/lib/match-connections.ts</code></li>
+<li>Cause: Loop with <code>await db.insert(prospectBridges).values(val).onConflictDoNothing()</code></li>
+<li>Improvement path: Collect all <code>bridgeValues</code> and issue a single bulk insert with <code>.values(bridgeValues).onConflictDoNothing()</code></li>
+</ul>
+<p><strong>N+1 Updates in Bulk Categorize Route:</strong></p>
+<ul>
+<li>Problem: <code>src/app/api/contacts/import/categorize/route.ts</code> (lines 24–30) updates each contact&#39;s closeness individually in a <code>for...of</code> loop — for a 1500-contact triage pass this issues 1500 sequential DB updates</li>
+<li>Files: <code>src/app/api/contacts/import/categorize/route.ts</code></li>
+<li>Cause: No batch-update path in Drizzle ORM without raw SQL; current code issues one UPDATE per contact</li>
+<li>Improvement path: Use a single <code>UPDATE ... SET closeness = CASE WHEN id = ... THEN ... END</code> or a batched transaction</li>
+</ul>
+<p><strong>No Database Indexes on Frequently Filtered Columns:</strong></p>
+<ul>
+<li>Problem: Schema files define no indexes; all filtering is against unindexed columns. The search route runs <code>ilike</code> against <code>companies.name</code>, <code>contacts.firstName</code>, <code>contacts.lastName</code>, <code>contacts.title</code>, <code>contacts.currentCompany</code>, <code>notes.title</code>, <code>notes.content</code> (18 <code>ilike</code> usages across API routes). The contacts import route fetches all contacts to build in-memory dedup sets. The triage page orders by <code>contacts.linkedinConnectionDate</code> without an index.</li>
+<li>Files: <code>drizzle/schema/contacts.ts</code>, <code>drizzle/schema/companies.ts</code>, <code>drizzle/schema/applications.ts</code>, <code>drizzle/schema/notes.ts</code></li>
+<li>Cause: No <code>index()</code> calls in any <code>pgTable</code> definition</li>
+<li>Improvement path: Add indexes on <code>contacts(archived_at)</code>, <code>contacts(linkedin_url)</code>, <code>contacts(company_id)</code>, <code>contacts(linkedin_connection_date)</code>, <code>companies(name)</code> using Drizzle&#39;s <code>index()</code> helper; for <code>ilike</code> search consider <code>pg_trgm</code> GIN indexes</li>
+</ul>
+<p><strong>Full Contacts Table Scan on Every Import and Match:</strong></p>
+<ul>
+<li>Problem: <code>src/app/api/contacts/import/route.ts</code> (lines 55–64) and <code>src/features/job-leads/lib/match-connections.ts</code> (lines 44–47) both <code>SELECT *</code> from <code>contacts</code> with no pagination or filter beyond <code>archivedAt IS NULL</code> — at 1500+ contacts this loads the entire table into Node memory on every import or scrape match</li>
+<li>Files: <code>src/app/api/contacts/import/route.ts</code>, <code>src/features/job-leads/lib/match-connections.ts</code></li>
+<li>Improvement path: For import dedup, push dedup to the database with <code>ON CONFLICT DO NOTHING</code>; for name matching, implement server-side fuzzy search rather than loading all contacts</li>
+</ul>
+<hr>
+<h2>Fragile Areas</h2>
+<p><strong>LinkedIn Scraper — Entire Feature Is Brittle:</strong></p>
+<ul>
+<li>Files: <code>src/features/job-leads/lib/scrape-connections.ts</code>, <code>src/features/job-leads/lib/linkedin-browser.ts</code>, <code>src/features/job-leads/lib/scrape-job-page.ts</code>, <code>src/app/api/job-leads/[id]/search/route.ts</code>, <code>src/app/api/job-leads/linkedin-setup/route.ts</code></li>
+<li>Why fragile:<ol>
+<li>LinkedIn can change their DOM structure at any time — the scraper relies on <code>a[href*=&quot;/in/&quot;]</code>, <code>a[href*=&quot;/company/&quot;]</code>, <code>button[aria-label=&quot;Next&quot;]</code>, <code>span[aria-hidden=&quot;true&quot;]</code>, and text matching against <code>&quot;employees&quot;</code> — any layout update breaks extraction silently</li>
+<li>Hardcoded company name <code>&#39;point&#39;</code> is passed to <code>page.evaluate()</code> in <code>scrape-connections.ts</code> line 62 — this should use <code>companyName</code> from the function parameter but instead matches text against the literal string <code>&quot;point&quot;</code>; this is likely a debug artifact left in production code</li>
+<li>Browser instance is intentionally never closed: <code>// Don&#39;t close page or context — leave browser open for debugging</code> (lines 344–346) — this leaks browser resources on every invocation</li>
+<li>LinkedIn aggressively detects bot traffic; the scraper uses <code>waitForTimeout</code> with fixed delays (5000ms, 3000ms, 1000ms) that may be too short or trigger rate limiting</li>
+<li>The feature assumes a long-lived server process with a local filesystem (<code>~/.heimdall/linkedin-profile/</code>) — completely incompatible with Vercel serverless deployment</li>
+<li>The fire-and-forget async IIFE in the search route means scrape errors only update the DB to <code>status: &#39;scraped&#39;</code> with no user-facing notification</li>
+</ol>
+</li>
+<li>Safe modification: Only touch this code locally with a running headed browser; test against a specific job URL before shipping changes; resolve the hardcoded <code>&#39;point&#39;</code> immediately</li>
+</ul>
+<p><strong>Fire-and-Forget Async Pattern with No Timeout:</strong></p>
+<ul>
+<li>Files: <code>src/app/api/job-leads/[id]/search/route.ts</code> (lines 40–97)</li>
+<li>Why fragile: The async IIFE is launched with no timeout bound; if the Playwright scrape hangs (e.g., LinkedIn captcha), the <code>jobLead.status</code> stays <code>&#39;searching&#39;</code> indefinitely with no way to recover except a direct DB update</li>
+<li>Safe modification: Add a <code>Promise.race()</code> against a timeout that sets the lead back to <code>&#39;scraped&#39;</code> status</li>
+</ul>
+<p><strong><code>scrape-connections.ts</code> Debug Code in Production:</strong></p>
+<ul>
+<li>Files: <code>src/features/job-leads/lib/scrape-connections.ts</code></li>
+<li>Issues:<ul>
+<li>20+ <code>console.log()</code> calls including full JSON dumps of page link arrays (line 39 dumps up to 30 links as JSON)</li>
+<li>Hardcoded <code>&#39;point&#39;</code> company name in evaluate callback (line 62) — bug, not debug</li>
+<li>&quot;Leave browser open for now (debug mode)&quot; comment with commented-out <code>context.close()</code> (lines 344–346)</li>
+</ul>
+</li>
+<li>Why fragile: These logs will flood server stdout in production; the leaked browser accumulates until the process restarts</li>
+</ul>
+<hr>
+<h2>Scaling Limits</h2>
+<p><strong>Playwright / Chromium Cannot Run on Vercel Serverless:</strong></p>
+<ul>
+<li>Current capacity: Works only in local dev or Docker environments with a headed browser</li>
+<li>Limit: Vercel Functions have no persistent filesystem, no display server, and a 250 MB bundle limit — Playwright&#39;s Chromium binary alone exceeds this; <code>homedir()</code> returns an ephemeral path that does not persist between invocations</li>
+<li>Impact: The entire job-leads search feature (<code>POST /api/job-leads/[id]/search</code>) silently fails on Vercel deployment</li>
+<li>Scaling path: Use a remote browser service (Browserless, Playwright Cloud) via <code>BROWSER_WS_ENDPOINT</code>/<code>BROWSER_CDP_ENDPOINT</code> env vars (already supported in <code>linkedin-browser.ts</code>) or move scraping to a long-running sidecar service</li>
+</ul>
+<hr>
+<h2>Dependencies at Risk</h2>
+<p><strong><code>playwright</code> as a Production Dependency:</strong></p>
+<ul>
+<li>Risk: <code>playwright</code> (^1.58.2) is listed under <code>dependencies</code> (not <code>devDependencies</code>) in <code>package.json</code> — Playwright installs browser binaries on <code>npm install</code> which dramatically increases deployment bundle size and install time; Vercel will attempt to bundle it</li>
+<li>Impact: Build/deploy failures or oversized serverless functions on Vercel</li>
+<li>Migration plan: Move to <code>devDependencies</code> if scraping stays local-only; or configure <code>serverExternalPackages: [&#39;playwright&#39;]</code> in <code>next.config.ts</code></li>
+</ul>
+<hr>
+<h2>Test Coverage Gaps</h2>
+<p><strong>Zero Test Files Exist:</strong></p>
+<ul>
+<li>What&#39;s not tested: All API routes, all domain logic, all UI components, all scraping logic, all schema migrations</li>
+<li>Files: Entire <code>src/</code> directory — no <code>*.test.ts</code>, <code>*.test.tsx</code>, <code>*.spec.ts</code>, or <code>*.spec.tsx</code> files exist</li>
+<li>Risk: Silent regressions in pipeline stage transitions, API response envelope format, timeline event creation, LinkedIn CSV parsing, bridge score computation, and the hydration bug documented in <code>bug.md</code></li>
+<li>Priority: High — the CLAUDE.md spec explicitly calls for validating API envelope format, pipeline stage transitions, and timeline event creation but none of these are tested</li>
+</ul>
+<hr>
+<p><em>Concerns audit: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/codebase/CONCERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

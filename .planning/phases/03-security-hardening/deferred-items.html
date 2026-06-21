@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>deferred-items</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/03-security-hardening/deferred-items.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 3 — Deferred Items</h1>
+<p>Out-of-scope discoveries surfaced during plan execution. Each item has been
+verified to pre-exist on the phase base commit (<code>1c69a7e</code>) and is NOT caused
+by changes in plans 03-01 or 03-02. These do not block the security-hardening
+work and should be addressed in a follow-on cleanup phase.</p>
+<h2>DI-01: Pre-existing TypeScript compile error in <code>src/features/job-leads/lib/prioritization.ts</code></h2>
+<p><strong>Discovered during:</strong> Plan 03-01 Task 1 (build verification gate) and independently
+confirmed during Plan 03-02 (executor stashed all 03-02 changes and reproduced the
+same error on the unmodified baseline).</p>
+<p><strong>Symptom:</strong></p>
+<pre><code>./src/features/job-leads/lib/prioritization.ts:70:21
+Type error: Type &#39;MapIterator&lt;PrioritizedRecommendation&gt;&#39; can only be iterated through
+when using the &#39;--downlevelIteration&#39; flag or with a &#39;--target&#39; of &#39;es2015&#39; or higher.
+
+  70 |   for (const rec of byContact.values()) {
+</code></pre>
+<p><strong>Root cause:</strong> <code>tsconfig.json</code> has <code>&quot;target&quot;: &quot;es5&quot;</code> (from the starter template), but
+the source uses <code>Map.prototype.values()</code> iteration which requires ES2015 iterators.
+The error exists on the phase base commit <code>1c69a7e</code> (verified twice via <code>git stash</code> +
+<code>npm run build</code>).</p>
+<p><strong>Impact on plans 03-01 / 03-02:</strong> The verification step <code>npm run build exits 0</code> cannot
+succeed in the base state. The Phase 3 changes themselves compile cleanly — the build
+gets through &quot;Compiled successfully in N.Ns&quot; and fails only at the unrelated TS check.
+Auth-related verification (test suite, file/grep assertions) is unaffected.</p>
+<p><strong>Recommended fix (one-line, deferred):</strong> Either</p>
+<ul>
+<li><code>for (const rec of Array.from(byContact.values())) { ... }</code> (minimal change), OR</li>
+<li>Bump <code>tsconfig.json</code> <code>target</code> from <code>es5</code> → <code>es2015</code> (or <code>es2020</code>), and/or enable
+<code>downlevelIteration: true</code>. Next.js 16 already requires Node 22; ES5 target is
+dead weight.</li>
+</ul>
+<p><strong>Scope:</strong> Not security; out of scope for SEC-A1/SEC-A2. Defer to Phase 4
+(Starter-Template Cleanup) or a dedicated tsconfig modernization pass.</p>
+<h2>DI-02: PD-01 in <code>03-CONTEXT.md</code> is incorrect for Next.js 16</h2>
+<p><strong>Discovered during:</strong> Plan 03-01 Task 1, while validating that the rename was needed.</p>
+<p><strong>Symptom:</strong> PD-01 claims <code>src/proxy.ts</code> is &quot;not currently loaded by Next.js&quot; and that
+Next.js requires the file to be named <code>middleware.ts</code>. Empirically false for Next.js
+16.0.10 (the version pinned in <code>package.json</code>): the framework now uses the <strong>proxy</strong>
+file convention with <code>PROXY_LOCATION_REGEXP = (?:src/)?proxy</code>. <code>src/proxy.ts</code> IS
+loaded as the framework proxy file in v16. Renaming to <code>middleware.ts</code> instead
+triggers a deprecation warning:</p>
+<pre><code>⚠ The &quot;middleware&quot; file convention is deprecated. Please use &quot;proxy&quot; instead.
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+</code></pre>
+<p><strong>Evidence:</strong></p>
+<ul>
+<li>Next.js 16 upgrade guide (vercel/next.js docs/01-app/02-guides/upgrading/version-16.mdx):
+&quot;The <code>middleware</code> filename is deprecated, and has been renamed to <code>proxy</code>.&quot;</li>
+<li><code>packages/next/src/lib/constants.ts</code>: <code>PROXY_FILENAME = &#39;proxy&#39;</code>,
+<code>PROXY_LOCATION_REGEXP = (?:src/)?proxy</code>.</li>
+</ul>
+<p><strong>Impact on plan 03-01:</strong> The rename was unnecessary; PD-01&#39;s framing of &quot;activate
+dead middleware via rename&quot; rests on a false premise. The actual gap was that the
+existing <code>src/proxy.ts</code> callback&#39;s <code>createRouteMatcher</code> argument list excluded
+<code>/api/(.*)</code>. The matcher expansion + envelope short-circuit is the load-bearing
+change; the rename would be a downgrade. See <code>03-01-SUMMARY.md</code> for the deviation log.</p>
+<p><strong>Recommended doc fix (deferred):</strong></p>
+<ul>
+<li>Update <code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Entry Points → Clerk Middleware
+(<code>src/proxy.ts</code>)&quot; to reflect that proxy IS the active Next.js 16 file convention,
+not legacy.</li>
+<li>Update <code>CLAUDE.md</code> &quot;Single-user Clerk lock in middleware&quot; to call it the proxy file
+(or remain silent about filename).</li>
+<li>Update <code>.planning/codebase/STACK.md</code> / <code>INTEGRATIONS.md</code> if either references
+Next.js &quot;middleware&quot; — call it the proxy file instead.</li>
+<li>The plan-output instruction in 03-01-PLAN.md to flag these as Phase 3 wrap-up
+doc-correction targets still applies, but for a different reason than the planner
+thought (rename was unnecessary, not that the file was renamed).</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/03-security-hardening/deferred-items.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

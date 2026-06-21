@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 05-job-leads-completion
+verified: 2026-05-14T12:42:54Z
+status: passed
+score: 5/5 must-haves verified
+overrides_applied: 0</h2>
+<h1>Phase 5: Job Leads Completion (RESHAPED) — Verification Report</h1>
+<p><strong>Phase Goal:</strong> LinkedIn connection scraping is reliable. Scraping moves out of the app into a Claude Code skill driving <code>vercel-labs/agent-browser</code>; the app holds the queue and the results, scraping runs out-of-band, failures surface back into the UI via the DB.
+<strong>Verified:</strong> 2026-05-14T12:42:54Z
+<strong>Status:</strong> passed
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths (mapped to ROADMAP Success Criteria + JL-B1..B5)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth (ROADMAP Success Criteria / Requirement)</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SC1 / JL-B1 — A Claude Code skill exists under <code>.claude/skills/</code> that accepts a job URL/UUID argument OR drains unprocessed leads when invoked with no arg</td>
+<td>VERIFIED</td>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> exists with <code>argument-hint: &#39;[job-lead-id-or-url]&#39;</code> frontmatter; SKILL.md &quot;Argument parsing&quot; section branches on empty/UUID/<code>https://</code> shapes; &quot;Drain mode (no arg)&quot; section fetches <code>GET /api/job-leads?status=queued&amp;limit=50</code>, renders queue table, processes each.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>SC2 / JL-B2 — The skill drives <code>vercel-labs/agent-browser</code> through job → company → employees → 2nd-degree filter and extracts prospects in the <code>ScrapedProspect</code> shape</td>
+<td>VERIFIED</td>
+<td><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code> documents the canonical 4-step path (Step 1 job, Step 2 company link, Step 3 employees link, Step 4 2nd-degree network filter <code>network=%5B%22S%22%5D</code>) + Step 5 pagination/extraction. SKILL.md &quot;Single-lead mode&quot; §3 references the same path. <code>ScrapedProspect</code> type in <code>src/features/job-leads/lib/types.ts</code> has exactly 5 fields (name, title, linkedinUrl, profileSnippet, mutualConnectionNames). Skill extracts those 5 fields per §4.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>SC3 / JL-B3 — Skill writes results back via REST routes; the in-app fire-and-forget Playwright IIFE in <code>search/route.ts</code> and <code>scrape-connections.ts</code> are DELETED (hardcoded <code>&#39;point&#39;</code>, <code>waitForTimeout</code>, 20+ debug <code>console.log</code> dumps go with them)</td>
+<td>VERIFIED</td>
+<td><code>src/features/job-leads/lib/scrape-connections.ts</code> does NOT exist (<code>ls</code> confirms). <code>src/features/job-leads/components/search-progress.tsx</code> does NOT exist. <code>src/app/api/job-leads/[id]/search/route.ts</code> is a synchronous status flip — no IIFE, no Playwright, uses <code>canJobLeadTransition</code> gate. Grep for <code>&#39;point&#39;</code> and <code>waitForTimeout</code> in <code>src/</code> returns zero matches. Grep for <code>scrapeConnections</code> / <code>SearchProgress</code> in <code>src/</code> returns matches ONLY inside regression-lock test files (<code>__cleanup__.test.ts</code>, <code>search/route.test.ts</code>) — no production import remains. New routes exist and are wired: <code>POST /api/job-leads/[id]/prospects</code> (bulk insert with Zod 5-field schema), <code>PATCH /api/job-leads/[id]/status</code> (state-machine enforced via <code>canJobLeadTransition</code>).</td>
+</tr>
+<tr>
+<td>4</td>
+<td>SC4 / JL-B4 — Job-lead status cleanly represents the scraping queue: queued, in-progress (searching), found, failed-with-category — state machine enforces transitions</td>
+<td>VERIFIED</td>
+<td><code>drizzle/schema/enums.ts:160-171</code> defines <code>jobLeadStatusEnum</code> with <code>&#39;queued&#39;</code> (position 4 between <code>&#39;scraped&#39;</code> and <code>&#39;searching&#39;</code>) and <code>&#39;failed&#39;</code> (position 10, terminal-recoverable). <code>drizzle/schema/job-leads.ts:37-38</code> defines <code>lastError: text</code> (nullable) and <code>lastErrorAt: timestamp with timezone</code> (nullable). <code>src/lib/domain/types.ts:205-216</code> <code>jobLeadStatusValues</code> matches enum order exactly. <code>src/lib/domain/job-lead-pipeline.ts</code> exports <code>canJobLeadTransition</code> with transitions: <code>scraped → queued</code>, <code>queued → {searching, failed}</code>, <code>searching → {found, failed}</code>, <code>failed → queued</code>, plus existing pipeline. Migration <code>0007_add_queued_failed_status_and_error_columns.sql</code> uses <code>ALTER TYPE ADD VALUE IF NOT EXISTS &#39;queued&#39; BEFORE &#39;searching&#39;</code> and <code>ADD VALUE IF NOT EXISTS &#39;failed&#39;</code> + <code>ADD COLUMN last_error text</code> + <code>ADD COLUMN last_error_at timestamp with time zone</code>. PATCH <code>/status</code> route rejects invalid transitions with <code>validationError(\</code>Invalid transition: ${lead.status} -&gt; ${newStatus}`)`.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>SC5 / JL-B5 — Job-lead detail UI surfaces a &quot;Run scrape from Claude Code&quot; affordance for unprocessed leads + categorized failure banner with retry that re-queues</td>
+<td>VERIFIED</td>
+<td><code>src/features/job-leads/components/job-lead-detail.tsx</code>: on <code>status === &#39;scraped&#39;</code> shows &quot;Copy skill invocation to scrape connections&quot; button (lines 76-86). On <code>status === &#39;queued&#39;</code> shows <code>&lt;Badge variant=&#39;secondary&#39;&gt;queued for connection scrape&lt;/Badge&gt;</code> + Copy button (89-102). On <code>status === &#39;failed&#39;</code> shows <code>bg-destructive/10 border-destructive/30</code> banner with bold category (<code>lead.lastError?.split(&#39;:&#39;)[0]</code>) + truncated detail + Retry button that POSTs to <code>/api/job-leads/${lead.id}/search</code> (114-133). <code>handleCopyInvocation</code> writes <code>claude /scrape-linkedin-connections ${lead.id}</code> to clipboard and emits sonner toast (30-39). <code>handleRetry</code> calls POST <code>/search</code> (which flips back to <code>&#39;queued&#39;</code> per D-13) and updates local state (41-61). No <code>SearchProgress</code> import remains. No &quot;Find Connections&quot; button remains in job-leads (the only &quot;Find Connections&quot; string in the codebase is unrelated — Networking feature&#39;s contact-search Card title).</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 5/5 truths verified</p>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>drizzle/schema/enums.ts</code></td>
+<td><code>jobLeadStatusEnum</code> includes <code>&#39;queued&#39;</code> and <code>&#39;failed&#39;</code></td>
+<td>VERIFIED</td>
+<td>Lines 160-171 — 10 values total, <code>queued</code> at position 4, <code>failed</code> at position 10</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/job-leads.ts</code></td>
+<td><code>last_error</code> (text) + <code>last_error_at</code> (timestamp w/ tz) columns</td>
+<td>VERIFIED</td>
+<td>Lines 37-38, both nullable as required</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code></td>
+<td>Migration adds enum values + error columns</td>
+<td>VERIFIED</td>
+<td>Uses <code>ALTER TYPE ... ADD VALUE IF NOT EXISTS ... BEFORE</code>; journal entry idx 7 confirms registration</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/types.ts</code></td>
+<td><code>jobLeadStatusValues</code> matches enum order</td>
+<td>VERIFIED</td>
+<td>Lines 205-216 match enum 1:1</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/types.ts</code></td>
+<td>Exports <code>ScrapedProspect</code> (5 fields)</td>
+<td>VERIFIED</td>
+<td>5 fields exactly: <code>name</code>, <code>title</code>, <code>linkedinUrl</code>, <code>profileSnippet</code>, <code>mutualConnectionNames</code></td>
+</tr>
+<tr>
+<td><code>src/lib/domain/job-lead-pipeline.ts</code></td>
+<td>Exports <code>canJobLeadTransition</code> + transitions graph</td>
+<td>VERIFIED</td>
+<td>Exports <code>canJobLeadTransition</code>, <code>jobLeadTransitions</code>, <code>jobLeadTerminalStates</code></td>
+</tr>
+<tr>
+<td><code>src/proxy.ts</code></td>
+<td>Bearer-token bypass via SHA-256 + <code>SINGLE_USER_EMAIL</code> gate</td>
+<td>VERIFIED</td>
+<td>Lines 20-46 — Web-Crypto <code>sha256Hex</code>, multi-tenant safety gate, silent fall-through to Clerk on miss, <code>/api/*</code> only</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/prospects/route.ts</code></td>
+<td>New POST route, Zod 5-field schema with <code>profileSnippet</code>, single bulk insert</td>
+<td>VERIFIED</td>
+<td><code>prospectSchema</code> has 5 fields incl. <code>profileSnippet: z.string().max(500).nullable()</code>; single <code>db.insert(prospects).values(rows)</code> call (line 60); flips lead to <code>&#39;found&#39;</code> + emits <code>job_lead_search_complete</code> timeline event</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/status/route.ts</code></td>
+<td>PATCH enforces state machine via <code>canJobLeadTransition</code></td>
+<td>VERIFIED</td>
+<td>Imports <code>canJobLeadTransition</code>; rejects invalid transitions with <code>validationError</code>; failure path stamps <code>lastError</code>+<code>lastErrorAt</code>; queued/found paths clear them</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/search/route.ts</code></td>
+<td>Thin status flip; no IIFE; uses <code>canJobLeadTransition</code></td>
+<td>VERIFIED</td>
+<td>56 lines; synchronous; no IIFE/Playwright imports; uses <code>canJobLeadTransition(lead.status, &#39;queued&#39;)</code> gate</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/route.ts</code></td>
+<td>GET accepts <code>status</code> query param</td>
+<td>VERIFIED</td>
+<td>Lines 22-33 — <code>parseArrayParam</code> extracts statuses; <code>inArray(jobLeads.status, ...)</code> filter applied</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td>Skill entry point with frontmatter</td>
+<td>VERIFIED</td>
+<td><code>name</code>, <code>description</code>, <code>argument-hint</code>, <code>allowed-tools: [Read, Bash]</code> frontmatter; &quot;Drain mode&quot; + &quot;Single-lead mode&quot; + &quot;Error handling&quot; sections present</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code></td>
+<td>Nav cheat-sheet</td>
+<td>VERIFIED</td>
+<td>194 lines; 5 canonical steps + selector hints table</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code></td>
+<td>API contract</td>
+<td>VERIFIED</td>
+<td>Documents all 4 endpoints + envelope + valid transitions table</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code></td>
+<td>Failure modes mapped to 5 categories</td>
+<td>VERIFIED</td>
+<td>5 categories: Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>&quot;Copy skill invocation&quot; + failure banner + retry; no SearchProgress</td>
+<td>VERIFIED</td>
+<td>All branches present; no <code>SearchProgress</code> import</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/scrape-connections.ts</code></td>
+<td>DOES NOT EXIST (deleted)</td>
+<td>VERIFIED</td>
+<td>Filesystem check confirms absent; <code>__cleanup__.test.ts</code> regression-locks the absence</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/components/search-progress.tsx</code></td>
+<td>DOES NOT EXIST (deleted)</td>
+<td>VERIFIED</td>
+<td>Filesystem check confirms absent; <code>__cleanup__.test.ts</code> regression-locks the absence</td>
+</tr>
+<tr>
+<td><code>src/__cleanup__.test.ts</code></td>
+<td>Phase 5 regression block present</td>
+<td>VERIFIED</td>
+<td>Lines 39-69 — <code>phase5DeletedPaths</code> array + describe block with 4 <code>it(...)</code> cases (2 paths + scrapeConnections-not-imported + SearchProgress-not-imported)</td>
+</tr>
+<tr>
+<td><code>scripts/generate-api-token.ts</code></td>
+<td>Token generation script</td>
+<td>VERIFIED</td>
+<td>File exists at expected path; <code>package.json</code> registers <code>token:generate</code> script</td>
+</tr>
+<tr>
+<td><code>env.example.txt</code></td>
+<td>Documents <code>API_TOKEN_HASH</code> and <code>SINGLE_USER_EMAIL</code></td>
+<td>VERIFIED</td>
+<td>Lines 98-103 — &quot;Heimdall Service-Token Bypass (Phase 5)&quot; section with both placeholders</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>job-lead-detail.tsx</code></td>
+<td><code>POST /api/job-leads/[id]/search</code></td>
+<td><code>fetch</code> in <code>handleRetry</code></td>
+<td>WIRED</td>
+<td>Line 43 — <code>fetch(/api/job-leads/${lead.id}/search, { method: &#39;POST&#39; })</code>; response handled with state update + sonner toast</td>
+</tr>
+<tr>
+<td><code>job-lead-detail.tsx</code></td>
+<td>clipboard</td>
+<td><code>navigator.clipboard.writeText</code></td>
+<td>WIRED</td>
+<td>Line 32 — copies <code>claude /scrape-linkedin-connections ${lead.id}</code></td>
+</tr>
+<tr>
+<td><code>search/route.ts</code></td>
+<td><code>canJobLeadTransition</code></td>
+<td>import</td>
+<td>WIRED</td>
+<td>Line 7 imports; line 30 uses to gate the flip</td>
+</tr>
+<tr>
+<td><code>status/route.ts</code></td>
+<td><code>canJobLeadTransition</code></td>
+<td>import</td>
+<td>WIRED</td>
+<td>Line 7 imports; line 76 uses; rejects with <code>validationError</code> on invalid transition</td>
+</tr>
+<tr>
+<td><code>status/route.ts</code></td>
+<td>timeline</td>
+<td><code>logTimeline</code> import + call</td>
+<td>WIRED</td>
+<td>Line 6 imports; <code>eventTypeFor(newStatus)</code> selects event type; always called after update</td>
+</tr>
+<tr>
+<td><code>prospects/route.ts</code></td>
+<td><code>prospects</code> table</td>
+<td><code>db.insert(prospects).values(rows)</code></td>
+<td>WIRED</td>
+<td>Single bulk insert at line 60 (no per-row loop); rows include <code>profileSnippet</code> field plumbed from request body</td>
+</tr>
+<tr>
+<td><code>prospects/route.ts</code></td>
+<td>timeline</td>
+<td><code>logTimeline</code> import + call</td>
+<td>WIRED</td>
+<td>Emits <code>job_lead_search_complete</code> with <code>prospectCount</code> metadata</td>
+</tr>
+<tr>
+<td><code>proxy.ts</code> middleware</td>
+<td><code>process.env.API_TOKEN_HASH</code> + <code>SINGLE_USER_EMAIL</code></td>
+<td>env reads + Web-Crypto SHA-256 compare</td>
+<td>WIRED</td>
+<td>Lines 37-44 — token hashed; compared to <code>expected</code>; gated by <code>singleUser === ALLOWED_EMAIL</code></td>
+</tr>
+<tr>
+<td>SKILL.md</td>
+<td><code>GET /api/job-leads?status=queued</code></td>
+<td>curl with Bearer token</td>
+<td>WIRED</td>
+<td>&quot;Drain mode&quot; §1 — uses <code>$(cat ~/.heimdall/api-token)</code> and the GET endpoint</td>
+</tr>
+<tr>
+<td>SKILL.md</td>
+<td><code>PATCH /api/job-leads/[id]/status</code></td>
+<td>curl</td>
+<td>WIRED</td>
+<td>&quot;Single-lead mode&quot; §1 (claim) + §6 (failure write)</td>
+</tr>
+<tr>
+<td>SKILL.md</td>
+<td><code>POST /api/job-leads/[id]/prospects</code></td>
+<td>curl</td>
+<td>WIRED</td>
+<td>&quot;Single-lead mode&quot; §6 (success path)</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>job-lead-detail.tsx</code></td>
+<td><code>lead.status</code>, <code>lead.lastError</code></td>
+<td><code>JobLead</code> prop (Drizzle <code>$inferSelect</code> from <code>jobLeads</code>)</td>
+<td>Yes — populated by RSC parent page from <code>db.select().from(jobLeads)</code></td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>job-lead-detail.tsx</code> Retry handler</td>
+<td>API response</td>
+<td><code>fetch(&#39;/api/job-leads/${id}/search&#39;, { method: &#39;POST&#39; })</code> JSON</td>
+<td>Yes — server returns <code>success(updated)</code> envelope with updated row</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>prospects/route.ts</code> insert</td>
+<td><code>rows</code></td>
+<td>Validated <code>validated.prospects</code> from request body</td>
+<td>Yes — Zod-validated 5-field shape from skill payload</td>
+<td>FLOWING</td>
+</tr>
+<tr>
+<td><code>proxy.ts</code> bypass</td>
+<td><code>expected</code> env var</td>
+<td><code>process.env.API_TOKEN_HASH</code></td>
+<td>Yes — set by user after <code>npm run token:generate</code>; env.example.txt documents it</td>
+<td>FLOWING (subject to user setup)</td>
+</tr>
+</tbody></table>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Full test suite passes</td>
+<td><code>npm run test:run</code></td>
+<td>`Test Files 16 passed (16)</td>
+<td>Tests 133 passed (133)` (15.9s)</td>
+</tr>
+<tr>
+<td>Migration file syntactically valid (SQL)</td>
+<td>manual read of <code>0007_add_queued_failed_status_and_error_columns.sql</code></td>
+<td>4 statements, breakpoint-separated, <code>ADD VALUE IF NOT EXISTS</code> used</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>TypeScript compiles (excluding pre-existing prioritization.ts errors)</td>
+<td><code>npx tsc --noEmit</code></td>
+<td>Only the 4 known pre-existing errors in <code>src/features/job-leads/lib/prioritization.ts:70-72</code>; no new errors introduced by Phase 5</td>
+<td>PASS (no regression)</td>
+</tr>
+<tr>
+<td>No orphan imports of deleted files</td>
+<td><code>grep -rn &quot;scrapeConnections|SearchProgress|scrape-connections|search-progress&quot; src/</code></td>
+<td>All matches are inside regression-lock test files (<code>__cleanup__.test.ts</code>, <code>search/route.test.ts</code>)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No debt markers (TBD/FIXME/XXX) in phase-5 modified files</td>
+<td><code>grep -rn &quot;TBD|FIXME|XXX&quot;</code> across phase-5 paths + <code>.claude/skills</code></td>
+<td>Zero matches</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Brittle antipatterns removed</td>
+<td><code>grep -rn &quot;&#39;point&#39;|waitForTimeout&quot; src/</code></td>
+<td>Zero matches</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<table>
+<thead>
+<tr>
+<th>Probe</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(No formal phase-5 probes declared)</td>
+<td>—</td>
+<td>Probe pattern is not used for this project&#39;s phase 5; verification relies on the Vitest suite (133/133), behavioral spot-checks, and goal-backward inspection</td>
+<td>SKIPPED (no probe scripts declared in PLAN/SUMMARY; the test suite acts as the runnable verification surface, and it passes)</td>
+</tr>
+</tbody></table>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description (abbrev)</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JL-B1</td>
+<td>05-06</td>
+<td>Skill exists at <code>.claude/skills/scrape-linkedin-connections/</code>, accepts UUID/URL arg or drains queue</td>
+<td>SATISFIED</td>
+<td>SKILL.md frontmatter <code>argument-hint</code>; SKILL.md &quot;Argument parsing&quot; + &quot;Drain mode&quot; + &quot;Single-lead mode&quot; sections</td>
+</tr>
+<tr>
+<td>JL-B2</td>
+<td>05-06</td>
+<td>Skill drives agent-browser through 4-step nav and extracts 5-field <code>ScrapedProspect</code></td>
+<td>SATISFIED</td>
+<td><code>references/linkedin-navigation.md</code> documents canonical path; SKILL.md §4 lists the 5 fields; <code>types.ts</code> exports the 5-field type</td>
+</tr>
+<tr>
+<td>JL-B3</td>
+<td>05-04, 05-05, 05-07</td>
+<td>Skill writes via REST; IIFE + <code>scrape-connections.ts</code> + <code>search-progress.tsx</code> deleted; no <code>scrapeConnections</code> in <code>src/</code></td>
+<td>SATISFIED</td>
+<td>All deletions confirmed via filesystem + grep; <code>search/route.ts</code> is now 56 lines synchronous flip; <code>__cleanup__.test.ts</code> regression-locks the deletions</td>
+</tr>
+<tr>
+<td>JL-B4</td>
+<td>05-01, 05-04</td>
+<td>Enum gains <code>queued</code>/<code>failed</code>; <code>last_error</code>/<code>last_error_at</code> columns added; state machine enforces transitions</td>
+<td>SATISFIED</td>
+<td><code>enums.ts</code> + <code>job-leads.ts</code> schema updated; migration 0007 generated and applied (journal idx 7); <code>canJobLeadTransition</code> enforced at PATCH <code>/status</code>; transitions cover scraped→queued, queued→searching, searching→{found,failed}, failed→queued</td>
+</tr>
+<tr>
+<td>JL-B5</td>
+<td>05-05</td>
+<td>UI: queued badge + Copy invocation button + categorized failure banner with Retry</td>
+<td>SATISFIED</td>
+<td><code>job-lead-detail.tsx</code> lines 76-133; clipboard write + sonner toast; failure banner with bold category + retry posting to <code>/search</code></td>
+</tr>
+</tbody></table>
+<p>(No orphaned requirements — REQUIREMENTS.md Traceability table shows JL-B1..B5 mapped to Phase 5; all five are addressed by plans 05-01..05-07.)</p>
+<h3>Decision Honoring (D-01..D-26)</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Honored?</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>D-01 Skill location <code>.claude/skills/scrape-linkedin-connections/</code></td>
+<td>YES</td>
+<td>Directory exists at expected path</td>
+</tr>
+<tr>
+<td>D-02 Skill name &amp; invocation form</td>
+<td>YES</td>
+<td>Frontmatter <code>name: scrape-linkedin-connections</code>; clipboard copy produces <code>claude /scrape-linkedin-connections &lt;id&gt;</code></td>
+</tr>
+<tr>
+<td>D-03 Skill structure (SKILL.md + references)</td>
+<td>YES</td>
+<td>All 3 reference files present (linkedin-navigation, heimdall-api, troubleshooting); no <code>helpers/</code> dir but D-03 made that optional</td>
+</tr>
+<tr>
+<td>D-04 agent-browser ai-chat reasoning</td>
+<td>YES</td>
+<td>SKILL.md is prompt-based and instructs Claude to reason through agent-browser snapshots (not scripted CLI calls); references/linkedin-navigation.md treats selectors as hints</td>
+</tr>
+<tr>
+<td>D-05 agent-browser attaches to <code>~/.heimdall/linkedin-profile/</code></td>
+<td>YES</td>
+<td>SKILL.md &quot;Setup&quot; + &quot;Single-lead mode&quot; §2 document this; troubleshooting.md <code>Browser unavailable</code> covers the failure mode</td>
+</tr>
+<tr>
+<td>D-06 enum <code>queued</code>/<code>failed</code></td>
+<td>YES</td>
+<td>Confirmed in schema + types + migration</td>
+</tr>
+<tr>
+<td>D-07 <code>last_error: text</code> + <code>last_error_at: timestamp</code></td>
+<td>YES</td>
+<td>Confirmed in <code>job-leads.ts</code> + migration</td>
+</tr>
+<tr>
+<td>D-08 State machine transitions</td>
+<td>YES</td>
+<td>Pipeline graph matches D-08 spec (plus an additional <code>queued → failed</code> direct edge which is harmless — covers skill-time <code>Browser unavailable</code> claim failures before <code>searching</code> is even reached; does not violate any required transition)</td>
+</tr>
+<tr>
+<td>D-09 Error category taxonomy (5 categories)</td>
+<td>YES</td>
+<td><code>troubleshooting.md</code> documents all 5 verbatim; SKILL.md &quot;Error handling&quot; + heimdall-api.md &quot;Error envelopes&quot; reference the same 5</td>
+</tr>
+<tr>
+<td>D-10 No-arg drain mode</td>
+<td>YES</td>
+<td>SKILL.md &quot;Drain mode&quot; section implements the 6-step protocol</td>
+</tr>
+<tr>
+<td>D-11 Concurrent-skill safety via state-machine PATCH</td>
+<td>YES</td>
+<td>SKILL.md &quot;Single-lead mode&quot; §1 documents the 400 &quot;already-claimed&quot; path</td>
+</tr>
+<tr>
+<td>D-12 Deletion scope</td>
+<td>YES</td>
+<td>All listed files/symbols deleted; cleanup test locks</td>
+</tr>
+<tr>
+<td>D-13 Convert <code>/search</code> to thin flip</td>
+<td>YES</td>
+<td>Route is 56 lines, synchronous, no IIFE</td>
+</tr>
+<tr>
+<td>D-14 Keep <code>linkedin-browser.ts</code> and <code>scrape-job-page.ts</code></td>
+<td>YES</td>
+<td>Both files still present; pre-existing <code>console.log</code> calls in <code>linkedin-browser.ts</code> are pre-Phase-5 debt and explicitly out of scope per D-14</td>
+</tr>
+<tr>
+<td>D-15/CD-01 Working-tree handling</td>
+<td>YES (Option A)</td>
+<td>Pre-execution snapshot commit <code>9546440 chore(05): snapshot pre-execution working tree</code> precedes deletions in 05-07</td>
+</tr>
+<tr>
+<td>D-16 UI affordances</td>
+<td>YES</td>
+<td>Badge + Copy invocation button + failure banner + Retry all present</td>
+</tr>
+<tr>
+<td>D-17 No real-time notification</td>
+<td>YES</td>
+<td><code>&#39;searching&#39;</code> branch shows static &quot;Refresh the page&quot; message; no polling component</td>
+</tr>
+<tr>
+<td>D-18 List-view representation</td>
+<td>YES</td>
+<td><code>job-lead-card.tsx</code> defines <code>statusColors</code> for <code>queued</code> (amber) and <code>failed</code> (red)</td>
+</tr>
+<tr>
+<td>D-19 Bearer token + token script + env hash</td>
+<td>YES</td>
+<td>Middleware bypass, <code>scripts/generate-api-token.ts</code>, env.example.txt placeholders all present</td>
+</tr>
+<tr>
+<td>D-20 Routes: GET status filter, PATCH status, POST prospects</td>
+<td>YES</td>
+<td>All 3 routes wired; error write folded into PATCH <code>/status</code> (CD-02 disposition)</td>
+</tr>
+<tr>
+<td>D-21 SINGLE_USER_EMAIL gate</td>
+<td>YES</td>
+<td>Proxy.ts line 39 — explicit <code>singleUser === ALLOWED_EMAIL</code> check before bypass</td>
+</tr>
+<tr>
+<td>D-22 Zod 5-field schema</td>
+<td>YES</td>
+<td><code>prospects/route.ts</code> lines 13-19 — exact shape with bounded sizes</td>
+</tr>
+<tr>
+<td>D-23 Migration name + sane SQL</td>
+<td>YES</td>
+<td><code>0007_add_queued_failed_status_and_error_columns.sql</code> uses <code>ADD VALUE IF NOT EXISTS ... BEFORE</code> (hand-tweaked safely)</td>
+</tr>
+<tr>
+<td>D-24 No data migration</td>
+<td>YES</td>
+<td>Migration adds enum values + columns only; no row-level UPDATEs</td>
+</tr>
+<tr>
+<td>D-25 Three testing layers</td>
+<td>PARTIAL</td>
+<td>Layer 1 (API tests, PGlite) confirmed — 4 new route test files. Layer 2 (schema migration test) — not separately present, but applied successfully (<code>npm run db:migrate</code> exit 0 per submission context; journal updated). Layer 3 (manual skill smoke) — out of scope for verifier (requires LinkedIn login + agent-browser install). Not a blocker since layer 2 is implicitly covered by the live migration and layer 3 is human-only.</td>
+</tr>
+<tr>
+<td>D-26 Cleanup-test regression lock</td>
+<td>YES</td>
+<td><code>__cleanup__.test.ts</code> Phase 5 block present with 4 it-cases</td>
+</tr>
+</tbody></table>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(none in Phase 5 modified files)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/linkedin-browser.ts</code></td>
+<td>63,72,81,89</td>
+<td>Pre-existing <code>console.log</code> debug statements</td>
+<td>INFO</td>
+<td>Out of scope per D-14 (file is &quot;Keep&quot;) — not part of Phase 5 deltas</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/prioritization.ts</code></td>
+<td>70-72</td>
+<td>Pre-existing TS strict errors (iterator + implicit <code>any</code>)</td>
+<td>INFO</td>
+<td>Phase 5 verification context explicitly notes these are allowed (pre-existing); no new errors introduced</td>
+</tr>
+</tbody></table>
+<h3>Human Verification Required</h3>
+<p>None blocking phase acceptance. The phase&#39;s end-to-end happy path (run <code>claude /scrape-linkedin-connections</code> against a real queued lead) is intentionally human-tested per D-25 layer 3 — it requires:</p>
+<ol>
+<li>User installs <code>vercel-labs/agent-browser</code> (not in repo).</li>
+<li>User runs <code>npm run token:generate</code> and pastes <code>API_TOKEN_HASH=</code> into <code>.env.local</code> (one-time setup).</li>
+<li>User signs into LinkedIn in the visible Chrome backed by <code>~/.heimdall/linkedin-profile/</code>.</li>
+<li>User starts dev server (<code>npm run dev</code>), creates or selects a <code>queued</code> job lead, clicks &quot;Copy skill invocation&quot;, pastes in Claude Code, observes prospects flow into the DB and the UI flips <code>&#39;queued&#39; → &#39;searching&#39; → &#39;found&#39;</code>.</li>
+</ol>
+<p>This is the canonical skill smoke per D-25.3 and is explicitly out of scope for automated verification (mocking agent-browser would defeat the purpose). Recording here for transparency, not as a gap — the goal-backward question is answered YES on inspection of the assets.</p>
+<h3>Gaps Summary</h3>
+<p>No blocking gaps. All 5 ROADMAP Success Criteria are observably true in the codebase; all 5 JL-B requirements are satisfied; all 26 numbered decisions (D-01..D-26) are honored or have documented dispositions (D-25 layer-3 manual smoke is human-only and not a gap; layer-2 schema-migration test is implicitly covered by the live migration&#39;s clean apply).</p>
+<h3>Goal-Backward Conclusion</h3>
+<p><strong>Could the owner, given only this repo as it stands now, run <code>claude /scrape-linkedin-connections</code> against a queued job lead and have prospects land in their DB via REST without ever leaving Claude Code?</strong></p>
+<p>YES, assuming the documented external prerequisites are met:</p>
+<ul>
+<li><code>vercel-labs/agent-browser</code> installed (not in repo scope).</li>
+<li><code>~/.heimdall/api-token</code> generated via <code>npm run token:generate</code> (one-time).</li>
+<li><code>API_TOKEN_HASH</code> + <code>SINGLE_USER_EMAIL</code> set in <code>.env.local</code> (one-time).</li>
+<li>Dev server running on <code>http://localhost:4000</code>.</li>
+<li>LinkedIn signed in inside <code>~/.heimdall/linkedin-profile/</code> Chrome.</li>
+</ul>
+<p>The skill assets, the auth-bypass middleware, the new REST endpoints, the state machine, the UI affordances, and the deletions of the brittle in-app scraper are ALL in place. The DB-driven queue model (<code>queued → searching → found|failed → queued</code>) is enforced end-to-end by <code>canJobLeadTransition</code>. The 133-test suite passes and <code>__cleanup__.test.ts</code> regression-locks the deletions so this work cannot be silently regressed.</p>
+<hr>
+<p><em>Verified: 2026-05-14T12:42:54Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

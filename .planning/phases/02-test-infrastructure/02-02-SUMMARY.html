@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 02
+subsystem: testing
+tags: [vitest, pure-logic, pipeline, bridge-score, seniority, filters, typescript]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 02-test-infrastructure/01
+provides: Vitest 4.1.6 + node environment + @/* alias + npm test scripts already wired</li>
+</ul>
+<p>provides:</p>
+<ul>
+<li>src/lib/domain/pipeline.test.ts — canTransition (valid/blocked/invalid) + isTerminalState exhaustive</li>
+<li>src/lib/api/types.test.ts — all 7 envelope factories with status codes + console.error spy</li>
+<li>src/lib/api/filters.test.ts — parseCursor/parseLimit/parseArrayParam edge cases</li>
+<li>src/features/job-leads/lib/seniority.test.ts — inferSeniority rules + rule-order regression guard</li>
+<li>src/features/job-leads/lib/prioritization.test.ts — computeBridgeScore composition/bounds/monotonicity + buildRecommendations</li>
+<li>tsconfig.json updated with vitest/globals type reference</li>
+</ul>
+<p>affects: [02-test-infrastructure, 03-security-hardening, 04-api-cleanup, 05-job-leads]</p>
+<p>tech-stack:
+  added: []
+  patterns:
+    - Vitest globals mode (globals:true in config) — no explicit imports of describe/it/expect in test files
+    - makeContact()/makeProspect() helper factories satisfying full Drizzle $inferSelect type without as-cast
+    - @faker-js/faker fuzz batch pattern for bounds-checking score functions
+    - vi.spyOn(console, &#39;error&#39;).mockImplementation() + spy.mockRestore() in afterEach for side-effect assertions
+    - Rule-order regression guard: asserting &#39;Senior Manager&#39; returns senior_manager/55 before the looser senior rule</p>
+<p>key-files:
+  created:
+    - src/lib/domain/pipeline.test.ts
+    - src/lib/api/types.test.ts
+    - src/lib/api/filters.test.ts
+    - src/features/job-leads/lib/seniority.test.ts
+    - src/features/job-leads/lib/prioritization.test.ts
+  modified:
+    - tsconfig.json (added &quot;vitest/globals&quot; to types array)</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Used vitest globals mode (no imports needed) since vitest.config.ts already had globals:true from 02-01; added vitest/globals to tsconfig types to satisfy tsc strict mode&quot;</li>
+<li>&quot;makeContact() helper fully populates all Contact nullable columns to avoid type cast — provides future-proof type fidelity&quot;</li>
+<li>&quot;Composition test value 94 confirmed against real formula: Math.round(0.4<em>85 + 0.35</em>100 + 0.25*100) = 94&quot;</li>
+<li>&quot;Pre-existing tsc errors in prioritization.ts and scrape-connections.ts deferred — out of scope for this plan&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Pure-logic tests: plain inputs, no PGlite, no vi.mock — D-08 contract honored across all 5 files&quot;</li>
+<li>&quot;makeContact()/makeProspect() fixture factories: full nullable-field coverage without as-cast ensures type drift is caught by tsc&quot;</li>
+<li>&quot;Fuzz batches use faker.helpers.arrayElement over domain enum arrays, not random strings — ensures valid enum values&quot;</li>
+</ul>
+<p>requirements-completed: [TEST-A2]</p>
+<h2>duration: 25min
+completed: 2026-05-12</h2>
+<h1>Phase 2 Plan 02: Pure-Logic Test Coverage Summary</h1>
+<p><strong>Five colocated .test.ts files pin canTransition, bridge-score weights (exact value 94), seniority rule order, envelope factories, and filter parsers — 63 tests, 5 files, all passing under npm run test:run</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> 25 min</li>
+<li><strong>Started:</strong> 2026-05-12T18:20:00Z</li>
+<li><strong>Completed:</strong> 2026-05-12T18:25:30Z</li>
+<li><strong>Tasks:</strong> 3</li>
+<li><strong>Files modified:</strong> 6 (5 test files created, tsconfig.json modified)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>63 pure-logic tests across 5 files; all pass in 343ms with no network, DB, or env access</li>
+<li>Pipeline transition graph covered exhaustively via Object.entries loop over <code>validTransitions</code>; terminal-state blocking and invalid-jump guards each have dedicated <code>it()</code> blocks</li>
+<li>API envelope factories (success, created, paginated, error, notFound, validationError, serverError) each tested for status code and body shape; <code>serverError</code> asserts <code>console.error</code> spy call with exact args</li>
+<li>Bridge-score composition test asserts exact value 94 (not a range); 50-iteration faker fuzz batch verifies [0,100] bounds</li>
+<li>Seniority rule-order regression guard: &#39;Senior Manager&#39; must hit <code>senior_manager</code> rule before the looser <code>senior</code> rule — catches reordering bugs</li>
+</ul>
+<h2>Test File it() Counts</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>it() count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>src/lib/domain/pipeline.test.ts</td>
+<td>13</td>
+</tr>
+<tr>
+<td>src/lib/api/types.test.ts</td>
+<td>9</td>
+</tr>
+<tr>
+<td>src/lib/api/filters.test.ts</td>
+<td>18</td>
+</tr>
+<tr>
+<td>src/features/job-leads/lib/seniority.test.ts</td>
+<td>13</td>
+</tr>
+<tr>
+<td>src/features/job-leads/lib/prioritization.test.ts</td>
+<td>10</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>63</strong></td>
+</tr>
+</tbody></table>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically:</p>
+<ol>
+<li><strong>Task 1: Pipeline + envelope shape</strong> - <code>ce9ff25</code> (test)</li>
+<li><strong>Task 2: Filter parsers</strong> - <code>9a2bf88</code> (test)</li>
+<li><strong>Task 3: Seniority + bridge-score</strong> - <code>31eb944</code> (test)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>src/lib/domain/pipeline.test.ts</code> — canTransition (valid graph loop, terminal block, invalid jumps) + isTerminalState exhaustive</li>
+<li><code>src/lib/api/types.test.ts</code> — all 7 factories, status codes, console.error spy</li>
+<li><code>src/lib/api/filters.test.ts</code> — parseCursor (5 cases), parseLimit (8 cases), parseArrayParam (5 cases)</li>
+<li><code>src/features/job-leads/lib/seniority.test.ts</code> — inferSeniority 12 title cases + seniorityWeights completeness</li>
+<li><code>src/features/job-leads/lib/prioritization.test.ts</code> — computeBridgeScore 5 cases + buildRecommendations grouping/sorting</li>
+<li><code>tsconfig.json</code> — added <code>&quot;vitest/globals&quot;</code> to <code>types</code> array for strict-mode tsc compliance</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><code>vitest/globals</code> added to tsconfig <code>types</code> array — required because vitest.config.ts has <code>globals: true</code> but tsc didn&#39;t know about the ambient globals. This is the standard fix; no separate tsconfig.test.json needed (CD-03 resolved in favor of single config).</li>
+<li><code>makeContact()</code> / <code>makeProspect()</code> helpers populate every nullable column explicitly — makes type drift detectable without <code>as Contact</code> casts.</li>
+<li>Composition test locked to exact value 94 (confirmed against source formula). No rounding adjustment was needed.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 3 - Blocking] Added vitest/globals to tsconfig types</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 verification (npx tsc --noEmit)</li>
+<li><strong>Issue:</strong> vitest.config.ts had <code>globals: true</code> so test files used <code>describe/it/expect</code> without imports, but TypeScript didn&#39;t know about these ambient globals — tsc reported TS2582/TS2304 errors in all 5 test files</li>
+<li><strong>Fix:</strong> Added <code>&quot;types&quot;: [&quot;vitest/globals&quot;]</code> to tsconfig.json <code>compilerOptions</code></li>
+<li><strong>Files modified:</strong> tsconfig.json</li>
+<li><strong>Verification:</strong> <code>npx tsc --noEmit</code> — zero errors in any <code>.test.ts</code> file</li>
+<li><strong>Committed in:</strong> <code>31eb944</code> (Task 3 commit)</li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 1 auto-fixed (Rule 3 — blocking tsc check)
+<strong>Impact on plan:</strong> Required for <code>npx tsc --noEmit</code> success criterion. No scope creep.</p>
+<h2>Known Stubs</h2>
+<p>None — all test assertions use real formula values and enum constants from source.</p>
+<h2>PGlite Confirmation</h2>
+<p>No test file imports <code>createTestDb</code>, <code>@electric-sql/pglite</code>, or <code>@/lib/db</code>. All tests are pure-logic per D-08.</p>
+<h2>Deferred Issues</h2>
+<p>The following pre-existing TypeScript errors in source files were out of scope for this plan (not caused by Wave 2 changes):</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Error</th>
+<th>Reason Deferred</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/job-leads/lib/prioritization.ts</code> lines 70-72</td>
+<td>TS2802 MapIterator downlevel, TS7006 implicit any</td>
+<td>Pre-existing; tsconfig target es5 vs. Map.values() iteration; not introduced by this plan</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/scrape-connections.ts</code> lines 56,93,187</td>
+<td>TS2802 NodeListOf downlevel iteration</td>
+<td>Pre-existing; same root cause</td>
+</tr>
+</tbody></table>
+<p>These will be addressed when Phase 5 (Job Leads Completion) reworks these modules.</p>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>All 5 pure-logic test surfaces from TEST-A2/D-11/D-12 are covered</li>
+<li>02-03 (DB-integration route tests) can proceed — <code>createTestDb()</code> and <code>callRoute()</code> from 02-01 are ready</li>
+<li><code>tsconfig.json</code> now has vitest/globals so future test files also get ambient type support without imports</li>
+</ul>
+<hr>
+<p><em>Phase: 02-test-infrastructure</em>
+<em>Completed: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

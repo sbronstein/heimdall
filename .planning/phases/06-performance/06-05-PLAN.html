@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-05-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-05-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: 05
+type: execute
+wave: 2
+depends_on: [06-01]
+files_modified:</p>
+<ul>
+<li>src/app/api/job-leads/[id]/recommendations/route.ts</li>
+<li>src/app/api/job-leads/[id]/recommendations/route.test.ts
+autonomous: true
+requirements: [PERF-A1]
+tags: [drizzle, bulk-update, on-the-fly, prospect-bridges]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;GET /api/job-leads/[id]/recommendations no longer issues a per-row UPDATE for missing bridge scores&quot;
+    - &quot;Bridge scores are computed on-the-fly via computeBridgeScore in the handler — NO persistence loop, NO bulk UPDATE, NO db write at all (planner pick: Variant B per CONTEXT D-15)&quot;
+    - &quot;The mutated rows array passed to buildRecommendations() contains the computed scores for any bridge whose .score column was null&quot;
+    - &quot;prioritization.ts:55 (<code>bridge.score ?? computeBridgeScore(...)</code>) remains the fallback for the same compute, so removing persistence does not change observable behavior for callers&quot;
+    - &quot;The greppable N+1 anti-pattern <code>for (...) { await db.update(prospectBridges)</code> does NOT survive in recommendations/route.ts (D-21)&quot;
+    - &quot;The route is now a pure READ — no INSERT/UPDATE/DELETE statements remain&quot;
+    - &quot;Test fixture uses ONLY valid seniorityLevelEnum values from drizzle/schema/enums.ts (BLOCKER 3 fix — <code>&#39;c_suite&#39;</code> not <code>&#39;executive&#39;</code>)&quot;
+    - &quot;D-17: this plan is Wave 2 / Plan 2d — one of four parallel code-change atomics blocked on Wave 1 (Plan 01) and disjoint from Plans 02/03/04 in its file set (recommendations/route.ts + route.test.ts only)&quot;
+    - &quot;D-19: PGlite-backed route tests assert post-conditions (recommendation count, no DB writes, idempotency under retry, response envelope shape); the Phase 2 harness (src/test-utils/{pglite,call-route}.ts) is reused without modification&quot;
+  artifacts:
+    - path: &quot;src/app/api/job-leads/[id]/recommendations/route.ts&quot;
+      provides: &quot;GET handler that computes missing bridge scores on-the-fly without persistence&quot;
+      contains: &quot;computeBridgeScore&quot;
+    - path: &quot;src/app/api/job-leads/[id]/recommendations/route.test.ts&quot;
+      provides: &quot;PGlite test coverage: missing-score path computes correctly, no db writes occur, no timeline events, idempotent reads&quot;
+      contains: &quot;expect(events).toHaveLength(0)&quot;
+  key_links:
+    - from: &quot;src/app/api/job-leads/[id]/recommendations/route.ts&quot;
+      to: &quot;src/features/job-leads/lib/prioritization.ts&quot;
+      via: &quot;buildRecommendations receives rows whose bridge.score is non-null (computed in-handler)&quot;
+  pattern: &quot;buildRecommendations\(rows\)&quot;
+</p>
+<hr>
+<objective>
+Eliminate the per-row UPDATE loop in `GET /api/job-leads/[id]/recommendations` (lines 43-53). Planner pick per CONTEXT D-15: **Variant B — compute on-the-fly, drop persistence entirely.** Grep evidence confirms `prioritization.ts:55` already falls back to `computeBridgeScore` when `bridge.score` is null, so dropping the persistence loop does NOT change observable behavior — and it makes the route a pure READ.<p>Purpose: PERF-A1 (the incidental fold #3 — recommendations N+1 elimination). This is the simplest of the four Wave 2 plans because the right answer is to delete code, not refactor SQL.
+Output: 1 route simplified (lines 43-53 collapsed into a single in-memory map), 1 test file added/extended pinning the no-writes invariant.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/06-performance/06-CONTEXT.md
+@.planning/phases/06-performance/06-PATTERNS.md
+@CLAUDE.md
+@src/app/api/job-leads/[id]/recommendations/route.ts
+@src/features/job-leads/lib/prioritization.ts
+@src/features/job-leads/lib/prioritization.test.ts
+@drizzle/schema/job-leads.ts
+@drizzle/schema/enums.ts<interfaces>
+<!-- prioritization.ts already handles null scores. Grep evidence (run during planning): --><p>From src/features/job-leads/lib/prioritization.ts:55 (the fallback that makes Variant B safe):</p>
+<pre><code class="language-typescript">// In buildRecommendations:
+for (const { bridge, prospect, contact } of bridges) {
+  const score = bridge.score ?? computeBridgeScore(prospect, contact);  // &lt;-- THIS
+  // ... uses `score` for the rest of the row
+}
+</code></pre>
+<p>Implication: if recommendations/route.ts simply DELETES the persistence loop (lines 43-53) and passes <code>rows</code> straight to <code>buildRecommendations</code>, the existing fallback at line 55 handles the null-score case correctly. The bridge.score column on prospect_bridges stays nullable; it will just never be populated by this route. (If, in the future, some other path persists scores, prioritization.ts will use the persisted value when available — the <code>??</code> keeps both branches working.)</p>
+<p>From src/app/api/job-leads/[id]/recommendations/route.ts (current, lines 43-53 — the N+1 being eliminated):</p>
+<pre><code class="language-typescript">// CURRENT (N+1):
+for (const row of rows) {
+  if (row.bridge.score === null) {
+    const score = computeBridgeScore(row.prospect, row.contact);
+    await db
+      .update(prospectBridges)
+      .set({ score })
+      .where(eq(prospectBridges.id, row.bridge.id));
+    row.bridge.score = score;
+  }
+}
+
+// NEW (no writes, no loop — buildRecommendations handles the null branch internally):
+// ... lines 43-53 deleted; jump straight to:
+const recommendations = buildRecommendations(rows);
+</code></pre>
+<p>From drizzle/schema/job-leads.ts:66-86:</p>
+<pre><code class="language-typescript">// prospectBridges has NO updated_at column — only created_at. That&#39;s why even
+// if we wanted to bulk-UPDATE, the SET clause would not need `updated_at = NOW()`.
+// Confirms the &quot;no writes&quot; decision is clean.
+</code></pre>
+<p>From drizzle/schema/enums.ts (the canonical seniorityLevelEnum value list — BLOCKER 3 fix prerequisite):</p>
+<pre><code class="language-typescript">export const seniorityLevelEnum = pgEnum(&#39;seniority_level&#39;, [
+  &#39;c_suite&#39;,        // &lt;-- USE THIS for executive/c-level prospects
+  &#39;vp&#39;,             // VP-tier
+  &#39;director&#39;,
+  &#39;senior_manager&#39;,
+  &#39;manager&#39;,
+  &#39;senior_ic&#39;,
+  &#39;ic&#39;,
+  &#39;entry_level&#39;,
+  &#39;unknown&#39;
+]);
+// → NOTE: &#39;executive&#39; is NOT a valid enum value. Tests must use &#39;c_suite&#39;.
+//   Seeding &#39;executive&#39; will fail with a Postgres enum-violation error at
+//   INSERT time, causing all tests in the describe block to fail in beforeEach.
+</code></pre>
+</interfaces><decision_record>
+**Decision (this plan): Variant B — drop persistence entirely.**<p>Evidence supporting Variant B over Variant A (bulk UPDATE):</p>
+<ol>
+<li><code>src/features/job-leads/lib/prioritization.ts:55</code> uses <code>bridge.score ?? computeBridgeScore(...)</code> — null scores are transparently recomputed by the downstream consumer.</li>
+<li>The persisted <code>score</code> column is read by exactly TWO callsites:<ul>
+<li><code>recommendations/route.ts:44-52</code> itself (the loop we are removing).</li>
+<li><code>prioritization.ts:55</code> (the fallback that makes Variant B safe).
+No other consumer relies on the persisted score.</li>
+</ul>
+</li>
+<li><code>prospectBridges</code> has no <code>updated_at</code> column, so even a bulk UPDATE would not need timestamp management.</li>
+<li>Variant B removes an entire write path from a GET handler, which is cleaner from a &quot;pure read for GET&quot; stance.</li>
+<li>The persisted <code>score</code> column could be retired in a future cleanup (CONTEXT §Deferred §&quot;prospectBridges.score column retirement&quot;); Variant B is the natural lead-in.</li>
+</ol>
+<p>Future re-evaluation triggers:</p>
+<ul>
+<li>If <code>computeBridgeScore</code> becomes expensive enough that repeated computation is observable (currently it&#39;s a single-expression arithmetic on 3 numbers, so this is not a concern).</li>
+<li>If a future feature needs to query &quot;all bridges with score above N&quot; — at that point either persist scores via a different path (e.g., a write-time hook in match-connections.ts) OR introduce a materialized view (out of scope).</decision_record>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Delete the per-row UPDATE loop; compute scores in-memory via buildRecommendations fallback</name>
+  <files>src/app/api/job-leads/[id]/recommendations/route.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/recommendations/route.ts (full file, 68 lines) — current implementation. Lines 43-53 is the loop being deleted; lines 1-42 and 55-67 are preserved.
+    - src/features/job-leads/lib/prioritization.ts:55 — the `bridge.score ?? computeBridgeScore(...)` fallback that makes Variant B safe.
+    - .planning/phases/06-performance/06-CONTEXT.md D-15 (planner decision deferred to grep evidence; this plan's decision_record records the verdict).
+    - .planning/phases/06-performance/06-PATTERNS.md §"src/app/api/job-leads/[id]/recommendations/route.ts" — Variant A and Variant B presented; this plan picks Variant B.
+  </read_first>
+  <behavior>
+    - Test 1 (happy path — bridges with persisted scores): seed 1 lead + 2 prospects + 2 contacts + 2 bridges; one bridge has `score: 75` persisted, one has `score: null`. GET → response includes both contacts in `recommendations`. The recomputed score for the null-persisted bridge matches `computeBridgeScore(prospect, contact)` for those specific entities (use the test fixture from prioritization.test.ts to construct predictable inputs).
+    - Test 2 (no DB writes): after a GET call, query `prospectBridges` and assert: the bridge that had `score: null` is STILL `score: null` in the DB (Variant B does not persist). The persisted bridge with `score: 75` is unchanged.
+    - Test 3 (no timeline event): after a GET call, query `timeline_events` and assert 0 new rows. GET handlers do not emit timeline events; this preserves that invariant.
+    - Test 4 (empty bridges): seed lead with NO bridges. GET → response: `{ success: true, data: { recommendations: [], meta: { totalProspects: 0, totalBridges: 0, totalContacts: 0 } } }`. No errors.
+    - Test 5 (idempotent reads — D-19): call GET twice. Both calls return identical bodies. Both calls leave the DB unchanged (no writes happen, so trivially idempotent).
+    - Test 6 (lead not found): GET for a non-existent uuid → 404 with `body.error === 'Job lead not found'`. Preserved from current behavior.
+  </behavior>
+  <action>
+    Edit `src/app/api/job-leads/[id]/recommendations/route.ts`:<pre><code>1. Delete lines 43-53 entirely (the persistence loop). The block is:
+   ```typescript
+   // Compute and persist scores for any bridges missing them
+   for (const row of rows) {
+     if (row.bridge.score === null) {
+       const score = computeBridgeScore(row.prospect, row.contact);
+       await db
+         .update(prospectBridges)
+         .set({ score })
+         .where(eq(prospectBridges.id, row.bridge.id));
+       row.bridge.score = score;
+     }
+   }
+   ```
+
+2. The handler now flows directly from the joined SELECT into `buildRecommendations(rows)`. `prioritization.ts:55` already handles `bridge.score === null` via the `??` fallback, so deletion is the entire change.
+
+3. Clean up unused imports:
+   - `computeBridgeScore` from `@/features/job-leads/lib/prioritization` is no longer used in this route — remove it from the named import (keeping `buildRecommendations`).
+   - Confirm `prospectBridges` from the schema barrel is still used (it IS — line 38 still has `.from(prospectBridges)` in the join). Keep it imported.
+   - Confirm `eq` from drizzle-orm is still used (it IS — line 26 + line 39 + line 40 + line 41 still use `eq`). Keep it imported.
+
+4. Add a brief inline comment on or above line 42 (the `const rows = await db.select...` line):
+   ```typescript
+   // Variant B per Phase 6 D-15: bridge scores are computed on-the-fly inside
+   // buildRecommendations (which falls back to computeBridgeScore when bridge.score
+   // is null). No persistence step — recommendations is a pure read.
+   ```
+
+Do NOT introduce a bulk UPDATE (Variant A). The decision_record above documents why Variant B wins on grep evidence.
+
+Do NOT touch the join SELECT (lines 32-41) or the response shape (lines 57-64). The route remains a GET with the same envelope; only the persistence side-effect is removed.
+
+Do NOT modify `prioritization.ts`. The fallback at line 55 stays exactly as-is — it is now the SOLE place where null-bridge-scores are filled in.
+
+Do NOT drop the `score` column from the `prospectBridges` schema. That&#39;s a separate cleanup tracked in CONTEXT §Deferred (&quot;prospectBridges.score column retirement&quot;). Phase 6 keeps the column nullable and unused-by-this-route.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -v '^#' src/app/api/job-leads/[id]/recommendations/route.ts | grep -c "db.update\|db.insert\|db.delete" | grep -q "^0$" && grep -v '^#' src/app/api/job-leads/[id]/recommendations/route.ts | grep -c "computeBridgeScore" | grep -q "^0$" && grep -v '^#' src/app/api/job-leads/[id]/recommendations/route.ts | grep -q "buildRecommendations" && echo "Route is read-only; computeBridgeScore not imported; buildRecommendations still wired"</automated>
+  </verify>
+  <acceptance_criteria>
+    - The route file contains ZERO `db.update`, `db.insert`, or `db.delete` calls (verified by grep gate — the route is now a pure READ).
+    - The route file no longer imports `computeBridgeScore` from `@/features/job-leads/lib/prioritization` (only `buildRecommendations` remains).
+    - The route file still imports `prospectBridges` (used in the join) and `eq` from drizzle-orm (used in WHERE clauses).
+    - The `for (const row of rows) { ... }` loop in the current lines 44-53 is gone (verified by greppable regression for D-21 forbidden pattern).
+    - The response envelope is unchanged: `{ recommendations, meta: { totalProspects, totalBridges, totalContacts } }`.
+    - An inline comment near the SELECT references "Variant B" or "D-15" so a future reader understands why no persistence happens.
+    - `npx tsc --noEmit` exits 0 (note: removing the `computeBridgeScore` import will fail if it's referenced elsewhere in the file — verify it isn't).
+    - `npm run test:run -- src/app/api/job-leads/[id]/recommendations/route.test.ts` exits 0 with all 6 tests passing (Task 2 below provides this file).
+  </acceptance_criteria>
+  <done>Per-row UPDATE loop deleted; route is a pure READ; buildRecommendations' fallback handles null scores.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Create route.test.ts pinning no-writes, recompute-from-null, empty-bridges, and idempotency invariants (using ONLY valid seniorityLevelEnum values)</name>
+  <files>src/app/api/job-leads/[id]/recommendations/route.test.ts</files>
+  <read_first>
+    - Check whether `src/app/api/job-leads/[id]/recommendations/route.test.ts` exists. If NOT, create it. The PGlite harness pattern is the same as Plan 2's existing `prospects/route.test.ts`.
+    - src/app/api/job-leads/[id]/prospects/route.test.ts (Plan 2's existing test file) — canonical harness with seeded `companies` + `jobLeads` rows in `beforeEach`. The recommendations test needs additional seed: `prospects`, `contacts`, and `prospectBridges`.
+    - src/features/job-leads/lib/prioritization.test.ts — for valid `computeBridgeScore` fixture shape (prospects with `seniorityLevel`, contacts with `closeness` + `lastContactDate`).
+    - **drizzle/schema/enums.ts (MANDATORY before writing the fixture — BLOCKER 3 fix prerequisite)** — confirm the canonical seniorityLevelEnum values. The valid set is: `'c_suite', 'vp', 'director', 'senior_manager', 'manager', 'senior_ic', 'ic', 'entry_level', 'unknown'`. `'executive'` is NOT a valid value. Tests MUST use `'c_suite'` for an executive-tier prospect; using anything else causes a Postgres enum violation at `beforeEach` seed time, failing ALL tests in the suite.
+    - drizzle/schema/job-leads.ts — confirms `prospectBridges.score` is `integer('score')` nullable.
+    - .planning/phases/06-performance/06-CONTEXT.md D-19 (idempotency under retry, logTimeline emitted exactly once — for this route, the invariant is ZERO timeline emissions because GET handlers don't emit).
+  </read_first>
+  <behavior>
+    See Test 1-6 in the parent Plan's behavior block.
+  </behavior>
+  <action>
+    Create `src/app/api/job-leads/[id]/recommendations/route.test.ts` (new file — no existing analog at this path).<pre><code>File structure (adapted from `src/app/api/job-leads/[id]/prospects/route.test.ts`):
+```typescript
+import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { callRoute } from &#39;@/test-utils/call-route&#39;;
+import {
+  companies,
+  jobLeads,
+  prospects,
+  prospectBridges,
+  contacts,
+  timelineEvents
+} from &#39;../../../../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+
+const { dbRef } = vi.hoisted(() =&gt; ({
+  dbRef: { current: null as Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt; | null }
+}));
+
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({
+  db: new Proxy({}, {
+    get: (_: object, prop: string | symbol) =&gt;
+      (dbRef.current as unknown as Record&lt;string | symbol, unknown&gt;)[prop]
+  })
+}));
+
+describe(&#39;GET /api/job-leads/[id]/recommendations (pure read)&#39;, () =&gt; {
+  let leadId: string;
+  let companyId: string;
+  let prospectAId: string;
+  let prospectBId: string;
+  let contactXId: string;
+  let contactYId: string;
+  let bridgePersistedId: string;
+  let bridgeNullScoreId: string;
+
+  beforeEach(async () =&gt; {
+    dbRef.current = await createTestDb();
+
+    const [company] = await dbRef.current.insert(companies).values({ name: &#39;AcmeCo&#39; }).returning();
+    companyId = company.id;
+
+    const [lead] = await dbRef.current.insert(jobLeads).values({
+      linkedinJobUrl: &#39;https://www.linkedin.com/jobs/view/9001&#39;,
+      companyId,
+      companyName: &#39;AcmeCo&#39;,
+      roleTitle: &#39;VP Data&#39;,
+      status: &#39;found&#39;,
+      prospectCount: 2
+    }).returning();
+    leadId = lead.id;
+
+    // BLOCKER 3 fix — seniorityLevel MUST come from seniorityLevelEnum:
+    // valid values are &#39;c_suite&#39;, &#39;vp&#39;, &#39;director&#39;, &#39;senior_manager&#39;,
+    // &#39;manager&#39;, &#39;senior_ic&#39;, &#39;ic&#39;, &#39;entry_level&#39;, &#39;unknown&#39;.
+    // Use &#39;c_suite&#39; for the executive-tier prospect (NOT &#39;executive&#39; which
+    // is invalid and would trigger a Postgres enum violation at insert time).
+    const [pA, pB] = await dbRef.current.insert(prospects).values([
+      { jobLeadId: leadId, name: &#39;Alice CTO&#39;, title: &#39;CTO&#39;, seniorityLevel: &#39;c_suite&#39; },
+      { jobLeadId: leadId, name: &#39;Bob VP&#39;,  title: &#39;VP Engineering&#39;, seniorityLevel: &#39;vp&#39; }
+    ]).returning();
+    prospectAId = pA.id;
+    prospectBId = pB.id;
+
+    const [cX, cY] = await dbRef.current.insert(contacts).values([
+      { firstName: &#39;Carol&#39;, lastName: &#39;Connector&#39;, closeness: &#39;close_friend&#39;, lastContactDate: new Date() },
+      { firstName: &#39;Dave&#39;,  lastName: &#39;Distant&#39;,   closeness: &#39;acquaintance&#39;, lastContactDate: null }
+    ]).returning();
+    contactXId = cX.id;
+    contactYId = cY.id;
+
+    // One bridge with persisted score, one with null score — covers both branches of `??` in prioritization.ts:55.
+    const [bP, bN] = await dbRef.current.insert(prospectBridges).values([
+      { prospectId: prospectAId, contactId: contactXId, score: 75 },
+      { prospectId: prospectBId, contactId: contactYId /* score implicitly null */ }
+    ]).returning();
+    bridgePersistedId = bP.id;
+    bridgeNullScoreId = bN.id;
+  });
+
+  it(&#39;Test 1: returns recommendations for bridges with persisted AND null scores&#39;, async () =&gt; {
+    const { GET } = await import(&#39;@/app/api/job-leads/[id]/recommendations/route&#39;);
+    const { status, body } = await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: leadId } }
+    );
+    expect(status).toBe(200);
+    const data = (body as { data: { recommendations: unknown[]; meta: { totalBridges: number } } }).data;
+    expect(data.meta.totalBridges).toBe(2);
+    expect(data.recommendations).toHaveLength(2);  // 2 unique contacts → 2 grouped recommendations.
+  });
+
+  it(&#39;Test 2: no DB writes occur — null-score bridge stays null after GET (Variant B)&#39;, async () =&gt; {
+    const { GET } = await import(&#39;@/app/api/job-leads/[id]/recommendations/route&#39;);
+    await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: leadId } }
+    );
+
+    const [bridge] = await dbRef.current!
+      .select()
+      .from(prospectBridges)
+      .where(eq(prospectBridges.id, bridgeNullScoreId));
+    expect(bridge.score).toBeNull();  // STILL null — no persistence happened.
+
+    const [persistedBridge] = await dbRef.current!
+      .select()
+      .from(prospectBridges)
+      .where(eq(prospectBridges.id, bridgePersistedId));
+    expect(persistedBridge.score).toBe(75);  // Unchanged.
+  });
+
+  it(&#39;Test 3: no timeline events emitted&#39;, async () =&gt; {
+    const { GET } = await import(&#39;@/app/api/job-leads/[id]/recommendations/route&#39;);
+    await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: leadId } }
+    );
+    const events = await dbRef.current!.select().from(timelineEvents);
+    expect(events).toHaveLength(0);
+  });
+
+  it(&#39;Test 4: empty bridges returns empty recommendations array&#39;, async () =&gt; {
+    // Delete the bridges so the join produces 0 rows.
+    await dbRef.current!.delete(prospectBridges);
+
+    const { GET } = await import(&#39;@/app/api/job-leads/[id]/recommendations/route&#39;);
+    const { status, body } = await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: leadId } }
+    );
+
+    expect(status).toBe(200);
+    const data = (body as { data: { recommendations: unknown[]; meta: { totalBridges: number } } }).data;
+    expect(data.recommendations).toHaveLength(0);
+    expect(data.meta.totalBridges).toBe(0);
+  });
+
+  it(&#39;Test 5: idempotent reads — two GETs return identical body and leave DB unchanged&#39;, async () =&gt; {
+    const { GET } = await import(&#39;@/app/api/job-leads/[id]/recommendations/route&#39;);
+    const first = await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: leadId } }
+    );
+    const second = await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: leadId } }
+    );
+    expect(first.body).toEqual(second.body);
+
+    // DB state unchanged across both calls.
+    const bridgesAfter = await dbRef.current!.select().from(prospectBridges);
+    expect(bridgesAfter).toHaveLength(2);
+    const nullBridge = bridgesAfter.find((b) =&gt; b.id === bridgeNullScoreId);
+    expect(nullBridge?.score).toBeNull();
+  });
+
+  it(&#39;Test 6: lead not found returns 404&#39;, async () =&gt; {
+    const { GET } = await import(&#39;@/app/api/job-leads/[id]/recommendations/route&#39;);
+    const { status, body } = await callRoute(
+      GET as unknown as Parameters&lt;typeof callRoute&gt;[0],
+      { method: &#39;GET&#39;, params: { id: &#39;00000000-0000-0000-0000-000000000000&#39; } }
+    );
+    expect(status).toBe(404);
+    expect(body).toMatchObject({ success: false, error: &#39;Job lead not found&#39; });
+  });
+});
+```
+
+Verify during implementation:
+- **The `seniorityLevel` values used in prospect seeds MUST come from `seniorityLevelEnum` in `drizzle/schema/enums.ts`** (BLOCKER 3 fix). The valid set is `&#39;c_suite&#39;, &#39;vp&#39;, &#39;director&#39;, &#39;senior_manager&#39;, &#39;manager&#39;, &#39;senior_ic&#39;, &#39;ic&#39;, &#39;entry_level&#39;, &#39;unknown&#39;`. The fixture above uses `&#39;c_suite&#39;` and `&#39;vp&#39;` — both valid. Do NOT use `&#39;executive&#39;` (invalid; Postgres will reject the INSERT and ALL tests in this describe block will fail in beforeEach).
+- The `closeness` values used in contact seeds (`&#39;close_friend&#39;`, `&#39;acquaintance&#39;`) match `contactClosenessValues` in `src/lib/domain/types.ts`.
+- Test 1&#39;s `toHaveLength(2)` assertion depends on the 2 bridges connecting to 2 distinct contacts. The `buildRecommendations` function groups by contact, so 2 unique contacts → 2 entries.
+
+Do NOT use the `mockMatch` hoisted mock pattern from Plan 2 — that was for the route under test calling matchConnections. This route doesn&#39;t call matchConnections. Standard Proxy mock is sufficient.
+
+Do NOT modify `prioritization.test.ts` — the unit-test coverage of `computeBridgeScore` itself is already complete (verified by the existing 3 tests in that file).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/app/api/job-leads/[id]/recommendations/route.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/app/api/job-leads/[id]/recommendations/route.test.ts` exists and contains 6 `it(...)` blocks covering Tests 1-6 above.
+    - All 6 tests pass — `beforeEach` does NOT throw a Postgres enum violation (BLOCKER 3 fix verified by the test suite reaching green).
+    - The prospect seed uses `seniorityLevel: 'c_suite'` for the executive-tier prospect (NOT `'executive'`). Verifiable by grep: `grep -c "seniorityLevel: 'executive'" src/app/api/job-leads/[id]/recommendations/route.test.ts` returns 0.
+    - The prospect seed uses ONLY values from `seniorityLevelEnum` in `drizzle/schema/enums.ts`. Verifiable by inspection: the only values used in the fixture are `'c_suite'` and `'vp'`, both members of the canonical enum list.
+    - Test 2's no-writes invariant is asserted by directly querying `prospectBridges` after the GET call and confirming `score IS NULL` on the originally-null bridge — proves Variant B is intact (no Variant A regression possible).
+    - Test 3 asserts ZERO timeline events — GET handlers must not emit.
+    - Test 5 asserts the responses from two consecutive calls are byte-identical (`expect(first.body).toEqual(second.body)`) — idempotency under retry.
+    - The `vi.hoisted + Proxy` db-mock pattern is used per the standing convention.
+    - The full suite (`npm run test:run`) exits 0.
+  </acceptance_criteria>
+  <done>New test file pins the route as a pure READ — no writes, no timeline events, no bridge.score persistence — across happy-path, empty, and retry paths. Fixture uses only valid seniorityLevelEnum values.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Client (UI / CLI) → GET /api/job-leads/[id]/recommendations</td>
+<td>Bearer-token-authenticated; only <code>params.id</code> is user-controlled (a job-lead uuid).</td>
+</tr>
+<tr>
+<td>computeBridgeScore inputs (prospect, contact) → in-memory arithmetic</td>
+<td>Pure computation on DB-retrieved values; no SQL constructed from user input downstream.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-06-20</td>
+<td>T (tampering)</td>
+<td>Removing persistence loop could expose stale/incorrect scores to clients</td>
+<td>accept</td>
+<td><code>prioritization.ts:55</code>&#39;s <code>bridge.score ?? computeBridgeScore(...)</code> is the same arithmetic the deleted loop ran. Variant B produces identical numerical output to Variant A for null-persisted bridges; for persisted bridges (score !== null), both variants use the persisted value. No tampering surface. Tests 1 and 5 verify response stability.</td>
+</tr>
+<tr>
+<td>T-06-21</td>
+<td>I (information disclosure)</td>
+<td>params.id flows into a Drizzle eq() lookup</td>
+<td>accept</td>
+<td>Drizzle&#39;s <code>eq(jobLeads.id, id)</code> parameter-binds the value; no SQL injection surface. The lookup runs only on the indexed primary key.</td>
+</tr>
+<tr>
+<td>T-06-22</td>
+<td>D (denial of service)</td>
+<td>Repeated GET calls all recompute scores</td>
+<td>accept</td>
+<td><code>computeBridgeScore</code> is a single-expression arithmetic over 3 numbers (per prioritization.ts:42); recomputation cost is negligible. The decision_record documents the future re-evaluation trigger (&quot;if computeBridgeScore becomes expensive enough&quot;).</td>
+</tr>
+<tr>
+<td>T-06-23</td>
+<td>R (repudiation)</td>
+<td>No timeline event on GET means no audit trail</td>
+<td>accept</td>
+<td>GET handlers across the entire app do not emit timeline events (architectural convention from PROJECT.md §&quot;every write operation also creates a <code>timeline_events</code> record&quot;). Reads are not audited; this preserves that invariant. Test 3 pins it.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. Greppable regression: `grep -v '^#' src/app/api/job-leads/[id]/recommendations/route.ts | grep -c "db.update"` returns `0` (D-21 + the route is now pure-read).
+2. Greppable cleanup: `grep -v '^#' src/app/api/job-leads/[id]/recommendations/route.ts | grep -c "computeBridgeScore"` returns `0` (unused import removed; the function is no longer called from this file).
+3. Greppable presence: `grep -q "buildRecommendations" src/app/api/job-leads/[id]/recommendations/route.ts` exits 0 (still wired).
+4. Greppable BLOCKER 3 fix: `grep -c "'executive'" src/app/api/job-leads/[id]/recommendations/route.test.ts` returns `0` (no invalid enum value in the fixture).
+5. `npx tsc --noEmit` exits 0.
+6. `npm run test:run -- src/app/api/job-leads/[id]/recommendations/route.test.ts` exits 0 with all 6 tests passing — beforeEach does NOT throw a Postgres enum violation.
+7. `npm run test:run -- src/features/job-leads/lib/prioritization.test.ts` continues to exit 0 (the existing unit tests of computeBridgeScore must not regress).
+8. `npm run test:run` (full suite) exits 0.
+9. `npm run build` exits 0.
+</verification><success_criteria>
+- GET /api/job-leads/[id]/recommendations is a pure READ — no INSERT/UPDATE/DELETE statements remain (verified by Task 1 grep gates and Test 2).
+- Bridges with null `score` continue to return correctly-computed recommendations to the client, because `prioritization.ts:55`'s `??` fallback runs the computation in-memory (verified by Test 1's 2-recommendation result over 1 null + 1 persisted bridge).
+- The persisted-score path (`bridge.score === 75`) is unchanged in output (verified by Test 5's idempotent identity assertion).
+- No timeline event is emitted on read (verified by Test 3).
+- Test fixture uses only valid seniorityLevelEnum values from drizzle/schema/enums.ts (BLOCKER 3 fix — `'c_suite'` for executive-tier, NOT `'executive'`); beforeEach seed does not trigger a Postgres enum violation.
+- The persisted `score` column on `prospectBridges` remains nullable and unused-by-this-route, ready for retirement in a future cleanup (CONTEXT §Deferred).
+</success_criteria><output>
+After completion, create `.planning/phases/06-performance/06-05-SUMMARY.md` capturing:
+- The greppable confirmation that `db.update`, `db.insert`, and `db.delete` are all zero in `recommendations/route.ts` after the change.
+- The number of lines removed (expected: ~11 — the for loop block).
+- The number of imports removed (expected: 1 — `computeBridgeScore`).
+- Confirmation that the test fixture used `'c_suite'` (not `'executive'`) for the executive-tier prospect — BLOCKER 3 fix verified by green test run.
+- A note that the `prospectBridges.score` column is now write-free from this route and the future retirement-of-the-column cleanup is tracked in CONTEXT §Deferred.
+</output>
+</content>
+</invoke>
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-05-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

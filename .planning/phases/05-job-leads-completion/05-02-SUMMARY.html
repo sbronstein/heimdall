@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 02
+subsystem: auth
+tags: [clerk, middleware, bearer-token, sha256, web-crypto, edge-runtime, tsx, env]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 03-api-surface
+provides: src/proxy.ts Clerk middleware + isApiPath branch returning {success,error} envelope
+provides:</li>
+<li>Long-lived bearer-token bypass for /api/* (single-user gated)</li>
+<li>One-time token generation script writing to ~/.heimdall/api-token</li>
+<li>env.example.txt placeholders for API_TOKEN_HASH and SINGLE_USER_EMAIL</li>
+<li>npm run token:generate entry point
+affects: [05-job-leads-completion, claude-code-skill, agent-browser]</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added:
+    - &quot;crypto.subtle.digest (Web Crypto, Edge-runtime compatible) — for SHA-256 in middleware&quot;
+    - &quot;node:crypto randomBytes + createHash — for one-time token generation in the script&quot;
+  patterns:
+    - &quot;Edge-runtime SHA-256 via Web Crypto (no node:crypto import in middleware)&quot;
+    - &quot;Multi-tenant safety gate: bypass refuses unless SINGLE_USER_EMAIL === ALLOWED_EMAIL&quot;
+    - &quot;Silent short-circuit on bypass success (no token logging anywhere)&quot;
+    - &quot;Per-machine secret pattern: plaintext on disk (chmod 600), hash in env&quot;</p>
+<p>key-files:
+  created:
+    - &quot;scripts/generate-api-token.ts&quot;
+    - &quot;.planning/phases/05-job-leads-completion/05-02-SUMMARY.md&quot;
+  modified:
+    - &quot;src/proxy.ts&quot;
+    - &quot;src/proxy.test.ts&quot;
+    - &quot;env.example.txt&quot;
+    - &quot;package.json&quot;</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Web Crypto (crypto.subtle.digest) used in middleware — Edge-compatible, avoids &#39;node:crypto&#39; import that fails in Next.js Edge runtime&quot;</li>
+<li>&quot;Bypass is /api/<em>-only — Authorization header is IGNORED on /dashboard/</em> (browser path keeps Clerk redirect UX)&quot;</li>
+<li>&quot;On invalid token / missing env gate the middleware falls through silently to existing Clerk session check — preserves the same 401 envelope, no new error code&quot;</li>
+<li>&quot;Token file at ~/.heimdall/api-token (chmod 600); .env.local holds only the SHA-256 hash; plaintext never logged&quot;</li>
+<li>&quot;package.json script uses bare &#39;tsx&#39; (not &#39;npx tsx&#39;) — matches the deferred Phase 5 convention; tsx is reachable through node_modules .bin from npm script context (drizzle/seed.ts uses npx tsx as the older pattern)&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Edge-runtime auth bypass pattern: read request header → hash with Web Crypto → compare to env hash → SINGLE_USER_EMAIL gate → pass-through or fall through silently&quot;</li>
+<li>&quot;Per-machine local secret pattern: plaintext on disk (~/.heimdall/<name>, chmod 600), SHA-256 hash in .env.local, parent dir chmod 700&quot;</li>
+</ul>
+<p>requirements-completed: [JL-B3]</p>
+<h1>Metrics</h1>
+<h2>duration: 12min
+completed: 2026-05-14</h2>
+<h1>Phase 05 Plan 02: Middleware bearer-token bypass + token-gen script Summary</h1>
+<p><em><em>Long-lived bearer-token bypass on /api/</em> using Web Crypto SHA-256, gated by SINGLE_USER_EMAIL, plus a one-time token-generation script writing to ~/.heimdall/api-token (chmod 600).</em>*</p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~12 min</li>
+<li><strong>Started:</strong> 2026-05-14T07:57Z (worktree branch check + npm install)</li>
+<li><strong>Completed:</strong> 2026-05-14T08:02Z</li>
+<li><strong>Tasks:</strong> 2 (one TDD-split into RED + GREEN commits)</li>
+<li><strong>Files modified:</strong> 4 (1 created, 3 modified) — plus the test file</li>
+<li><strong>Commits:</strong> 3 atomic task commits (RED test, GREEN impl, script + env + npm)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><code>src/proxy.ts</code> now accepts <code>Authorization: Bearer &lt;token&gt;</code> as an alternative to Clerk session cookies on <code>/api/*</code> paths, validated by SHA-256(token) === <code>process.env.API_TOKEN_HASH</code> AND <code>process.env.SINGLE_USER_EMAIL === &#39;steve@bronstein.org&#39;</code>.</li>
+<li><code>/dashboard/*</code> is unchanged — the bearer header is ignored on browser paths, preserving Clerk&#39;s redirect UX.</li>
+<li><code>scripts/generate-api-token.ts</code> produces a fresh 32-byte hex token, writes it to <code>~/.heimdall/api-token</code> (chmod 600, parent dir chmod 700), and prints the SHA-256 hash + reminder text to stdout — never the plaintext token.</li>
+<li><code>env.example.txt</code> documents <code>API_TOKEN_HASH=</code> and <code>SINGLE_USER_EMAIL=</code> under a new &quot;Heimdall Service-Token Bypass (Phase 5)&quot; section with usage notes.</li>
+<li><code>package.json</code> adds <code>&quot;token:generate&quot;: &quot;tsx scripts/generate-api-token.ts&quot;</code>.</li>
+<li>Five new test cases (<code>describe(&#39;proxy (F): bearer-token bypass for /api/* skill traffic&#39;)</code>) verify the four decision paths: valid → pass-through (and Clerk auth NOT invoked); invalid → fall-through 401 envelope; no header → existing Clerk-only behavior preserved; <code>SINGLE_USER_EMAIL</code> unset → bypass refused (multi-tenant safety); <code>/dashboard/*</code> ignores the bearer header.</li>
+</ul>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically:</p>
+<ol>
+<li><strong>Task 1 (RED): Failing tests for bearer-token bypass</strong> — <code>2790534</code> (test)</li>
+<li><strong>Task 1 (GREEN): Middleware bearer-token bypass implementation</strong> — <code>5584022</code> (feat)</li>
+<li><strong>Task 2: Token generation script + env example + npm script</strong> — <code>a9b4169</code> (feat)</li>
+</ol>
+<p><em>Note: Task 1 was TDD (tdd=&quot;true&quot;) so it split into two commits — RED (failing test) and GREEN (passing impl). No REFACTOR commit was needed; the <code>sha256Hex</code> helper is local, single-purpose, and well-named on first write.</em></p>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><strong>CREATED</strong> <code>scripts/generate-api-token.ts</code> — one-time token generator (<code>randomBytes(32).toString(&#39;hex&#39;)</code> → SHA-256 hash → file write to <code>~/.heimdall/api-token</code> with mode 0o600 → print hash to stdout, never the plaintext).</li>
+<li><strong>MODIFIED</strong> <code>src/proxy.ts</code> — added Edge-compatible <code>sha256Hex</code> helper using <code>crypto.subtle.digest(&#39;SHA-256&#39;, ...)</code>; inserted bypass block inside the <code>isApiPath</code> branch BEFORE the existing <code>await auth()</code> call.</li>
+<li><strong>MODIFIED</strong> <code>src/proxy.test.ts</code> — wired <code>authSpy</code> on the Clerk-mock <code>auth()</code> callable; added <code>describe(&#39;proxy (F): bearer-token bypass for /api/* skill traffic&#39;)</code> with 5 <code>it(...)</code> cases.</li>
+<li><strong>MODIFIED</strong> <code>env.example.txt</code> — added &quot;Heimdall Service-Token Bypass (Phase 5)&quot; section with <code>API_TOKEN_HASH=</code> and <code>SINGLE_USER_EMAIL=</code> placeholder lines.</li>
+<li><strong>MODIFIED</strong> <code>package.json</code> — added <code>&quot;token:generate&quot;: &quot;tsx scripts/generate-api-token.ts&quot;</code> to the scripts block.</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>Web Crypto in middleware, node:crypto in script.</strong> <code>src/proxy.ts</code> runs in the Next.js Edge runtime where <code>import { createHash } from &#39;crypto&#39;</code> fails. Used <code>crypto.subtle.digest(&#39;SHA-256&#39;, ...)</code> instead (per plan PATTERNS.md guidance). <code>scripts/generate-api-token.ts</code> runs in Node and uses <code>randomBytes</code> + <code>createHash</code> directly.</li>
+<li><strong>Fall-through, not 401, on invalid token.</strong> When the bearer header is present but the hash doesn&#39;t match (or <code>SINGLE_USER_EMAIL</code> is unset), the middleware does not return a new 401 — it lets the existing Clerk session check fire. This keeps a single 401 envelope shape across all unauthenticated paths, per CD-02.</li>
+<li><strong><code>authSpy</code> added to the Clerk mock.</strong> Pre-existing tests only had <code>protectSpy</code> on <code>auth.protect()</code>. The new pass-through assertion needed to check that the callable <code>auth()</code> was NOT invoked (the bypass short-circuits BEFORE Clerk runs). Added a <code>vi.fn()</code> <code>authSpy</code> recorded inside the mock&#39;s <code>auth = Object.assign(async () =&gt; { authSpy(); ... }, ...)</code>. This is a backward-compatible test-only addition; existing tests still pass.</li>
+<li><strong><code>vi.stubEnv</code> + <code>afterEach(vi.unstubAllEnvs)</code> for hermetic env state.</strong> Vitest 4 standard pattern; avoids mutating <code>process.env</code> directly which would leak across tests.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<p>The plan was thorough: every artifact, acceptance grep, and threat-model mitigation was directly implementable. Prettier (pre-commit hook) reformatted one multi-line console.log in the script and adjusted some whitespace in the test file — neither affects behavior.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><strong>Worktree had no <code>node_modules</code>.</strong> First action after the branch check was <code>npm install</code> (788 packages, 8s, offline cache). Worktrees are created without symlinking node_modules from the main repo; running <code>npm install</code> in the worktree is the standard recovery.</li>
+<li><strong><code>process.env.SINGLE_USER_EMAIL=&#39;&#39;</code> semantics.</strong> In one test the gate is &quot;explicitly unset&quot; — <code>vi.stubEnv(&#39;SINGLE_USER_EMAIL&#39;, &#39;&#39;)</code> produces an empty string, not <code>undefined</code>. The middleware&#39;s <code>singleUser === ALLOWED_EMAIL</code> comparison still fails because <code>&#39;&#39; !== &#39;steve@bronstein.org&#39;</code>, so the bypass is correctly refused. Equivalent behavior to <code>undefined</code> for this gate.</li>
+</ul>
+<h2>Verification Confirmation (per plan output spec)</h2>
+<ul>
+<li><code>npm run test:run -- src/proxy.test.ts</code> → <strong>passes</strong> (13 tests; was 8 pre-plan, added 5 in suite F).</li>
+<li><code>npm run test:run</code> (full suite) → <strong>passes</strong> (106 tests, 12 files).</li>
+<li>Test count delta: <strong>+5 <code>it(...)</code> cases</strong> under the new <code>describe(&#39;proxy (F): ...&#39;)</code> block (5 of 6 describe blocks before; 6 of 6 now).</li>
+<li>Manual <code>npm run token:generate</code> smoke ran against <code>HOME=$(mktemp -d)</code> — wrote a 64-char hex token to a <code>chmod 600</code> file in a <code>chmod 700</code> parent dir, printed the SHA-256 hash to stdout. Round-trip (hash from script == <code>node -e &quot;createHash(&#39;sha256&#39;).update(&lt;token&gt;).digest(&#39;hex&#39;)&quot;</code>) <strong>matches</strong>. No write to the user&#39;s real <code>~/.heimdall/api-token</code> — the user runs the actual command themselves when they want to issue a new token.</li>
+</ul>
+<h2>Threat Model Disposition</h2>
+<p>Per the plan&#39;s <code>&lt;threat_model&gt;</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Disposition</th>
+<th>How it was mitigated in this plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-02-01 (spoofing — bypass)</td>
+<td>mitigate</td>
+<td>SHA-256 hash compared via <code>crypto.subtle.digest</code>; plaintext never stored in repo or env</td>
+</tr>
+<tr>
+<td>T-05-02-02 (multi-tenant misuse)</td>
+<td>mitigate</td>
+<td><code>process.env.SINGLE_USER_EMAIL === ALLOWED_EMAIL</code> gate verified by test F-4</td>
+</tr>
+<tr>
+<td>T-05-02-03 (info disclosure in logs)</td>
+<td>mitigate</td>
+<td>Middleware short-circuits silently (no <code>console.*</code> in proxy.ts); script prints only hash + token path, never plaintext; token file chmod 600 confirmed via smoke test</td>
+</tr>
+<tr>
+<td>T-05-02-04 (token replay)</td>
+<td>accept</td>
+<td>Per CONTEXT.md <code>&lt;deferred&gt;</code> — long-lived per-machine secret; rotation is manual (regenerate + update env)</td>
+</tr>
+<tr>
+<td>T-05-02-05 (env.example accidental real-secret commit)</td>
+<td>mitigate</td>
+<td><code>env.example.txt</code> shows placeholder text only (<code>API_TOKEN_HASH=</code> + <code># Example:</code> comment); <code>.env.local</code> remains gitignored</td>
+</tr>
+</tbody></table>
+<p>No new threat flags introduced — the bypass surface was already enumerated in the plan&#39;s threat model and is fully covered.</p>
+<h2>User Setup Required</h2>
+<p>The user must, on their development machine (once, before invoking the Claude Code skill in Plan 06):</p>
+<ol>
+<li>Run <code>npm run token:generate</code> (from the project root).</li>
+<li>Copy the printed <code>API_TOKEN_HASH=&lt;hash&gt;</code> line into <code>.env.local</code>.</li>
+<li>Confirm <code>SINGLE_USER_EMAIL=steve@bronstein.org</code> is set in <code>.env.local</code> (the script prints a reminder).</li>
+<li>Restart the dev server so the new env vars are picked up.</li>
+</ol>
+<p>The plaintext token at <code>~/.heimdall/api-token</code> will be read by the skill (Plan 06) and sent as the <code>Authorization: Bearer &lt;contents&gt;</code> header on REST writes.</p>
+<h2>Next Phase Readiness</h2>
+<p>Plan 05-02 is the auth path that unblocks Plan 05-06 (the Claude Code skill). With this in place:</p>
+<ul>
+<li>Skill can authenticate to <code>/api/*</code> via the bearer header without a browser session.</li>
+<li>The middleware&#39;s existing email-lock + Clerk redirect path remains the source of truth for browser traffic — no behavioral change for users in the browser.</li>
+<li>No blockers for the remaining Phase 5 plans (<code>05-03</code> schema migration, <code>05-04</code> API endpoints, <code>05-05</code> UI changes, <code>05-06</code> skill assets).</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li>File <code>src/proxy.ts</code> exists and contains <code>sha256Hex</code> + bearer bypass block — <strong>FOUND</strong>.</li>
+<li>File <code>src/proxy.test.ts</code> exists with the new <code>describe(&#39;proxy (F):</code> block — <strong>FOUND</strong>.</li>
+<li>File <code>scripts/generate-api-token.ts</code> exists — <strong>FOUND</strong>.</li>
+<li>File <code>env.example.txt</code> contains <code>API_TOKEN_HASH=</code> and <code>SINGLE_USER_EMAIL=</code> placeholders — <strong>FOUND</strong>.</li>
+<li>File <code>package.json</code> contains <code>&quot;token:generate&quot;</code> script entry — <strong>FOUND</strong>.</li>
+<li>Commit <code>2790534</code> (test RED) — <strong>FOUND</strong> in <code>git log</code>.</li>
+<li>Commit <code>5584022</code> (feat GREEN proxy.ts) — <strong>FOUND</strong> in <code>git log</code>.</li>
+<li>Commit <code>a9b4169</code> (feat script + env + npm) — <strong>FOUND</strong> in <code>git log</code>.</li>
+<li>Full test suite <code>npm run test:run</code> exits 0 with 106/106 tests passing — <strong>CONFIRMED</strong>.</li>
+</ul>
+<hr>
+<p><em>Phase: 05-job-leads-completion</em>
+<em>Completed: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

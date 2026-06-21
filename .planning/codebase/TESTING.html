@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TESTING</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/codebase/TESTING.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Testing Patterns</h1>
+<p><strong>Analysis Date:</strong> 2026-05-12</p>
+<h2>Test Framework</h2>
+<p><strong>Runner:</strong> None. No test runner is configured in this project.</p>
+<p><strong>Assertion Library:</strong> None.</p>
+<p><strong>Test Config Files:</strong> No <code>jest.config.*</code>, <code>vitest.config.*</code>, or equivalent found.</p>
+<p><strong>Run Commands:</strong></p>
+<pre><code class="language-bash"># No test commands exist in package.json scripts
+npm run lint          # Lint only (no test equivalent)
+npm run build         # Build validation (used as pre-push check via Husky)
+</code></pre>
+<h2>Current Quality Gates</h2>
+<p>Although there are no automated tests, two quality gates are enforced via Husky hooks in <code>.husky/</code>:</p>
+<p><strong>Pre-commit (<code>lint-staged</code>):</strong></p>
+<ul>
+<li>Runs Prettier (<code>prettier --write</code>) on all staged <code>*.js</code>, <code>*.jsx</code>, <code>*.tsx</code>, <code>*.ts</code>, <code>*.css</code>, <code>*.less</code>, <code>*.scss</code>, <code>*.sass</code> files</li>
+<li>Config: <code>package.json</code> <code>lint-staged</code> key</li>
+</ul>
+<p><strong>Pre-push:</strong></p>
+<ul>
+<li>Runs <code>bun run build</code> — a failing TypeScript build blocks the push</li>
+<li>This catches type errors and broken imports before they reach remote</li>
+</ul>
+<h2>Test File Organization</h2>
+<p><strong>No test files exist.</strong> A search across the entire repository (excluding <code>node_modules</code> and <code>.next</code>) found zero <code>.test.ts</code>, <code>.test.tsx</code>, <code>.spec.ts</code>, or <code>.spec.tsx</code> files.</p>
+<h2>Test Infrastructure Status</h2>
+<p>This codebase has <strong>no testing infrastructure</strong>. The following are absent:</p>
+<ul>
+<li>No test runner (Jest, Vitest, Playwright test runner)</li>
+<li>No assertion library</li>
+<li>No mock framework</li>
+<li>No test utilities or factories</li>
+<li>No fixtures or test data helpers</li>
+<li>No coverage tooling or thresholds</li>
+<li>No CI test step (<code>.github/</code> directory exists but its contents were not observed running tests)</li>
+</ul>
+<p><strong>Note:</strong> <code>@faker-js/faker</code> is present in <code>devDependencies</code> (<code>package.json</code>) and <code>playwright</code> is in <code>dependencies</code>, but neither is wired into a test suite. Faker is likely used in <code>drizzle/seed.ts</code> for seed data. Playwright is imported in scraping code (<code>src/features/job-leads/lib/linkedin-browser.ts</code>, <code>src/features/job-leads/lib/scrape-connections.ts</code>) as a browser automation tool, not a test framework.</p>
+<h2>What Would Need to Exist to Add Tests</h2>
+<p>If tests were added, the natural framework choice given the stack would be <strong>Vitest</strong> (compatible with Next.js/ESM, faster than Jest). The following patterns from the codebase suggest how tests would be structured:</p>
+<p><strong>Unit test candidates (pure functions, no DB or network):</strong></p>
+<ul>
+<li><code>src/lib/domain/pipeline.ts</code> — <code>canTransition()</code>, <code>isTerminalState()</code>: pure functions with enum inputs, ideal for unit tests</li>
+<li><code>src/lib/api/filters.ts</code> — <code>parseArrayParam()</code>, <code>parseCursor()</code>, <code>parseLimit()</code>: pure string/date parsing functions</li>
+<li><code>src/features/job-leads/lib/prioritization.ts</code> — <code>computeBridgeScore()</code>, <code>buildRecommendations()</code>: scoring logic with no side effects</li>
+<li><code>src/features/job-leads/lib/seniority.ts</code> — <code>inferSeniority()</code>: title-to-enum inference logic</li>
+<li><code>src/lib/format.ts</code> — <code>formatDate()</code>: date formatting utility</li>
+</ul>
+<p><strong>Integration test candidates (require DB mock or real Neon):</strong></p>
+<ul>
+<li>All <code>src/app/api/*/route.ts</code> files: test request/response envelope format, status codes, and <code>logTimeline</code> side effects</li>
+<li>Pipeline status transitions: <code>src/app/api/applications/[id]/status/route.ts</code> validates <code>canTransition</code> is enforced at the API layer</li>
+</ul>
+<p><strong>E2E test candidates (Playwright already installed):</strong></p>
+<ul>
+<li>LinkedIn scraping flows in <code>src/features/job-leads/lib/scrape-connections.ts</code> and <code>scrape-job-page.ts</code> — Playwright is used here as a live browser tool, not a test harness</li>
+</ul>
+<h2>Conventions to Follow When Adding Tests</h2>
+<p>Given the existing code style:</p>
+<p><strong>File location:</strong> Co-locate test files with source, e.g.:</p>
+<ul>
+<li><code>src/lib/domain/pipeline.test.ts</code> alongside <code>src/lib/domain/pipeline.ts</code></li>
+<li><code>src/lib/api/filters.test.ts</code> alongside <code>src/lib/api/filters.ts</code></li>
+</ul>
+<p><strong>Naming:</strong> <code>[file-being-tested].test.ts</code> or <code>[file-being-tested].spec.ts</code></p>
+<p><strong>Suggested mock approach for API routes:</strong></p>
+<pre><code class="language-typescript">// Mock the Drizzle db client
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({ db: mockDb }));
+
+// Mock timeline logger (side-effect only)
+vi.mock(&#39;@/lib/db/timeline&#39;, () =&gt; ({ logTimeline: vi.fn() }));
+</code></pre>
+<p><strong>Suggested unit test structure based on existing patterns:</strong></p>
+<pre><code class="language-typescript">import { describe, it, expect } from &#39;vitest&#39;;
+import { canTransition, isTerminalState } from &#39;@/lib/domain/pipeline&#39;;
+
+describe(&#39;canTransition&#39;, () =&gt; {
+  it(&#39;allows valid forward transitions&#39;, () =&gt; {
+    expect(canTransition(&#39;researching&#39;, &#39;applied&#39;)).toBe(true);
+  });
+
+  it(&#39;blocks transitions from terminal states&#39;, () =&gt; {
+    expect(canTransition(&#39;accepted&#39;, &#39;applied&#39;)).toBe(false);
+  });
+
+  it(&#39;blocks invalid transitions&#39;, () =&gt; {
+    expect(canTransition(&#39;researching&#39;, &#39;offer&#39;)).toBe(false);
+  });
+});
+</code></pre>
+<h2>Coverage Gaps (High Priority if Tests Are Added)</h2>
+<p><strong>Critical business logic with no test coverage:</strong></p>
+<ul>
+<li><strong>Pipeline transition enforcement</strong> (<code>src/lib/domain/pipeline.ts</code>) — <code>canTransition</code> is the only guard preventing invalid status changes; currently untested</li>
+<li><strong>API response envelope format</strong> — All <code>route.ts</code> files must return <code>{ success, data?, error?, meta? }</code> but this is never verified</li>
+<li><strong>Zod validation schemas</strong> — Input validation in each route is untested; malformed inputs could expose unexpected behavior</li>
+<li><strong>Cursor-based pagination</strong> (<code>src/lib/api/filters.ts</code>) — <code>parseCursor</code> date parsing and <code>parseLimit</code> bounds are untested</li>
+<li><strong>Connection scoring algorithm</strong> (<code>src/features/job-leads/lib/prioritization.ts</code>) — <code>computeBridgeScore</code> weight calculations are untested</li>
+<li><strong>Seniority inference</strong> (<code>src/features/job-leads/lib/seniority.ts</code>) — Title-to-seniority-level mapping logic is untested</li>
+<li><strong>Soft delete behavior</strong> — DELETE routes set <code>archivedAt</code> rather than removing rows; no test verifies this invariant</li>
+</ul>
+<hr>
+<p><em>Testing analysis: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/codebase/TESTING.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

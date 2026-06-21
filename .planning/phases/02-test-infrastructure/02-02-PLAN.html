@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 02
+type: execute
+wave: 2
+depends_on:</p>
+<ul>
+<li>02-01
+files_modified:</li>
+<li>src/lib/api/types.test.ts</li>
+<li>src/lib/api/filters.test.ts</li>
+<li>src/lib/domain/pipeline.test.ts</li>
+<li>src/features/job-leads/lib/prioritization.test.ts</li>
+<li>src/features/job-leads/lib/seniority.test.ts
+autonomous: true
+requirements:</li>
+<li>TEST-A2
+tags:</li>
+<li>vitest</li>
+<li>pure-logic</li>
+<li>pipeline</li>
+<li>bridge-score</li>
+<li>seniority</li>
+<li>filters
+must_haves:
+  truths:<ul>
+<li>&quot;Running <code>npm run test:run</code> exits 0 with all 5 pure-logic test files passing&quot;</li>
+<li>&quot;<code>canTransition</code> is verified for valid forward moves, blocked terminal transitions, and blocked invalid jumps&quot;</li>
+<li>&quot;<code>computeBridgeScore</code> is verified for weight composition (0.4 / 0.35 / 0.25), bounds, and monotonicity&quot;</li>
+<li>&quot;<code>inferSeniority</code> is verified for every rule + rule-order regression guard + roleWordPattern fallback + empty/gibberish&quot;</li>
+<li>&quot;<code>parseCursor</code> and <code>parseLimit</code> are verified for null, valid, invalid, and bounds-clamping inputs&quot;</li>
+<li>&quot;API envelope factories (<code>success</code>, <code>created</code>, <code>paginated</code>, <code>error</code>, <code>notFound</code>, <code>validationError</code>, <code>serverError</code>) return the exact <code>{ success, data?, error?, meta? }</code> shape with correct status codes&quot;
+artifacts:</li>
+<li>path: &quot;src/lib/api/types.test.ts&quot;
+provides: &quot;Envelope shape + status-code coverage for <code>src/lib/api/types.ts</code> and <code>src/lib/api/errors.ts</code>&quot;
+contains: &quot;describe&quot;</li>
+<li>path: &quot;src/lib/api/filters.test.ts&quot;
+provides: &quot;parseCursor, parseLimit, parseArrayParam edge-case coverage&quot;
+contains: &quot;parseCursor&quot;</li>
+<li>path: &quot;src/lib/domain/pipeline.test.ts&quot;
+provides: &quot;canTransition + isTerminalState graph coverage&quot;
+contains: &quot;canTransition&quot;</li>
+<li>path: &quot;src/features/job-leads/lib/prioritization.test.ts&quot;
+provides: &quot;computeBridgeScore weight composition + bounds + buildRecommendations aggregation&quot;
+contains: &quot;computeBridgeScore&quot;</li>
+<li>path: &quot;src/features/job-leads/lib/seniority.test.ts&quot;
+provides: &quot;inferSeniority rule coverage + rule-order regression&quot;
+contains: &quot;inferSeniority&quot;
+key_links:</li>
+<li>from: &quot;src/lib/api/types.test.ts&quot;
+to: &quot;src/lib/api/types.ts + src/lib/api/errors.ts&quot;
+via: &quot;import via @/lib/api/types and @/lib/api/errors path aliases&quot;
+pattern: &quot;from &#39;@/lib/api/(types|errors)&#39;&quot;</li>
+<li>from: &quot;src/features/job-leads/lib/prioritization.test.ts&quot;
+to: &quot;src/features/job-leads/lib/seniority.ts seniorityWeights&quot;
+via: &quot;Re-used seniority enum weights — drift here would silently break bridge-score (D-12 rationale)&quot;
+pattern: &quot;seniorityWeights&quot;
+decisions_honored:</li>
+<li>&quot;D-02: tests colocated with source&quot;</li>
+<li>&quot;D-03: .test.ts naming&quot;</li>
+<li>&quot;D-08: pure-logic tests do NOT use PGlite (plain in/out)&quot;</li>
+<li>&quot;D-11: covers roadmap-listed surfaces (envelope, canTransition, bridge-score)&quot;</li>
+<li>&quot;D-12: adds parseCursor/parseLimit (filters.test.ts) and inferSeniority (seniority.test.ts)&quot;</li>
+<li>&quot;D-13: does NOT cover match-connections.ts, scrapers, linkedin-browser.ts&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Cover the pure-logic surfaces named in TEST-A2 (D-11.1, D-11.2, D-11.5) plus the two adjacent surfaces flagged in D-12 (`parseCursor`/`parseLimit`, `inferSeniority`). None of these need PGlite — they accept plain inputs and return plain outputs, per D-08.<p>Purpose: This is the load-bearing-logic backstop. If pipeline transitions, bridge-score weights, seniority inference, cursor parsing, or the API envelope shape drift, <code>npm test</code> fails before review.</p>
+<p>Output: Five colocated <code>.test.ts</code> files, all in the default <code>node</code> Vitest environment, all using <code>@/*</code> path aliases, all running under a single <code>npm run test:run</code> invocation.
+</objective></p>
+<decisions_honored>
+This plan honors the following CONTEXT.md decisions:
+- **D-02:** Tests colocated with source (e.g., `pipeline.test.ts` next to `pipeline.ts`).
+- **D-03:** `.test.ts` naming (all five files).
+- **D-08:** Pure-logic tests do NOT need PGlite — these tests receive plain inputs and return plain outputs. No `createTestDb()` calls.
+- **D-11:** Covers the roadmap-listed surfaces — envelope shape (factory tests in `types.test.ts`), `canTransition()`, CSV parse (delegated to 02-03), `computeBridgeScore` weights + bounds.
+- **D-12:** Adds `parseCursor`/`parseLimit` (`filters.test.ts`) and `inferSeniority` (`seniority.test.ts`).
+- **D-13:** Does NOT cover `match-connections.ts`, scraper modules, or `linkedin-browser.ts` — Phase 5 owns those.
+</decisions_honored><execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/02-test-infrastructure/02-CONTEXT.md
+@.planning/phases/02-test-infrastructure/02-PATTERNS.md
+@CLAUDE.md
+@src/lib/api/types.ts
+@src/lib/api/errors.ts
+@src/lib/api/filters.ts
+@src/lib/domain/pipeline.ts
+@src/features/job-leads/lib/prioritization.ts
+@src/features/job-leads/lib/seniority.ts
+@src/lib/domain/types.ts<interfaces>
+<!-- Exact function signatures, weight tables, and enum values the tests must assert against. --><p>From src/lib/api/types.ts:</p>
+<pre><code>export type ApiResponse&lt;T&gt; = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  meta?: { total?: number; cursor?: string | null; hasMore?: boolean };
+};
+export function success&lt;T&gt;(data: T, status = 200): Response
+export function created&lt;T&gt;(data: T): Response                   // delegates to success(data, 201)
+export function paginated&lt;T&gt;(data: T[], meta: { total?: number; cursor?: string | null; hasMore: boolean }): Response
+export function error(message: string, status = 400): Response
+</code></pre>
+<p>From src/lib/api/errors.ts:</p>
+<pre><code>export function notFound(entity: string)         // status 404, body { success: false, error: `${entity} not found` }
+export function validationError(message: string) // status 400, body { success: false, error: message }
+export function serverError(error: unknown)      // status 500, console.error(&#39;API Error:&#39;, error); body { success: false, error: &#39;Internal server error&#39; }
+</code></pre>
+<p>From src/lib/api/filters.ts:</p>
+<pre><code>export function parseArrayParam(param: string | null): string[] | null  // splits on &#39;,&#39; trim+filter; null/empty → null
+export function parseCursor(param: string | null): Date | null          // null → null; valid date string → Date; invalid → null
+export function parseLimit(param: string | null, max = 100): number     // null/NaN/&lt;1 → 20; else min(value, max)
+</code></pre>
+<p>From src/lib/domain/pipeline.ts:</p>
+<pre><code>// validTransitions graph (Record&lt;string, string[]&gt;) — exact entries:
+//   researching → [&#39;applied&#39;, &#39;withdrawn&#39;]
+//   applied → [&#39;recruiter_screen&#39;, &#39;rejected&#39;, &#39;ghosted&#39;, &#39;withdrawn&#39;, &#39;on_hold&#39;]
+//   recruiter_screen → [&#39;phone_interview&#39;, &#39;rejected&#39;, &#39;ghosted&#39;, &#39;withdrawn&#39;, &#39;on_hold&#39;]
+//   phone_interview → [&#39;onsite&#39;, &#39;rejected&#39;, &#39;ghosted&#39;, &#39;withdrawn&#39;, &#39;on_hold&#39;]
+//   onsite → [&#39;final_round&#39;, &#39;offer&#39;, &#39;rejected&#39;, &#39;ghosted&#39;, &#39;withdrawn&#39;, &#39;on_hold&#39;]
+//   final_round → [&#39;offer&#39;, &#39;rejected&#39;, &#39;ghosted&#39;, &#39;withdrawn&#39;, &#39;on_hold&#39;]
+//   offer → [&#39;negotiating&#39;, &#39;accepted&#39;, &#39;rejected&#39;, &#39;withdrawn&#39;]
+//   negotiating → [&#39;accepted&#39;, &#39;rejected&#39;, &#39;withdrawn&#39;]
+//   on_hold → [&#39;applied&#39;, &#39;recruiter_screen&#39;, &#39;phone_interview&#39;, &#39;withdrawn&#39;, &#39;ghosted&#39;]
+// terminalStates = [&#39;accepted&#39;, &#39;rejected&#39;, &#39;withdrawn&#39;, &#39;ghosted&#39;]
+export function canTransition(from: string, to: string): boolean
+export function isTerminalState(status: string): boolean
+export { validTransitions, terminalStates };
+</code></pre>
+<p>From src/features/job-leads/lib/prioritization.ts (full formula reproduced for test fidelity):</p>
+<pre><code>closenessWeights = { close_friend: 100, close_colleague: 90, friend: 75, colleague: 60,
+                     career_contact: 45, acquaintance: 30, linkedin_only: 15, never_met: 5 };
+recencyWeight(lastContactDate) = lastContactDate ? max(0, 100 - daysSince/3.65) : 0;
+computeBridgeScore(prospect, contact) =
+  Math.round(0.4 * seniorityWeights[prospect.seniorityLevel] +
+             0.35 * closenessWeights[contact.closeness ?? &#39;acquaintance&#39;] +
+             0.25 * recencyWeight(contact.lastContactDate));
+</code></pre>
+<p>From src/features/job-leads/lib/seniority.ts:</p>
+<pre><code>seniorityWeights: Record&lt;SeniorityLevel, number&gt; = {
+  c_suite: 100, vp: 85, director: 70, senior_manager: 55, manager: 40,
+  senior_ic: 30, ic: 20, entry_level: 10, unknown: 15
+};
+// rules array order is load-bearing — senior_manager regex matches before the looser `senior` regex.
+// roleWordPattern (engineer|developer|analyst|...) returns { level: &#39;ic&#39;, weight: 20 } when no rule hits.
+// Empty title or no-match-no-roleword → { level: &#39;unknown&#39;, weight: 15 }.
+</code></pre>
+<p>From drizzle/schema/contacts.ts (required NOT NULL columns for <code>Contact</code> fixtures — every other column is nullable or has a DB default):</p>
+<pre><code>id            uuid       (defaultRandom) primaryKey
+firstName     text       NOT NULL
+lastName      text       NOT NULL
+createdAt     timestamp  defaultNow NOT NULL
+updatedAt     timestamp  defaultNow NOT NULL
+// Nullable / defaulted (safe to omit in test fixtures but the inferred Contact type lists them all):
+//   email, phone, linkedinUrl, title, currentCompany, companyId, relationship (default &#39;other&#39;),
+//   warmth (default &#39;cold&#39;), closeness (default &#39;acquaintance&#39;), outreachStatus (default &#39;not_reached_out&#39;),
+//   outreachDate, introducedBy, linkedinConnectionDate, importSource, importedAt,
+//   notes, tags, howMet, metDate, lastContactDate, nextFollowUpDate, followUpNotes,
+//   triagedAt, archivedAt
+</code></pre>
+<p>From drizzle/schema/job-leads.ts (<code>Prospect</code> = <code>prospects.$inferSelect</code> — required NOT NULL columns):</p>
+<pre><code>id              uuid           (defaultRandom) primaryKey
+jobLeadId       uuid           NOT NULL
+name            text           NOT NULL
+seniorityLevel  enum           NOT NULL (default &#39;unknown&#39;)
+createdAt       timestamp      defaultNow NOT NULL
+updatedAt       timestamp      defaultNow NOT NULL
+// Nullable: title, linkedinUrl, profileSnippet
+</code></pre>
+</interfaces>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: Test pipeline transitions and API envelope shape</name>
+  <files>src/lib/domain/pipeline.test.ts, src/lib/api/types.test.ts</files>
+  <read_first>
+    - src/lib/domain/pipeline.ts (full file, 55 lines) — graph + canTransition + isTerminalState
+    - src/lib/api/types.ts (full file) — envelope factories + status codes
+    - src/lib/api/errors.ts (full file) — notFound / validationError / serverError
+    - src/lib/domain/types.ts lines 47-90 — `applicationStatusValues` array for exhaustive isTerminalState check
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-11.1, D-11.2)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("`src/lib/domain/pipeline.test.ts`" and "`src/lib/api/types.test.ts`" sections)
+  </read_first>
+  <behavior>
+    pipeline.test.ts:
+    - For every `(from, to)` pair in the `validTransitions` graph, `canTransition(from, to) === true`.
+    - For every terminal state `t ∈ ['accepted','rejected','withdrawn','ghosted']` and every other status `s`, `canTransition(t, s) === false`.
+    - `canTransition('researching', 'offer') === false` (invalid forward jump).
+    - `canTransition('applied', 'accepted') === false` (skips intermediate stages).
+    - `canTransition('researching', 'researching') === false` (self-transition not in graph).
+    - `isTerminalState(t) === true` for each `t` in `terminalStates`; `false` for every other value in `applicationStatusValues`.<pre><code>types.test.ts:
+- `await success(data).json()` → `{ success: true, data }` with status 200.
+- `await success(data, 418).json()` → `{ success: true, data }` with status 418 (status pass-through).
+- `await created(data).json()` → `{ success: true, data }` with status 201.
+- `await paginated([a,b], { hasMore: true, cursor: &#39;2026-01-01T00:00:00Z&#39; }).json()` → `{ success: true, data: [a,b], meta: { hasMore: true, cursor: &#39;2026-01-01T00:00:00Z&#39; } }` with status 200.
+- `await error(&#39;bad&#39;, 422).json()` → `{ success: false, error: &#39;bad&#39; }` with status 422; default status is 400.
+- `await notFound(&#39;Company&#39;).json()` → `{ success: false, error: &#39;Company not found&#39; }` with status 404.
+- `await validationError(&#39;missing field&#39;).json()` → `{ success: false, error: &#39;missing field&#39; }` with status 400.
+- `await serverError(new Error(&#39;boom&#39;)).json()` → `{ success: false, error: &#39;Internal server error&#39; }` with status 500; `console.error` was called once with `&#39;API Error:&#39;` as the first argument (use `vi.spyOn(console, &#39;error&#39;)`, restore after).
+</code></pre>
+  </behavior>
+  <action>
+    Create `src/lib/domain/pipeline.test.ts`. Import `canTransition`, `isTerminalState`, `validTransitions`, `terminalStates` from `@/lib/domain/pipeline`. Import `applicationStatusValues` from `@/lib/domain/types`. Use one top-level `describe('pipeline', ...)` with nested `describe` blocks for `canTransition` (3 nested describes for the three cases above) and `isTerminalState`. Iterate `validTransitions` entries with `Object.entries` for the valid-moves test. Use `it.each` or a `for` loop — either is fine — but every behavior bullet above must be a separate `it()` so failures are localized.<pre><code>Create `src/lib/api/types.test.ts`. Import factories from `@/lib/api/types` and from `@/lib/api/errors`. For each factory, call it, `await response.json()`, then assert both `response.status` and the parsed body. For `serverError`, set up `const spy = vi.spyOn(console, &#39;error&#39;).mockImplementation(() =&gt; {});` BEFORE invoking, then `expect(spy).toHaveBeenCalledWith(&#39;API Error:&#39;, expect.any(Error))`, then `spy.mockRestore()` in an `afterEach`. Use `describe(&#39;api envelope&#39;, ...)` with nested `describe` per factory.
+
+Style: single quotes, 2-space indent, no trailing commas, semicolons, named imports only. Test names are descriptive: `it(&#39;allows researching → applied&#39;)`, NOT `it(&#39;test 1&#39;)`.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/lib/domain/pipeline.test.ts src/lib/api/types.test.ts --reporter=basic</automated>
+  </verify>
+  <done>
+    Both files exist, every behavior bullet has a matching `it()`, all tests pass under `npx vitest run`. The pipeline test iterates the real `validTransitions` map (no hardcoded duplicate). The serverError test verifies the `console.error` side-effect with a spy.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Test filter parsers (parseCursor, parseLimit, parseArrayParam)</name>
+  <files>src/lib/api/filters.test.ts</files>
+  <read_first>
+    - src/lib/api/filters.ts (full file, 19 lines)
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-12 — keep small, ~5 cases each)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("`src/lib/api/filters.test.ts`" section)
+  </read_first>
+  <behavior>
+    parseCursor:
+    - `parseCursor(null)` returns `null`.
+    - `parseCursor('')` returns `null` (empty string is falsy → early return).
+    - `parseCursor('not-a-date')` returns `null` (NaN guard).
+    - `parseCursor('2026-01-15T12:00:00Z')` returns a `Date` whose `.toISOString()` equals `'2026-01-15T12:00:00.000Z'`.
+    - `parseCursor('2026-01-15')` returns a `Date` instance (date-only ISO is valid).<pre><code>parseLimit:
+- `parseLimit(null)` returns `20`.
+- `parseLimit(&#39;&#39;)` returns `20` (parseInt of empty default).
+- `parseLimit(&#39;0&#39;)` returns `20` (`&lt; 1` falls back to default).
+- `parseLimit(&#39;-5&#39;)` returns `20`.
+- `parseLimit(&#39;abc&#39;)` returns `20` (NaN guard).
+- `parseLimit(&#39;50&#39;)` returns `50`.
+- `parseLimit(&#39;500&#39;)` returns `100` (clamped to default max).
+- `parseLimit(&#39;500&#39;, 200)` returns `200` (clamped to provided max).
+
+parseArrayParam:
+- `parseArrayParam(null)` returns `null`.
+- `parseArrayParam(&#39;&#39;)` returns `null`.
+- `parseArrayParam(&#39;a,b,c&#39;)` returns `[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]`.
+- `parseArrayParam(&#39; a , , b &#39;)` returns `[&#39;a&#39;, &#39;b&#39;]` (trim + filter empties).
+- `parseArrayParam(&#39;single&#39;)` returns `[&#39;single&#39;]`.
+</code></pre>
+  </behavior>
+  <action>
+    Create `src/lib/api/filters.test.ts`. Import `parseArrayParam`, `parseCursor`, `parseLimit` from `@/lib/api/filters`. Use three top-level `describe` blocks, one per function. Each behavior bullet is an `it()`. For the `parseCursor` ISO assertion, use `expect(result?.toISOString()).toBe('2026-01-15T12:00:00.000Z')` rather than `expect(result).toEqual(new Date(...))` to avoid timezone surprises.
+  </action>
+  <verify>
+    <automated>npx vitest run src/lib/api/filters.test.ts --reporter=basic</automated>
+  </verify>
+  <done>
+    File exists; all 17 behavior bullets above have matching `it()` blocks; all pass under `npx vitest run`.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 3: Test seniority inference and bridge-score composition</name>
+  <files>src/features/job-leads/lib/seniority.test.ts, src/features/job-leads/lib/prioritization.test.ts</files>
+  <read_first>
+    - src/features/job-leads/lib/seniority.ts (full file, 79 lines)
+    - src/features/job-leads/lib/prioritization.ts (full file, 76 lines)
+    - src/lib/domain/types.ts (relevant lines — `Contact` and `Prospect` inferred types; just to know field names)
+    - drizzle/schema/contacts.ts (full file, 54 lines) — NOT NULL columns the `makeContact` defaults must populate
+    - drizzle/schema/job-leads.ts (lines 42-60) — `prospects` table NOT NULL columns the `makeProspect` defaults must populate
+    - package.json (full file) — confirm `@faker-js/faker` is in `devDependencies` BEFORE authoring the fuzz test (orchestrator verified it is present at `^9.9.0`; this read locks the assumption)
+    - .planning/phases/02-test-infrastructure/02-CONTEXT.md (D-11.5, D-12)
+    - .planning/phases/02-test-infrastructure/02-PATTERNS.md ("`src/features/job-leads/lib/seniority.test.ts`" and "`src/features/job-leads/lib/prioritization.test.ts`" sections)
+  </read_first>
+  <behavior>
+    seniority.test.ts:
+    - `inferSeniority('Chief Data Officer')` → `{ level: 'c_suite', weight: 100 }`.
+    - `inferSeniority('VP of Engineering')` → `{ level: 'vp', weight: 85 }`.
+    - `inferSeniority('Vice President, Product')` → `{ level: 'vp', weight: 85 }`.
+    - `inferSeniority('Senior Director of Data')` → `{ level: 'director', weight: 70 }` (director rule wins over the looser `senior` rule because `director` appears earlier in the rules array).
+    - `inferSeniority('Senior Manager')` → `{ level: 'senior_manager', weight: 55 }` (rule-order regression guard: senior_manager must hit BEFORE the `senior` rule).
+    - `inferSeniority('Head of Growth')` → `{ level: 'senior_manager', weight: 55 }`.
+    - `inferSeniority('Engineering Manager')` → `{ level: 'manager', weight: 40 }`.
+    - `inferSeniority('Senior Staff Engineer')` → `{ level: 'senior_ic', weight: 30 }`.
+    - `inferSeniority('Software Engineer')` → `{ level: 'ic', weight: 20 }` (roleWordPattern fallback).
+    - `inferSeniority('Junior Analyst')` → `{ level: 'entry_level', weight: 10 }`.
+    - `inferSeniority('')` → `{ level: 'unknown', weight: 15 }`.
+    - `inferSeniority('Banana')` → `{ level: 'unknown', weight: 15 }`.
+    - Sanity: `seniorityWeights` exports a mapping containing every `SeniorityLevel` enum value.<pre><code>prioritization.test.ts:
+- Composition: with `prospect.seniorityLevel=&#39;vp&#39;` (weight 85), `contact.closeness=&#39;close_friend&#39;` (weight 100), `contact.lastContactDate=new Date()` (recency ≈ 100), expect `computeBridgeScore` returns `Math.round(0.4*85 + 0.35*100 + 0.25*100)` === `94`.
+- Closeness default: when `contact.closeness=null`, the formula uses `closenessWeights[&#39;acquaintance&#39;]=30`. With `seniorityLevel=&#39;ic&#39;` (20), null closeness, null lastContactDate → `Math.round(0.4*20 + 0.35*30 + 0.25*0)` === `19`.
+- No recency: `contact.lastContactDate=null` contributes `0` to recency.
+- Bounds: across a fuzzed batch of 50 inputs (use `@faker-js/faker` for seniorityLevel + closeness + a date within the last 5 years), every returned score is in `[0, 100]` inclusive.
+- Monotonicity: with all other fields fixed, score for `seniorityLevel=&#39;c_suite&#39;` (100) ≥ score for `seniorityLevel=&#39;ic&#39;` (20). Use `&gt;=` not `&gt;` because rounding could collide at edges.
+- `buildRecommendations`: given a bridges array with 2 entries for the same contact (scores 70, 40) and 1 entry for a different contact (score 90):
+  * Returns 2 `PrioritizedRecommendation`s.
+  * The same-contact rec has `score === 70` (max of its bridge scores) and `prospects` array sorted desc by `bridgeScore`.
+  * The result array is sorted desc by `score` — the contact with score 90 appears first.
+</code></pre>
+  </behavior>
+  <action>
+    Create `src/features/job-leads/lib/seniority.test.ts`. Import `inferSeniority`, `seniorityWeights` from `@/features/job-leads/lib/seniority`. Import `seniorityLevelValues` (or similar enum array) from `@/lib/domain/types` for the exhaustive sanity check. One `describe('inferSeniority', ...)` with each behavior as an `it()`. Add a second small `describe('seniorityWeights', ...)` for the mapping sanity check.<pre><code>Create `src/features/job-leads/lib/prioritization.test.ts`. Import `computeBridgeScore`, `buildRecommendations` from `@/features/job-leads/lib/prioritization`. Import types `Contact`, `Prospect`, `ProspectBridge` from `@/lib/domain/types` (use as TS `import type` since they are inferred Drizzle types — `import type { Contact, Prospect, ProspectBridge } from &#39;@/lib/domain/types&#39;;`).
+
+Build a small helper inside the test file:
+
+```
+function makeContact(overrides: Partial&lt;Contact&gt; = {}): Contact {
+  const now = new Date();
+  return {
+    // NOT NULL columns from drizzle/schema/contacts.ts:
+    id: crypto.randomUUID(),
+    firstName: &#39;Test&#39;,
+    lastName: &#39;Contact&#39;,
+    createdAt: now,
+    updatedAt: now,
+    // All other columns are nullable in the schema; populate with null/defaults so the
+    // `Contact` inferred-select type is fully satisfied without `as` casting:
+    email: null,
+    phone: null,
+    linkedinUrl: null,
+    title: null,
+    currentCompany: null,
+    companyId: null,
+    relationship: &#39;other&#39;,
+    warmth: &#39;cold&#39;,
+    closeness: &#39;acquaintance&#39;,
+    outreachStatus: &#39;not_reached_out&#39;,
+    outreachDate: null,
+    introducedBy: null,
+    linkedinConnectionDate: null,
+    importSource: null,
+    importedAt: null,
+    notes: null,
+    tags: null,
+    howMet: null,
+    metDate: null,
+    lastContactDate: null,
+    nextFollowUpDate: null,
+    followUpNotes: null,
+    triagedAt: null,
+    archivedAt: null,
+    ...overrides
+  };
+}
+
+function makeProspect(overrides: Partial&lt;Prospect&gt; = {}): Prospect {
+  const now = new Date();
+  return {
+    // NOT NULL columns from drizzle/schema/job-leads.ts (prospects):
+    id: crypto.randomUUID(),
+    jobLeadId: crypto.randomUUID(),
+    name: &#39;Test Prospect&#39;,
+    seniorityLevel: &#39;unknown&#39;,
+    createdAt: now,
+    updatedAt: now,
+    // Nullable columns:
+    title: null,
+    linkedinUrl: null,
+    profileSnippet: null,
+    ...overrides
+  };
+}
+```
+
+The defaults above mirror the Drizzle defaults exactly (`relationship: &#39;other&#39;`, `warmth: &#39;cold&#39;`, `closeness: &#39;acquaintance&#39;`, `outreachStatus: &#39;not_reached_out&#39;`, `seniorityLevel: &#39;unknown&#39;`). If the executor verifies `Contact` does not include all listed columns (e.g. the schema was updated between this plan and execution), update the helper to match the current `$inferSelect` type — DO NOT silence it with `as Contact`; the whole point of these helpers is type fidelity.
+
+Use `@faker-js/faker` for the fuzz batch — `import { faker } from &#39;@faker-js/faker&#39;;` (the read_first step confirmed the package is present in `devDependencies`).
+
+For `buildRecommendations`, the `bridges` parameter is `Array&lt;{ bridge: ProspectBridge; prospect: Prospect; contact: Contact }&gt;`. The `bridge.score` field, if non-null, is used as-is; if null, `computeBridgeScore` is invoked. Make the test inputs deterministic by setting `bridge.score` explicitly on each entry (70, 40, 90).
+
+Single quotes, 2-space indent, semicolons. Named imports only.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx vitest run src/features/job-leads/lib/seniority.test.ts src/features/job-leads/lib/prioritization.test.ts --reporter=basic</automated>
+  </verify>
+  <done>
+    Both files exist; every behavior bullet has a matching `it()`; all tests pass under `npx vitest run`. Composition test asserts the exact computed value (94 / 19) rather than ranges. Monotonicity test uses `>=`. Fuzz test runs at least 50 iterations. `package.json` `devDependencies` contains `@faker-js/faker` (no install needed — orchestrator verified `^9.9.0` is already present; this acceptance criterion is a fast filesystem check via `node -e "require('./package.json').devDependencies['@faker-js/faker']"`). The `makeContact` and `makeProspect` helpers fully satisfy the `Contact` and `Prospect` inferred-select types without `as` casts.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>committed-test-code → repository</td>
+<td>Test inputs are synthetic — no real contacts, no real LinkedIn URLs, no Clerk session data.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-02-04</td>
+<td>Information disclosure</td>
+<td>All five test files</td>
+<td>mitigate</td>
+<td>All inputs are inline literals or <code>@faker-js/faker</code> outputs. No <code>.env.local</code> read, no fixture file read, no network call. PGlite is not used in this plan (per D-08).</td>
+</tr>
+<tr>
+<td>T-02-05</td>
+<td>Tampering</td>
+<td><code>serverError</code> console.error spy in <code>types.test.ts</code></td>
+<td>accept</td>
+<td>The spy is mocked then restored via <code>mockRestore()</code> in <code>afterEach</code>. Cannot leak into other tests because Vitest isolates files. Low risk.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. `npm run test:run` exits 0.
+2. `npx vitest run --reporter=basic` reports 5 test files passed, total it-count >= 40 (rough lower bound across all behaviors).
+3. `grep -r '\.env' src/lib/api/*.test.ts src/lib/domain/*.test.ts src/features/job-leads/lib/*.test.ts | grep -v '^#' | wc -l` returns `0` (no env reads in tests).
+4. All five test files compile under TS strict (`npx tsc --noEmit`).
+</verification><success_criteria>
+- [ ] `src/lib/domain/pipeline.test.ts` exists; iterates `validTransitions` for the valid-move check.
+- [ ] `src/lib/api/types.test.ts` exists; covers all 7 factory functions (`success`, `created`, `paginated`, `error`, `notFound`, `validationError`, `serverError`); `serverError` test asserts the `console.error` spy.
+- [ ] `src/lib/api/filters.test.ts` exists; covers `parseCursor`, `parseLimit`, `parseArrayParam` per the behavior list.
+- [ ] `src/features/job-leads/lib/seniority.test.ts` exists; includes the rule-order regression guard for `'Senior Manager'`.
+- [ ] `src/features/job-leads/lib/prioritization.test.ts` exists; composition test asserts the exact value 94 (not a range); fuzz test runs at least 50 iterations.
+- [ ] `npm run test:run` exits 0 with all 5 files green.
+- [ ] No test file imports from `@/lib/db`, `@electric-sql/pglite`, or `next/server` — all pure logic.
+- [ ] `package.json` `devDependencies` contains `@faker-js/faker` (verified before authoring Task 3; no install required).
+</success_criteria><output>
+After completion, create `.planning/phases/02-test-infrastructure/02-02-SUMMARY.md` capturing:
+- Final `it()` count per file
+- Any composition-test values that needed adjustment after running against the real formula (e.g. if rounding produced 93 instead of 94)
+- Confirmation that no PGlite import appears in any of these files
+</output>
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

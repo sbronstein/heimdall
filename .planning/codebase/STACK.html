@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STACK</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/codebase/STACK.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Technology Stack</h1>
+<p><strong>Analysis Date:</strong> 2026-05-12</p>
+<h2>Languages</h2>
+<p><strong>Primary:</strong></p>
+<ul>
+<li>TypeScript 5.7.2 - All source code (<code>src/</code>, <code>drizzle/</code>, scripts)</li>
+</ul>
+<p><strong>Secondary:</strong></p>
+<ul>
+<li>Python 3.x - Utility scripts only (<code>scripts/generate-import-data.py</code>, <code>scripts/parse-paste.py</code>)</li>
+</ul>
+<h2>Runtime</h2>
+<p><strong>Environment:</strong></p>
+<ul>
+<li>Node.js 22 (pinned in <code>.nvmrc</code>)</li>
+</ul>
+<p><strong>Package Manager:</strong></p>
+<ul>
+<li>npm</li>
+<li>Lockfile: <code>package-lock.json</code> present (lockfileVersion 3)</li>
+</ul>
+<h2>Frameworks</h2>
+<p><strong>Core:</strong></p>
+<ul>
+<li>Next.js 16.0.10 - Full-stack framework, App Router, Server Components by default</li>
+<li>React 19.2.0 - UI layer</li>
+</ul>
+<p><strong>UI Component Systems:</strong></p>
+<ul>
+<li>shadcn/ui (style: &quot;new-york&quot;) - Component library via <code>components.json</code>; primitives in <code>src/components/ui/</code></li>
+<li>Radix UI primitives - ~20 packages (<code>@radix-ui/react-*</code>), all via shadcn/ui</li>
+</ul>
+<p><strong>Styling:</strong></p>
+<ul>
+<li>Tailwind CSS v4 (<code>tailwindcss: ^4.0.0</code>) - Utility-first CSS</li>
+<li><code>@tailwindcss/postcss</code> v4 - PostCSS integration (<code>postcss.config.js</code>)</li>
+<li><code>tailwind-merge</code> v3 - Class merging (<code>src/lib/utils.ts</code>)</li>
+<li><code>tailwindcss-animate</code> + <code>tw-animate-css</code> - Animation utilities</li>
+<li><code>next-themes</code> v0.4.6 - Theme switching; active theme stored in cookie, default is &quot;vercel&quot; (<code>src/components/themes/theme.config.ts</code>)</li>
+</ul>
+<p><strong>Data / Tables:</strong></p>
+<ul>
+<li><code>@tanstack/react-table</code> v8 - Headless table primitives (<code>src/lib/data-table.ts</code>)</li>
+<li>Recharts v2 - Data visualization</li>
+</ul>
+<p><strong>Forms:</strong></p>
+<ul>
+<li><code>react-hook-form</code> v7</li>
+<li><code>@hookform/resolvers</code> v5</li>
+<li><code>zod</code> v4 - Schema validation; used on all API routes</li>
+</ul>
+<p><strong>Drag and Drop:</strong></p>
+<ul>
+<li><code>@dnd-kit/core</code>, <code>@dnd-kit/sortable</code>, <code>@dnd-kit/modifiers</code>, <code>@dnd-kit/utilities</code> v6-8</li>
+</ul>
+<p><strong>Routing / URL State:</strong></p>
+<ul>
+<li><code>nuqs</code> v2 - URL search params state management; adapter in <code>src/app/layout.tsx</code></li>
+</ul>
+<p><strong>Animation:</strong></p>
+<ul>
+<li><code>motion</code> v11 (Framer Motion)</li>
+</ul>
+<p><strong>Web Scraping:</strong></p>
+<ul>
+<li><code>playwright</code> v1.58.2 - Chromium browser automation for LinkedIn scraping (<code>src/features/job-leads/lib/linkedin-browser.ts</code>, <code>src/features/job-leads/lib/scrape-connections.ts</code>)</li>
+<li><code>cheerio</code> v1.2 - HTML parsing for job page scraping (<code>src/features/job-leads/lib/scrape-job-page.ts</code>)</li>
+</ul>
+<p><strong>Utilities:</strong></p>
+<ul>
+<li><code>date-fns</code> v4 - Date formatting</li>
+<li><code>papaparse</code> v5 - CSV parsing (LinkedIn import)</li>
+<li><code>uuid</code> v11 - UUID generation</li>
+<li><code>zustand</code> v5 - Client-side state management</li>
+<li><code>kbar</code> v0.1.0-beta.45 - Command palette (<code>src/components/kbar/</code>)</li>
+<li><code>sonner</code> v1 - Toast notifications</li>
+<li><code>lucide-react</code> v0.476, <code>@tabler/icons-react</code> v3, <code>@radix-ui/react-icons</code> v1 - Icon libraries</li>
+</ul>
+<p><strong>Testing:</strong></p>
+<ul>
+<li>Not configured; no jest.config.<em>, vitest.config.</em>, or test files detected</li>
+</ul>
+<p><strong>Build/Dev:</strong></p>
+<ul>
+<li><code>drizzle-kit</code> v0.31.9 - Schema migration tooling (<code>drizzle.config.ts</code>)</li>
+<li><code>husky</code> v9 + <code>lint-staged</code> v15 - Pre-commit hooks</li>
+<li><code>eslint</code> 8.48.0 + <code>eslint-config-next</code> v16 + <code>@typescript-eslint/eslint-plugin</code> v6</li>
+<li><code>prettier</code> 3.4.2 + <code>prettier-plugin-tailwindcss</code> v0.6.11</li>
+</ul>
+<h2>Key Dependencies</h2>
+<p><strong>Critical:</strong></p>
+<ul>
+<li><code>drizzle-orm</code> v0.45.1 - ORM for all database queries; used throughout <code>src/lib/db/</code>, <code>src/app/api/</code></li>
+<li><code>@neondatabase/serverless</code> v1.0.2 - Neon Postgres HTTP driver; initialized in <code>src/lib/db/index.ts</code></li>
+<li><code>@clerk/nextjs</code> v6 - Authentication and session management; middleware in <code>src/proxy.ts</code></li>
+<li><code>zod</code> v4 - Request validation; used in every API route</li>
+</ul>
+<p><strong>Infrastructure:</strong></p>
+<ul>
+<li><code>sharp</code> v0.33.5 - Image optimization (Next.js image processing)</li>
+<li><code>nextjs-toploader</code> v3 - Page load progress indicator</li>
+</ul>
+<h2>Configuration</h2>
+<p><strong>Environment:</strong></p>
+<ul>
+<li>Configured via <code>.env.local</code> (gitignored; <code>.env.local</code> file present)</li>
+<li>Template with all variable names documented in <code>env.example.txt</code></li>
+<li>Key variables:<ul>
+<li><code>DATABASE_URL</code> - Neon Postgres connection string</li>
+<li><code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> - Clerk public key</li>
+<li><code>CLERK_SECRET_KEY</code> - Clerk secret key</li>
+<li><code>NEXT_PUBLIC_CLERK_SIGN_IN_URL</code> - <code>/auth/sign-in</code></li>
+<li><code>NEXT_PUBLIC_CLERK_SIGN_UP_URL</code> - <code>/auth/sign-up</code></li>
+<li><code>NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL</code> - <code>/dashboard/overview</code></li>
+<li><code>NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL</code> - <code>/dashboard/overview</code></li>
+<li><code>WEBHOOK_SECRET</code> - Clerk webhook secret (optional)</li>
+<li><code>BROWSER_CDP_ENDPOINT</code> - Chrome DevTools Protocol endpoint for LinkedIn scraping (optional)</li>
+<li><code>BROWSER_WS_ENDPOINT</code> - Playwright WebSocket endpoint for LinkedIn scraping (optional)</li>
+<li><code>NEXT_PUBLIC_SENTRY_DSN</code> - Sentry DSN (optional; Sentry instrumentation is currently no-op in <code>src/instrumentation.ts</code>)</li>
+</ul>
+</li>
+</ul>
+<p><strong>TypeScript:</strong></p>
+<ul>
+<li><code>tsconfig.json</code>: strict mode, target es5, path aliases <code>@/*</code> → <code>./src/*</code> and <code>~/*</code> → <code>./public/*</code></li>
+</ul>
+<p><strong>Build:</strong></p>
+<ul>
+<li><code>next.config.ts</code> - Minimal config; remote image patterns for <code>img.clerk.com</code>, <code>clerk.com</code>, <code>api.slingacademy.com</code>; transpiles <code>geist</code></li>
+<li><code>postcss.config.js</code> - Tailwind v4 PostCSS plugin only</li>
+<li><code>drizzle.config.ts</code> - PostgreSQL dialect, schema at <code>./drizzle/schema/index.ts</code>, migrations at <code>./drizzle/migrations</code></li>
+</ul>
+<h2>Platform Requirements</h2>
+<p><strong>Development:</strong></p>
+<ul>
+<li>Node.js 22 (<code>.nvmrc</code>)</li>
+<li>Dev server runs on port 4000 (<code>npm run dev</code> uses <code>-p 4000 -H 0.0.0.0</code>)</li>
+<li>LinkedIn scraping requires either: local Chromium install (Playwright), a headed Chrome with CDP (<code>BROWSER_CDP_ENDPOINT</code>), or a Playwright remote server (<code>BROWSER_WS_ENDPOINT</code>)</li>
+</ul>
+<p><strong>Production:</strong></p>
+<ul>
+<li>Vercel (inferred from <code>eslint-config-next</code>, <code>@neondatabase/serverless</code> HTTP driver, App Router patterns)</li>
+<li>Neon Postgres (serverless HTTP driver required for Vercel edge/serverless compatibility)</li>
+</ul>
+<hr>
+<p><em>Stack analysis: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/codebase/STACK.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

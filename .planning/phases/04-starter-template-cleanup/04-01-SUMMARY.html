@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 01
+subsystem: cleanup
+tags: [starter-template, deletion, products-feature, tech-debt, mock-data]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 03-security-hardening
+provides: clean phase-base commit + atomic-commit-per-requirement pattern
+provides:</li>
+<li>&quot;src/features/products/ removed (entire directory, 7 files including product-tables/index.tsx and options.tsx not enumerated in plan files_modified)&quot;</li>
+<li>&quot;src/app/dashboard/product/ removed (route page.tsx + [productId]/page.tsx)&quot;</li>
+<li>&quot;src/constants/mock-api.ts removed (sole consumers were products components)&quot;</li>
+<li>&quot;src/constants/data.ts removed entirely (CD-01 path exercised — file became empty after stripping the only three exports Product/SaleUser/recentSalesData)&quot;</li>
+<li>&quot;src/hooks/use-breadcrumbs.tsx routeMapping no longer references /dashboard/product&quot;
+affects: [phase-04-plan-02, phase-04-plan-03, phase-04-plan-04, phase-04-plan-05]</li>
+</ul>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;Atomic single-commit per DEBT-Ax requirement (D-19) — Phase 3 inheritance&quot;
+    - &quot;Filesystem-existence verification via grep + test -f (D-16) rather than HTTP-level smoke (D-17 ruled out)&quot;
+    - &quot;CD-01 exercised: delete data.ts entirely rather than leave empty-exports stub&quot;
+    - &quot;Pre-existing main-branch build failures logged to phase-level deferred-items.md instead of being auto-fixed (SCOPE BOUNDARY)&quot;</p>
+<p>key-files:
+  created:
+    - &quot;.planning/phases/04-starter-template-cleanup/deferred-items.md (logs pre-existing prioritization.ts:70 TS error + dirty-tree note)&quot;
+    - &quot;.planning/phases/04-starter-template-cleanup/04-01-SUMMARY.md (this file)&quot;
+  modified:
+    - &quot;src/hooks/use-breadcrumbs.tsx (removed &#39;/dashboard/product&#39; routeMapping entry per D-10)&quot;
+  deleted:
+    - &quot;src/features/products/components/product-listing.tsx&quot;
+    - &quot;src/features/products/components/product-form.tsx&quot;
+    - &quot;src/features/products/components/product-view-page.tsx&quot;
+    - &quot;src/features/products/components/product-tables/columns.tsx&quot;
+    - &quot;src/features/products/components/product-tables/cell-action.tsx&quot;
+    - &quot;src/features/products/components/product-tables/index.tsx (not in plan files_modified but part of the directory — see Deviations)&quot;
+    - &quot;src/features/products/components/product-tables/options.tsx (not in plan files_modified but part of the directory — see Deviations)&quot;
+    - &quot;src/app/dashboard/product/page.tsx&quot;
+    - &quot;src/app/dashboard/product/[productId]/page.tsx&quot;
+    - &quot;src/constants/mock-api.ts&quot;
+    - &quot;src/constants/data.ts (CD-01 path)&quot;</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;CD-01 exercised: src/constants/data.ts deleted entirely because Product / SaleUser / recentSalesData were its only three exports, leaving the file empty. Recommended path per CONTEXT.md.&quot;</li>
+<li>&quot;D-19 atomic-commit-per-DEBT honored: all three plan tasks rolled into a single commit <code>feat(04): DEBT-A1 — delete products feature + dead support files</code> (0323e90). Plan tasks 1-2-3 are deletion stages with no intermediate semantic checkpoint — atomic commit preserves git log readability and matches Phase 3&#39;s pattern.&quot;</li>
+<li>&quot;Pre-existing TS error in src/features/job-leads/lib/prioritization.ts:70 (target=es5 + MapIterator iteration) is OUT OF SCOPE per SCOPE BOUNDARY rule. Reproduced on phase-base commit b592d28 before any 04-01 edits → not caused by DEBT-A1. Logged to deferred-items.md. All other plans in Phase 4 will need the same scope-out treatment OR a phase-prefix fix.&quot;</li>
+<li>&quot;Pre-existing TypeScript COMPILATION (npm run build&#39;s <code>Compiled successfully in 9.9s</code> line) passes with the deletions applied — no orphan-import errors introduced. The TS error blocks only the post-compile <code>Running TypeScript</code> typecheck phase, which fails on unrelated code.&quot;</li>
+<li>&quot;Verification via grep instead of running a Vitest fs.existsSync test — that test is owned by Plan 04-05 (D-16) per the wave structure. Plan 04-01 verifies its own deletion set via inline grep + test -f, leaving the consolidated test for the final wave.&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Pattern: When a CLAUDE.md / plan instruction lists <code>files_modified</code>, the executor MUST delete <em>complete</em> directories when <code>git rm -r</code> is the action — even if some files within the directory are not enumerated (e.g., product-tables/index.tsx and options.tsx). Enumerate the actual delta in the SUMMARY rather than the plan&#39;s incomplete list.&quot;</li>
+<li>&quot;Pattern: Pre-existing main-branch build failures get logged to <code>&lt;phase-dir&gt;/deferred-items.md</code> with verification steps (stash → build → reproduce on HEAD → pop). Future executors can grep deferred-items.md before re-running verification commands.&quot;</li>
+</ul>
+<p>requirements-completed: [DEBT-A1]</p>
+<h2>duration: 5min
+completed: 2026-05-13</h2>
+<h1>Phase 4 Plan 01: DEBT-A1 — Products Feature Deletion Summary</h1>
+<p><strong>Deleted the Next.js Shadcn starter &quot;products&quot; feature and its transitive dead-support code (mock-api.ts, data.ts, breadcrumb entry) in a single atomic commit, removing 11 files and 705 lines of starter residue with zero impact on the Heimdall feature set.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~5 min wall-clock</li>
+<li><strong>Started:</strong> 2026-05-13T02:26:33Z</li>
+<li><strong>Completed:</strong> 2026-05-13T02:31:00Z</li>
+<li><strong>Tasks:</strong> 3 (Task 1 directory deletion, Task 2 dead-support deletion, Task 3 breadcrumbs edit + atomic commit)</li>
+<li><strong>Files deleted:</strong> 11 (5 products components + 2 product-tables files + 2 route pages + mock-api.ts + data.ts)</li>
+<li><strong>Files modified:</strong> 1 (src/hooks/use-breadcrumbs.tsx)</li>
+<li><strong>Files created:</strong> 2 (deferred-items.md, this SUMMARY.md)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li><strong>src/features/products/ — entire directory removed.</strong> 7 files (component-listing, product-form, product-view-page, product-tables/columns, product-tables/cell-action, product-tables/index, product-tables/options). The plan&#39;s <code>files_modified</code> listed only 5 of these; the additional two (<code>product-tables/index.tsx</code>, <code>product-tables/options.tsx</code>) were swept up by <code>git rm -r src/features/products/</code> per D-07. Documented as Deviation #1.</li>
+<li><strong>src/app/dashboard/product/ — route directory removed.</strong> Both <code>page.tsx</code> and <code>[productId]/page.tsx</code>.</li>
+<li><strong>src/constants/mock-api.ts — file removed</strong> (sole consumers were the three products components confirmed dead by D-08).</li>
+<li><strong>src/constants/data.ts — file removed (CD-01 path exercised).</strong> The file contained only <code>Product</code> type, <code>SaleUser</code> interface, and <code>recentSalesData</code> const — all three products-only. After stripping, file would have been empty; per CD-01 recommendation, the file itself was deleted rather than left as an empty stub.</li>
+<li><strong>src/hooks/use-breadcrumbs.tsx — <code>/dashboard/product</code> routeMapping entry removed</strong> (D-10). The <code>/dashboard/employee</code> entry left intact (deferred per CONTEXT.md — also starter residue but not in DEBT-A1 scope).</li>
+<li><strong>Zero orphan imports remain in <code>src/</code></strong> — verified via <code>grep -rn</code> against <code>@/features/products</code>, <code>@/constants/mock-api</code>, <code>@/constants/data</code>, <code>SaleUser|recentSalesData</code>, and <code>&#39;/dashboard/product&#39;</code>. All five greps return zero hits.</li>
+</ul>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1 (delete products feature + route directories)</strong> — staged but not committed independently; rolled into the atomic DEBT-A1 commit per D-19.</li>
+<li><strong>Task 2 (delete mock-api.ts + data.ts)</strong> — staged but not committed independently; rolled into the atomic DEBT-A1 commit per D-19.</li>
+<li><strong>Task 3 (breadcrumbs edit + atomic commit)</strong> — <code>0323e90</code> (feat). One commit covers all three tasks: <code>feat(04): DEBT-A1 — delete products feature + dead support files</code>. <code>git log -1 --oneline</code> shows it; <code>grep -q &quot;DEBT-A1&quot;</code> passes.</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><strong>Deleted</strong> <code>src/features/products/components/product-listing.tsx</code>, <code>product-form.tsx</code>, <code>product-view-page.tsx</code>, <code>product-tables/columns.tsx</code>, <code>product-tables/cell-action.tsx</code>, <code>product-tables/index.tsx</code>, <code>product-tables/options.tsx</code> — entire feature directory.</li>
+<li><strong>Deleted</strong> <code>src/app/dashboard/product/page.tsx</code>, <code>[productId]/page.tsx</code> — entire route directory.</li>
+<li><strong>Deleted</strong> <code>src/constants/mock-api.ts</code> (D-08) and <code>src/constants/data.ts</code> (D-09 + CD-01).</li>
+<li><strong>Modified</strong> <code>src/hooks/use-breadcrumbs.tsx</code> — removed 4-line key-value pair for <code>/dashboard/product</code> from <code>routeMapping</code>. File still parses cleanly (TS strict mode); the <code>/dashboard/employee</code> entry above it is unchanged.</li>
+<li><strong>Created</strong> <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code> — logs the pre-existing <code>src/features/job-leads/lib/prioritization.ts:70</code> TS error encountered during Task 1 verification (out of scope per SCOPE BOUNDARY rule).</li>
+</ul>
+<h2>Verification</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Method</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/products/</code> does not exist</td>
+<td><code>test ! -d src/features/products</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/product/</code> does not exist</td>
+<td><code>test ! -d src/app/dashboard/product</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>src/constants/mock-api.ts</code> does not exist</td>
+<td><code>test ! -f src/constants/mock-api.ts</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>src/constants/data.ts</code> does not exist (CD-01)</td>
+<td><code>test ! -f src/constants/data.ts</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Zero <code>@/features/products</code> imports in <code>src/</code></td>
+<td><code>grep -rn &quot;from &#39;@/features/products&quot; src/</code></td>
+<td>0 hits</td>
+</tr>
+<tr>
+<td>Zero <code>@/constants/mock-api</code> imports in <code>src/</code></td>
+<td><code>grep -rn &quot;from &#39;@/constants/mock-api&#39;&quot; src/</code></td>
+<td>0 hits</td>
+</tr>
+<tr>
+<td>Zero <code>@/constants/data</code> imports in <code>src/</code></td>
+<td><code>grep -rn &quot;from &#39;@/constants/data&#39;&quot; src/</code></td>
+<td>0 hits</td>
+</tr>
+<tr>
+<td>Zero <code>SaleUser</code>/<code>recentSalesData</code> references in <code>src/</code></td>
+<td><code>grep -rn &quot;SaleUser|recentSalesData&quot; src/</code></td>
+<td>0 hits</td>
+</tr>
+<tr>
+<td>Zero <code>&#39;/dashboard/product&#39;</code> keys in breadcrumbs</td>
+<td><code>grep -n &quot;&#39;/dashboard/product&#39;&quot; src/hooks/use-breadcrumbs.tsx</code></td>
+<td>0 hits</td>
+</tr>
+<tr>
+<td>Build compile phase succeeds</td>
+<td><code>npm run build</code> → <code>Compiled successfully in 9.9s</code></td>
+<td>PASS (compile)</td>
+</tr>
+<tr>
+<td>Atomic DEBT-A1 commit exists</td>
+<td><code>git log -1 --oneline | grep -q &quot;DEBT-A1&quot;</code></td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<p><strong>Build verification caveat:</strong> <code>npm run build</code> exits 1 due to a pre-existing TypeScript error in <code>src/features/job-leads/lib/prioritization.ts:70</code> (target=es5 cannot iterate <code>MapIterator</code>). This error is <strong>not caused by DEBT-A1</strong> — reproduced on <code>HEAD = b592d28</code> before any Plan 04-01 edits by stashing the deletions. See <code>deferred-items.md</code> for the full reproducer. The plan&#39;s documented success criterion <code>npm run build exits 0</code> cannot be achieved without a separate fix to either <code>tsconfig.json</code> or <code>prioritization.ts</code>. The deletions themselves do not introduce any new compile errors — TypeScript&#39;s compilation phase passes cleanly on the post-deletion tree.</p>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p>None — this plan is pure deletion and no source-code bugs were touched.</p>
+<h3>Scope-Boundary Deferred Items</h3>
+<p><strong>1. [Pre-existing] <code>src/features/job-leads/lib/prioritization.ts:70</code> TS error blocks <code>npm run build</code></strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 verification (first build attempt after <code>git rm -r</code> deletions)</li>
+<li><strong>Issue:</strong> <code>Type &#39;MapIterator&lt;PrioritizedRecommendation&gt;&#39; can only be iterated through when using the &#39;--downlevelIteration&#39; flag or with a &#39;--target&#39; of &#39;es2015&#39; or higher.</code></li>
+<li><strong>Root cause:</strong> Project <code>tsconfig.json</code> has <code>&quot;target&quot;: &quot;es5&quot;</code> (verified in claudeMd / project structure section); <code>prioritization.ts</code> was authored using <code>for (const rec of byContact.values())</code> which requires <code>es2015+</code> or <code>downlevelIteration: true</code>.</li>
+<li><strong>Why not auto-fixed:</strong> SCOPE BOUNDARY rule — error is in <code>src/features/job-leads/lib/prioritization.ts</code>, which is unrelated to the products feature being deleted. Verified pre-existing by stashing my deletions, building HEAD, reproducing the same error. Fix would require either editing <code>tsconfig.json</code> (project-wide implications) or rewriting unrelated feature code — neither belongs in DEBT-A1.</li>
+<li><strong>Logged at:</strong> <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code></li>
+<li><strong>Recommended next step:</strong> Add a DEBT-A6 or PHASE-4-PREP plan that bumps <code>tsconfig.json</code> target to <code>es2015+</code> (or sets <code>downlevelIteration: true</code>) so subsequent Phase 4 plans can verify against a passing build baseline.</li>
+</ul>
+<h3>Plan-Spec Deviations</h3>
+<p><strong>1. [Doc] <code>src/features/products/components/product-tables/{index,options}.tsx</code> not enumerated in plan <code>files_modified</code></strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 <code>git rm -r src/features/products/</code></li>
+<li><strong>Issue:</strong> The plan&#39;s <code>files_modified</code> frontmatter listed 5 files under <code>src/features/products/components/</code> but the actual directory contains 7 files (<code>product-tables/index.tsx</code> and <code>product-tables/options.tsx</code> were not enumerated).</li>
+<li><strong>Resolution:</strong> D-07 in CONTEXT.md says &quot;delete BOTH the feature directory and the route directory in a single atomic step&quot; → the entire directory deletion is the contract, not the file-by-file list. The two extra files were swept up correctly. This is a plan-spec under-specification, not a planning error.</li>
+<li><strong>No remediation needed:</strong> the deletion executed per D-07 intent.</li>
+</ul>
+<p><strong>2. [Workflow] Atomic commit covers all three tasks (per D-19) rather than per-task commits (per execute-plan.md framework default)</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 step 6 execution</li>
+<li><strong>Issue:</strong> The executor framework&#39;s <code>task_commit_protocol</code> says &quot;commit immediately&quot; after each task; the plan&#39;s Task 3 step 6 explicitly mandates a single atomic commit per D-19.</li>
+<li><strong>Resolution:</strong> D-19 takes precedence (plan-specific instruction overrides generic framework). One commit <code>0323e90</code> covers all three task outputs. The framework&#39;s per-task tracking is preserved in this SUMMARY&#39;s &quot;Task Commits&quot; section, mapping each task to the same atomic commit hash.</li>
+</ul>
+<h2>Authentication Gates</h2>
+<p>None — this plan touched no auth-related code.</p>
+<h2>Known Stubs</h2>
+<p>None — pure deletion plan. No placeholder data, no <code>TODO</code>/<code>FIXME</code> markers introduced. No new code written.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>.planning/phases/04-starter-template-cleanup/04-01-SUMMARY.md</code> exists (this file).</li>
+<li><code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code> exists.</li>
+<li>Commit <code>0323e90</code> exists: <code>git log --oneline | grep -q &quot;0323e90&quot;</code> returns 0.</li>
+<li>Commit subject contains <code>DEBT-A1</code>: <code>git log -1 --oneline | grep -q &quot;DEBT-A1&quot;</code> returns 0.</li>
+<li>All deletion targets confirmed absent via <code>test ! -d</code> / <code>test ! -f</code>.</li>
+<li>All grep checks return zero hits (no orphan imports of deleted modules).</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

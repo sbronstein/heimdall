@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/01-critical-bug-fix/01-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 01-critical-bug-fix
+reviewed: 2026-05-12T00:00:00Z
+depth: standard
+files_reviewed: 2
+files_reviewed_list:</p>
+<ul>
+<li>src/components/user-avatar-profile.tsx</li>
+<li>src/components/layout/user-nav.tsx
+findings:
+  critical: 0
+  warning: 1
+  info: 3
+  total: 4
+status: issues_found</li>
+</ul>
+<hr>
+<h1>Phase 01: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-05-12
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 2
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Phase 1 commit <code>265fc6f</code> is a small, targeted bug-fix patch: it adds <code>suppressHydrationWarning</code> on three user-dependent text nodes in <code>UserAvatarProfile</code> (closing a residual SSR/CSR text-content mismatch in <code>AvatarFallback</code>/full-name/email) and applies the BUG-02 <code>user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;</code> optional-chain guard at the two prescribed sites.</p>
+<p>The changes are mechanical and faithful to the plan (<code>01-01-PLAN.md</code> Tasks 2, 3, and the residual fix captured in <code>01-01-SUMMARY.md</code>). No security vulnerabilities, no runtime regressions, no anti-pattern introductions. The fix lands as advertised.</p>
+<p>One warning is raised about a remaining hydration-mismatch surface in the same component (<code>AvatarImage.src</code> / <code>alt</code> derived from <code>user</code>) that the residual fix did NOT cover. In practice this is unlikely to fire because Radix <code>AvatarImage</code> does not render to DOM until the image actually loads, but the asymmetry is worth recording so the next hydration audit knows about it.</p>
+<p>Three info-level items flag stylistic inconsistencies (mixed <code>||</code> vs <code>??</code>, dead-defensive optional chain inside a narrowed-non-null block, unguarded <code>user.fullName</code> two lines above a guarded <code>user?.emailAddresses</code>). None of these are bugs; all are scope-limited by D-02 and <code>01-CONTEXT.md</code>&#39;s explicit &quot;no codebase-wide sweep&quot; decision and are recorded for future cleanup.</p>
+<h2>Warnings</h2>
+<h3>WR-01: <code>AvatarImage</code> <code>src</code>/<code>alt</code> derive from <code>user</code> but lack <code>suppressHydrationWarning</code></h3>
+<p><strong>File:</strong> <code>src/components/user-avatar-profile.tsx:21</code>
+<strong>Issue:</strong> The phase fix added <code>suppressHydrationWarning</code> to <code>AvatarFallback</code> (line 22), the full-name span (line 29), and the email span (line 32) — but <code>AvatarImage</code> on line 21 also derives its <code>src</code> and <code>alt</code> attributes from <code>user?.imageUrl</code> and <code>user?.fullName</code>. On the server those resolve to <code>&#39;&#39;</code>; on the client they resolve to the Clerk-provided values. This is the same SSR/CSR attribute-mismatch surface that the rest of the component now guards against.</p>
+<p>In practice this is unlikely to surface in DevTools because Radix <code>Avatar.Image</code> (<code>@radix-ui/react-avatar</code>) uses an internal <code>useImageLoadingStatus</code> hook and only mounts the underlying <code>&lt;img&gt;</code> element into the DOM once the image actually loads — so during SSR there is no <code>&lt;img&gt;</code> node in the rendered HTML at all, and no attribute mismatch can be reported. Confirmed by reviewing how Radix&#39;s primitive behaves and by the fact that the smoke run reported in <code>01-01-SUMMARY.md</code> did not flag this line. But the protection is implicit, not explicit, and depends on Radix&#39;s internal behavior staying that way across versions.</p>
+<p>If <code>@radix-ui/react-avatar</code> ever changes to render the <code>&lt;img&gt;</code> element eagerly (or if this component is reused with a non-Radix <code>&lt;img&gt;</code> swap-in), this line becomes a live hydration warning. The fix is mechanical and symmetric with the three nodes the phase already patched.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-tsx">&lt;AvatarImage
+  src={user?.imageUrl || &#39;&#39;}
+  alt={user?.fullName || &#39;&#39;}
+  suppressHydrationWarning
+/&gt;
+</code></pre>
+<p>Out-of-scope alternative if the planner prefers not to extend this phase: file a TEST-A3-adjacent follow-up so the Phase 2 smoke harness explicitly asserts the <code>AvatarImage</code> attributes don&#39;t mismatch.</p>
+<h2>Info</h2>
+<h3>IN-01: Mixed <code>||</code> and <code>??</code> operators in the same component</h3>
+<p><strong>File:</strong> <code>src/components/user-avatar-profile.tsx:21, 23, 30, 33</code>
+<strong>Issue:</strong> After this commit, <code>UserAvatarProfile</code> uses <code>||</code> as the fallback operator on lines 21 (<code>imageUrl</code>, <code>alt</code>), 23 (<code>AvatarFallback</code> text), and 30 (<code>fullName</code>), but <code>??</code> on line 33 (<code>emailAddress</code>). For string fields specifically these operators behave the same on <code>null</code>/<code>undefined</code>/<code>&#39;&#39;</code>/<code>0</code> (empty string falls back in both cases because <code>&#39;&#39;</code> is falsy and nullish-string is rare here), so the inconsistency is cosmetic, not functional.</p>
+<p>Why this is flagged at Info severity and not higher: the plan explicitly limits this phase&#39;s scope per <code>D-02</code> (&quot;Do NOT grep for or fix other unsafe Clerk property chains&quot;) — Task 2 prescribes <code>??</code> only for the BUG-02 line and leaves the rest unchanged. The inconsistency is by design for this phase. Record-only.</p>
+<p><strong>Fix:</strong> None required this phase. If a future &quot;Clerk-pattern normalization&quot; sweep is opened, switch all four sites to <code>??</code> for consistency, or leave all four as <code>||</code> (functionally equivalent for string fields).</p>
+<h3>IN-02: Dead-defensive optional chain on a narrowed-non-null binding</h3>
+<p><strong>File:</strong> <code>src/components/layout/user-nav.tsx:38</code>
+<strong>Issue:</strong> Line 18&#39;s <code>if (user) { return ... }</code> narrows <code>user</code> to non-null inside the entire returned JSX block. Two lines above the patched site (line 35) the code reads <code>{user.fullName}</code> — unguarded, taking advantage of the narrowing. The new patched line (38) reads <code>{user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;}</code> — with a leading <code>user?.</code> that is structurally unreachable as null.</p>
+<p>This produces a small cognitive-dissonance smell for the next reader: &quot;is <code>user</code> nullable here or not? Line 35 says no, line 38 says yes.&quot;</p>
+<p>The plan&#39;s Task 3 explicitly prescribes this pattern (&quot;Add <code>?.</code> after <code>user</code> — defensive — the outer <code>if (user)</code> already guards this branch, but matching the prescribed pattern in CONTEXT.md keeps both BUG-02 sites identical&quot;). So this is by-decision, not by-accident. Record-only.</p>
+<p><strong>Fix:</strong> None required this phase. If consistency is preferred later, either:</p>
+<ul>
+<li>Drop the leading <code>?.</code>: <code>{user.emailAddresses[0]?.emailAddress ?? &#39;&#39;}</code> (relies on outer <code>if (user)</code>), or</li>
+<li>Add a leading <code>?.</code> to line 35 too: <code>{user?.fullName ?? &#39;&#39;}</code> (matches BUG-02 pattern symmetrically).</li>
+</ul>
+<h3>IN-03: Untracked <code>scripts/phase-01-smoke.mjs</code> referenced by SUMMARY but not in the commit</h3>
+<p><strong>File:</strong> <code>scripts/phase-01-smoke.mjs</code> (referenced from <code>01-01-SUMMARY.md:34</code>)
+<strong>Issue:</strong> Not a source-file defect in the reviewed commit — flagged here because it shows up in the phase summary as the verification harness, sits on disk (per the summary), and is out of D-09&#39;s &quot;surgical add&quot; boundary so it was deliberately left untracked. The summary itself notes the open question: &quot;keep or remove? It&#39;s a useful regression harness... TEST-A3 in Phase 2 should subsume it.&quot;</p>
+<p>Risk if forgotten: the next contributor will not have a reproducible way to re-run the Phase 1 verification, and the file will silently rot in the working tree. Worse, if it contains real Clerk credentials, leaving it on disk indefinitely is a minor data-hygiene issue.</p>
+<p><strong>Fix:</strong> Two acceptable resolutions, both out of this phase&#39;s edit scope:</p>
+<ul>
+<li>Phase 2 (Test Infrastructure) folds the script into a tracked <code>tests/smoke/</code> directory as part of TEST-A3.</li>
+<li>Or delete <code>scripts/phase-01-smoke.mjs</code> from the working tree now that Phase 1 is closed, and re-derive a vitest-based smoke in Phase 2.</li>
+</ul>
+<p>This is not a blocker on Phase 1 sign-off; it&#39;s a housekeeping note for the next phase pick-up.</p>
+<hr>
+<p><em>Reviewed: 2026-05-12</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/01-critical-bug-fix/01-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

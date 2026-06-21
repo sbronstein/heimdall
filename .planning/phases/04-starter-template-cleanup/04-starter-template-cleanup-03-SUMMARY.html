@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-starter-template-cleanup-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 03
+subsystem: cleanup
+tags:</p>
+<ul>
+<li>cleanup</li>
+<li>starter-template</li>
+<li>deletion</li>
+<li>kanban</li>
+<li>decision-record</li>
+<li>anti-pattern-removal
+dependency_graph:
+  requires:<ul>
+<li>DEBT-A3 (Phase 4 requirement)</li>
+<li>.planning/PROJECT.md (existing &quot;Out of Scope&quot; kanban line)</li>
+<li>.planning/views/PROJECT.html (existing HTML companion)
+provides:</li>
+<li>&quot;Decision-record satisfaction of ROADMAP SC #3 (PROJECT.md contains &#39;Removed in Phase 4&#39; on kanban line)&quot;</li>
+<li>&quot;Elimination of zustand persist + localStorage anti-pattern (ARCHITECTURE.md §Anti-Patterns)&quot;</li>
+<li>&quot;Cleared /dashboard/kanban route directory (Next.js framework default 404 takes over)&quot;</li>
+<li>&quot;Cleared src/features/kanban/ orphan feature folder (no autocomplete pollution)&quot;
+affects:</li>
+<li>&quot;Phase 4 plan 04-05 (verification plan) — will assert fs.existsSync(&#39;src/app/dashboard/kanban&#39;) === false and fs.existsSync(&#39;src/features/kanban&#39;) === false; both now true&quot;</li>
+<li>&quot;.planning/codebase/ARCHITECTURE.md §Anti-Patterns — Kanban store entry is now obsolete (deferred doc-update per Phase 4 CONTEXT)&quot;
+tech_stack:
+added: []
+patterns:</li>
+<li>&quot;Atomic commit per DEBT-Ax (D-19) — single commit captures all plan changes&quot;</li>
+<li>&quot;Append-don&#39;t-rewrite editing for decision records (D-02 verbatim string match)&quot;</li>
+<li>&quot;Mirror markdown edits in <code>.planning/views/*.html</code> HTML companion (user&#39;s global CLAUDE.md preference)&quot;
+key_files:
+created: []
+modified:</li>
+<li>&quot;.planning/PROJECT.md (appended <code>(Removed in Phase 4)</code> to kanban Out-of-Scope line; +1 char-set, original sentence preserved verbatim)&quot;</li>
+<li>&quot;.planning/views/PROJECT.html (appended <code>&lt;em&gt;(Removed in Phase 4)&lt;/em&gt;</code> to matching <code>&lt;li&gt;</code> — reused existing palette, no new CSS)&quot;
+deleted:</li>
+<li>&quot;src/app/dashboard/kanban/page.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/board-column.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/column-action.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/kanban-board.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/kanban-view-page.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/new-section-dialog.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/new-task-dialog.tsx&quot;</li>
+<li>&quot;src/features/kanban/components/task-card.tsx&quot;</li>
+<li>&quot;src/features/kanban/utils/index.ts&quot;</li>
+<li>&quot;src/features/kanban/utils/store.ts (zustand persist + localStorage anti-pattern — ARCHITECTURE.md flagged)&quot;
+decisions:</li>
+</ul>
+</li>
+<li>&quot;Honored D-01: kanban removed (not wired to /api/tasks) — rationale captured in CONTEXT.md (localStorage anti-pattern; pipeline + tasks already cover the DB-backed kanban surface)&quot;</li>
+<li>&quot;Honored D-02: appended verbatim <code>(Removed in Phase 4)</code> (capital R, leading space, parentheses) without rewriting the original sentence — <code>git diff .planning/PROJECT.md</code> shows a single-character-set append&quot;</li>
+<li>&quot;Honored D-03: BOTH <code>src/app/dashboard/kanban/</code> AND <code>src/features/kanban/</code> deleted in one operation (no orphan feature folder)&quot;</li>
+<li>&quot;Honored D-19: single atomic commit <code>8fa1aa9</code> for DEBT-A3 (subject contains <code>DEBT-A3</code>)&quot;</li>
+<li>&quot;HTML companion mirrors the markdown append using <code>&lt;em&gt;</code> (no new CSS invented; reused existing earth-tone palette per global CLAUDE.md)&quot;
+metrics:
+  duration: &quot;~2 min (actual elapsed wall-clock)&quot;
+  completed: 2026-05-13
+  tasks: 2
+  files_changed: 12
+  files_deleted: 10
+  files_modified: 2
+  files_created: 0
+  commits: 1
+  commit_hashes:<ul>
+<li>8fa1aa9</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>Phase 4 Plan 3: Kanban Removal + Decision Record (DEBT-A3) Summary</h1>
+<p>DEBT-A3 shipped as one atomic commit (<code>8fa1aa9</code>): deleted <code>/dashboard/kanban</code> route and the entire <code>src/features/kanban/</code> feature folder (10 files including the zustand persist + localStorage store flagged as an anti-pattern in <code>.planning/codebase/ARCHITECTURE.md</code>), and recorded the removal decision verbatim per CONTEXT.md D-02 by appending <code> (Removed in Phase 4)</code> to the existing &quot;Out of Scope&quot; kanban line in <code>.planning/PROJECT.md</code> (with a mirrored append in <code>.planning/views/PROJECT.html</code>).</p>
+<h2>What Shipped</h2>
+<h3>Deletions (10 files)</h3>
+<ul>
+<li><code>src/app/dashboard/kanban/page.tsx</code> — Next.js App Router entry point for the starter kanban route. Post-deletion, the route returns 404 via the Next.js framework default (no <code>not-found.tsx</code> added per CD-02).</li>
+<li><code>src/features/kanban/components/</code> (7 files): <code>board-column.tsx</code>, <code>column-action.tsx</code>, <code>kanban-board.tsx</code>, <code>kanban-view-page.tsx</code>, <code>new-section-dialog.tsx</code>, <code>new-task-dialog.tsx</code>, <code>task-card.tsx</code>.</li>
+<li><code>src/features/kanban/utils/index.ts</code> — feature-level barrel.</li>
+<li><code>src/features/kanban/utils/store.ts</code> — <strong>the <code>zustand persist</code> + <code>localStorage</code> store</strong> explicitly called out as an anti-pattern in <code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns → Kanban store uses client-side localStorage persistence&quot;. Its deletion eliminates the only place in Heimdall that persisted client state to browser <code>localStorage</code>, reducing the localStorage attack surface to zero (threat T-04-07 mitigated).</li>
+</ul>
+<h3>Decision-record edits (2 files)</h3>
+<ul>
+<li><code>.planning/PROJECT.md</code> line 63 — <strong>appended <code>(Removed in Phase 4)</code> verbatim</strong> (capital R, leading space, exact parentheses) to the existing kanban &quot;Out of Scope&quot; bullet. Original sentence preserved character-for-character; only the parenthetical was added. Satisfies <code>grep -q &quot;Removed in Phase 4&quot; .planning/PROJECT.md</code> (case-sensitive) and ROADMAP SC #3.</li>
+<li><code>.planning/views/PROJECT.html</code> line 203 — appended <code>&lt;em&gt;(Removed in Phase 4)&lt;/em&gt;</code> to the matching <code>&lt;li&gt;</code> bullet in the Out of Scope card. Reused the existing earth-tone palette (no new CSS); preserves source-of-truth footer note. Per the user&#39;s global CLAUDE.md preference for <code>.planning/*.md</code> to have HTML companions.</li>
+</ul>
+<h2>Verification Outcomes</h2>
+<ul>
+<li><code>test ! -d src/app/dashboard/kanban</code> → exit 0</li>
+<li><code>test ! -d src/features/kanban</code> → exit 0</li>
+<li><code>grep -rn &quot;from &#39;@/features/kanban\|from &#39;@/app/dashboard/kanban&quot; src/</code> → zero hits (no orphan imports)</li>
+<li><code>grep -rn &quot;kanbanStore\|KanbanBoard\|TaskCard&quot; src/</code> (excluding <code>src/features/tasks/</code>) → zero hits (no leaked references)</li>
+<li><code>grep -q &quot;Removed in Phase 4&quot; .planning/PROJECT.md</code> → exit 0 (verbatim string present, case-sensitive)</li>
+<li><code>grep -q &quot;Removed in Phase 4&quot; .planning/views/PROJECT.html</code> → exit 0</li>
+<li><code>git log -1 --oneline | grep -q &quot;DEBT-A3&quot;</code> → exit 0 (atomic commit per D-19)</li>
+<li><code>git diff .planning/PROJECT.md</code> shows <strong>one</strong> changed line (the kanban out-of-scope bullet), confirming the edit was a true append and did not overshoot.</li>
+<li><code>npm run build</code> — fails on the known pre-existing <code>src/features/job-leads/lib/prioritization.ts:70</code> MapIterator/es5 error (documented in <code>deferred-items.md</code>). <strong>No new errors introduced by this plan.</strong> Per CONTEXT.md <code>&lt;scope_boundary&gt;</code> and the SCOPE BOUNDARY rule in <code>execute-plan.md</code>, that pre-existing failure is out of scope for DEBT-A3 — Phase 4&#39;s verification plan (04-05) will inherit the same scope-out treatment until a follow-on tsconfig/refactor lands.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p><strong>None.</strong> Plan executed exactly as written.</p>
+<ul>
+<li>D-01 / D-02 / D-03 / D-19 all honored verbatim.</li>
+<li>No deviation-rule fires triggered:<ul>
+<li>Rule 1 (auto-fix bug): nothing buggy in scope.</li>
+<li>Rule 2 (auto-add critical functionality): nothing missing (Heimdall has zero kanban callers outside the deleted surfaces; the threat register entry T-04-07 was mitigated by the deletion itself, not by added code).</li>
+<li>Rule 3 (auto-fix blocking issue): no blockers — pre-existing prioritization.ts:70 was already logged to <code>deferred-items.md</code> and was treated as a known pre-existing build blocker (DEBT-A3 verification falls back to filesystem-existence + grep gates per CONTEXT.md PD-05/D-16/D-17).</li>
+<li>Rule 4 (architectural decision): the only architectural question (REMOVE vs WIRE) was pre-locked by CONTEXT.md D-01.</li>
+</ul>
+</li>
+</ul>
+<h2>Anti-Pattern Elimination</h2>
+<p>The most material side-effect of DEBT-A3 is that <strong>the only place in Heimdall where client state was persisted to browser <code>localStorage</code> is now gone</strong>. Per the threat model in 04-03-PLAN.md:</p>
+<ul>
+<li><strong>T-04-07 (Tampering — <code>zustand persist</code> + <code>localStorage</code> store):</strong> Eliminated. The store at <code>src/features/kanban/utils/store.ts</code> was the sole holder. After this plan, all client state goes through Zustand-without-persistence (for <code>/dashboard/pipeline</code>) or directly to the REST API (for <code>/dashboard/tasks</code>).</li>
+<li><strong>T-04-08 (Information Disclosure — <code>/dashboard/kanban</code> route):</strong> Reduced. The starter route no longer exists; Next.js&#39;s default 404 handler covers the path.</li>
+</ul>
+<p>Both threats moved from &quot;mitigate&quot; to &quot;resolved&quot; without adding any new code — pure subtraction.</p>
+<h2>Authentication Gates</h2>
+<p>None — pure cleanup plan, no auth surface touched.</p>
+<h2>Files Touched (summary)</h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Path</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Deleted</td>
+<td><code>src/app/dashboard/kanban/page.tsx</code></td>
+<td>Next.js route entry, single import + default export</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/board-column.tsx</code></td>
+<td>Drag-and-drop column</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/column-action.tsx</code></td>
+<td>Column action menu</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/kanban-board.tsx</code></td>
+<td>Board orchestrator</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/kanban-view-page.tsx</code></td>
+<td>Page wrapper consumed by the route</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/new-section-dialog.tsx</code></td>
+<td>Section creation modal</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/new-task-dialog.tsx</code></td>
+<td>Task creation modal</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/components/task-card.tsx</code></td>
+<td>Task card</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/utils/index.ts</code></td>
+<td>Barrel</td>
+</tr>
+<tr>
+<td>Deleted</td>
+<td><code>src/features/kanban/utils/store.ts</code></td>
+<td><strong>Zustand persist + localStorage anti-pattern</strong></td>
+</tr>
+<tr>
+<td>Modified</td>
+<td><code>.planning/PROJECT.md</code></td>
+<td>+<code>(Removed in Phase 4)</code> on line 63</td>
+</tr>
+<tr>
+<td>Modified</td>
+<td><code>.planning/views/PROJECT.html</code></td>
+<td>+<code>&lt;em&gt;(Removed in Phase 4)&lt;/em&gt;</code> on line 203</td>
+</tr>
+</tbody></table>
+<p>Total: <strong>10 deletions + 2 modifications = 944 deletions, 2 insertions</strong> at the line level (per <code>git show 8fa1aa9 --stat</code>).</p>
+<h2>Commits</h2>
+<ul>
+<li><code>8fa1aa9</code> — <code>feat(04): DEBT-A3 — delete kanban route + feature folder, record decision in PROJECT.md</code></li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>[ -f .planning/PROJECT.md ]</code> → exists ✓</li>
+<li><code>[ -f .planning/views/PROJECT.html ]</code> → exists ✓</li>
+<li><code>[ ! -d src/app/dashboard/kanban ]</code> → confirmed absent ✓</li>
+<li><code>[ ! -d src/features/kanban ]</code> → confirmed absent ✓</li>
+<li><code>grep -q &quot;Removed in Phase 4&quot; .planning/PROJECT.md</code> → exit 0 ✓</li>
+<li><code>grep -q &quot;Removed in Phase 4&quot; .planning/views/PROJECT.html</code> → exit 0 ✓</li>
+<li><code>git log --oneline --all | grep -q 8fa1aa9</code> → exit 0 ✓</li>
+<li>All claimed deletions in the commit (<code>git show 8fa1aa9 --stat</code>) match the plan&#39;s <code>files_modified</code> set exactly ✓</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

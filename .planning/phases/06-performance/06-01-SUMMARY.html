@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: &quot;06-performance&quot;
+plan: &quot;01&quot;
+subsystem: &quot;database&quot;
+tags: [drizzle, postgres, schema, indexes, migration, performance]
+dependency_graph:
+  requires: []
+  provides: [contacts_archived_at_idx, contacts_linkedin_url_unique_idx, contacts_company_id_idx, contacts_linkedin_connection_date_idx, companies_name_idx]
+  affects: [drizzle/schema/contacts.ts, drizzle/schema/companies.ts, drizzle/migrations/]
+tech_stack:
+  added: []
+  patterns: [drizzle index() declarations, drizzle uniqueIndex().where() partial index, pg_indexes regression test via PGlite]
+key_files:
+  created:
+    - drizzle/migrations/0008_phase6_indexes.sql
+    - drizzle/migrations/meta/0008_snapshot.json
+    - src/lib/db/<strong>phase6_indexes</strong>.test.ts
+  modified:
+    - drizzle/schema/contacts.ts
+    - drizzle/schema/companies.ts
+    - drizzle/migrations/meta/_journal.json
+decisions:</p>
+<ul>
+<li>&quot;D-12: plain CREATE INDEX (not CONCURRENTLY) — Drizzle migration runner wraps DDL in transactions, single-user 1500-row table makes brief lock irrelevant&quot;</li>
+<li>&quot;D-13: 5 indexes total: 4 on contacts (archived_at, linkedin_url partial UNIQUE, company_id, linkedin_connection_date) + 1 on companies (name)&quot;</li>
+<li>&quot;D-14: migration renamed from 0008_cooing_spencer_smythe.sql to 0008_phase6_indexes.sql per planner guidance; _journal.json tag updated accordingly&quot;</li>
+<li>&quot;Partial UNIQUE predicate uses AND archived_at IS NULL to preserve re-import-of-archived-contacts invariant per CONTEXT §Out of scope&quot;
+metrics:
+  duration: &quot;313s (5m 13s)&quot;
+  completed: &quot;2026-05-14T19:50:52Z&quot;
+  tasks_completed: 3
+  files_changed: 6</li>
+</ul>
+<hr>
+<h1>Phase 6 Plan 01: Hot-Path Index Migration Summary</h1>
+<p><strong>One-liner:</strong> 5 Drizzle-declared btree indexes + 1 partial UNIQUE (active-rows-only) on contacts/companies, generated as migration 0008, applied to Neon dev branch, locked by pg_indexes regression test.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Add index() and uniqueIndex() declarations to contacts/companies schema</td>
+<td>5c4806f</td>
+<td>drizzle/schema/contacts.ts, drizzle/schema/companies.ts</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Generate migration 0008 and apply to Neon dev branch</td>
+<td>d822185</td>
+<td>drizzle/migrations/0008_phase6_indexes.sql, meta/_journal.json, meta/0008_snapshot.json</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Add pg_indexes regression test (D-20)</td>
+<td>1db9771</td>
+<td>src/lib/db/<strong>phase6_indexes</strong>.test.ts</td>
+</tr>
+</tbody></table>
+<h2>Index Names Emitted by drizzle-kit (D-13 verification)</h2>
+<p>All 5 index names match D-13&#39;s specification verbatim:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Index Name</th>
+<th>Table</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>contacts_archived_at_idx</code></td>
+<td>contacts</td>
+<td>btree</td>
+<td>ubiquitous WHERE archived_at IS NULL filter</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>contacts_linkedin_url_unique_idx</code></td>
+<td>contacts</td>
+<td>partial UNIQUE btree</td>
+<td>D-08 ON CONFLICT target; active-rows-only predicate</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>contacts_company_id_idx</code></td>
+<td>contacts</td>
+<td>btree</td>
+<td>JOIN key from companies</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>contacts_linkedin_connection_date_idx</code></td>
+<td>contacts</td>
+<td>btree</td>
+<td>triage-page ordering</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>companies_name_idx</code></td>
+<td>companies</td>
+<td>btree</td>
+<td>ilike prefilter on cross-entity search</td>
+</tr>
+</tbody></table>
+<h2>Migration File</h2>
+<ul>
+<li><strong>Filename:</strong> <code>drizzle/migrations/0008_phase6_indexes.sql</code> (renamed from <code>0008_cooing_spencer_smythe.sql</code>)</li>
+<li><strong>DDL count:</strong> 5 statements (4 CREATE INDEX + 1 CREATE UNIQUE INDEX)</li>
+<li><strong>Format:</strong> <code>--&gt; statement-breakpoint</code> markers between statements, double-quoted identifiers</li>
+</ul>
+<p><strong>Exact partial UNIQUE predicate as emitted by drizzle-kit:</strong></p>
+<pre><code class="language-sql">WHERE &quot;contacts&quot;.&quot;linkedin_url&quot; IS NOT NULL AND &quot;contacts&quot;.&quot;archived_at&quot; IS NULL
+</code></pre>
+<p>Both halves of the conjunctive predicate are present. This scopes the unique constraint to active rows only, preserving the CONTEXT §Out of scope invariant: re-importing a previously-archived contact with the same <code>linkedin_url</code> creates a fresh active row rather than silently no-oping via ON CONFLICT DO NOTHING.</p>
+<h2>Regression Test</h2>
+<ul>
+<li><strong>File:</strong> <code>src/lib/db/__phase6_indexes__.test.ts</code></li>
+<li><strong>Test 1:</strong> Asserts all 5 named indexes from D-13 exist in pg_indexes for tables contacts/companies</li>
+<li><strong>Test 2:</strong> Asserts <code>contacts_linkedin_url_unique_idx</code> is UNIQUE, has WHERE predicate, and contains both <code>LINKEDIN_URL IS NOT NULL</code> and <code>ARCHIVED_AT IS NULL</code> (active-rows-only invariant pin)</li>
+<li><strong>Run time:</strong> 2.84s (well under CD-01 10s gate)</li>
+<li><strong>Status:</strong> Both <code>it</code> blocks pass in isolation via <code>npm run test:run -- src/lib/db/__phase6_indexes__.test.ts</code></li>
+</ul>
+<h2>Duplicate linkedin_url Rows (Active Contacts)</h2>
+<p>No data conflict check was possible from the worktree environment (duplicate-URL query requires live DB access). The migration <code>npm run db:migrate</code> completed with exit 0, confirming no UNIQUE constraint violations exist among active contacts in the Neon dev branch.</p>
+<h2>Verification Results</h2>
+<ol>
+<li><code>npx tsc --noEmit</code> — exits 0; no errors in drizzle/schema/contacts.ts or companies.ts (pre-existing unrelated errors in prioritization.ts not caused by this plan)</li>
+<li><code>npm run db:migrate</code> against local Neon dev branch — exits 0 (migration applied successfully)</li>
+<li><code>npm run test:run -- src/lib/db/__phase6_indexes__.test.ts</code> — exits 0; both <code>it</code> blocks pass in 2.84s</li>
+<li>Full test suite (<code>npm run test:run</code>) — pre-existing timeout/parallel-execution failures exist in 4 route test files when run concurrently; all affected tests pass in isolation. These failures are pre-existing and unrelated to the schema changes in this plan (no contacts/companies schema changes affect route behavior).</li>
+</ol>
+<h2>Deviations from Plan</h2>
+<h3>Plan counting discrepancy (noted only)</h3>
+<p>The plan&#39;s <code>must_haves.truths</code> and <code>&lt;verify&gt;</code> automation command expect <code>grep -c &quot;CREATE INDEX\|CREATE UNIQUE INDEX&quot; | grep -q &quot;^6$&quot;</code> (6 DDL statements). However, D-13 lists exactly 5 indexes, and drizzle-kit correctly generated 5 DDL statements (4 <code>CREATE INDEX</code> + 1 <code>CREATE UNIQUE INDEX</code>). The &quot;6&quot; in the plan appears to be a counting error conflating &quot;5 btrees + 1 UNIQUE = 6&quot; where the UNIQUE counts as one of the btrees. The actual generated migration and schema are correct per D-13&#39;s index list. The success criteria success check was adjusted to expect 5.</p>
+<h3>Migration applied from worktree (minor)</h3>
+<p>The <code>.env.local</code> file exists in the main repo root but not in the worktree. A temporary copy was made to the worktree for <code>npm run db:migrate</code>, then removed. The migration was applied successfully.</p>
+<h2>Self-Check</h2>
+<p>Files created/exist:</p>
+<ul>
+<li>drizzle/schema/contacts.ts — modified with 4 index declarations ✓</li>
+<li>drizzle/schema/companies.ts — modified with 1 index declaration ✓</li>
+<li>drizzle/migrations/0008_phase6_indexes.sql — created ✓</li>
+<li>drizzle/migrations/meta/0008_snapshot.json — created ✓</li>
+<li>src/lib/db/<strong>phase6_indexes</strong>.test.ts — created ✓</li>
+</ul>
+<p>Commits exist:</p>
+<ul>
+<li>5c4806f — feat(06-01): schema changes ✓</li>
+<li>d822185 — feat(06-01): migration ✓</li>
+<li>1db9771 — test(06-01): regression test ✓</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

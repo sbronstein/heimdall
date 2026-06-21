@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>03-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/03-security-hardening/03-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 3: Security Hardening - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-05-12
+<strong>Phase:</strong> 3-Security Hardening
+<strong>Mode:</strong> <code>--auto</code> (Claude auto-selected the recommended option for every gray area; no interactive AskUserQuestion calls were issued)
+<strong>Areas discussed:</strong> Enforcement layer, Email lock scope, Verification strategy, Starter-auth cleanup scope, <code>stars</code> prop fate, <code>proxy.ts</code> → <code>middleware.ts</code> rename</p>
+<hr>
+<h2>Enforcement Layer (middleware vs per-route)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A: Middleware-only</td>
+<td>Rename <code>src/proxy.ts</code> → <code>src/middleware.ts</code>, expand matcher to <code>[/dashboard(.*), /api/(.*)]</code>. Single chokepoint.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>B: Per-route <code>auth()</code> calls</td>
+<td>Add a Clerk <code>auth()</code> check at the top of each of 32 <code>route.ts</code> files (or via a <code>requireAuth()</code> helper in <code>src/lib/api/</code>).</td>
+<td></td>
+</tr>
+<tr>
+<td>C: Hybrid</td>
+<td>Middleware for the session check; per-route for the email lock.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> A — Middleware-only.
+<strong>Reason:</strong> 32 route files; per-route enforcement creates drift risk. The existing <code>clerkMiddleware()</code> file is already authored and just needs to be activated (per PD-01 — the file is misnamed and not currently loaded by Next.js).</p>
+<hr>
+<h2>Email Lock Scope (api routes too?)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A: Same email lock</td>
+<td><code>steve@bronstein.org</code> lock applies to both <code>/dashboard/*</code> and <code>/api/*</code>.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>B: Session-only on <code>/api/*</code></td>
+<td>Any authenticated Clerk session passes; only <code>/dashboard/*</code> enforces the email.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> A — Same email lock.
+<strong>Reason:</strong> CLI parity uses Steve&#39;s Clerk session; multi-user is out-of-scope per CLAUDE.md / PROJECT.md / REQUIREMENTS.md.</p>
+<hr>
+<h2>Verification Strategy (Phase 3 SC #1)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A: Middleware unit test + route-enumeration assertion</td>
+<td>One Vitest file: mocks Clerk, asserts middleware returns 401/redirect for unauthenticated <code>/api/*</code> and <code>/dashboard/*</code> requests; separately globs <code>src/app/api/**/route.ts</code> and asserts every path matches the protected-route matcher.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>B: Per-route HTTP sweep</td>
+<td>Dynamically import every <code>route.ts</code>, simulate a <code>NextRequest</code> with no Clerk session, assert each handler/middleware returns 401.</td>
+<td></td>
+</tr>
+<tr>
+<td>C: Single-route smoke</td>
+<td>Pick one representative route, assert middleware rejects it. Manual verification for the rest.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> A — Middleware unit test + route-enumeration assertion.
+<strong>Reason:</strong> Middleware is the chokepoint after D-01; per-route tests would have to mock middleware to even reach the handler, which defeats the point. Enumeration + chokepoint test together satisfy SC #1&#39;s &quot;automated test against all routes&quot; contract.</p>
+<hr>
+<h2>Starter-Auth Cleanup Scope (SEC-A2)</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A: Surgical</td>
+<td>Delete only what SEC-A2 names: GitHub button + <code>api.github.com</code> fetch + dead <code>stars</code> prop + the <code>Star on GitHub</code> Link block (dead after prop removal).</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>B: Sweep auth-page chrome</td>
+<td>Also delete the &quot;Random Dude&quot; quote, placeholder <code>Logo</code> SVG, <code>interactive-grid</code> background, <code>Login</code> top-right link.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> A — Surgical.
+<strong>Reason:</strong> Phase 4 (Starter-Template Cleanup) owns DEBT-A1..A5; the un-named auth-page chrome is starter residue but not a security concern. Stay narrow.</p>
+<hr>
+<h2><code>stars</code> Prop Fate</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A: Remove prop + dead <code>&lt;Link&gt;</code> block</td>
+<td>Drop <code>stars</code> from both view component signatures; delete the <code>&lt;Link&gt;...Star on GitHub...{stars}&lt;/Link&gt;</code> block in both view components since it exists solely to render the now-removed prop.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>B: Hardcode <code>stars = 0</code></td>
+<td>Keep the prop with a hardcoded literal value, leave the Link block.</td>
+<td></td>
+</tr>
+<tr>
+<td>C: Keep Link, remove count</td>
+<td>Keep the Link block with static text, remove only the <code>{stars}</code> interpolation.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> A — Remove prop and dead block.
+<strong>Reason:</strong> Minimum complete change after removing the fetch. Leaving the dead Link block creates a TypeScript / lint warning and the block has no purpose without the count.</p>
+<hr>
+<h2>Rename <code>src/proxy.ts</code> → <code>src/middleware.ts</code></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A: <code>git mv</code> rename</td>
+<td>Preserves git history via <code>git mv</code>. Single-file change; existing matcher config is already correct after the D-02 expansion.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>B: Add new <code>middleware.ts</code>, delete <code>proxy.ts</code></td>
+<td>Two-file diff; loses blame on the matcher config.</td>
+<td></td>
+</tr>
+<tr>
+<td>C: Leave <code>proxy.ts</code>, register it some other way</td>
+<td>Next.js does not support custom middleware file paths — this is not actually viable, listed only to document why it was not picked.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Auto-selected:</strong> A — <code>git mv</code>.
+<strong>Reason:</strong> Preserves history. Documented in CONCERNS.md&#39;s recommended fix path. Activates the existing dead file (per PD-01).</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<p>Documented in CONTEXT.md under &quot;Claude&#39;s Discretion&quot;:</p>
+<ul>
+<li><strong>CD-01:</strong> Use <code>git mv</code> (vs <code>rm</code> + <code>add</code>) — locked by selection above.</li>
+<li><strong>CD-02:</strong> Whether middleware emits an explicit <code>NextResponse.json({ success: false, error: &#39;Unauthorized&#39; }, { status: 401 })</code> for <code>/api/*</code> paths (preserves API-V1 envelope) or relies on Clerk&#39;s default response. <strong>Planner must verify Clerk&#39;s behavior in Next.js 16.</strong> Recommended default: explicit short-circuit.</li>
+<li><strong>CD-03:</strong> Single commit vs two commits for rename + matcher expansion — recommended single (one logical change).</li>
+<li><strong>CD-04:</strong> <code>git rm</code> the deleted <code>github-auth-button.tsx</code> (no caller remains).</li>
+<li><strong>CD-05:</strong> Convert both auth <code>page.tsx</code> files from <code>async</code> to sync after the <code>await fetch</code> is removed.</li>
+</ul>
+<hr>
+<h2>Deferred Ideas</h2>
+<p>Captured in CONTEXT.md <code>&lt;deferred&gt;</code>:</p>
+<ul>
+<li>Codebase-wide CSRF / security headers audit</li>
+<li>Rate limiting</li>
+<li>API audit logging (distinct from <code>logTimeline()</code>)</li>
+<li>Architecture doc correction post-phase (<code>.planning/codebase/ARCHITECTURE.md</code> and <code>CLAUDE.md</code> describe the middleware as if active — update after the phase lands)</li>
+<li><code>src/app/dashboard/&lt;feature&gt;/page.tsx</code> defense-in-depth audit (no longer correctness-critical once middleware is active)</li>
+<li>LinkedIn cookie file security (Phase 5 concern, local-dev only)</li>
+<li>Auth-page visual chrome scrub (Phase 4 or follow-on)</li>
+<li>Removing the now-redundant page-level <code>auth()</code> redirects in <code>src/app/page.tsx</code> and <code>src/app/dashboard/page.tsx</code></li>
+</ul>
+<hr>
+<p><em>Generated under <code>--auto</code> mode — no interactive prompts issued.</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/03-security-hardening/03-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

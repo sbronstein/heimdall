@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-05-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-05-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: 05
+subsystem: api
+tags: [drizzle, n+1, pure-read, prospect-bridges, recommendations, pglite, vitest]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 06-01
+provides: Schema indexes migration that Wave 2 plans depend on</li>
+</ul>
+<p>provides:</p>
+<ul>
+<li>&quot;GET /api/job-leads/[id]/recommendations is a pure READ — zero db.update/insert/delete calls&quot;</li>
+<li>&quot;6-test PGlite suite pinning no-writes, recompute-from-null, no timeline events, idempotency invariants&quot;</li>
+</ul>
+<p>affects: [06-SUMMARY, prospectBridges-score-retirement-deferred]</p>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;Variant B (on-the-fly compute): remove persistence side-effects from GET handlers when a downstream consumer already has the recomputation fallback&quot;
+    - &quot;beforeAll + beforeEach cleanup pattern for PGlite test suites that seed 5+ tables (avoids hookTimeout)&quot;</p>
+<p>key-files:
+  created:
+    - src/app/api/job-leads/[id]/recommendations/route.test.ts
+  modified:
+    - src/app/api/job-leads/[id]/recommendations/route.ts</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;Variant B per D-15: delete persistence loop entirely; buildRecommendations fallback at prioritization.ts:55 handles null bridge.score via the ?? operator&quot;</li>
+<li>&quot;Use beforeAll for PGlite migration replay (expensive, ~10s) and beforeEach for per-test row cleanup — avoids the 10s hookTimeout that fires when createTestDb() + seed runs in every beforeEach&quot;</li>
+<li>&quot;Fixture uses &#39;c_suite&#39; and &#39;vp&#39; (valid seniorityLevelEnum values) — NOT &#39;executive&#39; which is invalid and causes Postgres enum violation at INSERT time (BLOCKER 3 fix)&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;GET handler with no DB writes: comments reference the specific decision (Variant B / D-15) so readers understand why persistence was intentionally removed&quot;</li>
+</ul>
+<p>requirements-completed: [PERF-A1]</p>
+<h2>duration: ~15min
+completed: 2026-05-14</h2>
+<h1>Phase 6 Plan 05: Recommendations N+1 Elimination Summary</h1>
+<p><strong>Deleted the 11-line per-row UPDATE loop from GET /api/job-leads/[id]/recommendations; route is now a pure read using buildRecommendations&#39; existing bridge.score ?? computeBridgeScore fallback</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~15 min</li>
+<li><strong>Started:</strong> 2026-05-14</li>
+<li><strong>Completed:</strong> 2026-05-14</li>
+<li><strong>Tasks:</strong> 2</li>
+<li><strong>Files modified:</strong> 2 (1 modified, 1 created)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Removed <code>computeBridgeScore</code> import and the entire <code>for (const row of rows)</code> persistence loop (11 lines deleted, 1 import removed)</li>
+<li>Route now contains zero <code>db.update</code>, <code>db.insert</code>, or <code>db.delete</code> calls — verified by grep</li>
+<li><code>prioritization.ts:55</code> <code>bridge.score ?? computeBridgeScore(...)</code> fallback was already the correct handler for null scores; Variant B required no changes to that file</li>
+<li>6-test PGlite suite covers: 2-bridge happy path, no-writes invariant (null bridge stays null), no timeline events, empty-bridges, idempotency under retry, 404 not-found</li>
+<li>BLOCKER 3 fix verified: fixture uses <code>&#39;c_suite&#39;</code> (not <code>&#39;executive&#39;</code>) for executive-tier prospect — all 6 tests green, no Postgres enum violations</li>
+</ul>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1: Delete per-row UPDATE loop; route is pure read</strong> - <code>c8c77ec</code> (refactor)</li>
+<li><strong>Task 2: Create route.test.ts pinning no-writes and recompute invariants</strong> - <code>29c2538</code> (test)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> — Removed <code>computeBridgeScore</code> import; deleted lines 43-53 (persistence loop); added Variant B comment referencing D-15; route is now 55 lines (was 68)</li>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.test.ts</code> — New: 6-test PGlite suite using beforeAll/beforeEach pattern for efficient migration replay</li>
+</ul>
+<h2>Verification Results</h2>
+<pre><code>grep db.update in route.ts:          0  (PASS)
+grep db.insert in route.ts:          0  (PASS)
+grep db.delete in route.ts:          0  (PASS)
+grep computeBridgeScore in imports:  0  (PASS — only appears in comment)
+grep buildRecommendations in route:  3  (PASS — import + call + re-export)
+grep &#39;executive&#39; as enum value:      0  (PASS — only in negative-guidance comment)
+All 6 tests:                         PASS
+</code></pre>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>Variant B confirmed by grep evidence</strong>: <code>prioritization.ts:55</code> uses <code>bridge.score ?? computeBridgeScore(prospect, contact)</code> — null scores are transparently recomputed. No other consumer reads the persisted score from this write path. Removing the persistence loop is safe and cleaner.</li>
+<li><strong>beforeAll + beforeEach cleanup</strong>: Using <code>beforeAll</code> for <code>createTestDb()</code> (expensive migration replay ~10s) and <code>beforeEach</code> for row cleanup prevented the 10s <code>hookTimeout</code> that fires when <code>createTestDb()</code> runs per-test. This is the correct pattern for PGlite suites seeding 5+ tables.</li>
+<li><strong><code>prospectBridges.score</code> column</strong>: Column stays nullable and write-free from this route. Future retirement tracked in CONTEXT §Deferred (&quot;prospectBridges.score column retirement&quot;).</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] Changed beforeEach to beforeAll + beforeEach cleanup for PGlite harness</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 2 (running tests)</li>
+<li><strong>Issue:</strong> Using <code>beforeEach(async () =&gt; { dbRef.current = await createTestDb(); ... })</code> caused Tests 1 and 2 to timeout at the default 10s hookTimeout because migration replay + seeding 5 tables exceeded 10s</li>
+<li><strong>Fix:</strong> Changed to <code>beforeAll(async () =&gt; { dbRef.current = await createTestDb(); }, 30000)</code> for one-time migration replay, with <code>beforeEach</code> only doing fast row deletions + re-seeding</li>
+<li><strong>Files modified:</strong> src/app/api/job-leads/[id]/recommendations/route.test.ts</li>
+<li><strong>Verification:</strong> All 6 tests pass, Tests 1-2 complete in ~2.4s and 0.6s respectively</li>
+<li><strong>Committed in:</strong> 29c2538 (Task 2 commit)</li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 1 auto-fixed (Rule 1 — bug in test setup pattern)
+<strong>Impact on plan:</strong> Test harness pattern change only; test coverage and invariants are identical to the plan spec. No scope creep.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li>PGlite <code>hookTimeout</code> exceeded when <code>createTestDb()</code> + 5-table seed ran inside <code>beforeEach</code>. Resolved by using <code>beforeAll</code> for migration replay and <code>beforeEach</code> for lightweight row cleanup (see deviations above).</li>
+</ul>
+<h2>User Setup Required</h2>
+<p>None - no external service configuration required.</p>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>Wave 2 Plan 05 (2d) is complete. GET /api/job-leads/[id]/recommendations is now a pure read.</li>
+<li>The <code>prospectBridges.score</code> column remains in the schema, nullable, with no writer path from this route. Retirement cleanup tracked in CONTEXT §Deferred.</li>
+<li>All pre-existing tests continue to pass.</li>
+</ul>
+<hr>
+<p><em>Phase: 06-performance</em>
+<em>Completed: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-05-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

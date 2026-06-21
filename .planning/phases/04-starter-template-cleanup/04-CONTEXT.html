@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 4: Starter-Template Cleanup - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-13
+<strong>Status:</strong> Ready for planning
+<strong>Mode:</strong> <code>--auto</code> (Claude auto-selected the recommended option for every gray area; log appended at bottom)</p>
+<domain>
+## Phase Boundary<p>Delete the Next.js Shadcn dashboard starter-template residue still in the tree so the repo contains only Heimdall code: four unused dashboard routes, the 805-line Infobar component and its dependent machinery, the unused products feature, the kanban starter (decision: remove, not wire), the <code>__CLEANUP__/</code> directory, and the unused <code>computeBridgeScore</code> import in the job-leads search route.</p>
+<p><strong>In scope (DEBT-A1..A5 verbatim):</strong></p>
+<ul>
+<li><strong>DEBT-A1</strong>: Delete <code>src/features/products/</code> and <code>src/app/dashboard/product/</code> routes.</li>
+<li><strong>DEBT-A2</strong>: Delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code> routes and the 805-line <code>src/components/ui/infobar.tsx</code>.</li>
+<li><strong>DEBT-A3</strong>: Decide on <code>/dashboard/kanban</code> — wire to <code>/api/tasks</code> or remove. <strong>Decision: REMOVE</strong> (rationale in D-04 below; record in PROJECT.md per ROADMAP SC #3).</li>
+<li><strong>DEBT-A4</strong>: Remove the <code>__CLEANUP__/</code> directory at the repo root.</li>
+<li><strong>DEBT-A5</strong>: Drop the unused <code>computeBridgeScore</code> import in <code>src/app/api/job-leads/[id]/search/route.ts:10</code>.</li>
+</ul>
+<p><strong>In scope by transitive necessity (will break the build if left dangling):</strong></p>
+<ul>
+<li><strong>Infobar machinery teardown (consequence of DEBT-A2):</strong> <code>src/config/infoconfig.ts</code>, <code>src/components/layout/info-sidebar.tsx</code>, <code>src/components/ui/info-button.tsx</code>, the <code>InfobarProvider</code> + <code>&lt;InfoSidebar /&gt;</code> wrapper in <code>src/app/dashboard/layout.tsx</code>, and the <code>infoContent</code> prop on <code>PageContainer</code> (<code>src/components/layout/page-container.tsx</code>) and <code>Heading</code> (<code>src/components/ui/heading.tsx</code>) — see PD-02.</li>
+<li><strong>Products feature dead support (consequence of DEBT-A1):</strong> <code>src/constants/mock-api.ts</code> (sole consumer is <code>src/features/products/</code>); <code>Product</code>, <code>SaleUser</code>, <code>recentSalesData</code> from <code>src/constants/data.ts</code>; the <code>/dashboard/product</code> entry in <code>src/hooks/use-breadcrumbs.tsx</code>.</li>
+<li><strong>Live billing href to a deleted route:</strong> the <code>&lt;a href=&#39;/dashboard/billing&#39;&gt;</code> link inside <code>src/app/dashboard/exclusive/page.tsx</code> is removed with its parent file (no other dashboard surface links to <code>/dashboard/billing</code>).</li>
+<li><strong>PROJECT.md update for SC #3:</strong> Append <code>(Removed in Phase 4)</code> to the existing &quot;Out of Scope&quot; line about <code>/dashboard/kanban</code> so the decision is recorded.</li>
+</ul>
+<p><strong>Out of scope (deferred to other phases, captured in <code>&lt;deferred&gt;</code> below):</strong></p>
+<ul>
+<li>Orphan starter components NOT named in DEBT-A1..A5 and NOT a transitive consequence of their deletion: <code>src/components/org-switcher.tsx</code>, <code>src/components/forms/demo-form.tsx</code>, <code>src/features/auth/components/user-auth-form.tsx</code>, <code>src/app/dashboard/profile/[[...profile]]/page.tsx</code>, the <code>Profile</code> and <code>Login</code> items in <code>src/config/nav-config.ts</code>, the <code>Star on GitHub</code> link text in auth views (already partly addressed by Phase 3&#39;s SEC-A2).</li>
+<li>The remaining auth-page visual chrome that Phase 3 explicitly left alone (Random Dude quote, placeholder <code>Logo</code> SVG, <code>interactive-grid</code> decoration, <code>Login</code> top-right link).</li>
+<li>The <code>any</code> typings in <code>src/components/kbar/index.tsx</code> and <code>src/features/metrics/components/weekly-snapshot-form.tsx</code> from CONCERNS.md — type-debt cleanup, not starter-residue.</li>
+<li><code>playwright</code> package classification (<code>dependencies</code> → <code>devDependencies</code>) — that&#39;s JL2-02, deferred to v2.</li>
+<li>Any architecture-doc rewrites — <code>.planning/codebase/ARCHITECTURE.md</code> and similar references will need a sweep after Phase 4 lands, but that&#39;s a doc-update task, not part of the deletion phase.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Critical Pre-Discovery (anchor the whole phase here)</h3>
+<ul>
+<li><p><strong>PD-01:</strong> Every name in DEBT-A1..A5 still exists in the tree. Verified by <code>ls</code>/<code>grep</code>: <code>src/features/products/components/</code> (4 files), <code>src/app/dashboard/{product,exclusive,workspaces,billing,kanban}/</code> (5 starter routes), <code>src/components/ui/infobar.tsx</code> (805 lines confirmed), <code>__CLEANUP__/</code> (clerk/, kanban/, sentry/, scripts/, cleanup.md), and <code>computeBridgeScore</code> imported but unused in <code>src/app/api/job-leads/[id]/search/route.ts:10</code>. The phase is genuinely additive cleanup — no requirement is already satisfied.</p>
+</li>
+<li><p><strong>PD-02:</strong> <code>infobar.tsx</code> is not isolated — deleting just that file breaks the build. The Infobar machinery is wired into <code>src/app/dashboard/layout.tsx</code> via <code>InfobarProvider</code> + <code>&lt;InfoSidebar side=&#39;right&#39; /&gt;</code>, and the <code>InfobarContent</code> type is referenced by <code>PageContainer</code>/<code>Heading</code> (via the <code>infoContent</code> prop) and by <code>src/config/infoconfig.ts</code>. Every Heimdall-feature page that passes <code>infoContent={...}</code> to <code>PageContainer</code> (<code>pipeline</code>, <code>metrics</code>, <code>tasks</code>, <code>networking</code>, <code>contacts/*</code>, <code>notes/*</code>, <code>overview/layout</code>, <code>job-leads/[id]</code>, plus the four starter routes being deleted) must be updated — for the Heimdall pages the prop is silently dropped from the JSX; for the starter pages the entire file goes. This is the largest unmarked dependency in the phase and is the most likely source of churn.</p>
+</li>
+<li><p><strong>PD-03:</strong> The <code>kanban</code> removal has two surfaces: the <code>/dashboard/kanban</code> route (<code>src/app/dashboard/kanban/page.tsx</code>) AND the feature folder <code>src/features/kanban/</code> (board components, zustand <code>persist</code> store from CONCERNS.md anti-pattern, drag-and-drop wiring). Both must go to satisfy &quot;the route is removed&quot; cleanly — leaving <code>src/features/kanban/</code> behind would be an orphan feature folder. Also note <code>__CLEANUP__/kanban/</code> is a <em>template</em> directory the original cleanup script would have used; it&#39;s deleted alongside <code>__CLEANUP__/</code> itself under DEBT-A4 (not separately).</p>
+</li>
+<li><p><strong>PD-04:</strong> <code>src/features/products/</code> has a wider blast radius than DEBT-A1 names: <code>src/constants/mock-api.ts</code> is consumed <em>only</em> by the products feature, and <code>Product</code>/<code>SaleUser</code>/<code>recentSalesData</code> in <code>src/constants/data.ts</code> are consumed only by <code>src/features/products/components/*</code>. Once products are gone, these files/exports are dead. Same goes for the <code>&#39;/dashboard/product&#39;</code> entry in <code>src/hooks/use-breadcrumbs.tsx</code>. Folding these into the products-deletion plan keeps the post-phase tree clean.</p>
+</li>
+<li><p><strong>PD-05:</strong> Verification of SC #1 (&quot;visiting <code>/dashboard/{product,exclusive,workspaces,billing}</code> returns 404&quot;) does not require an HTTP smoke. In Next.js App Router, deleting a route directory IS the 404 — the dynamic catch-all <code>not-found.tsx</code> (or the framework default) takes over. A filesystem-existence assertion in Vitest (assert these directories no longer exist under <code>src/app/dashboard/</code>) plus <code>npm run build</code> succeeding is a stronger, faster, deterministic check than running a dev server and <code>curl</code>-ing four URLs.</p>
+</li>
+</ul>
+<h3>Kanban Decision (DEBT-A3 — recorded for SC #3)</h3>
+<ul>
+<li><strong>D-01:</strong> <strong>Remove <code>/dashboard/kanban</code> entirely</strong> rather than wiring it to <code>/api/tasks</code>. Rationale:<ol>
+<li>The kanban store uses <code>zustand persist</code> with <code>localStorage</code> — explicitly called out as an anti-pattern in <code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns → Kanban store uses client-side localStorage persistence&quot;. Wiring it to <code>/api/tasks</code> would mean rebuilding the whole feature, not a cleanup task.</li>
+<li>Heimdall already has two production kanban-like surfaces: <code>/dashboard/pipeline</code> (PIPE-V1, the load-bearing system of record per PROJECT.md) and <code>/dashboard/tasks</code> (TASK-V1, DB-backed). A third kanban with localStorage state is redundant and confusing.</li>
+<li>The phase boundary is <em>cleanup</em>, not new feature work. Wiring kanban to the DB would expand scope and miss the cleanup-cycle deadline.</li>
+</ol>
+</li>
+<li><strong>D-02:</strong> Decision recording for SC #3 — append <code>(Removed in Phase 4)</code> to the existing line in <code>PROJECT.md</code> §&quot;Out of Scope&quot;: <code>Database-backed Kanban for the /dashboard/kanban route — Starter-template residue; will be removed under DEBT-A3.</code> This satisfies SC #3 (<code>decision recorded in PROJECT.md</code>) without inventing a new doc.</li>
+<li><strong>D-03:</strong> Delete <em>both</em> the route (<code>src/app/dashboard/kanban/page.tsx</code>) AND the feature folder (<code>src/features/kanban/</code>). Per PD-03, leaving the feature folder is an orphan and pollutes search/import autocomplete.</li>
+</ul>
+<h3>Infobar Teardown (DEBT-A2, transitive)</h3>
+<ul>
+<li><strong>D-04:</strong> <strong>Transitive removal</strong>, not surgical. Delete <code>src/components/ui/infobar.tsx</code>, <code>src/components/ui/info-button.tsx</code>, <code>src/components/layout/info-sidebar.tsx</code>, and <code>src/config/infoconfig.ts</code> together. Strip <code>InfobarProvider</code> + <code>&lt;InfoSidebar side=&#39;right&#39; /&gt;</code> from <code>src/app/dashboard/layout.tsx</code>. Drop the <code>infoContent?: InfobarContent</code> prop from <code>src/components/layout/page-container.tsx</code> and <code>src/components/ui/heading.tsx</code> (and the <code>&lt;InfoButton ... /&gt;</code> invocation inside <code>Heading</code>).</li>
+<li><strong>D-05:</strong> Sweep every <code>infoContent={...}</code> prop usage in dashboard pages. From the scout: <code>src/app/dashboard/{billing,workspaces,workspaces/team/[[...rest]],product}/page.tsx</code> (deleted with their parent routes — no work) and the Heimdall feature pages that pass it. Grep <code>infoContent</code> after the prop is removed to confirm zero hits before commit.</li>
+<li><strong>D-06:</strong> No replacement for the removed <code>&lt;InfoSidebar /&gt;</code> slot in <code>src/app/dashboard/layout.tsx</code>. The layout currently has the right-side info panel; after Phase 4 the layout is just <code>&lt;KBar&gt;&lt;SidebarProvider&gt;&lt;AppSidebar /&gt;&lt;SidebarInset&gt;...&lt;/SidebarInset&gt;&lt;/SidebarProvider&gt;&lt;SearchCommand /&gt;&lt;/KBar&gt;</code>. No new component, no replacement panel — that would be feature work.</li>
+</ul>
+<h3>Products + Dead Support Files (DEBT-A1, transitive)</h3>
+<ul>
+<li><strong>D-07:</strong> Delete <code>src/features/products/</code> (entire directory: <code>components/product-listing.tsx</code>, <code>product-form.tsx</code>, <code>product-view-page.tsx</code>, <code>product-tables/</code> subtree). Delete <code>src/app/dashboard/product/</code> (route directory: <code>page.tsx</code>, <code>[productId]/page.tsx</code>).</li>
+<li><strong>D-08:</strong> Delete <code>src/constants/mock-api.ts</code> outright — sole consumers are the four <code>src/features/products/components/*</code> files. Verified: no other Heimdall code imports from this module.</li>
+<li><strong>D-09:</strong> Strip <code>Product</code>, <code>SaleUser</code>, and <code>recentSalesData</code> from <code>src/constants/data.ts</code>. If the file becomes empty after that, delete it; if any unrelated exports remain, leave the file with only those exports. (Grep before commit; from the scout, those are the only three exports in the file.)</li>
+<li><strong>D-10:</strong> Remove the <code>&#39;/dashboard/product&#39;: [{ title: &#39;Dashboard&#39; ... }, { title: &#39;Product&#39; ... }]</code> block from <code>src/hooks/use-breadcrumbs.tsx</code>. No other entries in that mapping reference deleted routes.</li>
+</ul>
+<h3>Starter Dashboard Routes (DEBT-A2)</h3>
+<ul>
+<li><strong>D-11:</strong> Delete <code>src/app/dashboard/exclusive/page.tsx</code>, <code>src/app/dashboard/workspaces/page.tsx</code>, <code>src/app/dashboard/workspaces/team/[[...rest]]/page.tsx</code>, <code>src/app/dashboard/billing/page.tsx</code>. The internal <code>&lt;a href=&#39;/dashboard/billing&#39;&gt;</code> in <code>exclusive/page.tsx</code> is removed with the file (no other dashboard surface links to it; org-switcher.tsx&#39;s <code>/dashboard/workspaces</code> <code>router.push</code> is in an orphan component covered under deferred — not Phase 4 scope).</li>
+<li><strong>D-12:</strong> No nav-config edits are required for DEBT-A2 — <code>src/config/nav-config.ts</code> does NOT contain entries for product/exclusive/workspaces/billing/kanban. (Verified via Read: the nav lists Dashboard, Companies, Pipeline, Networking, Job Leads, Contacts, Tasks, Notes, Metrics, Account → Profile/Login. Clean already.)</li>
+</ul>
+<h3><code>__CLEANUP__/</code> Removal (DEBT-A4)</h3>
+<ul>
+<li><strong>D-13:</strong> <code>rm -rf __CLEANUP__/</code> — entire top-level directory. Contains <code>clerk/</code>, <code>kanban/</code>, <code>sentry/</code>, <code>scripts/</code>, and <code>cleanup.md</code> — none of which are referenced by any code in <code>src/</code> (verified by grep). Per <code>__CLEANUP__/cleanup.md</code> line 33, the directory is supposed to be removed once feature-strip decisions are made, which Phase 4 finalizes.</li>
+<li><strong>D-14:</strong> Sequence: do DEBT-A4 <em>after</em> DEBT-A1/A2/A3 land. Reason: <code>__CLEANUP__/kanban/</code> and <code>__CLEANUP__/clerk/</code> are template directories that mirror real source files; if the order is wrong and someone accidentally invokes <code>node __CLEANUP__/scripts/cleanup.js kanban</code> mid-phase, it would silently overwrite real source. Keeping <code>__CLEANUP__/</code> until last avoids any accidental script invocation against partially-cleaned state. Planner enforces ordering.</li>
+</ul>
+<h3>Unused Import (DEBT-A5)</h3>
+<ul>
+<li><strong>D-15:</strong> One-line edit in <code>src/app/api/job-leads/[id]/search/route.ts</code>: remove line 10 (<code>import { computeBridgeScore } from &#39;@/features/job-leads/lib/prioritization&#39;;</code>). <code>computeBridgeScore</code> is genuinely used by <code>src/app/api/job-leads/[id]/recommendations/route.ts</code> and <code>src/features/job-leads/lib/prioritization.ts</code> — only this one import is dead. No risk to the export.</li>
+</ul>
+<h3>Verification Strategy (Phase 4 SC #1–4)</h3>
+<ul>
+<li><strong>D-16:</strong> Verification has two layers, both required to call the phase done:<ol>
+<li><strong>Filesystem-existence assertion test</strong> (one file, e.g., <code>src/__cleanup__.test.ts</code> colocated with the deletion targets, or under <code>src/lib/cleanup.test.ts</code> — planner chooses). Asserts:<ul>
+<li><code>fs.existsSync(&#39;src/features/products&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/app/dashboard/product&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/app/dashboard/exclusive&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/app/dashboard/workspaces&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/app/dashboard/billing&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/app/dashboard/kanban&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/features/kanban&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;src/components/ui/infobar.tsx&#39;)</code> is <code>false</code></li>
+<li><code>fs.existsSync(&#39;__CLEANUP__&#39;)</code> is <code>false</code></li>
+<li>Source string <code>computeBridgeScore</code> is not present in <code>src/app/api/job-leads/[id]/search/route.ts</code>
+This is deterministic, fast (&lt;50ms), and runs in the Phase 2 Vitest harness without PGlite (it&#39;s filesystem I/O only). Satisfies SC #1 and SC #2 directly; SC #3 is verified by the PROJECT.md edit (D-02) being committed.</li>
+</ul>
+</li>
+<li><strong><code>npm run build</code> clean exit.</strong> Phase 2&#39;s pre-push hook already runs <code>npm run build</code> + <code>npm run test:run</code>; this phase doesn&#39;t add a new gate, it just ensures the build still passes with no warning for the removed <code>computeBridgeScore</code> import (SC #4). The planner should run <code>npm run build</code> locally before each commit to catch transitive breakage.</li>
+</ol>
+</li>
+<li><strong>D-17:</strong> Do NOT add a runtime HTTP test that spins up a dev server and <code>curl</code>s <code>/dashboard/product</code> for a 404. Filesystem-existence + a clean build is a stronger contract — Next.js&#39;s route resolver IS the contract being asserted, and adding HTTP-level checks would mean booting Next in tests for a property the framework guarantees by definition. Per PD-05.</li>
+</ul>
+<h3>Plan Grouping (informs the planner, not a hard rule)</h3>
+<ul>
+<li><p><strong>D-18:</strong> <strong>Recommended plan breakdown — four disjoint plans, executable in two waves.</strong> Mirrors Phase 3&#39;s two-disjoint-plans pattern but at the right granularity for five DEBT requirements that don&#39;t all touch the same files. The planner has final authority; this is a starting point:</p>
+<p><strong>Wave 1 (all four parallel — disjoint file sets):</strong></p>
+<ul>
+<li><strong>04-01-PLAN.md (DEBT-A1)</strong> — Products: delete <code>src/features/products/</code>, <code>src/app/dashboard/product/</code>, <code>src/constants/mock-api.ts</code>; strip Product/SaleUser/recentSalesData from <code>src/constants/data.ts</code>; strip <code>/dashboard/product</code> entry from <code>src/hooks/use-breadcrumbs.tsx</code>.</li>
+<li><strong>04-02-PLAN.md (DEBT-A2)</strong> — Starter routes + Infobar teardown: delete <code>src/app/dashboard/{exclusive,workspaces,billing}/</code>; delete <code>src/components/ui/infobar.tsx</code>, <code>src/components/ui/info-button.tsx</code>, <code>src/components/layout/info-sidebar.tsx</code>, <code>src/config/infoconfig.ts</code>; strip <code>InfobarProvider</code> + <code>&lt;InfoSidebar /&gt;</code> from <code>src/app/dashboard/layout.tsx</code>; drop the <code>infoContent</code> prop from <code>src/components/layout/page-container.tsx</code> and <code>src/components/ui/heading.tsx</code> and every <code>infoContent={...}</code> call site on Heimdall feature pages.</li>
+<li><strong>04-03-PLAN.md (DEBT-A3)</strong> — Kanban removal: delete <code>src/app/dashboard/kanban/</code>, <code>src/features/kanban/</code>; append <code>(Removed in Phase 4)</code> to the kanban &quot;Out of Scope&quot; line in <code>.planning/PROJECT.md</code>.</li>
+<li><strong>04-04-PLAN.md (DEBT-A5)</strong> — One-line import cleanup in <code>src/app/api/job-leads/[id]/search/route.ts</code>. Trivial; could be folded into 04-01 if the planner prefers, but it&#39;s already a clean atomic commit on its own.</li>
+</ul>
+<p><strong>Wave 2 (blocked on Wave 1 completion — must be last):</strong></p>
+<ul>
+<li><strong>04-05-PLAN.md (DEBT-A4 + verification)</strong> — <code>rm -rf __CLEANUP__/</code>; add the filesystem-existence test file (D-16); confirm <code>npm run build</code> clean. Sequenced last so <code>__CLEANUP__/</code> scripts can&#39;t be accidentally invoked against partially-cleaned state (D-14), and so the verification test runs against the final post-cleanup tree.</li>
+</ul>
+<p><strong>Why parallel in Wave 1:</strong> the four plans touch disjoint file sets. The only seam is the <code>infoContent</code> prop in <code>PageContainer</code>/<code>Heading</code> — that&#39;s owned entirely by 04-02 because all <code>infoContent</code> call sites on Heimdall feature pages are within <code>src/app/dashboard/{pipeline,metrics,tasks,networking,contacts,notes,overview,job-leads}/...</code> and 04-02 sweeps them. 04-01/04-03/04-04 do not touch those files.</p>
+<p><strong>Caveat:</strong> If the planner determines that interleaving deletions across Wave 1 plans causes git-merge friction (e.g., two plans both editing <code>src/app/dashboard/layout.tsx</code>), the planner is free to serialize. Phase 3&#39;s wave-1 worked because the file sets were strictly disjoint; same should hold here once <code>infoContent</code> ownership is fixed to 04-02.</p>
+</li>
+<li><p><strong>D-19:</strong> Atomic commits per requirement. Each DEBT-Ax gets its own commit so <code>git log</code> reads cleanly (DEBT-A1: delete products; DEBT-A2: delete starter routes + infobar; DEBT-A3: delete kanban + record decision; DEBT-A4: rm <strong>CLEANUP</strong>; DEBT-A5: drop unused import). Phase 3 set this pattern.</p>
+</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><strong>CD-01:</strong> Whether to delete <code>src/constants/data.ts</code> entirely (if it becomes empty after stripping Product/SaleUser/recentSalesData) or leave it as an empty exports file. Recommended: delete the file if no exports remain — leaving an empty <code>data.ts</code> is starter residue too. Planner verifies via <code>cat src/constants/data.ts</code> post-edit.</li>
+<li><strong>CD-02:</strong> Whether to add a <code>not-found.tsx</code> under <code>src/app/</code> for a Heimdall-branded 404 page on the now-deleted routes, or rely on Next.js&#39;s default 404 chrome. Recommended: rely on default — adding a custom 404 is a feature, not cleanup. Defer if desired.</li>
+<li><strong>CD-03:</strong> Whether to write the filesystem-existence test as one big <code>describe(&#39;Phase 4 cleanup&#39;)</code> with multiple <code>it()</code> blocks, or one <code>it()</code> with a list of paths checked in a <code>forEach</code>. Recommended: <code>forEach</code> over a path array — most concise; fewer test names to maintain. Either is fine.</li>
+<li><strong>CD-04:</strong> Whether to use a single sweep commit for Wave 1 vs four separate commits. Recommended: four separate commits per D-19 — one per DEBT-Ax requirement so <code>git log</code> traceability is clean.</li>
+<li><strong>CD-05:</strong> Whether to scrub the orphan <code>src/constants/mock-api.ts</code> import-only types (e.g., the <code>User</code>, <code>Order</code> types if any exist) vs delete the whole file. Recommended: delete the whole file — the scout confirmed all five exports (<code>fakeProducts</code>, mock product helpers) are products-only. If grep finds any non-products import, planner stops and flags.</li>
+<li><strong>CD-06:</strong> Whether to also fold in the <code>Star on GitHub</code> <code>&lt;Link&gt;</code> block in auth view components that Phase 3 left behind (CONTEXT.md §&quot;D-12&quot;). Recommended: skip — Phase 3 chose to remove the <code>stars</code> <em>prop</em> and the <code>&lt;Link&gt;</code> block in D-12; if the block was correctly removed in Phase 3, there&#39;s nothing left to do here. Planner verifies.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Requirements &amp; Roadmap</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;Starter-Template Cleanup&quot; — DEBT-A1..A5 verbatim text.</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 4: Starter-Template Cleanup&quot; — Goal + 4 success criteria. SC #3 explicitly requires the kanban decision to be recorded in PROJECT.md.</li>
+<li><code>.planning/PROJECT.md</code> §&quot;Out of Scope&quot; — Already contains the kanban-removal commitment; this phase finalizes it.</li>
+</ul>
+<h3>Codebase Maps (read before planning)</h3>
+<ul>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Tech Debt → Entire Starter Template Product Feature Unreferenced by App&quot; — Names <code>src/features/products/</code>, <code>src/app/dashboard/product/</code>, demo-form.tsx, user-auth-form.tsx (last two are deferred — see below).</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Tech Debt → <code>__CLEANUP__</code> Directory Not Yet Removed&quot; — Recommends <code>rm -rf __CLEANUP__</code> after feature-strip decisions land.</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Tech Debt → Starter Template Infobar / Workspaces / Billing / Exclusive Pages&quot; — Names all four routes + <code>src/config/infoconfig.ts</code> + <code>infobar.tsx</code> (805 lines).</li>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Tech Debt → <code>computeBridgeScore</code> Imported But Unused in Search Route&quot; — Names DEBT-A5 target precisely.</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Anti-Patterns → Kanban store uses client-side localStorage persistence&quot; — Architectural rationale for the D-01 kanban-removal decision.</li>
+</ul>
+<h3>Prior Phase Context (decisions to carry forward)</h3>
+<ul>
+<li><code>.planning/phases/03-security-hardening/03-CONTEXT.md</code> §&quot;Verification Strategy&quot;, §&quot;Plan Grouping&quot; — Phase 3 established (a) verify via colocated Vitest tests using Phase 2 harness, (b) parallel plans when file sets are disjoint, (c) atomic commits per requirement, (d) prefer <code>git mv</code> over <code>git rm</code> when preserving blame. Phase 4 inherits patterns (a)–(c); (d) does not apply (Phase 4 is pure deletion, no renames).</li>
+<li><code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> — Vitest config + <code>npm run test:run</code> pre-push gate. Phase 4 reuses without modification (no PGlite needed; filesystem assertions only).</li>
+<li><code>__CLEANUP__/cleanup.md</code> line 33 — Owner intent: &quot;Once you&#39;ve finished cleaning up features you don&#39;t need, delete the <code>__CLEANUP__</code> folder.&quot; Phase 4 executes this.</li>
+</ul>
+<h3>Source Files (under modification or deletion)</h3>
+<p><strong>Delete entirely:</strong></p>
+<ul>
+<li><code>src/features/products/</code> (whole directory: <code>components/product-listing.tsx</code>, <code>product-form.tsx</code>, <code>product-view-page.tsx</code>, <code>product-tables/columns.tsx</code>, <code>product-tables/cell-action.tsx</code>)</li>
+<li><code>src/app/dashboard/product/page.tsx</code>, <code>src/app/dashboard/product/[productId]/page.tsx</code></li>
+<li><code>src/app/dashboard/exclusive/page.tsx</code></li>
+<li><code>src/app/dashboard/workspaces/page.tsx</code>, <code>src/app/dashboard/workspaces/team/[[...rest]]/page.tsx</code></li>
+<li><code>src/app/dashboard/billing/page.tsx</code></li>
+<li><code>src/app/dashboard/kanban/page.tsx</code></li>
+<li><code>src/features/kanban/</code> (whole directory: components + zustand store under <code>utils/store.ts</code>)</li>
+<li><code>src/components/ui/infobar.tsx</code> (805 lines)</li>
+<li><code>src/components/ui/info-button.tsx</code></li>
+<li><code>src/components/layout/info-sidebar.tsx</code></li>
+<li><code>src/config/infoconfig.ts</code></li>
+<li><code>src/constants/mock-api.ts</code></li>
+<li><code>__CLEANUP__/</code> (whole directory at repo root)</li>
+</ul>
+<p><strong>Edit (remove specific dependencies, file stays):</strong></p>
+<ul>
+<li><code>src/app/dashboard/layout.tsx</code> — Remove <code>import { InfobarProvider }</code> + <code>import { InfoSidebar }</code> + the <code>&lt;InfobarProvider&gt;...&lt;InfoSidebar /&gt;...&lt;/InfobarProvider&gt;</code> wrapper.</li>
+<li><code>src/components/layout/page-container.tsx</code> — Drop the <code>infoContent?: InfobarContent</code> prop and the two call sites that pass it to <code>Heading</code>.</li>
+<li><code>src/components/ui/heading.tsx</code> — Drop the <code>infoContent?: InfobarContent</code> prop and the <code>{infoContent &amp;&amp; &lt;InfoButton content={infoContent} /&gt;}</code> block.</li>
+<li>Every Heimdall feature page that passes <code>infoContent={...}</code> (sweep with <code>grep -rn &quot;infoContent&quot; src/app/dashboard/</code>). Confirmed live sites from scout: none after the starter routes are deleted (the four starter pages were the only <code>infoContent</code> callers; verify by post-deletion grep).</li>
+<li><code>src/constants/data.ts</code> — Strip <code>Product</code> type, <code>SaleUser</code> interface, <code>recentSalesData</code> const. Delete file if it becomes empty (CD-01).</li>
+<li><code>src/hooks/use-breadcrumbs.tsx</code> — Remove the <code>&#39;/dashboard/product&#39;: [...]</code> entry (lines ~18–20).</li>
+<li><code>src/app/api/job-leads/[id]/search/route.ts</code> — Remove line 10 only.</li>
+<li><code>.planning/PROJECT.md</code> §&quot;Out of Scope&quot; — Append <code>(Removed in Phase 4)</code> to the kanban line.</li>
+</ul>
+<h3>Tooling / Build / Test</h3>
+<ul>
+<li><code>vitest.config.ts</code> — Phase 2 config; no edits expected. The filesystem-existence test runs in the default node environment with no PGlite.</li>
+<li><code>package.json</code> — <code>test:run</code>, <code>build</code>, and the husky pre-push hook are inherited from Phase 2. No script changes expected.</li>
+<li><code>tsconfig.json</code> — strict; deleted imports will surface as TS errors during <code>npm run build</code> if a dependent edit is missed.</li>
+</ul>
+<h3>Coding Conventions</h3>
+<ul>
+<li><code>CLAUDE.md</code> — TypeScript strict mode, named exports, no server actions, all mutations through <code>/api/*</code>. No new code in this phase, but the planner should verify no edit accidentally violates these.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — Naming, kebab-case files. (No new files added, so mostly a sanity reference.)</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong>Phase 2 Vitest harness</strong> (<code>vitest.config.ts</code>, <code>src/test-utils/</code>) — Reused for the filesystem-existence assertion test (D-16). No new test config or harness work.</li>
+<li><strong>Phase 3&#39;s <code>git mv</code> precedent</strong> — Does NOT apply here; Phase 4 is pure <code>git rm</code> (no rename pattern). Just noting so the planner doesn&#39;t search for analogues.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>Parallel plans on disjoint file sets</strong> — Phase 3 ran two plans in parallel (one for the middleware activation, one for the GitHub button removal). Phase 4 extends this to four parallel plans + one serialized wave-2 plan (D-18).</li>
+<li><strong>Atomic commits per requirement</strong> — Phase 3 D-12/CD-04 established the pattern: one commit per DEBT-Ax. Phase 4 inherits (D-19).</li>
+<li><strong>Single-pass <code>--auto</code> discussion</strong> — Phase 3 was discussed in auto mode and produced a CONTEXT.md without iteration. Phase 4 does the same; this CONTEXT.md is the single canonical record.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong><code>InfobarProvider</code> in dashboard layout</strong> — Removing it breaks every dashboard page that calls <code>useInfobar()</code> (verified by grep: only <code>info-sidebar.tsx</code>, <code>info-button.tsx</code>, and the four starter routes via <code>infoContent</code> prop — all going away). After Phase 4, <code>useInfobar</code> has zero callers and zero declarations.</li>
+<li><strong>Kanban store anti-pattern</strong> — The <code>zustand persist</code> localStorage store in <code>src/features/kanban/utils/store.ts</code> is documented in ARCHITECTURE.md as an anti-pattern. Removal eliminates the anti-pattern outright, not just the route.</li>
+<li><strong><code>__CLEANUP__/</code> script side-effect risk</strong> — The script in <code>__CLEANUP__/scripts/cleanup.js</code> can be invoked to overwrite real source files with template versions. D-14 sequences <code>rm -rf __CLEANUP__/</code> last in the phase to avoid the risk of an accidental invocation against half-cleaned state.</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Whether to wire <code>/dashboard/kanban</code> to <code>/api/tasks</code> (D-01 locks: remove, do not wire).</li>
+<li>Whether to delete the Infobar machinery transitively or just <code>infobar.tsx</code> (D-04 locks: transitive).</li>
+<li>Whether to add an HTTP smoke test for 404s (D-17 locks: no — filesystem assertion + build is the contract).</li>
+<li>Whether the deferred starter components (OrgSwitcher, demo-form, user-auth-form) need to be touched (<code>&lt;deferred&gt;</code> says no — they&#39;re explicit OOS).</li>
+<li>Whether to add a 404 not-found.tsx page (CD-02 recommends no).</li>
+</ul>
+<h3>What the Planner DOES Need to Research / Decide</h3>
+<ul>
+<li>Whether <code>src/constants/data.ts</code> ends up empty after stripping the three exports (drives CD-01: delete file vs leave empty stub).</li>
+<li>Whether any unexpected Heimdall code imports <code>Product</code>, <code>SaleUser</code>, <code>recentSalesData</code>, or the <code>mock-api</code> module — a final <code>grep -rn &quot;from &#39;@/constants/mock-api&#39;&quot; src/</code> and <code>grep -rn &quot;SaleUser\|recentSalesData&quot; src/</code> before Plan 04-01 ships. Scout returned zero non-products usage but the planner verifies.</li>
+<li>Whether any <code>infoContent</code> call site exists outside the four starter dashboard routes — <code>grep -rn &quot;infoContent&quot; src/app/dashboard/</code> post-deletion. Scout showed all sites are in <code>billing</code>/<code>workspaces</code>/<code>product</code>/<code>exclusive</code>, but the planner should confirm.</li>
+<li>Whether <code>__CLEANUP__/scripts/cleanup.js</code> has any deps in <code>package.json</code> (<code>scripts/</code>, <code>dependencies</code>) that should be cleaned out — e.g., a <code>cleanup</code> npm script. Quick <code>cat package.json</code> check during planning.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li>The filesystem-existence test (D-16) should live at <code>src/__cleanup__.test.ts</code> next to <code>src/app/</code> so it&#39;s discoverable as a Phase 4 artifact. Use <code>node:fs/promises</code>&#39; <code>access</code> + an array of paths in a <code>forEach</code>: <code>for (const p of deletedPaths) { expect(existsSync(p)).toBe(false); }</code>. Also a single assertion that the source string <code>computeBridgeScore</code> is not present in <code>src/app/api/job-leads/[id]/search/route.ts</code> (read the file as UTF-8, <code>expect(content).not.toMatch(/computeBridgeScore/)</code>).</li>
+<li>For the Wave 1 plans, the planner should commit each <code>git rm -r &lt;path&gt;</code> immediately after the deletion (atomic per D-19). This keeps <code>git log</code> traceable: a reader can <code>git log --diff-filter=D --name-only</code> and see exactly which directories were removed under each DEBT-Ax.</li>
+<li>The <code>__CLEANUP__/</code> removal in Wave 2 should also delete any <code>node_modules</code> entries that the cleanup script might have pulled in — but the script is pure Node <code>fs</code> and config; no extra deps are expected. Sanity check with <code>git status</code> after <code>rm -rf __CLEANUP__/</code>.</li>
+<li>The PROJECT.md edit (D-02) should be a one-line append to the existing kanban &quot;Out of Scope&quot; line, NOT a new section. The line currently reads: <code>DB-backed Kanban for the /dashboard/kanban page — Starter-template residue; will be removed under DEBT-A3.</code> After Phase 4: <code>DB-backed Kanban for the /dashboard/kanban page — Starter-template residue; removed in Phase 4 (DEBT-A3).</code> Same line, past tense.</li>
+<li>Order of edits in Plan 04-02 (the largest plan): (1) drop <code>infoContent</code> from <code>PageContainer</code> and <code>Heading</code> first — gets TS errors at every call site. (2) walk the TS errors removing call sites in the starter pages (which are about to be deleted anyway). (3) delete the four starter route directories. (4) delete <code>info-sidebar.tsx</code>, <code>info-button.tsx</code>, <code>infoconfig.ts</code>. (5) strip <code>InfobarProvider</code> from <code>dashboard/layout.tsx</code>. (6) delete <code>infobar.tsx</code>. This order means the build never goes red for more than one commit, and the final <code>delete infobar.tsx</code> only happens after every consumer is gone.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<p>These came up during analysis but are out of phase-4 scope. Captured so future phases / a follow-on cleanup phase don&#39;t lose them.</p>
+<ul>
+<li><strong><code>src/components/org-switcher.tsx</code></strong> — Imports <code>useOrganization</code> from Clerk, calls <code>router.push(&#39;/dashboard/workspaces&#39;)</code>. After Phase 4 deletes the workspaces route, this component is fully orphan (the only caller of itself per scout grep). It is not named in DEBT-A1..A5 and removing it is not a transitive consequence of the named requirements (no other file imports it today). Defer to a follow-on starter-orphan cleanup, or fold into a future &quot;Heimdall vs starter audit&quot; phase.</li>
+<li><strong><code>src/components/forms/demo-form.tsx</code></strong> — Starter template demo form. Orphan (no callers in scout). CONCERNS.md mentions it under &quot;Entire Starter Template Product Feature&quot; but it&#39;s not named in DEBT-A1..A5. Defer.</li>
+<li><strong><code>src/features/auth/components/user-auth-form.tsx</code></strong> — Starter auth form, orphan. Same status as demo-form: mentioned in CONCERNS.md, not in DEBT requirements. Defer.</li>
+<li><strong><code>src/app/dashboard/profile/[[...profile]]/page.tsx</code> + the <code>Profile</code> and <code>Login</code> items in <code>src/config/nav-config.ts</code></strong> — The profile route uses <code>&lt;ProfileViewPage /&gt;</code> from <code>@/features/profile/</code>. This is starter chrome (Clerk&#39;s profile editor) and the <code>Login</code> nav item points at <code>/</code> which is the redirect-to-sign-in landing page — possibly intentional, possibly starter residue. Not named in DEBT. Defer for a Heimdall-specific UX decision.</li>
+<li><strong>Auth-page visual chrome</strong> (Random Dude quote, placeholder <code>Logo</code> SVG, <code>interactive-grid</code> decoration, <code>Login</code> top-right link, <code>Star on GitHub</code> link text) — Phase 3 D-13 explicitly deferred these as &quot;starter residue but not security concerns.&quot; Phase 4&#39;s scope is named DEBT requirements; these are not named. Defer to a future cosmetic-cleanup phase.</li>
+<li><strong><code>any</code> typings in <code>src/components/kbar/index.tsx</code> and <code>src/features/metrics/components/weekly-snapshot-form.tsx</code></strong> — CONCERNS.md &quot;Tech Debt&quot; entries, not in the v1 Active requirements list. Defer to a future type-tightening phase.</li>
+<li><strong><code>playwright</code> package classification</strong> (CONCERNS.md &quot;Dependencies at Risk&quot;) — JL2-02 in REQUIREMENTS.md <code>v2 (deferred)</code>. Already deferred.</li>
+<li><strong><code>.planning/codebase/ARCHITECTURE.md</code> rewrites</strong> — The ARCHITECTURE map currently lists <code>infobar.tsx</code> and the Kanban store as components. After Phase 4 lands, the map needs a refresh. Defer to a <code>/gsd-map-codebase</code> re-run or a docs-update step after the milestone closes.</li>
+<li><strong><code>scripts/</code> directory at repo root</strong> (referenced by <code>__CLEANUP__/scripts/</code>) — Not touched by Phase 4; only <code>__CLEANUP__/scripts/</code> (the cleanup-script implementation) is deleted with the parent directory. The top-level <code>scripts/</code> (with <code>generate-import-data.py</code>, <code>parse-paste.py</code>) is Heimdall tooling and stays.</li>
+<li><strong>Phase 3 ARCHITECTURE.md correction</strong> (Phase 3 03-CONTEXT.md deferred this) — Still pending, separate doc-update.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no project-level todos cross-referenced this phase via <code>gsd-sdk query todo.match-phase</code>.</p>
+</deferred><hr>
+<h2>--auto Discussion Log</h2>
+<p>For each gray area surfaced during analysis, Claude auto-selected the recommended option (no AskUserQuestion calls per <code>workflows/discuss-phase/modes/auto.md</code>):</p>
+<ul>
+<li><strong>[auto] Kanban route fate (DEBT-A3 — recorded for SC #3)</strong> — Q: &quot;Wire <code>/dashboard/kanban</code> to <code>/api/tasks</code> or remove it?&quot; → Selected: <strong>Remove</strong> (recommended). Reason: localStorage-persisted starter (ARCHITECTURE.md anti-pattern); <code>/dashboard/pipeline</code> (PIPE-V1) and <code>/dashboard/tasks</code> (TASK-V1) already cover the DB-backed kanban surface; scope is cleanup, not new features. D-01.</li>
+<li><strong>[auto] Infobar deletion scope</strong> — Q: &quot;Surgical (<code>infobar.tsx</code> only) or transitive (<code>infobar.tsx</code> + <code>info-button.tsx</code> + <code>info-sidebar.tsx</code> + <code>infoconfig.ts</code> + layout/PageContainer/Heading edits)?&quot; → Selected: <strong>Transitive</strong> (recommended). Reason: surgical breaks the build — 5+ files depend on the <code>InfobarProvider</code>/<code>InfobarContent</code> symbols. D-04.</li>
+<li><strong>[auto] Products deletion blast radius</strong> — Q: &quot;Just <code>src/features/products/</code> + <code>src/app/dashboard/product/</code>, or also <code>mock-api.ts</code> + <code>Product</code>/<code>SaleUser</code>/<code>recentSalesData</code> + breadcrumb entry?&quot; → Selected: <strong>Fold in transitive dead code</strong> (recommended). Reason: those files/exports are products-only; leaving them is starter residue too and would force a follow-on cleanup. D-07..D-10.</li>
+<li><strong>[auto] Plan grouping</strong> — Q: &quot;One bulk plan or disjoint parallel plans?&quot; → Selected: <strong>Four parallel plans (Wave 1) + one verification plan (Wave 2)</strong> (recommended). Reason: file sets are disjoint; mirrors Phase 3&#39;s parallel-disjoint pattern; <code>__CLEANUP__/</code> deletion must be last (D-14). D-18.</li>
+<li><strong>[auto] Verification approach</strong> — Q: &quot;Filesystem-existence test + clean <code>npm run build</code>, or runtime HTTP 404 smoke?&quot; → Selected: <strong>Filesystem-existence test + clean build</strong> (recommended). Reason: Next.js route resolver IS the 404 contract; HTTP smoke would test the framework. Faster (&lt;50ms), deterministic, runs in Phase 2 harness. D-16, D-17.</li>
+<li><strong>[auto] Atomic commits granularity</strong> — Q: &quot;One sweep commit or one commit per DEBT-Ax?&quot; → Selected: <strong>One commit per DEBT-Ax</strong> (recommended). Reason: Phase 3 set the pattern; preserves <code>git log</code> traceability. D-19.</li>
+<li><strong>[auto] <code>__CLEANUP__/</code> deletion ordering</strong> — Q: &quot;Delete first (clearer diff) or last (avoid accidental script invocation against half-cleaned state)?&quot; → Selected: <strong>Last (Wave 2)</strong> (recommended). Reason: <code>__CLEANUP__/scripts/cleanup.js</code> can overwrite real source files; sequencing it last makes accidents structurally impossible. D-14.</li>
+<li><strong>[auto] Adjacent starter orphans (org-switcher, demo-form, user-auth-form, profile route)</strong> — Q: &quot;Sweep them along with the named DEBT items, or defer?&quot; → Selected: <strong>Defer</strong> (recommended). Reason: not named in DEBT-A1..A5; not a transitive consequence of any named deletion; scope discipline beats opportunistic cleanup. <code>&lt;deferred&gt;</code> section.</li>
+<li><strong>[auto] Decision record location for SC #3</strong> — Q: &quot;New doc, new section in PROJECT.md, or amend the existing kanban out-of-scope line?&quot; → Selected: <strong>Amend existing line</strong> (recommended). Reason: PROJECT.md already has the commitment; appending <code>(Removed in Phase 4)</code> is the minimum complete edit. D-02.</li>
+</ul>
+<hr>
+<p><em>Phase: 04-Starter-Template Cleanup</em>
+<em>Context gathered: 2026-05-13</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

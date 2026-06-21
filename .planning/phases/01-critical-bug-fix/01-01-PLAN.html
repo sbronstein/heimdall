@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/01-critical-bug-fix/01-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 01-critical-bug-fix
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/components/user-avatar-profile.tsx</li>
+<li>src/components/layout/app-sidebar.tsx</li>
+<li>src/components/layout/user-nav.tsx
+autonomous: false
+requirements: [BUG-01, BUG-02]
+tags: [bug-fix, hydration, clerk, react]</li>
+</ul>
+<p>must_haves:
+  decisions_addressed:
+    - &quot;D-01: Fix only the two known BUG-02 sites — no codebase-wide sweep (applied in Tasks 2, 3)&quot;
+    - &quot;D-02: No grep/fix of other unsafe Clerk property chains (firstName, primaryEmailAddress, etc.) — out of scope this phase (Tasks 2, 3 action text explicit)&quot;
+    - &quot;D-03: Verification is dev-server smoke only, not a 1500-contact import repro (Task 5 implements this exact protocol)&quot;
+    - &quot;D-04: Do not synthesize a no-email Clerk user state to repro BUG-02 (no such task in plan; honored by omission)&quot;
+    - &quot;D-05: No regression test in this phase — TEST-A3 owned by Phase 2 (no test task in plan; honored by omission)&quot;
+    - &quot;D-06: Working tree contains partial BUG-01 fixes already (acknowledged in <interfaces> block; Task 1 audits them)&quot;
+    - &quot;D-07: Audit-then-accept strategy for pre-existing edits (Task 1 is dedicated audit with concrete grep assertions)&quot;
+    - &quot;D-08: Do NOT git restore the working-tree edits (Task 1 action and Task 5 resume-signal both call this out explicitly)&quot;
+    - &quot;D-09: Surgical git add per file — only the three BUG files (Tasks 6, 7 use file-specific git add)&quot;
+    - &quot;D-10: Leave Job Leads / package.json / docs/summary.md / .planning/config.json dirty and untouched (Tasks 6, 7 acceptance criteria verify with negative grep)&quot;
+    - &quot;D-11: Do not stash or commit unrelated dirty changes (Tasks 6, 7 acceptance criteria assert git status still shows them dirty post-commit)&quot;
+  truths:
+    - &quot;Sidebar nav links route correctly on every dashboard page after a hard refresh&quot;
+    - &quot;Loading /dashboard/overview produces no React hydration warnings in the browser console&quot;
+    - &quot;Loading /dashboard/networking produces no React hydration warnings in the browser console&quot;
+    - &quot;UserAvatarProfile renders inside SidebarMenuButton without {user &amp;&amp; ...} guards&quot;
+    - &quot;user.emailAddresses[0]?.emailAddress is the access pattern at every patched site (no unguarded [0] dereference)&quot;
+    - &quot;Phase 1 commits touch only the three BUG files — Job Leads, package.json, docs/summary.md, .planning/config.json are untouched in this phase&#39;s git history&quot;
+  artifacts:
+    - path: &quot;src/components/user-avatar-profile.tsx&quot;
+      provides: &quot;Span-based avatar profile with optional-chain guard on emailAddresses[0]&quot;
+      contains: &quot;user?.emailAddresses[0]?.emailAddress&quot;
+    - path: &quot;src/components/layout/app-sidebar.tsx&quot;
+      provides: &quot;Unconditional UserAvatarProfile render at lines ~148 and ~164&quot;
+      contains: &quot;user={user ?? null}&quot;
+    - path: &quot;src/components/layout/user-nav.tsx&quot;
+      provides: &quot;Optional-chain guard on emailAddresses[0]&quot;
+      contains: &quot;user?.emailAddresses[0]?.emailAddress&quot;
+  key_links:
+    - from: &quot;src/components/layout/app-sidebar.tsx&quot;
+      to: &quot;src/components/user-avatar-profile.tsx&quot;
+      via: &quot;unconditional render with user={user ?? null}&quot;
+      pattern: &quot;user=\{user \?\? null\}&quot;
+    - from: &quot;src/components/user-avatar-profile.tsx&quot;
+      to: &quot;browser DOM&quot;
+      via: &quot;root <span> + inner showInfo <span> (valid inside <button>)&quot;
+  pattern: &quot;<span className='flex items-center gap-2'>&quot;
+</p>
+<hr>
+<objective>
+Eliminate the React hydration crash (BUG-01) that breaks sidebar navigation after large LinkedIn imports, and guard the unsafe `emailAddresses[0]` array access (BUG-02) that can crash on edge-case Clerk users.<p>Per CONTEXT.md decisions D-06 and D-07, the working tree already contains partial fixes for BUG-01 — <code>user-avatar-profile.tsx</code> root is <code>&lt;span&gt;</code>, inner <code>showInfo</code> is <code>&lt;span&gt;</code>, and <code>app-sidebar.tsx</code> already removed the <code>{user &amp;&amp; ...}</code> guards at lines 148 and 166, passing <code>user={user ?? null}</code> through. This plan <strong>audits</strong> those edits against <code>bug.md</code>&#39;s prescription, applies the two remaining BUG-02 optional-chain guards, performs a dev-server smoke verification (D-03), and produces surgical commits scoped to the three BUG files only (D-09, D-10).</p>
+<p>Purpose: Restore reliable dashboard navigation. The user is currently blocked from daily use after large LinkedIn imports.
+Output: Two atomic commits (one per requirement, per D-12), each touching only the BUG-scoped files.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/01-critical-bug-fix/01-CONTEXT.md
+@bug.md
+@.planning/codebase/CONCERNS.md
+@CLAUDE.md<interfaces>
+<!-- Key contracts the executor needs to know. Extracted from src/components/user-avatar-profile.tsx. -->
+<!-- Executor should use these directly — no codebase exploration needed. --><p>From src/components/user-avatar-profile.tsx (current working-tree state):</p>
+<pre><code class="language-typescript">interface UserAvatarProfileProps {
+  className?: string;
+  showInfo?: boolean;
+  user: {
+    imageUrl?: string;
+    fullName?: string | null;
+    emailAddresses: Array&lt;{ emailAddress: string }&gt;;
+  } | null;
+}
+
+export function UserAvatarProfile({
+  className,
+  showInfo = false,
+  user
+}: UserAvatarProfileProps);
+</code></pre>
+<p>Component <strong>already accepts <code>user: ... | null</code></strong> and <strong>already uses <code>&lt;span&gt;</code> at the root and inner <code>showInfo</code></strong>. The only remaining defect inside this file is line 31&#39;s <code>user?.emailAddresses[0].emailAddress</code> chain — the <code>[0]</code> is unguarded.</p>
+<p>From src/components/layout/app-sidebar.tsx (current working-tree state):</p>
+<ul>
+<li>Line 52: <code>const { user } = useUser();</code> — Clerk hook, <code>user</code> is <code>User | null | undefined</code></li>
+<li>Lines 148–152: <code>&lt;UserAvatarProfile className=&#39;h-8 w-8 rounded-lg&#39; showInfo user={user ?? null} /&gt;</code> — already unconditional, already passes <code>user ?? null</code></li>
+<li>Lines 164–168: same — already unconditional, already passes <code>user ?? null</code></li>
+<li>No <code>{user &amp;&amp; ...}</code> JSX guards remain around <code>UserAvatarProfile</code></li>
+</ul>
+<p>From src/components/layout/user-nav.tsx (current working-tree state):</p>
+<ul>
+<li>Line 13: <code>const { user } = useUser();</code></li>
+<li>Line 18: outer <code>if (user) { return ( ... ) }</code> guard — kept; this is an early return, not a JSX hydration mismatch</li>
+<li>Line 38: <code>{user.emailAddresses[0].emailAddress}</code> — unguarded <code>[0]</code> dereference inside the truthy branch; this is the BUG-02 site</interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto">
+  <name>Task 1: Audit pre-existing BUG-01 working-tree edits and confirm they match bug.md prescription</name>
+  <files>src/components/user-avatar-profile.tsx, src/components/layout/app-sidebar.tsx</files>
+  <read_first>
+    - src/components/user-avatar-profile.tsx (full file — 38 lines)
+    - src/components/layout/app-sidebar.tsx (full file, focus on lines 140–195)
+    - bug.md (fix prescription)
+    - .planning/phases/01-critical-bug-fix/01-CONTEXT.md (decisions D-06, D-07, D-08)
+  </read_first>
+  <action>
+    Per D-07 (audit-then-accept), verify the working-tree state matches `bug.md`'s fix prescription before touching anything. Do NOT `git restore` (D-08).<pre><code>Checks to perform with grep against the current working-tree files (NOT the committed HEAD):
+
+1. In `src/components/user-avatar-profile.tsx`:
+   - Root element at line 19 is `&lt;span className=&#39;flex items-center gap-2&#39;&gt;` (NOT `&lt;div&gt;`).
+   - Inner `showInfo` wrapper at line 28 is `&lt;span className=&#39;grid flex-1 text-left text-sm leading-tight&#39;&gt;` (NOT `&lt;div&gt;`).
+   - The closing tag on the final line matches the opening — `&lt;/span&gt;` (not `&lt;/div&gt;`).
+   - `UserAvatarProfileProps.user` is typed as `{...} | null` (component handles null user).
+
+2. In `src/components/layout/app-sidebar.tsx`:
+   - No `{user &amp;&amp; &lt;UserAvatarProfile ... /&gt;}` JSX pattern exists anywhere in the file (grep should return zero matches for `{user &amp;&amp; &lt;UserAvatarProfile`).
+   - Both `UserAvatarProfile` render sites (around lines 148–152 inside `SidebarMenuButton` and lines 164–168 inside `DropdownMenuLabel`) pass `user={user ?? null}`.
+
+If ALL checks pass, mark the audit complete and proceed to the next task — the BUG-01 source edits are accepted as-is. If ANY check fails, fix the divergence in-place (apply the exact change from `bug.md`) before proceeding.
+
+Do NOT modify any other file. Do NOT `git restore`. Do NOT run `git add` yet.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -c "user && &lt;UserAvatarProfile" src/components/layout/app-sidebar.tsx | grep -q '^0$' && grep -q "&lt;span className='flex items-center gap-2'&gt;" src/components/user-avatar-profile.tsx && grep -q "user={user ?? null}" src/components/layout/app-sidebar.tsx && echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `grep -c '{user && <UserAvatarProfile' src/components/layout/app-sidebar.tsx` returns `0`
+    - `grep -c "user={user ?? null}" src/components/layout/app-sidebar.tsx` returns `2` (both render sites)
+    - `grep -q "<span className='flex items-center gap-2'>" src/components/user-avatar-profile.tsx` succeeds (root span)
+    - `grep -q "<span className='grid flex-1 text-left text-sm leading-tight'>" src/components/user-avatar-profile.tsx` succeeds (inner showInfo span)
+    - `grep -c "<div" src/components/user-avatar-profile.tsx` returns `0` (no divs remain in this file)
+  </acceptance_criteria>
+  <done>The working-tree state of `user-avatar-profile.tsx` and `app-sidebar.tsx` matches `bug.md`'s BUG-01 fix prescription verbatim, with zero divergence. No file has been re-edited unnecessarily.</done>
+</task><task type="auto">
+  <name>Task 2: Apply BUG-02 optional-chain guard at user-avatar-profile.tsx:31</name>
+  <files>src/components/user-avatar-profile.tsx</files>
+  <read_first>
+    - src/components/user-avatar-profile.tsx (line 31 specifically — the `emailAddresses[0].emailAddress` access)
+    - .planning/phases/01-critical-bug-fix/01-CONTEXT.md (decision D-01 — fix only the two known sites; do NOT do a codebase sweep per D-02)
+  </read_first>
+  <action>
+    Per D-01, change the single line at `src/components/user-avatar-profile.tsx:31` from:<pre><code>`{user?.emailAddresses[0].emailAddress || &#39;&#39;}`
+
+to:
+
+`{user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;}`
+
+Two changes on this one line:
+1. Add `?.` between `[0]` and `.emailAddress` (guards against `emailAddresses` being an empty array).
+2. Change the `||` fallback to `??` (per D-01 spec — nullish-coalescing is the prescribed operator; `||` would also coerce `0`/`false`/`&quot;&quot;` to `&#39;&#39;`, which is not the intent for an email string but is the prescribed pattern in CONTEXT.md and matches the BUG-02 acceptance criteria).
+
+Do NOT modify any other line in this file. Do NOT grep for or fix other unsafe Clerk property chains (D-02 — no codebase-wide sweep this phase).
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -q "user?.emailAddresses\[0\]?.emailAddress ?? ''" src/components/user-avatar-profile.tsx &amp;&amp; ! grep -q "user?.emailAddresses\[0\]\.emailAddress" src/components/user-avatar-profile.tsx &amp;&amp; echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `grep -q "user?.emailAddresses\[0\]?.emailAddress ?? ''" src/components/user-avatar-profile.tsx` succeeds
+    - `grep -c "user?.emailAddresses\[0\]\.emailAddress" src/components/user-avatar-profile.tsx` returns `0` (the unguarded form is gone)
+    - `git diff src/components/user-avatar-profile.tsx` shows exactly one line changed beyond the pre-existing BUG-01 span edits (the line 31 change)
+    - No other file is modified by this task
+  </acceptance_criteria>
+  <done>Line 31 of `user-avatar-profile.tsx` reads `{user?.emailAddresses[0]?.emailAddress ?? ''}`. The change is mechanical and surgical — no other lines or files are touched.</done>
+</task><task type="auto">
+  <name>Task 3: Apply BUG-02 optional-chain guard at user-nav.tsx:38</name>
+  <files>src/components/layout/user-nav.tsx</files>
+  <read_first>
+    - src/components/layout/user-nav.tsx (full file — 59 lines)
+    - .planning/phases/01-critical-bug-fix/01-CONTEXT.md (decision D-01)
+  </read_first>
+  <action>
+    Per D-01, change the single line at `src/components/layout/user-nav.tsx:38` from:<pre><code>`{user.emailAddresses[0].emailAddress}`
+
+to:
+
+`{user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;}`
+
+Three changes on this one line:
+1. Add `?.` after `user` (defensive — the outer `if (user) { return ... }` at line 18 already guards this branch, but matching the prescribed pattern in CONTEXT.md keeps both BUG-02 sites identical).
+2. Add `?.` between `[0]` and `.emailAddress`.
+3. Add the `?? &#39;&#39;` fallback for the empty-emailAddresses-array case.
+
+Do NOT modify the outer `if (user) { return ... }` guard at line 18 — that is an early return for the falsy-user case, not a JSX hydration issue. Do NOT touch any other line. Do NOT touch any other file.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -q "user?.emailAddresses\[0\]?.emailAddress ?? ''" src/components/layout/user-nav.tsx &amp;&amp; ! grep -q "user\.emailAddresses\[0\]\.emailAddress" src/components/layout/user-nav.tsx &amp;&amp; echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `grep -q "user?.emailAddresses\[0\]?.emailAddress ?? ''" src/components/layout/user-nav.tsx` succeeds
+    - `grep -cE "user\.emailAddresses\[0\]\.emailAddress" src/components/layout/user-nav.tsx` returns `0` (the unguarded form is gone)
+    - `git diff src/components/layout/user-nav.tsx` shows exactly one line changed
+    - The `if (user) {` guard on line 18 is intact and unmodified
+  </acceptance_criteria>
+  <done>Line 38 of `user-nav.tsx` reads `{user?.emailAddresses[0]?.emailAddress ?? ''}`. The outer `if (user)` early return is preserved unchanged.</done>
+</task><task type="auto">
+  <name>Task 4: Build verification — confirm TypeScript compiles cleanly</name>
+  <files>(none — verification task)</files>
+  <read_first>
+    - src/components/user-avatar-profile.tsx (post-edit)
+    - src/components/layout/user-nav.tsx (post-edit)
+    - src/components/layout/app-sidebar.tsx (working-tree state)
+  </read_first>
+  <action>
+    Run `npx tsc --noEmit` to confirm the three modified files type-check cleanly with no errors.<pre><code>This is a sanity check that the optional-chain edits did not break any TypeScript inference (e.g., a stale `as string` assertion somewhere downstream).
+
+If tsc reports errors specifically in `user-avatar-profile.tsx`, `app-sidebar.tsx`, or `user-nav.tsx` (the three BUG-scoped files), fix them. If tsc reports unrelated errors in Job Leads scrape files or other dirty working-tree files, IGNORE them — those are out of scope per D-10.
+
+Do NOT run `npm run build` — that would also touch unrelated dirty files and is overkill for this phase. `tsc --noEmit` is sufficient.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit 2>&amp;1 | grep -E "(user-avatar-profile|app-sidebar|user-nav)\.tsx" | grep -v "^$" | wc -l | tr -d ' ' | grep -q '^0$' &amp;&amp; echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - `npx tsc --noEmit` produces zero errors referencing `user-avatar-profile.tsx`, `app-sidebar.tsx`, or `user-nav.tsx`
+    - Errors in unrelated files (Job Leads scrapers, etc.) are acceptable per D-10 — they do NOT block this task
+  </acceptance_criteria>
+  <done>The three BUG-scoped files type-check cleanly. Unrelated tsc errors in dirty Job Leads files are recorded but ignored.</done>
+</task><task type="checkpoint:human-verify" gate="blocking">
+  <name>Task 5: Dev-server smoke verification (D-03)</name>
+  <files>(none — manual verification task; no file mutations)</files>
+  <read_first>
+    - .planning/phases/01-critical-bug-fix/01-CONTEXT.md (decision D-03 — dev-server smoke only, not a full 1500-contact repro)
+    - bug.md (for the symptom list to scan the console against)
+  </read_first>
+  <action>
+    Per D-03, this is a 2-minute manual smoke check. The executor automates the dev-server launch but the human verifies the result.<pre><code>Executor responsibilities (BEFORE handing off to the user):
+1. Start the dev server in a background task: `npm run dev`. (The project&#39;s `npm run dev` script binds to port 4000 — confirm by reading the &quot;Ready&quot; line in the server output.)
+2. Wait until the server prints &quot;Ready&quot; / &quot;Local: http://localhost:4000&quot; before printing the verification instructions to the user.
+3. If the dev server fails to start (TypeScript error, port conflict, missing env), surface the error and pause for resolution BEFORE asking the user to verify.
+
+Then print the verification steps below verbatim and pause for the resume signal.
+
+The user (steve@bronstein.org) verification steps:
+
+1. Open a Chromium browser and navigate to `http://localhost:4000/dashboard/overview`.
+2. Open DevTools → Console. **Expected: zero React hydration warnings or errors.** Specifically, no messages containing &quot;Hydration&quot;, &quot;did not match&quot;, &quot;Text content does not match server-rendered HTML&quot;, or &quot;Warning: Expected server HTML to contain...&quot;
+3. Click each sidebar nav link in turn (Overview, Networking, Companies, Contacts, Applications, Pipeline, Tasks, Notes, Job Leads, Recruiters, Metrics, etc. — every link that appears in the sidebar). **Expected: each click changes the URL and renders the destination page without console errors.**
+4. Navigate to `http://localhost:4000/dashboard/networking`. **Expected: same — no hydration warnings, page renders, sidebar still works.**
+5. Click the user avatar in the sidebar footer to open the dropdown. **Expected: dropdown opens, displays full name + email (or empty string if Clerk user has no email), no console errors.**
+
+If any of the above fails, do NOT type &quot;approved&quot;. Capture the console error text and the URL where it occurred, then describe the failure in the resume message. Per D-08, do NOT `git restore` — the diagnostic data is more valuable than rolling back.
+
+If all steps pass, the user types &quot;approved&quot; to continue. After the resume signal, the executor stops the dev server before proceeding to Task 6.
+</code></pre>
+  </action>
+  <what-built>
+    BUG-01 hydration mismatch resolved (audited and accepted from working tree): `<span>`-based `UserAvatarProfile` renders unconditionally inside `SidebarMenuButton` with `user={user ?? null}`. BUG-02 optional-chain guards applied at the two known sites.
+  </what-built>
+  <how-to-verify>
+    1. Executor starts `npm run dev` in background; waits for "Ready" on `http://localhost:4000`.
+    2. User opens `http://localhost:4000/dashboard/overview`, opens DevTools console, confirms zero hydration warnings.
+    3. User clicks every sidebar nav link in turn; confirms each routes correctly.
+    4. User opens `http://localhost:4000/dashboard/networking`; same check.
+    5. User opens the sidebar-footer user dropdown; confirms it opens cleanly.
+  </how-to-verify>
+  <verify>
+    <automated>echo "MANUAL CHECKPOINT — see &lt;how-to-verify&gt;. Executor must wait for &apos;approved&apos; resume signal from user (steve@bronstein.org) before proceeding to Task 6."</automated>
+  </verify>
+  <acceptance_criteria>
+    - User has loaded `/dashboard/overview` AND `/dashboard/networking` in a real Chromium browser
+    - User has confirmed (via "approved" resume signal) that DevTools Console showed zero messages matching "Hydration", "did not match", "Text content does not match server-rendered HTML", or "Warning: Expected server HTML to contain..."
+    - User has confirmed every sidebar nav link routes correctly with no console errors
+    - User has confirmed the sidebar-footer user dropdown opens cleanly
+    - Dev server has been stopped before the executor proceeds to Task 6
+  </acceptance_criteria>
+  <done>The user has typed "approved" after completing all five verification steps with no hydration warnings or routing failures. The dev server is stopped.</done>
+  <resume-signal>Type "approved" if no hydration warnings appear on `/dashboard/overview` and `/dashboard/networking`, all sidebar nav links route correctly, and the user dropdown opens cleanly. Otherwise paste the console error text and the URL that produced it.</resume-signal>
+</task><task type="auto">
+  <name>Task 6: Commit BUG-01 — span migration + unconditional UserAvatarProfile render</name>
+  <files>src/components/user-avatar-profile.tsx, src/components/layout/app-sidebar.tsx</files>
+  <read_first>
+    - .planning/phases/01-critical-bug-fix/01-CONTEXT.md (decisions D-09, D-10, D-11, D-12)
+    - `git status` output (verify the dirty-tree boundary)
+  </read_first>
+  <action>
+    Per D-12, produce one commit per requirement for clean revertability. This task handles BUG-01.<pre><code>**The complication:** `src/components/user-avatar-profile.tsx` contains BOTH BUG-01 changes (the `&lt;span&gt;` migration on lines 19, 28, 33, 35) AND the BUG-02 change (line 31 optional-chain). To commit BUG-01 in isolation, use `git add -p` (interactive hunk staging) to stage only the `&lt;span&gt;` hunks and skip the line-31 hunk.
+
+**Executor&#39;s discretion (per CONTEXT.md):** if `git add -p` is impractical in this environment, the acceptable fallback is to combine BUG-01 + BUG-02 into a single commit. State the choice explicitly in the commit message footer.
+
+**Preferred path (two commits):**
+
+1. Verify the dirty-tree boundary first (D-10). Run `git status` and confirm these files are dirty but will be left untouched:
+   - `src/features/job-leads/lib/linkedin-browser.ts`
+   - `src/features/job-leads/lib/scrape-connections.ts`
+   - `src/features/job-leads/lib/scrape-job-page.ts`
+   - `src/app/api/job-leads/[id]/search/route.ts`
+   - `package.json`, `package-lock.json`
+   - `docs/summary.md`, `.planning/config.json`
+
+   Do NOT `git add` any of these.
+
+2. `git add -p src/components/user-avatar-profile.tsx`
+   - Stage the `&lt;span&gt;` hunks (root `&lt;span&gt;`, inner `showInfo` `&lt;span&gt;`, closing tag fixes).
+   - **Skip** the hunk containing the line-31 `?.emailAddress ?? &#39;&#39;` change (that is BUG-02, committed separately in Task 7).
+
+3. `git add src/components/layout/app-sidebar.tsx`
+   - The whole file&#39;s diff is BUG-01 (unconditional render + `user ?? null` passthrough); stage in full.
+
+4. Verify the staged set with `git diff --cached --stat` — exactly two files, no Job Leads / package.json / docs entries.
+
+5. Commit with message:
+
+   ```
+   fix(BUG-01): eliminate hydration crash in app-sidebar UserAvatarProfile
+
+   Remove the `{user &amp;&amp; ...}` conditional guard around UserAvatarProfile in
+   app-sidebar.tsx (lines 148, 166) — useUser() returns undefined on the
+   server and a user object on the client, causing an SSR/CSR HTML mismatch
+   that crashes React&#39;s hydration and kills sidebar navigation after large
+   LinkedIn imports.
+
+   UserAvatarProfile now renders unconditionally with `user={user ?? null}`;
+   the component already handles a null user via optional chaining.
+
+   Also migrate UserAvatarProfile&#39;s root and inner `showInfo` wrappers from
+   &lt;div&gt; to &lt;span&gt; so the component renders valid HTML inside a &lt;button&gt;.
+
+   Refs: BUG-01, .planning/phases/01-critical-bug-fix/01-CONTEXT.md (D-06, D-07).
+   ```
+
+**Fallback path (single combined commit, if `git add -p` fails or is unavailable):**
+
+- `git add src/components/user-avatar-profile.tsx src/components/layout/app-sidebar.tsx src/components/layout/user-nav.tsx`
+- Commit with a combined message referencing both BUG-01 and BUG-02.
+- **Skip Task 7** in this case.
+
+Critical: per D-11, do NOT stash, do NOT commit, do NOT touch the unrelated dirty files. Only the BUG-scoped files leave the working tree as committed changes.
+</code></pre>
+  </action>
+  <verify>
+    <automated>git log -1 --name-only | grep -E "user-avatar-profile|app-sidebar" &amp;&amp; ! git log -1 --name-only | grep -E "job-leads|package|docs/summary|.planning/config" &amp;&amp; echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - The latest commit's file list contains `src/components/user-avatar-profile.tsx` and `src/components/layout/app-sidebar.tsx`
+    - The latest commit's file list does NOT contain any path matching `job-leads`, `package.json`, `package-lock.json`, `docs/summary.md`, or `.planning/config.json`
+    - `git status` after the commit still shows the Job Leads / package / docs files as dirty (untouched, per D-11)
+    - The commit message subject starts with `fix(BUG-01):` (or, in the fallback path, `fix(BUG-01,BUG-02):` and Task 7 is skipped)
+  </acceptance_criteria>
+  <done>BUG-01 is committed as an isolated change touching only `user-avatar-profile.tsx` (span-migration hunks) and `app-sidebar.tsx`. The dirty-tree boundary is intact.</done>
+</task><task type="auto">
+  <name>Task 7: Commit BUG-02 — optional-chain guards on emailAddresses[0]</name>
+  <files>src/components/user-avatar-profile.tsx, src/components/layout/user-nav.tsx</files>
+  <read_first>
+    - .planning/phases/01-critical-bug-fix/01-CONTEXT.md (decisions D-09, D-12)
+    - `git status` output
+  </read_first>
+  <action>
+    Skip this task entirely if Task 6 took the fallback "single combined commit" path (the commit message will then reference both BUG-01 and BUG-02 and BUG-02 is already committed).<pre><code>Otherwise, finish the BUG-02 commit:
+
+1. `git add src/components/user-avatar-profile.tsx` — the remaining unstaged hunk is the line-31 optional-chain change.
+2. `git add src/components/layout/user-nav.tsx` — the entire diff is BUG-02 (line-38 optional-chain change).
+3. Verify the staged set with `git diff --cached --stat` — exactly two files.
+4. Confirm `git status` still shows Job Leads / package / docs files as dirty and uncommitted (D-11).
+5. Commit with message:
+
+   ```
+   fix(BUG-02): guard emailAddresses[0] access against empty array
+
+   Clerk users with SSO-only sign-in can have an empty emailAddresses
+   array. The existing `user?.emailAddresses[0].emailAddress` pattern
+   guards the user object but not the array index, throwing at runtime
+   when accessing `.emailAddress` on undefined.
+
+   Replace with `user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;` at:
+   - src/components/user-avatar-profile.tsx:31
+   - src/components/layout/user-nav.tsx:38
+
+   Refs: BUG-02, .planning/phases/01-critical-bug-fix/01-CONTEXT.md (D-01).
+   ```
+</code></pre>
+  </action>
+  <verify>
+    <automated>git log -1 --name-only | grep -E "user-avatar-profile|user-nav" &amp;&amp; ! git log -1 --name-only | grep -E "job-leads|package|docs/summary|.planning/config" &amp;&amp; echo PASS</automated>
+  </verify>
+  <acceptance_criteria>
+    - The latest commit's file list contains `src/components/user-avatar-profile.tsx` and `src/components/layout/user-nav.tsx`
+    - The latest commit's file list does NOT contain `app-sidebar.tsx` (that committed in Task 6) or any Job Leads / package / docs file
+    - `git status` after the commit shows zero dirty files among the three BUG-scoped paths
+    - `git status` after the commit STILL shows the Job Leads / package / docs files as dirty (untouched, per D-11)
+    - The commit message subject starts with `fix(BUG-02):`
+  </acceptance_criteria>
+  <done>BUG-02 is committed as an isolated change touching only `user-avatar-profile.tsx` (line-31 hunk) and `user-nav.tsx`. The dirty-tree boundary remains intact. The phase is complete.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clerk → React tree</td>
+<td>Clerk&#39;s <code>useUser()</code> hook crosses SSR/CSR; user data can be null/undefined</td>
+</tr>
+<tr>
+<td>Clerk user record → UI render</td>
+<td><code>emailAddresses</code> can be an empty array for SSO-only users</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-01-01</td>
+<td>Denial of Service</td>
+<td><code>app-sidebar.tsx</code> hydration</td>
+<td>mitigate</td>
+<td>Remove <code>{user &amp;&amp; ...}</code> JSX guard so SSR and CSR render identical HTML; the entire app&#39;s sidebar navigation depends on this not crashing</td>
+</tr>
+<tr>
+<td>T-01-02</td>
+<td>Denial of Service</td>
+<td><code>user-avatar-profile.tsx:31</code>, <code>user-nav.tsx:38</code></td>
+<td>mitigate</td>
+<td>Add <code>?.</code> between <code>[0]</code> and <code>.emailAddress</code> to prevent runtime TypeError on empty <code>emailAddresses</code> array</td>
+</tr>
+<tr>
+<td>T-01-03</td>
+<td>Information Disclosure</td>
+<td>Component renders email</td>
+<td>accept</td>
+<td>Email is the signed-in user&#39;s own email displayed in their own dashboard; single-user app. No PII exposure to third parties.</td>
+</tr>
+<tr>
+<td>T-01-04</td>
+<td>Tampering</td>
+<td>Working-tree edits committed without audit</td>
+<td>mitigate</td>
+<td>D-07 audit-then-accept: Task 1 explicitly verifies the pre-existing edits match <code>bug.md</code> before they&#39;re committed. Surgical <code>git add</code> (D-09) prevents accidentally committing unrelated dirty files.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+## Phase-level checks<ol>
+<li>After Task 1 (audit): <code>grep -c &#39;{user &amp;&amp; &lt;UserAvatarProfile&#39; src/components/layout/app-sidebar.tsx</code> returns <code>0</code>.</li>
+<li>After Task 2: <code>grep -q &quot;user?.emailAddresses\[0\]?.emailAddress ?? &#39;&#39;&quot; src/components/user-avatar-profile.tsx</code> succeeds.</li>
+<li>After Task 3: <code>grep -q &quot;user?.emailAddresses\[0\]?.emailAddress ?? &#39;&#39;&quot; src/components/layout/user-nav.tsx</code> succeeds.</li>
+<li>After Task 4: <code>npx tsc --noEmit</code> produces zero errors in the three BUG-scoped files.</li>
+<li>After Task 5: human-verified — no hydration warnings on <code>/dashboard/overview</code> and <code>/dashboard/networking</code>; all sidebar nav links route correctly; user dropdown opens cleanly.</li>
+<li>After Tasks 6 + 7: <code>git log -2 --name-only</code> shows exactly the three BUG-scoped files across the last two commits and zero Job Leads / package.json / docs files. <code>git status</code> still shows the unrelated dirty files as uncommitted.</verification></li>
+</ol>
+<success_criteria>
+- All three BUG-scoped files modified to match `bug.md`'s prescription and D-01's BUG-02 optional-chain pattern.
+- `/dashboard/overview` and `/dashboard/networking` load with zero React hydration warnings in DevTools console (D-03 verification).
+- Every sidebar nav link routes correctly after a hard refresh.
+- Two atomic commits (or one combined commit, per executor discretion D-12) exist on `main`, each scoped exclusively to the BUG files.
+- `git status` shows Job Leads scrape files, `package.json`, `package-lock.json`, `docs/summary.md`, and `.planning/config.json` still dirty and untouched (D-10, D-11).
+- ROADMAP.md updated to mark Phase 1 complete (handled by execute-phase, not this plan).
+</success_criteria><output>
+After completion, create `.planning/phases/01-critical-bug-fix/01-01-SUMMARY.md` recording:
+- The audit outcome from Task 1 (whether pre-existing edits matched `bug.md` verbatim or required correction).
+- The two commit SHAs (or the single combined SHA, if the fallback path was taken).
+- The list of dirty files left untouched (Job Leads + package + docs), confirming the D-10 boundary held.
+- Confirmation that no hydration warnings appeared during the Task 5 smoke check.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/01-critical-bug-fix/01-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

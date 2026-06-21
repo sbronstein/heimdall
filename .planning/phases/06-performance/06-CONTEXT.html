@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 6: Performance - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-14
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>Eliminate per-row DB round-trips and add hot-path indexes so the 1500-contact dataset stops straining import, bulk categorize, prospect writes, bridge-building, and recommendations. The scope is <strong>horizontal: N+1 elimination + index migration</strong>, scoped to the five PERF-A* requirements <strong>plus</strong> three incidentals discovered during codebase scout (see Critical Findings below) and <strong>plus</strong> the restoration of the <code>matchConnections</code> caller that Phase 5&#39;s reshape unintentionally orphaned.</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li><strong>PERF-A1 (bridges half):</strong> Bulk-insert <code>prospectBridges</code> in <code>matchConnections</code>. The prospect-bulk-insert half is <strong>already satisfied</strong> by Phase 5 (<code>/api/job-leads/[id]/prospects/route.ts:60</code> uses a single <code>db.insert(prospects).values(rows)</code>).</li>
+<li><strong>PERF-A2:</strong> Restore <code>matchConnections</code> caller by invoking it <strong>inline inside <code>POST /api/job-leads/[id]/prospects</code></strong>, wrapped in <code>db.transaction()</code> with the existing prospect bulk-insert and status flip. Make the bridge insert itself a single <code>db.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code>.</li>
+<li><strong>PERF-A3:</strong> Batch closeness updates in <code>/api/contacts/import/categorize</code> using a single <code>UPDATE contacts SET closeness = data.cl FROM (SELECT * FROM unnest(${ids}::uuid[], ${closenesses}::text[]) AS data(id, cl)) WHERE contacts.id = data.id</code> via Drizzle&#39;s <code>sql</code> template tag inside <code>db.execute()</code>.</li>
+<li><strong>PERF-A4:</strong> Add Drizzle <code>index()</code> definitions on <code>contacts(archived_at)</code>, <code>contacts(linkedin_url)</code>, <code>contacts(company_id)</code>, <code>contacts(linkedin_connection_date)</code>, and <code>companies(name)</code>. Plus a <strong>UNIQUE partial index</strong> on <code>contacts(linkedin_url) WHERE linkedin_url IS NOT NULL</code> to enable PERF-A5&#39;s <code>ON CONFLICT DO NOTHING</code>. Generated via <code>npm run db:generate</code> and applied via <code>npm run db:migrate</code>.</li>
+<li><strong>PERF-A5 (DB-side dedup):</strong> <code>/api/contacts/import</code> becomes a single bulk insert: build rows array, then <code>db.insert(contacts).values([...rows]).onConflictDoNothing({ target: contacts.linkedinUrl })</code>. The full <code>SELECT * FROM contacts</code> scan goes away. Name+company secondary dedup stays in-app but uses a <strong>narrowed SELECT</strong> keyed only on <code>(lower(first_name), lower(last_name), lower(coalesce(current_company,&#39;&#39;)))</code> tuples that appear in the CSV — not a full scan.</li>
+<li><strong>PERF-A5 (match-connections half):</strong> <code>match-connections.ts</code> no longer does <code>SELECT * FROM contacts WHERE archived_at IS NULL</code>. It does a narrowed <code>SELECT</code> keyed on tokens drawn from the scraped <code>mutualConnectionNames</code> list (e.g., <code>WHERE lower(last_name) IN (...)</code> ORed with <code>lower(first_name) IN (...)</code>). The in-memory fuzzy match stays as-is — server-side fuzzy match (e.g., <code>pg_trgm</code>) is <strong>out of scope</strong> (see Deferred).</li>
+<li><strong>Incidental fold #1 — Refresh ROADMAP SC #1 wording.</strong> The current SC text names <code>/api/job-leads/[id]/search</code> as the prospect-insert path; that route is now a thin status-flip. Update the SC to point at the actual current path and mark the prospect-insert half satisfied.</li>
+<li><strong>Incidental fold #2 — Bulk insert in <code>/api/contacts/import</code>.</strong> The PERF-A5 ON-CONFLICT change is meaningless without converting the surrounding <code>for (row of parsed.data) { await db.insert(contacts) }</code> loop into a single bulk insert. Per-row error reporting drops; aggregate counts (<code>created</code> / <code>skipped</code>) replace it. Inputs that fail Zod-style validation (missing names) still get filtered up-front and surfaced via the existing <code>errors[]</code> array.</li>
+<li><strong>Incidental fold #3 — Recommendations bridge-score N+1.</strong> <code>src/app/api/job-leads/[id]/recommendations/route.ts:44-52</code> runs a per-row <code>db.update(prospectBridges).set({score})</code> in a <code>for</code> loop. Replace with a single bulk <code>UPDATE ... FROM unnest(...)</code> (same shape as PERF-A3) for any bridges missing a score; planner chooses between &quot;compute and persist up-front&quot; vs &quot;compute on-the-fly without persisting&quot; — both are correct.</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li>Server-side fuzzy matching via <code>pg_trgm</code> GIN indexes for <code>match-connections.ts</code> or the cross-entity <code>/api/search</code> route — heavier extension dependency, planner research item only.</li>
+<li><code>pg_trgm</code> GIN indexes on the 18 <code>ilike</code>-using API routes (companies, contacts, applications, notes, recruiters search). REQUIREMENTS.md PERF-A4 says &quot;investigate <code>pg_trgm</code> GIN for search&quot; but ROADMAP SC #3 only locks the five btree indexes. Investigation deferred to v2.</li>
+<li>Deleting <code>matchConnections</code> or retiring the bridges/recommendations feature — the inline-call decision (D-01) restores it.</li>
+<li>New caching layers, materialized views, query result memoization. Pure SQL-shape and index changes only.</li>
+<li><code>CREATE INDEX CONCURRENTLY</code> for the migration — single-user app, 1500-row table, plain <code>CREATE INDEX</code> is fine and works with Drizzle&#39;s transactional migration runner.</li>
+<li>Migrating the bridge-score column away from <code>prospectBridges</code> (planner picks &quot;persist up-front&quot; vs &quot;on-the-fly&quot; inside the recommendations route — column stays either way for now).</li>
+<li>Removing the <code>archivedAt IS NULL</code> filter from contacts dedup — the existing behavior (dedup only against active contacts, allowing re-import of archived ones) is the documented intent.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Bridge-Building Flow (PERF-A2 Caller Restoration)</h3>
+<ul>
+<li><strong>D-01:</strong> <strong><code>matchConnections</code> is called inline inside <code>POST /api/job-leads/[id]/prospects</code></strong> — after the bulk prospect insert, before the status flip to <code>&#39;found&#39;</code>. Single HTTP call from the skill; one atomic operation from the skill&#39;s perspective. This is the <strong>most natural restoration</strong> of the caller Phase 5 orphaned, and it makes PERF-A2 land inside the now-active path.</li>
+<li><strong>D-02:</strong> <strong>The entire <code>POST /prospects</code> handler runs inside <code>db.transaction()</code></strong> — prospect bulk insert, <code>matchConnections</code> (which fetches <code>prospectRecords</code> + does the narrowed contacts SELECT + bulk inserts bridges), and the <code>jobLeads</code> status update all commit or rollback together. If bridges fail, prospects rollback, status stays <code>&#39;searching&#39;</code>, skill sees a 500 and can retry. <strong>No partial state ever observed by the UI.</strong> Implementation note: Neon&#39;s HTTP driver supports <code>db.transaction(async (tx) =&gt; {...})</code> via the neon-http adapter — all statements are coalesced into a single transactional HTTP request.</li>
+<li><strong>D-03:</strong> <strong><code>matchConnections</code> signature changes minimally</strong> — it currently takes <code>(jobLeadId, scrapedProspects)</code>. Either keep that and have the caller pass <code>scrapedProspects</code> derived from the validated request body (the body already contains <code>mutualConnectionNames</code> per the Zod schema at <code>prospects/route.ts:13-19</code>), or refactor to take a <code>tx</code> (transaction) handle so it can run inside the outer transaction. Planner picks. <strong>Both prospect insert and bridge insert must use the same <code>tx</code> handle for the atomicity guarantee in D-02 to hold.</strong></li>
+<li><strong>D-04:</strong> <strong>Bridge bulk insert pattern:</strong> <code>await tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code> — single statement, leverages the existing <code>unique(&#39;prospect_bridge_unique&#39;)</code> constraint on <code>(prospect_id, contact_id)</code> declared in <code>drizzle/schema/job-leads.ts</code>. The current per-row <code>for (val of bridgeValues) { try { await db.insert(...).onConflictDoNothing() } catch {} }</code> swallow-exceptions pattern goes away.</li>
+</ul>
+<h3>Bulk Update Mechanism (PERF-A3)</h3>
+<ul>
+<li><strong>D-05:</strong> <strong><code>UPDATE ... FROM unnest()</code> via <code>sql</code> template tag</strong> is the chosen mechanism. Shape:<pre><code class="language-ts">await db.execute(sql`
+  UPDATE contacts
+  SET closeness = data.cl, updated_at = NOW()
+  FROM (SELECT * FROM unnest(${sql.raw(`ARRAY[${ids.map(quote).join(&#39;,&#39;)}]::uuid[]`)}, ${sql.raw(`ARRAY[${vals.map(quote).join(&#39;,&#39;)}]::contact_closeness[]`)}) AS d(id, cl)) AS data
+  WHERE contacts.id = data.id
+`);
+</code></pre>
+Planner refines the exact parameterization (Drizzle&#39;s <code>sql</code> tag supports parameter binding so <code>sql.raw</code> isn&#39;t strictly needed — use <code>${ids}</code> with proper casting where supported). One round-trip, no N+1. The <code>updated</code> count in the response is derived from <code>result.rowCount</code> or by <code>RETURNING id</code> from the UPDATE.</li>
+<li><strong>D-06:</strong> <strong>CLAUDE.md &quot;no raw SQL&quot; guard is respected</strong> — <code>sql</code> template tag inside <code>db.execute()</code> is the standard Drizzle escape hatch for batched updates and <strong>is not</strong> the &quot;raw SQL&quot; the guard forbids. The guard targets handwritten string-concatenated SQL bypassing the query builder. Document this exception inline in a one-line comment on the <code>db.execute()</code> call.</li>
+<li><strong>D-07:</strong> <strong>Response shape is unchanged</strong> — <code>{ updated, total }</code> envelope from <code>success()</code>. <code>updated</code> reflects rows actually mutated; <code>total</code> is the input length.</li>
+</ul>
+<h3>DB-Side Dedup (PERF-A5)</h3>
+<ul>
+<li><strong>D-08:</strong> <strong>UNIQUE partial index on <code>contacts(linkedin_url) WHERE linkedin_url IS NOT NULL</code></strong> — added in the Drizzle schema via <code>uniqueIndex(...).where(sql\</code>linkedin_url IS NOT NULL`)<code>or the equivalent helper, and surfaced in the migration. Postgres</code>ON CONFLICT<code>accepts a partial unique index as its conflict target. This index doubles as the</code>contacts(linkedin_url)` btree from PERF-A4 — <strong>one index covers both purposes</strong>.</li>
+<li><strong>D-09:</strong> <strong>Name+company dedup stays in-app, but uses a narrowed SELECT</strong> — not a full scan. Build the set of <code>(lower(firstName), lower(lastName), lower(coalesce(currentCompany,&#39;&#39;)))</code> tuples from the CSV first, then issue a single <code>SELECT</code> filtering by <code>WHERE (lower(first_name), lower(last_name), lower(coalesce(current_company,&#39;&#39;))) IN (...)</code>. Drizzle&#39;s <code>sql</code> tag is used to express the tuple-IN clause if the query builder doesn&#39;t support it natively. Planner picks the exact expression; the narrow filter SHOULD return zero or near-zero rows in the steady state.</li>
+<li><strong>D-10:</strong> <strong>The contacts-import handler becomes a single bulk insert.</strong> The current <code>for (row of parsed.data) { ... await db.insert(contacts) ... }</code> loop is rewritten as:<pre><code class="language-ts">// 1. Filter/validate rows (collect errors[])
+// 2. Build name+company set from validated rows
+// 3. Issue narrowed name+company SELECT (D-09) — get existing tuples
+// 4. Filter out rows that match either dedup branch
+// 5. ONE bulk insert with ON CONFLICT DO NOTHING (D-08)
+// 6. logTimeline once with aggregate counts
+</code></pre>
+Per-row error messages in the <code>errors[]</code> array are reduced to validation-stage errors only (missing names, malformed rows). Database-level errors after the bulk insert are reported as a single aggregate failure if <code>INSERT</code> throws.</li>
+<li><strong>D-11:</strong> <strong><code>match-connections.ts</code> narrowed contacts SELECT</strong> — replace <code>SELECT * FROM contacts WHERE archived_at IS NULL</code> with a narrowed query keyed on tokens extracted from <code>scrapedProspects.flatMap(p =&gt; p.mutualConnectionNames)</code>. Strategy: split each mutual name on whitespace, lowercase, then <code>SELECT ... FROM contacts WHERE archived_at IS NULL AND (lower(first_name) IN (...) OR lower(last_name) IN (...))</code>. Returns a much smaller working set for the in-memory <code>fuzzyMatch</code>. <strong>The fuzzy match itself stays in Node</strong> — <code>pg_trgm</code> is deferred. Planner verifies this narrowing preserves match accuracy on a representative dataset.</li>
+</ul>
+<h3>Index Migration (PERF-A4)</h3>
+<ul>
+<li><strong>D-12:</strong> <strong>Indexes are declared in the Drizzle schema</strong> using <code>index(&#39;idx_name&#39;).on(table.column)</code> in each table file&#39;s third callback argument. Plain <code>CREATE INDEX</code> — <strong>not</strong> <code>CREATE INDEX CONCURRENTLY</code> (Drizzle&#39;s migration runner wraps DDL in transactions, which conflicts with CONCURRENTLY; single-user app + tiny tables makes the brief lock irrelevant).</li>
+<li><strong>D-13:</strong> <strong>Index list (5 + 1 UNIQUE = 6 total):</strong><ol>
+<li><code>contacts(archived_at)</code> — btree, the <code>WHERE archived_at IS NULL</code> filter is everywhere</li>
+<li><code>contacts(linkedin_url) UNIQUE WHERE linkedin_url IS NOT NULL</code> — supports D-08 ON CONFLICT and the import URL-dedup lookup</li>
+<li><code>contacts(company_id)</code> — btree, the JOIN key from <code>companies</code> and the filter in <code>/api/companies/[id]/contacts</code></li>
+<li><code>contacts(linkedin_connection_date)</code> — btree, ordering on the triage page</li>
+<li><code>companies(name)</code> — btree, <code>ilike</code> prefilter on the cross-entity search and companies list filter</li>
+</ol>
+</li>
+<li><strong>D-14:</strong> <strong>Migration filename + format</strong> — generated by <code>npm run db:generate</code>, picks the next sequential number (<code>0008_*.sql</code>). Single migration file with all six DDL statements. The migration is committed to <code>drizzle/migrations/</code> and applied via <code>npm run db:migrate</code> against the local Neon dev branch and then production at deploy time.</li>
+</ul>
+<h3>Recommendations N+1 (Incidental Fold #3)</h3>
+<ul>
+<li><strong>D-15:</strong> <strong>Bridge-score persistence loop</strong> in <code>recommendations/route.ts:44-52</code> is replaced by a single bulk <code>UPDATE ... FROM unnest(...)</code> for bridges with <code>score IS NULL</code>. Same shape as D-05; planner reuses the helper if extracted. Alternative — compute scores on-the-fly without persistence — is acceptable if the planner prefers (saves the UPDATE entirely). Decision deferred to planner based on whether other callers rely on <code>prospectBridges.score</code> being persisted (grep + decide).</li>
+</ul>
+<h3>Wave Structure (Planner Guidance)</h3>
+<ul>
+<li><strong>D-16:</strong> <strong>Wave 1 — Schema + migration.</strong> Add <code>index()</code> and <code>uniqueIndex()</code> calls to <code>drizzle/schema/contacts.ts</code> and <code>drizzle/schema/companies.ts</code>. Run <code>npm run db:generate</code> to produce <code>drizzle/migrations/0008_*.sql</code>. Single atomic commit. <strong>Blocks all of Wave 2</strong> (D-08 ON CONFLICT depends on the UNIQUE index).</li>
+<li><strong>D-17:</strong> <strong>Wave 2 — Four parallel code-change atomics</strong> (disjoint file sets):<ul>
+<li><strong>Plan 2a (PERF-A1 bridges half + PERF-A2):</strong> Refactor <code>POST /prospects</code> + <code>matchConnections</code> for transactional inline call + bulk bridge insert + narrowed contacts SELECT. Refresh ROADMAP SC #1 wording in the same commit.</li>
+<li><strong>Plan 2b (PERF-A3):</strong> Rewrite <code>/api/contacts/import/categorize/route.ts</code> to use <code>UPDATE ... FROM unnest()</code>.</li>
+<li><strong>Plan 2c (PERF-A5 import half):</strong> Rewrite <code>/api/contacts/import/route.ts</code> for bulk insert + ON CONFLICT + narrowed name+company SELECT.</li>
+<li><strong>Plan 2d (Incidental #3):</strong> Rewrite <code>recommendations/route.ts:44-52</code> for bulk bridge-score update (or remove persistence if planner chooses on-the-fly).</li>
+</ul>
+</li>
+<li><strong>D-18:</strong> <strong>Atomic-per-requirement commit pattern (D-19 carried from Phases 1-5)</strong> — each plan above lands as a single commit. The schema migration in Wave 1 is its own commit. ROADMAP SC #1 wording refresh ships in the same commit as Plan 2a since it documents the same change.</li>
+</ul>
+<h3>Testing Strategy (Reuse Phase 2 Harness)</h3>
+<ul>
+<li><strong>D-19:</strong> <strong>PGlite-backed route tests</strong> assert post-conditions on each rewritten path (correct row counts, idempotency under retry, timeline event emitted). The harness from Phase 2 (<code>src/test-utils/{pglite,call-route}.ts</code>) handles all the new tests — no new infrastructure.</li>
+<li><strong>D-20:</strong> <strong>Index presence regression test</strong> — add a single test that queries <code>pg_indexes</code> on the PGlite instance after migrations run, asserting all six indexes from D-13 exist on the expected columns. This pins PERF-A4 against future schema drift.</li>
+<li><strong>D-21:</strong> <strong>No micro-benchmarks.</strong> Wall-clock timing assertions are environment-dependent and brittle. The behavior tests above + code review (<code>for...of await db.X</code> greppable as a forbidden pattern in changed routes) provide the durable signal.</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li>The exact parameter-binding shape for the <code>UPDATE ... FROM unnest()</code> SQL in D-05 and D-15 (whether to use Drizzle&#39;s <code>${array}</code> interpolation or build the <code>ARRAY[...]</code> literal explicitly).</li>
+<li>Whether to refactor <code>matchConnections</code>&#39;s signature in D-03 to take a <code>tx</code> handle, or keep it free-standing and wrap the whole <code>POST /prospects</code> body in a transaction that uses the outer <code>tx</code> for both inserts.</li>
+<li>Index naming convention (<code>idx_contacts_archived_at</code> vs <code>contacts_archived_at_idx</code> etc.) — pick what matches existing Drizzle conventions in <code>drizzle/migrations/</code>.</li>
+<li>Whether D-15 persists bridge scores or computes on-the-fly — decided by grep evidence on other consumers of <code>prospectBridges.score</code>.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Project Context &amp; Requirements</h3>
+<ul>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 6: Performance&quot; — Goal + 5 SCs (note SC #1 wording refresh per D-18)</li>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;Performance&quot; — PERF-A1..A5 full definitions</li>
+<li><code>.planning/PROJECT.md</code> §&quot;Constraints&quot; — &quot;No raw SQL in app code except for pgvector queries&quot; (PERF-A3 <code>sql</code> template usage is the documented escape, see D-06); &quot;1500+ contacts in the table today; queries that scan the full <code>contacts</code> table or do N+1 inserts/updates are already noticeable&quot; — the phase&#39;s reason for being</li>
+</ul>
+<h3>Code Paths Touched</h3>
+<ul>
+<li><code>src/app/api/job-leads/[id]/prospects/route.ts</code> — current bulk-prospect insert (line 60); becomes the host for inline <code>matchConnections</code> per D-01</li>
+<li><code>src/features/job-leads/lib/match-connections.ts</code> — currently dead post-Phase-5; restored as callee per D-01, narrowed SELECT per D-11, bulk bridge insert per D-04</li>
+<li><code>src/app/api/contacts/import/categorize/route.ts</code> — per-row UPDATE loop replaced per D-05</li>
+<li><code>src/app/api/contacts/import/route.ts</code> — per-row INSERT loop + full SELECT scan replaced per D-08..D-10</li>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.ts</code> (lines 44-52) — per-row UPDATE loop replaced per D-15</li>
+<li><code>drizzle/schema/contacts.ts</code> — add <code>index()</code> + <code>uniqueIndex()</code> calls per D-12..D-13</li>
+<li><code>drizzle/schema/companies.ts</code> — add <code>index()</code> for <code>name</code> per D-13</li>
+<li><code>drizzle/migrations/0008_*.sql</code> (new) — generated migration per D-14</li>
+</ul>
+<h3>Phase 5 Context (Background for Phase 5 Reshape Implications)</h3>
+<ul>
+<li><code>.planning/phases/05-job-leads-completion/05-CONTEXT.md</code> — explains the matchConnections orphan and the new prospect-write flow</li>
+<li><code>.planning/phases/05-job-leads-completion/05-PATTERNS.md</code> — the bulk-prospects route&#39;s reference patterns</li>
+<li><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code> — the skill&#39;s contract with <code>/api/job-leads/[id]/prospects</code> (planner verifies the inline <code>matchConnections</code> call doesn&#39;t break that contract — return envelope stays <code>{ insertedCount, lead }</code>)</li>
+</ul>
+<h3>Codebase Codified Knowledge</h3>
+<ul>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Performance Bottlenecks&quot; — confirms the N+1 loci and the missing indexes (source of the phase&#39;s evidence base)</li>
+<li><code>.planning/codebase/ARCHITECTURE.md</code> §&quot;Data Flow&quot; — confirms the API-route-as-mutation-boundary pattern; all four code-change atomics in D-17 are API routes or libs called from API routes</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> §&quot;Drizzle ORM Conventions&quot; — &quot;Query builder only — no raw SQL except for <code>sql</code> template tag in complex WHERE conditions&quot; — D-06 extends this to bulk UPDATE/INSERT</li>
+</ul>
+<h3>Existing Drizzle Patterns to Reuse</h3>
+<ul>
+<li><code>drizzle/schema/job-leads.ts</code> line ~end — example of <code>unique(&#39;prospect_bridge_unique&#39;).on(...)</code> syntax for D-08&#39;s UNIQUE partial index pattern</li>
+<li><code>drizzle/migrations/0007_add_queued_failed_status_and_error_columns.sql</code> — most recent migration file; format reference for D-14</li>
+</ul>
+<h3>Test Infrastructure</h3>
+<ul>
+<li><code>src/test-utils/pglite.ts</code>, <code>src/test-utils/call-route.ts</code> — Phase 2 harness; reused for D-19, D-20</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>db.transaction(async (tx) =&gt; {...})</code> via neon-http</strong> — Drizzle&#39;s neon-http adapter supports transactions; D-02&#39;s atomic wrap depends on this. Verify the adapter version (<code>drizzle-orm</code> v0.45.1) does coalesce statements into one HTTP request.</li>
+<li><strong><code>prospect_bridge_unique</code> constraint on <code>prospectBridges(prospect_id, contact_id)</code></strong> — already exists (<code>drizzle/schema/job-leads.ts</code>). D-04 piggybacks on it for <code>onConflictDoNothing()</code>.</li>
+<li><strong>PGlite test harness</strong> — Phase 2&#39;s <code>createTestDb()</code> returns a fresh in-memory Postgres for each test, with all migrations replayed. D-19 and D-20 use it as-is.</li>
+<li><strong><code>canJobLeadTransition</code> state machine</strong> — unchanged by Phase 6; the new inline <code>matchConnections</code> inside <code>POST /prospects</code> does NOT alter the state graph (<code>&#39;searching&#39; → &#39;found&#39;</code> already exists).</li>
+<li><strong><code>logTimeline()</code> side-effect</strong> — preserved in all rewrites; each refactored route still emits exactly one timeline event on success (D-10&#39;s import becomes one event with aggregate counts, not 1500).</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>API route shape:</strong> <code>try { Zod parse → query → success() } catch (ZodError → validationError; default → serverError)</code> — every Phase 6 rewrite must keep this exact shell.</li>
+<li><strong><code>updatedAt: new Date()</code> set manually on updates</strong> (Drizzle doesn&#39;t auto-update) — the unnest UPDATE in D-05 must explicitly write <code>updated_at = NOW()</code> in the SET clause.</li>
+<li><strong>Soft-delete via <code>archivedAt</code></strong> — D-11&#39;s narrowed SELECT keeps the <code>WHERE archived_at IS NULL</code> filter; PERF-A5 doesn&#39;t change the dedup-vs-archived rule.</li>
+<li><strong>No server actions; all mutations via REST</strong> — D-01&#39;s inline <code>matchConnections</code> call stays inside an API route. Confirmed compatible.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Skill → <code>POST /prospects</code></strong> — the skill&#39;s contract with the API is <code>(prospects[]) → { insertedCount, lead }</code>. D-01 adds bridge-building inside this call but the response envelope stays the same. The skill&#39;s reference doc (<code>heimdall-api.md</code>) does not need updating for the inline-call decision; the response shape is unchanged.</li>
+<li><strong><code>/triage</code> and <code>/recommendations</code> pages</strong> — currently silently empty because no bridges exist post-Phase-5. After D-01..D-04 land, they start returning real data without any UI change.</li>
+<li><strong>Drizzle migration runner</strong> — <code>npm run db:migrate</code> against Neon dev branch, then auto-applied at Vercel deploy via the project&#39;s existing deploy hook (verify in planner phase).</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><strong><code>UPDATE ... FROM unnest()</code></strong> is the named idiom for D-05 and D-15. Both calls use the same shape; planner may extract a helper if both end up identical (<code>updateColumnByIdMap(table, columnName, idMap)</code>).</li>
+<li><strong>D-11&#39;s narrowing strategy:</strong> split mutual-name strings on whitespace, lowercase, dedup, then <code>WHERE lower(first_name) IN (...) OR lower(last_name) IN (...)</code>. Don&#39;t over-engineer — this is a coarse pre-filter, the existing <code>fuzzyMatch</code> does the final comparison in Node.</li>
+<li><strong>D-08&#39;s partial UNIQUE index:</strong> Postgres ON CONFLICT requires the conflict target to match a unique constraint OR a unique partial index whose <code>WHERE</code> predicate the inserted rows satisfy. The skill ensures <code>linkedinUrl !== null</code> is the LinkedIn-URL-present case; rows without URL won&#39;t trigger ON CONFLICT and pass through normally. Drizzle supports the partial UNIQUE via <code>uniqueIndex(...).on(...).where(sql\</code>...`)`.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong><code>pg_trgm</code> GIN indexes for <code>ilike</code> search</strong> — across <code>/api/search</code>, companies/contacts/notes/applications/recruiters list-search routes. REQUIREMENTS.md PERF-A4 mentions &quot;investigate <code>pg_trgm</code> GIN for search&quot; but ROADMAP SC #3 only locks the five btree indexes. This is a separate v2 line item (call it <code>PERF-V2-01</code> if it makes the roadmap).</li>
+<li><strong>Server-side fuzzy matching in <code>match-connections.ts</code></strong> — <code>pg_trgm</code> <code>similarity()</code> or full-text search to replace the in-memory <code>fuzzyMatch</code>. Deferred for the same reason as above; D-11&#39;s narrowed SELECT is sufficient for the current 1500-contact dataset.</li>
+<li><strong>Materialized view for <code>recommendations</code></strong> — the join across <code>prospectBridges + prospects + contacts</code> could be precomputed. Out of scope; bulk-insert + bulk-update + indexes deliver the required perf without a new abstraction layer.</li>
+<li><strong>Bulk-import error reporting at row granularity</strong> — D-10 trades per-row error messages for aggregate counts. If row-level visibility becomes a UX requirement later, revisit (could re-introduce per-row INSERT inside a single transaction, accepting the perf cost in exchange for granular errors — or stream the bulk-insert result via <code>RETURNING id</code> and reconcile against input).</li>
+<li><strong>Index for <code>prospectBridges(prospect_id)</code> or <code>(contact_id)</code></strong> — recommendations and triage routes JOIN on these. Current <code>unique(&#39;prospect_bridge_unique&#39;)</code> covers the pair; whether each column individually warrants its own btree is a planner research item if joins start lagging.</li>
+<li><strong><code>prospectBridges.score</code> column retirement</strong> — if D-15 picks the &quot;compute on-the-fly&quot; variant, the persisted <code>score</code> becomes unused. Removing the column is a follow-up cleanup, not Phase 6 scope.</li>
+</ul>
+</deferred><hr>
+<p><em>Phase: 6-Performance</em>
+<em>Context gathered: 2026-05-14</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

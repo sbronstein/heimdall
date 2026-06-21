@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-04-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-04-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 04
+subsystem: testing
+tags: [vitest, regression, hydration, ssr, clerk-mock, jsdom, react-dom]</p>
+<h1>Dependency graph</h1>
+<p>requires:</p>
+<ul>
+<li>phase: 01-critical-bug-fix
+provides: Fixed app-sidebar.tsx (span outer element, unconditional UserAvatarProfile render)</li>
+<li>phase: 02-test-infrastructure/02-01
+provides: Vitest + jsdom setup, npm run test:run script
+provides:</li>
+<li>BUG-01 SSR structural regression test (app-sidebar.ssr.test.tsx, node env)</li>
+<li>BUG-01 hydration mount regression test (app-sidebar.hydration.test.tsx, jsdom env)
+affects:</li>
+<li>future refactors of app-sidebar.tsx or user-avatar-profile.tsx</li>
+</ul>
+<h1>Tech tracking</h1>
+<p>tech-stack:
+  added: [jsdom@26, @types/jsdom]
+  patterns:
+    - vi.mock asChild-aware sidebar mock pattern (render <span> when asChild=true, <button> when not)
+    - JSDOM structural DOM assertion (querySelectorAll + querySelector for nested element detection)
+    - console.error spy with hydration-pattern filter (/hydrat/i, /did not match/i)
+    - renderToString + hydrateRoot in-process hydration regression pattern</p>
+<p>key-files:
+  created:
+    - src/components/layout/app-sidebar.ssr.test.tsx
+    - src/components/layout/app-sidebar.hydration.test.tsx
+  modified:
+    - package.json (jsdom, @types/jsdom added to devDependencies)
+    - package-lock.json</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;jsdom was not a transitive dep of vitest in this project config; installed explicitly as devDependency&quot;</li>
+<li>&quot;SidebarMenuButton mock respects asChild=true by rendering <span> instead of <button> to avoid false positives on no-div-in-button assertion&quot;</li>
+<li>&quot;SidebarMenuSubButton mock renders <span> (not <a>) to avoid nested <a>-inside-<a> hydration error from next/link rendering&quot;</li>
+<li>&quot;All custom sidebar props (isActive, tooltip, asChild) explicitly destructured and discarded to prevent React unknown-prop warnings&quot;</li>
+<li>&quot;Regression sanity check: introducing <div> outer in user-avatar-profile.tsx caused SSR test FAIL as expected; reverted&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Component SSR regression: mock UI primitives + use renderToString + JSDOM DOM parsing for structural assertions&quot;</li>
+<li>&quot;Hydration regression: renderToString -&gt; innerHTML -&gt; hydrateRoot -&gt; setTimeout flush -&gt; spy filter pattern&quot;</li>
+<li>&quot;asChild-aware mock: if asChild=true render neutral <span>, else render semantic element (<button>)&quot;</li>
+</ul>
+<p>requirements-completed: [TEST-A3]</p>
+<h1>Metrics</h1>
+<h2>duration: 25min
+completed: 2026-05-12</h2>
+<h1>Phase 02 Plan 04: BUG-01 Regression Test Suite Summary</h1>
+<p><strong>Two-file regression harness pinning the BUG-01 fix: JSDOM-parsed SSR structural assertion (no div-in-button) + hydrateRoot console.error spy (no hydration warnings) for AppSidebar</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~25 min</li>
+<li><strong>Started:</strong> 2026-05-12T18:40:00Z</li>
+<li><strong>Completed:</strong> 2026-05-12T18:44:00Z</li>
+<li><strong>Tasks:</strong> 2</li>
+<li><strong>Files created:</strong> 2 test files + package.json changes</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Created <code>app-sidebar.ssr.test.tsx</code> (node env, 4 it-blocks): no-throw render, no-div-in-button via JSDOM DOM walk, UserAvatarProfile markup present, mocked user fullName+email in HTML</li>
+<li>Created <code>app-sidebar.hydration.test.tsx</code> (jsdom env, 1 it-block): hydrateRoot + microtask flush + console.error spy filtered to <code>/hydrat/i</code> and <code>/did not match/i</code></li>
+<li>Installed <code>jsdom</code> + <code>@types/jsdom</code> (was not a transitive dep in this vitest node-env config)</li>
+<li>Full test suite passes: 79 tests (10 files) including 5 new tests</li>
+</ul>
+<h2>jsdom Installation Note</h2>
+<p><code>jsdom</code> was NOT a pre-existing transitive dependency. <code>node -e &quot;require.resolve(&#39;jsdom&#39;)&quot;</code> confirmed its absence before Task 1. Installed via <code>npm install --save-dev jsdom @types/jsdom</code>.</p>
+<h2>Regression Sanity Check Result</h2>
+<p>As required by the plan&#39;s <code>&lt;verification&gt;</code> section:</p>
+<ol>
+<li>Temporarily changed <code>user-avatar-profile.tsx</code> line 19 from <code>&lt;span className=&#39;flex items-center gap-2&#39;&gt;</code> to <code>&lt;div className=&#39;flex items-center gap-2&#39;&gt;</code></li>
+<li>Ran <code>npx vitest run src/components/layout/app-sidebar.ssr.test.tsx</code></li>
+<li><strong>Result: FAILED</strong> on <code>contains no &lt;div&gt; inside any &lt;button&gt;</code> with the expected error message showing the offending button outerHTML</li>
+<li>Reverted the change; all 79 tests pass again</li>
+</ol>
+<p>The SSR structural test correctly catches re-introduction of the BUG-01 root cause.</p>
+<h2>Console.error Noise Observed (Hydration Test)</h2>
+<p>During development of the hydration test, the following non-hydration console.error was present:</p>
+<ul>
+<li><strong>&quot;React does not recognize the <code>isActive</code> prop on a DOM element&quot;</strong> — triggered by sidebar mock components passing <code>isActive</code> through to real DOM elements</li>
+</ul>
+<p>This noise was resolved by explicitly destructuring and discarding <code>isActive</code>, <code>tooltip</code>, and <code>asChild</code> props in all sidebar mock component signatures. The hydration spy filter (D-15) correctly ignores non-hydration warnings, but eliminating the noise keeps the test output clean.</p>
+<p>No Radix UI warnings were observed during the actual test runs (all Radix UI components are fully mocked).</p>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1: SSR structural regression test</strong> - <code>4e091c9</code> (test)</li>
+<li><strong>Task 2: Hydration mount regression test</strong> - <code>d9c9ca0</code> (test)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>src/components/layout/app-sidebar.ssr.test.tsx</code> - 4 SSR structural assertions; node env; mocks Clerk, next/navigation, sidebar UI primitives, icons</li>
+<li><code>src/components/layout/app-sidebar.hydration.test.tsx</code> - 1 hydration assertion; jsdom env (<code>// @vitest-environment jsdom</code> first line); same mocks; hydrateRoot + spy pattern</li>
+<li><code>package.json</code> - Added jsdom + @types/jsdom to devDependencies</li>
+<li><code>package-lock.json</code> - Updated lockfile</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>jsdom install path taken:</strong> explicit install (not pre-existing transitive dep). Confirmed with <code>node -e &quot;require.resolve(&#39;jsdom&#39;)&quot;</code> before and after.</li>
+<li><strong>SidebarMenuButton mock uses asChild guard:</strong> When <code>asChild=true</code>, mock renders <code>&lt;span&gt;</code> instead of <code>&lt;button&gt;</code>. This prevents false positives in the no-div-in-button assertion — the header area uses <code>SidebarMenuButton asChild</code> with a <code>&lt;Link&gt;</code> containing <code>&lt;div&gt;</code> children, which would incorrectly fail the assertion if the mock always emitted <code>&lt;button&gt;</code>.</li>
+<li><strong>SidebarMenuSubButton mock renders <code>&lt;span&gt;</code>:</strong> The nav has an &quot;Account&quot; item with sub-items (Profile). <code>SidebarMenuSubButton asChild</code> + <code>next/link</code> (which mocks to <code>&lt;a&gt;</code>) would create <code>&lt;a&gt; inside &lt;a&gt;</code> invalid HTML causing a real hydration warning. Rendering <code>&lt;span&gt;</code> avoids this without losing the meaningful assertion coverage.</li>
+<li><strong>Clerk mock:</strong> <code>vi.mock(&#39;@clerk/nextjs&#39;)</code> returns fixed user; real Clerk runtime never imported. Grep: no <code>@clerk/themes</code> or real Clerk import outside <code>vi.mock</code> blocks.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] SidebarMenuButton mock needed asChild awareness</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 1 (SSR structural test)</li>
+<li><strong>Issue:</strong> Plan specified a simple <code>&lt;button&gt;</code> mock for <code>SidebarMenuButton</code> but did not account for the header area using <code>asChild=true</code> + a <code>&lt;Link&gt;</code> child containing <code>&lt;div&gt;</code> elements. This caused false positives in the no-div-in-button assertion.</li>
+<li><strong>Fix:</strong> Added <code>asChild</code> parameter check: render <code>&lt;span&gt;</code> when <code>asChild=true</code>, <code>&lt;button&gt;</code> when false/undefined</li>
+<li><strong>Files modified:</strong> app-sidebar.ssr.test.tsx, app-sidebar.hydration.test.tsx</li>
+<li><strong>Verification:</strong> Test passes with mocked structure; regression sanity check confirmed the assertion still catches the real bug</li>
+<li><strong>Committed in:</strong> <code>d9c9ca0</code> (Task 2 commit — refinement applied to both files)</li>
+</ul>
+<p><strong>2. [Rule 1 - Bug] SidebarMenuSubButton mock caused nested <code>&lt;a&gt;</code> hydration warning</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 2 (hydration test)</li>
+<li><strong>Issue:</strong> The initial <code>&lt;a&gt;</code> mock for <code>SidebarMenuSubButton</code> + <code>next/link</code> rendering as <code>&lt;a&gt;</code> created <code>&lt;a&gt; inside &lt;a&gt;</code> invalid HTML. This generated a real React warning matching <code>/did not match/i</code>, causing the hydration test to fail for a structural mock reason rather than the real BUG-01.</li>
+<li><strong>Fix:</strong> Changed <code>SidebarMenuSubButton</code> mock to render <code>&lt;span&gt;</code> (neutral passthrough) instead of <code>&lt;a&gt;</code></li>
+<li><strong>Files modified:</strong> app-sidebar.ssr.test.tsx, app-sidebar.hydration.test.tsx</li>
+<li><strong>Verification:</strong> Hydration test passes cleanly; no unexpected warnings in spy output</li>
+<li><strong>Committed in:</strong> <code>d9c9ca0</code></li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 2 auto-fixed (Rule 1 - Bug)
+<strong>Impact on plan:</strong> Both fixes were necessary for mock correctness. No scope creep; the assertions still exercise the BUG-01 regression fence as designed.</p>
+<h2>Clerk Runtime Isolation Verification</h2>
+<pre><code class="language-bash">grep -n &quot;import.*@clerk&quot; src/components/layout/app-sidebar.ssr.test.tsx
+grep -n &quot;import.*@clerk&quot; src/components/layout/app-sidebar.hydration.test.tsx
+</code></pre>
+<p>Neither file imports from <code>@clerk/nextjs</code> outside of <code>vi.mock(...)</code> factory callbacks. The real Clerk runtime is never loaded.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><strong>jsdom <code>SecurityError: localStorage is not available for opaque origins</code></strong> — JSDOM requires a <code>url</code> option to avoid opaque origin restrictions. Fixed by passing <code>{ url: &#39;http://localhost/&#39; }</code> to <code>new JSDOM(html, ...)</code>.</li>
+</ul>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>TEST-A3 complete: BUG-01 regression fence active. Any future refactor that re-introduces <code>&lt;div&gt;</code> inside <code>&lt;button&gt;</code> in <code>AppSidebar</code> will be caught by the SSR test. Any re-introduction of <code>{user &amp;&amp; ...}</code> gating will cause the mocked fullName/email to disappear from SSR HTML, failing two assertions.</li>
+<li>Phase 3 (Security Hardening) can proceed without dependency on these tests.</li>
+</ul>
+<hr>
+<p><em>Phase: 02-test-infrastructure</em>
+<em>Completed: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-04-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

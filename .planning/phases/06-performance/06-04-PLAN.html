@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-04-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-04-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: 04
+type: execute
+wave: 2
+depends_on: [06-01]
+files_modified:</p>
+<ul>
+<li>src/app/api/contacts/import/route.ts</li>
+<li>src/app/api/contacts/import/route.test.ts
+autonomous: true
+requirements: [PERF-A5]
+tags: [drizzle, bulk-insert, on-conflict, dedup, contacts-import, csv]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;POST /api/contacts/import issues exactly ONE bulk INSERT for all CSV rows that survive validation + dedup (D-10)&quot;
+    - &quot;URL-based dedup happens DB-side via <code>.onConflictDoNothing({ target: contacts.linkedinUrl })</code> against the partial UNIQUE index from Plan 1, whose predicate is <code>WHERE linkedin_url IS NOT NULL AND archived_at IS NULL</code> (D-08 + BLOCKER 1 fix) — so re-import of an ARCHIVED contact with the same URL creates a fresh active row (not silently skipped)&quot;
+    - &quot;Name+company secondary dedup uses a NARROWED SELECT keyed only on tuples appearing in the CSV — NOT a full table scan (D-09)&quot;
+    - &quot;The narrowed name+company SELECT preserves the <code>archived_at IS NULL</code> filter (soft-delete invariant)&quot;
+    - &quot;Per-row error reporting is reduced to validation-stage errors only (missing names, malformed dates); DB-level errors after the bulk INSERT report as a single aggregate failure (D-10)&quot;
+    - &quot;The greppable N+1 anti-pattern <code>for (row of parsed.data) ... await db.insert(contacts)</code> does NOT survive in import/route.ts (D-21)&quot;
+    - &quot;logTimeline is emitted at MOST ONCE per import — aggregate counts only, never per-row (D-10)&quot;
+    - &quot;Response envelope is unchanged: { created, skipped, errors }&quot;
+    - &quot;D-17: this plan is Wave 2 / Plan 2c — one of four parallel code-change atomics blocked on Wave 1 (Plan 01) and disjoint from Plans 02/03/05 in its file set (import/route.ts + route.test.ts only; categorize is a separate folder owned by Plan 03)&quot;
+    - &quot;D-19: PGlite-backed route tests assert post-conditions (created/skipped row counts under both dedup branches, idempotency under retry, exactly-one logTimeline emission per import, re-import-of-archived succeeds); the Phase 2 harness (src/test-utils/{pglite,call-route}.ts) is reused without modification&quot;
+  artifacts:
+    - path: &quot;src/app/api/contacts/import/route.ts&quot;
+      provides: &quot;Bulk-insert CSV import with DB-side URL dedup (active-rows-only partial UNIQUE) + narrowed name+company dedup&quot;
+      contains: &quot;.onConflictDoNothing({ target: contacts.linkedinUrl })&quot;
+    - path: &quot;src/app/api/contacts/import/route.test.ts&quot;
+      provides: &quot;Extended PGlite coverage: URL-only dedup branch, name+company-only dedup branch, re-import-of-archived-succeeds, idempotency&quot;
+      contains: &quot;expect.objectContaining({ created:&quot;
+  key_links:
+    - from: &quot;src/app/api/contacts/import/route.ts&quot;
+      to: &quot;drizzle/migrations/0008_phase6_indexes.sql contacts_linkedin_url_unique_idx&quot;
+      via: &quot;Postgres infers the conflict target from the partial UNIQUE index whose predicate matches rows where linkedin_url IS NOT NULL AND archived_at IS NULL&quot;
+  pattern: &quot;onConflictDoNothing\(\{ target: contacts\.linkedinUrl \}\)&quot;
+</p>
+<hr>
+<objective>
+Rewrite `POST /api/contacts/import` so all valid CSV rows survive a SINGLE bulk INSERT with `onConflictDoNothing({ target: contacts.linkedinUrl })` (which leverages the active-rows-only partial UNIQUE index from Plan 1 for DB-side URL dedup), and the name+company secondary dedup uses a NARROWED SELECT keyed only on the tuples present in the CSV — not a full `contacts` table scan. This closes the PERF-A5 import half: the import becomes one bulk INSERT + one narrowed SELECT + one aggregate timeline event, regardless of CSV row count.<p>BLOCKER 1 fix integration: Plan 1&#39;s partial UNIQUE predicate is now <code>WHERE linkedin_url IS NOT NULL AND archived_at IS NULL</code>, meaning the index covers ONLY active rows. This preserves the CONTEXT §Out-of-scope invariant — re-importing a previously archived linkedin_url creates a fresh active contact row instead of silently no-opping via ON CONFLICT. Test 8c pins this behavior.</p>
+<p>Purpose: PERF-A5 (import half) — replace the per-row INSERT loop and the full-table dedup SELECT with DB-side dedup and a tuple-keyed narrowing.
+Output: 1 route rewritten, 1 test file extended with new bulk + conflict + narrowing + idempotency + re-import-of-archived coverage.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/06-performance/06-CONTEXT.md
+@.planning/phases/06-performance/06-PATTERNS.md
+@CLAUDE.md
+@src/app/api/contacts/import/route.ts
+@src/app/api/contacts/import/route.test.ts
+@drizzle/seed.ts
+@drizzle/schema/contacts.ts
+@drizzle/schema/enums.ts
+@src/lib/domain/types.ts
+@src/lib/db/timeline.ts<interfaces>
+<!-- `onConflictDoNothing` with target column — established analog from drizzle/seed.ts:107-112 (the ONLY existing onConflictDoNothing with explicit target in the repo). --><p>From drizzle-orm pg-core insert builder:</p>
+<pre><code class="language-typescript">// Existing usage in drizzle/seed.ts:107-111:
+await db.insert(pipelineStages).values(stage).onConflictDoNothing({ target: pipelineStages.name });
+
+// New usage for this plan — same { target } shape, keyed on the partial UNIQUE index from Plan 1:
+await db.insert(contacts).values(rowsToInsert).onConflictDoNothing({ target: contacts.linkedinUrl });
+// → Postgres infers the constraint from the partial UNIQUE index named
+//   `contacts_linkedin_url_unique_idx` (declared in drizzle/schema/contacts.ts
+//   in Plan 1; the predicate is `WHERE linkedin_url IS NOT NULL AND archived_at IS NULL`
+//   per BLOCKER 1 fix). Rows being inserted always have archived_at = NULL (default),
+//   so they satisfy the predicate; the conflict is checked against existing ACTIVE
+//   rows only. Archived rows with the same linkedin_url do NOT block the insert —
+//   a new active row is created with a duplicate linkedin_url, but the partial
+//   predicate scopes the UNIQUE constraint to active rows so this is permitted.
+//   Rows with linkedinUrl IS NULL are NOT covered by the index and pass through
+//   normally — they are deduped only by the name+company branch.
+</code></pre>
+<p>From drizzle-orm <code>sql</code> template for tuple-IN narrowing (D-09):</p>
+<pre><code class="language-typescript">import { sql, isNull, and } from &#39;drizzle-orm&#39;;
+
+// Build tuple keys from CSV-validated rows. Each key is &quot;first|last|company&quot;
+// lowercased — the SAME format as the existing in-memory `existingNameCompany`
+// Set in the current implementation.
+const keys: string[] = validatedRows.map(
+  (r) =&gt; `${r.firstName.toLowerCase()}|${r.lastName.toLowerCase()}|${(r.currentCompany ?? &#39;&#39;).toLowerCase()}`
+);
+
+// Narrowed SELECT — only fetches rows whose composed-key matches a CSV row.
+// The composed-key matches Postgres-side via `lower(first_name) || &#39;|&#39; || lower(last_name) || &#39;|&#39; || lower(coalesce(current_company, &#39;&#39;))`.
+// `sql.join` parameter-binds each key string individually — NO sql.raw, NO concat.
+const narrowed = await db
+  .select({
+    id: contacts.id,
+    firstName: contacts.firstName,
+    lastName: contacts.lastName,
+    currentCompany: contacts.currentCompany
+  })
+  .from(contacts)
+  .where(and(
+    isNull(contacts.archivedAt),
+    sql`(lower(${contacts.firstName}) || &#39;|&#39; || lower(${contacts.lastName}) || &#39;|&#39; || lower(coalesce(${contacts.currentCompany}, &#39;&#39;))) IN (${sql.join(keys.map((k) =&gt; sql`${k}`), sql`, `)})`
+  ));
+// Edge case: if keys.length === 0 (all CSV rows failed validation), skip the
+// SELECT entirely — empty IN-list is a SQL syntax error in some drivers.
+</code></pre>
+</interfaces><five_step_rewrite>
+Per D-10, the new import handler follows this shape (planner refines per request):
+1. Parse multipart, extract CSV text, strip LinkedIn preamble (lines 35-42 of current — keep).
+2. Papa.parse the CSV into typed rows (lines 44-52 of current — keep).
+3. **Validation pass**: collect `errors[]` for rows missing names; build the candidate `rowsToInsert: NewContact[]` array AND the parallel `name+company key` set for narrowed dedup.
+4. **Narrowed name+company SELECT** (D-09): build the key set from rowsToInsert, then issue ONE narrowed SELECT scoped to those keys + `isNull(archivedAt)`. Build a `Set<string>` of the existing keys.
+5. **Filter** rowsToInsert: drop any row whose key is in the existing-keys set (name+company dedup). URL dedup is NOT pre-filtered — let the DB handle it via ON CONFLICT.
+6. **Bulk INSERT** with `.onConflictDoNothing({ target: contacts.linkedinUrl })` and `.returning({ id: contacts.id })` so we know how many actually inserted. The active-rows-only partial UNIQUE (BLOCKER 1 fix) means archived rows with the same URL do NOT block the insert.
+7. Compute `created = returnedRows.length`, `skipped = rowsToInsertOriginalLength - created + nameCompanySkipped`, `errors = errors[]`.
+8. `logTimeline` ONCE if `created > 0` (preserved invariant from current line 145-151).
+9. Return `success({ created, skipped, errors })`.
+</five_step_rewrite>
+</context><tasks><task type="auto" tdd="true">
+  <name>Task 1: Rewrite POST /api/contacts/import with bulk INSERT + ON CONFLICT (active-rows-only) + narrowed name+company SELECT</name>
+  <files>src/app/api/contacts/import/route.ts</files>
+  <read_first>
+    - src/app/api/contacts/import/route.ts (full file, 158 lines) — current implementation. Lines 35-52 (Papa.parse + preamble strip) preserved; lines 55-74 (full-table dedup SELECT) replaced with narrowed SELECT; lines 80-143 (per-row insert loop) replaced with bulk insert; lines 145-151 (single logTimeline) preserved.
+    - drizzle/seed.ts lines 107-112 — the ONLY existing `onConflictDoNothing({ target: ... })` with explicit target; this plan's analog.
+    - drizzle/schema/contacts.ts (post-Plan-1) — contains `contacts_linkedin_url_unique_idx` partial UNIQUE that Postgres matches as the conflict target. **Predicate is `WHERE linkedin_url IS NOT NULL AND archived_at IS NULL`** (BLOCKER 1 fix).
+    - .planning/phases/06-performance/06-CONTEXT.md D-08, D-09, D-10 (the 5-step rewrite plus the dedup-vs-archived rule) + §Out of scope ("the existing behavior — dedup only against active contacts, allowing re-import of archived ones — is the documented intent").
+    - .planning/phases/06-performance/06-PATTERNS.md §"src/app/api/contacts/import/route.ts" — full pattern guidance.
+    - src/lib/domain/types.ts — confirm `contactClosenessValues` and that `defaultClosenessSchema` already validates to the enum.
+  </read_first>
+  <behavior>
+    - Test 1 (existing happy-path "fixture CSV with preamble + 3 valid rows + 1 malformed row" — MUST still pass): created=3, skipped=0, errors=['missing name'], 3 contact rows, 1 timeline event with eventType='contacts_imported'.
+    - Test 2 (existing "missing file" test — MUST still pass): 400 with "CSV file is required", no rows.
+    - Test 3 (existing "dedup within import — two rows same URL" — MUST still pass after rewrite): the second row with the duplicate URL is now deduped DB-side via ON CONFLICT (not in-app); response stays {created:1, skipped:1}.
+    - Test 4 (new — URL dedup against pre-existing ACTIVE DB contact): seed 1 ACTIVE contact with linkedin_url='https://linkedin.com/in/eve' and archivedAt:null; POST CSV with one row whose URL is 'https://linkedin.com/in/eve'. Response: {created:0, skipped:1}. DB: still 1 active contact (no duplicate). NO timeline event.
+    - Test 5 (new — name+company dedup via NARROWED SELECT): seed 1 contact with firstName='Frank', lastName='Foster', currentCompany='FooCorp'; POST CSV with one row {First Name: Frank, Last Name: Foster, Company: FooCorp, URL: <empty>}. Response: {created:0, skipped:1}.
+    - Test 7 (new — empty CSV early-return): POST a CSV with only headers and no data rows. Response: {created:0, skipped:0, errors:[]}. NO bulk INSERT issued. NO timeline event.
+    - **Test 8a (URL-only dedup branch — WARNING 4 fix):** POST a 3-row CSV with 3 distinct first+last names but ALL three sharing the SAME `linkedin_url='https://linkedin.com/in/dup'`. First POST returns {created:1, skipped:2} (Test 3 behavior — internal dedup). Second POST returns {created:0, skipped:3} via URL ON CONFLICT (the name+company branch returns 0 matches because names differ from the seeded row's name). Assert that the partial UNIQUE index was used: query `pg_stat_user_indexes` for `idx_scan` count on `contacts_linkedin_url_unique_idx` and assert it increased between the two POSTs.
+    - **Test 8b (name+company-only dedup branch — WARNING 4 fix):** POST a 3-row CSV with NO `linkedin_url` (null) but matching name+company tuples that already exist as active contacts. Second POST returns {created:0, skipped:3} via the in-app narrowed SELECT (URL branch returns 0 because no URLs are present in either side). Assert the narrowed SELECT returns the 3 existing tuples.
+    - **Test 8c (re-import-of-archived succeeds — BLOCKER 1 fix):** Seed an ARCHIVED contact: `{firstName:'Archived', lastName:'User', linkedinUrl:'https://linkedin.com/in/archived-user', archivedAt: new Date()}`. POST a CSV containing one row with the SAME URL='https://linkedin.com/in/archived-user' (any name+company). Response: EXACTLY `{success:true, data:{created:1, skipped:0, errors:[]}}` — a NEW active contact row is created. Verify post-call: `db.select().from(contacts).where(eq(contacts.linkedinUrl, 'https://linkedin.com/in/archived-user'))` returns 2 rows; one is the original (archived_at NOT NULL), the other is the newly inserted (archived_at IS NULL).
+    - Test 9 (new — null linkedinUrl rows are NOT affected by the partial-index conflict path): seed 1 contact `Alice` with linkedin_url=NULL; POST CSV with `Alice, Acme` (URL empty in CSV). Response: should NOT skip via URL ON CONFLICT; should skip via name+company narrowed SELECT if `Alice @ Acme` matches the seed.
+  </behavior>
+  <action>
+    Rewrite the handler in `src/app/api/contacts/import/route.ts` per the five_step_rewrite shape above.<pre><code>Preserve unchanged:
+- The formData / file extraction (lines 25-33).
+- The LinkedIn preamble strip (lines 38-42).
+- The Papa.parse call (lines 44-52).
+- The CSV-row → field-extraction pattern (lines 81-93 — first/last/url/email/company/position/connectedOn — extract once per row in the validation pass).
+- The `defaultCloseness` parsing (line 27-29).
+- The `if (created &gt; 0) await logTimeline(...)` block (lines 145-151) — guard is preserved, single emission is preserved.
+- The response envelope: `success({ created, skipped, errors })`.
+- The error-handling try/catch shell (lines 154-157).
+
+New handler body (replacing lines 54-143):
+```typescript
+// === STEP 1: VALIDATION PASS ===
+// Build the candidate rows + the dedup key set from CSV in one pass.
+type Candidate = {
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  linkedinUrl: string | null;
+  currentCompany: string | null;
+  title: string | null;
+  linkedinConnectionDate: Date | null;
+  key: string;  // for name+company dedup
+};
+
+const candidates: Candidate[] = [];
+const errors: string[] = [];
+
+for (const row of parsed.data) {
+  const firstName = row[&#39;First Name&#39;]?.trim();
+  const lastName = row[&#39;Last Name&#39;]?.trim();
+
+  if (!firstName || !lastName) {
+    errors.push(&#39;Skipped row: missing name&#39;);
+    continue;
+  }
+
+  const linkedinUrl = row[&#39;URL&#39;]?.trim() || null;
+  const email = row[&#39;Email Address&#39;]?.trim() || null;
+  const company = row[&#39;Company&#39;]?.trim() || null;
+  const position = row[&#39;Position&#39;]?.trim() || null;
+  const connectedOn = row[&#39;Connected On&#39;]?.trim() || null;
+
+  let linkedinConnectionDate: Date | null = null;
+  if (connectedOn) {
+    const d = new Date(connectedOn);
+    if (!isNaN(d.getTime())) linkedinConnectionDate = d;
+  }
+
+  candidates.push({
+    firstName,
+    lastName,
+    email,
+    linkedinUrl,
+    currentCompany: company,
+    title: position,
+    linkedinConnectionDate,
+    key: `${firstName.toLowerCase()}|${lastName.toLowerCase()}|${(company ?? &#39;&#39;).toLowerCase()}`
+  });
+}
+
+// === STEP 2: NARROWED NAME+COMPANY SELECT (D-09) ===
+// Empty-input short-circuit — no SQL issued.
+let existingNameCompanyKeys = new Set&lt;string&gt;();
+if (candidates.length &gt; 0) {
+  const keys = candidates.map((c) =&gt; c.key);
+  const narrowed = await db
+    .select({
+      firstName: contacts.firstName,
+      lastName: contacts.lastName,
+      currentCompany: contacts.currentCompany
+    })
+    .from(contacts)
+    .where(and(
+      isNull(contacts.archivedAt),
+      // Composed-key tuple-IN narrowing — same shape used by match-connections.ts (Plan 2).
+      // sql.join parameter-binds each key — NO sql.raw, NO string concat.
+      // D-06: sql template inside Drizzle&#39;s query builder is the documented
+      // escape; this is NOT the &quot;raw SQL&quot; CLAUDE.md forbids.
+      sql`(lower(${contacts.firstName}) || &#39;|&#39; || lower(${contacts.lastName}) || &#39;|&#39; || lower(coalesce(${contacts.currentCompany}, &#39;&#39;))) IN (${sql.join(keys.map((k) =&gt; sql`${k}`), sql`, `)})`
+    ));
+  existingNameCompanyKeys = new Set(
+    narrowed.map(
+      (r) =&gt; `${r.firstName.toLowerCase()}|${r.lastName.toLowerCase()}|${(r.currentCompany ?? &#39;&#39;).toLowerCase()}`
+    )
+  );
+}
+
+// === STEP 3: FILTER by name+company dedup ===
+// URL dedup is NOT pre-filtered — handled DB-side by ON CONFLICT below.
+const toInsert = candidates.filter((c) =&gt; !existingNameCompanyKeys.has(c.key));
+const nameCompanySkipped = candidates.length - toInsert.length;
+
+// === STEP 4: BULK INSERT with ON CONFLICT (D-08, D-10) ===
+let created = 0;
+if (toInsert.length &gt; 0) {
+  try {
+    const returningRows = await db
+      .insert(contacts)
+      .values(
+        toInsert.map((c) =&gt; ({
+          firstName: c.firstName,
+          lastName: c.lastName,
+          email: c.email,
+          linkedinUrl: c.linkedinUrl,
+          currentCompany: c.currentCompany,
+          title: c.title,
+          closeness: defaultCloseness || &#39;acquaintance&#39;,
+          outreachStatus: &#39;not_reached_out&#39;,
+          importSource: &#39;linkedin_csv&#39;,
+          importedAt: new Date(),
+          linkedinConnectionDate: c.linkedinConnectionDate,
+          tags: [&#39;linkedin-import&#39;]
+        }))
+      )
+      // Postgres infers the conflict target from the partial UNIQUE index
+      // `contacts_linkedin_url_unique_idx` (Plan 1) whose predicate is
+      // `WHERE linkedin_url IS NOT NULL AND archived_at IS NULL`. The
+      // ACTIVE-rows-only scope (BLOCKER 1 fix) means:
+      //   - Conflicts trigger ONLY against existing active contacts with the same URL.
+      //   - Re-importing an ARCHIVED contact with the same URL creates a fresh
+      //     active row (no silent skip).
+      //   - Rows with linkedinUrl IS NULL are not covered by the index and pass
+      //     through (no conflict path).
+      .onConflictDoNothing({ target: contacts.linkedinUrl })
+      .returning({ id: contacts.id });
+    created = returningRows.length;
+  } catch (err) {
+    // Aggregate failure — per D-10, DB-level errors after the bulk INSERT
+    // report as a single error, NOT per-row.
+    errors.push(`Failed to insert ${toInsert.length} rows: ${String(err)}`);
+  }
+}
+
+// skipped = (rows lost to name+company dedup) + (rows lost to URL ON CONFLICT)
+const urlConflictSkipped = toInsert.length - created;
+const skipped = nameCompanySkipped + urlConflictSkipped;
+
+// === STEP 5: SINGLE TIMELINE EVENT ===
+if (created &gt; 0) {
+  await logTimeline({
+    eventType: &#39;contacts_imported&#39;,
+    title: `Imported ${created} contacts from LinkedIn CSV`,
+    metadata: { created, skipped, errors: errors.length }
+  });
+}
+
+return success({ created, skipped, errors });
+```
+
+Imports to update at the top of the file (the file currently imports `isNull, sql, ilike` from drizzle-orm — keep `isNull` and `sql`, drop `ilike` if unused, add `and`):
+```typescript
+import { isNull, sql, and } from &#39;drizzle-orm&#39;;
+```
+
+Verify after rewrite (during implementation):
+- The variable `urlConflictSkipped` correctly handles the case where `toInsert.length === 0` (then `urlConflictSkipped === 0 - 0 === 0`, OK).
+- When `created === 0` (because ALL rows were dedup&#39;d or the input had only invalid rows), `logTimeline` is NOT called — preserving the existing invariant.
+- The `errors` array still contains the per-row &quot;missing name&quot; strings for any validation failures (Test 1 depends on this).
+- The `returning({ id: contacts.id })` is mandatory: without it, `created` cannot be derived because `db.insert(...).values(...).onConflictDoNothing(...)` returns `void` by default on the neon-http driver.
+
+Do NOT add transactions — the bulk INSERT is atomic by Postgres semantics. Wrapping in `db.transaction()` would add no value and one extra HTTP round-trip on neon-http.
+
+Do NOT remove the `archived_at IS NULL` filter from the narrowed SELECT — soft-delete invariant (D-09 / CONTEXT §&quot;In scope&quot; &quot;Removing the archivedAt IS NULL filter from contacts dedup ... is the documented intent&quot;).
+
+Do NOT introduce server-side fuzzy matching (`pg_trgm`) — that is deferred per CONTEXT §Deferred.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -v '^#' src/app/api/contacts/import/route.ts | grep -c "for.*await db\.insert(contacts)" | grep -q "^0$" && grep -v '^#' src/app/api/contacts/import/route.ts | grep -q "onConflictDoNothing({ target: contacts.linkedinUrl })" && ! grep -q "sql.raw" src/app/api/contacts/import/route.ts && echo "bulk insert + on conflict target present, no N+1, no sql.raw"</automated>
+  </verify>
+  <acceptance_criteria>
+    - The handler issues at MOST ONE `db.insert(contacts).values([...]).onConflictDoNothing({ target: contacts.linkedinUrl }).returning(...)` call per request.
+    - The handler issues at MOST ONE `db.select().from(contacts).where(and(isNull(contacts.archivedAt), sql\`... IN (...)\`))` call per request, and only when `candidates.length > 0`.
+    - There is NO `for (row of parsed.data) ... await db.insert(...)` pattern (verified by greppable regression D-21).
+    - There is NO `sql.raw(...)` call in the file (security gate).
+    - The narrowed SELECT predicate composes the key via `lower(...) || '|' || lower(...) || '|' || lower(coalesce(...))` and bounds the result set by `sql.join(keys.map((k) => sql\`${k}\`), sql\`, \`)` — verifying each key is bound as a separate parameter.
+    - `isNull(contacts.archivedAt)` appears in the narrowed SELECT (soft-delete invariant).
+    - `logTimeline()` is called AT MOST ONCE per request, guarded by `if (created > 0)`.
+    - Response envelope is `success({ created, skipped, errors })` (unchanged).
+    - `npx tsc --noEmit` exits 0.
+    - All tests pass (Task 2 below provides the extended test coverage, including 8a, 8b, 8c).
+  </acceptance_criteria>
+  <done>Single bulk INSERT with DB-side URL dedup (active-rows-only partial UNIQUE) + narrowed name+company dedup; full-table SELECT and per-row INSERT loop both eliminated; re-import of archived URL succeeds.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Extend route.test.ts with split URL-vs-name+company dedup tests, re-import-of-archived, and idempotency coverage</name>
+  <files>src/app/api/contacts/import/route.test.ts</files>
+  <read_first>
+    - src/app/api/contacts/import/route.test.ts (full file, 109 lines) — 3 existing tests (happy path, missing file, dedup within import). The existing dedup-within-import test (lines 82-108) must continue to pass after the rewrite — the ON CONFLICT path silently drops the duplicate.
+    - src/app/api/contacts/import/__fixtures__/linkedin-connections.csv (the existing fixture used by Test 1) — do NOT modify; new tests build CSV strings inline.
+    - drizzle/schema/timeline-events.ts and src/lib/db/timeline.ts — for asserting timeline-event row count after each test.
+    - drizzle/schema/contacts.ts — confirm the partial UNIQUE predicate from Plan 1 is `WHERE linkedin_url IS NOT NULL AND archived_at IS NULL` (BLOCKER 1 fix prerequisite).
+    - .planning/phases/06-performance/06-CONTEXT.md D-19 (PGlite-backed route tests, idempotency under retry) + §Out of scope (the re-import-of-archived invariant Test 8c pins).
+  </read_first>
+  <behavior>
+    See Tests 1-9 in the parent Plan's behavior block. Tests 1, 2, 3 are existing — verify they still pass. Tests 4, 5, 7 are new straightforward additions. Test 8 is SPLIT into Test 8a (URL-only branch), Test 8b (name+company-only branch), and Test 8c (re-import-of-archived succeeds) per WARNING 4 and BLOCKER 1 fixes. Test 9 is an optional degenerate variant of Test 5.
+  </behavior>
+  <action>
+    Append new `it(...)` blocks to the existing `describe('POST /api/contacts/import', ...)` block. Do NOT modify Tests 1, 2, 3.<pre><code>Test 4 — &quot;URL dedup against pre-existing ACTIVE DB contact (D-08 ON CONFLICT)&quot;:
+```typescript
+it(&#39;URL dedup against pre-existing active contact: returns created: 0, skipped: 1, NO timeline event&#39;, async () =&gt; {
+  await dbRef.current!.insert(contacts).values({
+    firstName: &#39;Eve&#39;,
+    lastName: &#39;Existing&#39;,
+    linkedinUrl: &#39;https://linkedin.com/in/eve-existing&#39;
+  });
+
+  const csv = [
+    &#39;First Name,Last Name,Email Address,Company,Position,Connected On,URL&#39;,
+    &#39;Eve,Existing,eve@new.com,NewCorp,Engineer,01 Jan 2024,https://linkedin.com/in/eve-existing&#39;
+  ].join(&#39;\n&#39;);
+  const file = new File([csv], &#39;eve.csv&#39;, { type: &#39;text/csv&#39; });
+  const formData = new FormData();
+  formData.append(&#39;file&#39;, file);
+
+  const { POST } = await import(&#39;@/app/api/contacts/import/route&#39;);
+  const { status, body } = await callRoute(POST, { method: &#39;POST&#39;, formData });
+
+  expect(status).toBe(200);
+  expect(body).toMatchObject({ success: true, data: { created: 0, skipped: 1 } });
+
+  const contactRows = await dbRef.current!.select().from(contacts);
+  expect(contactRows).toHaveLength(1);  // The pre-existing Eve only; no second Eve.
+
+  // Timeline event was NOT emitted (created === 0 short-circuited the guard).
+  const tlRows = await dbRef.current!.select().from(timelineEvents);
+  expect(tlRows).toHaveLength(0);
+});
+```
+
+Test 5 — &quot;Name+company dedup via narrowed SELECT (D-09, no URL in CSV)&quot;:
+```typescript
+it(&#39;Name+company dedup against pre-existing contact (no URL): returns created: 0, skipped: 1&#39;, async () =&gt; {
+  await dbRef.current!.insert(contacts).values({
+    firstName: &#39;Frank&#39;,
+    lastName: &#39;Foster&#39;,
+    currentCompany: &#39;FooCorp&#39;
+  });
+
+  const csv = [
+    &#39;First Name,Last Name,Email Address,Company,Position,Connected On,URL&#39;,
+    &#39;Frank,Foster,frank@new.com,FooCorp,Engineer,01 Jan 2024,&#39;  // empty URL
+  ].join(&#39;\n&#39;);
+  const file = new File([csv], &#39;frank.csv&#39;, { type: &#39;text/csv&#39; });
+  const formData = new FormData();
+  formData.append(&#39;file&#39;, file);
+
+  const { POST } = await import(&#39;@/app/api/contacts/import/route&#39;);
+  const { status, body } = await callRoute(POST, { method: &#39;POST&#39;, formData });
+
+  expect(status).toBe(200);
+  expect(body).toMatchObject({ success: true, data: { created: 0, skipped: 1 } });
+
+  const contactRows = await dbRef.current!.select().from(contacts);
+  expect(contactRows).toHaveLength(1);
+});
+```
+
+Test 7 — &quot;Empty-CSV (header-only) returns created: 0, no SQL writes&quot;:
+```typescript
+it(&#39;Header-only CSV: returns created: 0, skipped: 0, no rows inserted, no timeline&#39;, async () =&gt; {
+  const csv = &#39;First Name,Last Name,Email Address,Company,Position,Connected On,URL&#39;;
+  const file = new File([csv], &#39;empty.csv&#39;, { type: &#39;text/csv&#39; });
+  const formData = new FormData();
+  formData.append(&#39;file&#39;, file);
+
+  const { POST } = await import(&#39;@/app/api/contacts/import/route&#39;);
+  const { status, body } = await callRoute(POST, { method: &#39;POST&#39;, formData });
+
+  expect(status).toBe(200);
+  expect(body).toMatchObject({ success: true, data: { created: 0, skipped: 0, errors: [] } });
+
+  const contactRows = await dbRef.current!.select().from(contacts);
+  expect(contactRows).toHaveLength(0);
+  const tlRows = await dbRef.current!.select().from(timelineEvents);
+  expect(tlRows).toHaveLength(0);
+});
+```
+
+**Test 8a — &quot;URL-only dedup branch (WARNING 4 fix)&quot;:**
+```typescript
+it(&#39;Test 8a: URL-only dedup branch — 3 rows with same URL, distinct names&#39;, async () =&gt; {
+  // First seed an ACTIVE contact whose URL will be the duplicate target.
+  // Note: even though we re-POST the same CSV, this test specifically exercises
+  // the URL dedup branch by ensuring NAMES differ from anything pre-existing,
+  // so the name+company branch returns 0 matches and only the URL ON CONFLICT
+  // path fires.
+  const csv = [
+    &#39;First Name,Last Name,Email Address,Company,Position,Connected On,URL&#39;,
+    &#39;Alpha,One,a@x.com,AcmeA,Eng,01 Jan 2024,https://linkedin.com/in/dup&#39;,
+    &#39;Beta,Two,b@x.com,AcmeB,Eng,02 Jan 2024,https://linkedin.com/in/dup&#39;,
+    &#39;Gamma,Three,c@x.com,AcmeC,Eng,03 Jan 2024,https://linkedin.com/in/dup&#39;
+  ].join(&#39;\n&#39;);
+
+  const post = async () =&gt; {
+    const file = new File([csv], &#39;dup.csv&#39;, { type: &#39;text/csv&#39; });
+    const formData = new FormData();
+    formData.append(&#39;file&#39;, file);
+    const { POST } = await import(&#39;@/app/api/contacts/import/route&#39;);
+    return callRoute&lt;{ data: { created: number; skipped: number } }&gt;(POST, { method: &#39;POST&#39;, formData });
+  };
+
+  // Capture pre-call idx_scan count for the partial UNIQUE index.
+  // PGlite supports pg_stat_user_indexes; query for the baseline.
+  const idxScanBefore = await dbRef.current!.execute(sql`
+    SELECT idx_scan FROM pg_stat_user_indexes WHERE indexrelname = &#39;contacts_linkedin_url_unique_idx&#39;
+  `);
+  const scanBefore = (idxScanBefore.rows[0] as { idx_scan: number } | undefined)?.idx_scan ?? 0;
+
+  const first = await post();
+  // First POST: internal duplicate within the bulk insert → 1 created, 2 skipped
+  // (the ON CONFLICT fires twice within the single VALUES batch).
+  expect(first.body).toMatchObject({ data: { created: 1, skipped: 2 } });
+
+  const second = await post();
+  // Second POST: all 3 rows conflict with the existing active row from first POST.
+  // The name+company branch returns 0 matches (names differ from the seeded row).
+  // → all 3 deduped via URL ON CONFLICT.
+  expect(second.body).toMatchObject({ data: { created: 0, skipped: 3 } });
+
+  const idxScanAfter = await dbRef.current!.execute(sql`
+    SELECT idx_scan FROM pg_stat_user_indexes WHERE indexrelname = &#39;contacts_linkedin_url_unique_idx&#39;
+  `);
+  const scanAfter = (idxScanAfter.rows[0] as { idx_scan: number } | undefined)?.idx_scan ?? 0;
+  // Index was scanned for the ON CONFLICT check.
+  expect(scanAfter).toBeGreaterThan(scanBefore);
+
+  const contactRows = await dbRef.current!.select().from(contacts);
+  expect(contactRows).toHaveLength(1);
+});
+```
+
+**Test 8b — &quot;Name+company-only dedup branch (WARNING 4 fix)&quot;:**
+```typescript
+it(&#39;Test 8b: name+company-only dedup branch — 3 rows with null URL, matching name+company&#39;, async () =&gt; {
+  // Seed 3 active contacts with name+company tuples; no URLs.
+  await dbRef.current!.insert(contacts).values([
+    { firstName: &#39;Nico&#39;, lastName: &#39;NameOnly&#39;, currentCompany: &#39;NCo&#39; },
+    { firstName: &#39;Olga&#39;, lastName: &#39;OnlyName&#39;, currentCompany: &#39;OCo&#39; },
+    { firstName: &#39;Pat&#39;,  lastName: &#39;PureName&#39;, currentCompany: &#39;PCo&#39; }
+  ]);
+
+  const csv = [
+    &#39;First Name,Last Name,Email Address,Company,Position,Connected On,URL&#39;,
+    &#39;Nico,NameOnly,n@x.com,NCo,Eng,01 Jan 2024,&#39;,  // empty URL
+    &#39;Olga,OnlyName,o@x.com,OCo,Eng,02 Jan 2024,&#39;,  // empty URL
+    &#39;Pat,PureName,p@x.com,PCo,Eng,03 Jan 2024,&#39;    // empty URL
+  ].join(&#39;\n&#39;);
+  const file = new File([csv], &#39;names.csv&#39;, { type: &#39;text/csv&#39; });
+  const formData = new FormData();
+  formData.append(&#39;file&#39;, file);
+
+  const { POST } = await import(&#39;@/app/api/contacts/import/route&#39;);
+  const { status, body } = await callRoute(POST, { method: &#39;POST&#39;, formData });
+
+  expect(status).toBe(200);
+  // All 3 deduped via narrowed name+company SELECT; URL branch returned 0 (no URLs).
+  expect(body).toMatchObject({ data: { created: 0, skipped: 3 } });
+
+  const contactRows = await dbRef.current!.select().from(contacts);
+  expect(contactRows).toHaveLength(3);  // Original seeds only.
+});
+```
+
+**Test 8c — &quot;Re-import of archived URL succeeds (BLOCKER 1 fix — active-rows-only partial UNIQUE)&quot;:**
+```typescript
+it(&#39;Test 8c: re-importing an archived linkedin_url creates a fresh active row&#39;, async () =&gt; {
+  // Seed an ARCHIVED contact with a specific URL.
+  await dbRef.current!.insert(contacts).values({
+    firstName: &#39;Archived&#39;,
+    lastName: &#39;User&#39;,
+    linkedinUrl: &#39;https://linkedin.com/in/archived-user&#39;,
+    archivedAt: new Date()
+  });
+
+  const csv = [
+    &#39;First Name,Last Name,Email Address,Company,Position,Connected On,URL&#39;,
+    &#39;Rebuilt,User,r@x.com,RebuiltCo,Eng,01 Jan 2024,https://linkedin.com/in/archived-user&#39;
+  ].join(&#39;\n&#39;);
+  const file = new File([csv], &#39;archived.csv&#39;, { type: &#39;text/csv&#39; });
+  const formData = new FormData();
+  formData.append(&#39;file&#39;, file);
+
+  const { POST } = await import(&#39;@/app/api/contacts/import/route&#39;);
+  const { status, body } = await callRoute(POST, { method: &#39;POST&#39;, formData });
+
+  expect(status).toBe(200);
+  // The partial UNIQUE predicate (`WHERE linkedin_url IS NOT NULL AND archived_at IS NULL`)
+  // means the archived row is NOT in the index → no conflict → fresh row created.
+  expect(body).toEqual({ success: true, data: { created: 1, skipped: 0, errors: [] } });
+
+  // Two rows now share the same linkedin_url: one archived, one freshly active.
+  const sameUrlRows = await dbRef.current!
+    .select()
+    .from(contacts)
+    .where(eq(contacts.linkedinUrl, &#39;https://linkedin.com/in/archived-user&#39;));
+  expect(sameUrlRows).toHaveLength(2);
+
+  const active = sameUrlRows.find((r) =&gt; r.archivedAt === null);
+  const archived = sameUrlRows.find((r) =&gt; r.archivedAt !== null);
+  expect(active).toBeDefined();
+  expect(archived).toBeDefined();
+  expect(active!.firstName).toBe(&#39;Rebuilt&#39;);
+  expect(archived!.firstName).toBe(&#39;Archived&#39;);
+});
+```
+
+Place all six new `it` blocks (Test 4, 5, 7, 8a, 8b, 8c) AFTER the existing Test 3. Do NOT modify the existing tests. Do NOT modify the fixture CSV.
+
+Imports to add to the existing import block at the top of the file: `timelineEvents` from the schema barrel (already imported), `sql` and `eq` from `drizzle-orm` (eq already imported).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/app/api/contacts/import/route.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/app/api/contacts/import/route.test.ts` contains 9 `it(...)` blocks total (3 existing + 6 new: Test 4, 5, 7, 8a, 8b, 8c).
+    - All 9 tests pass (`npm run test:run -- src/app/api/contacts/import/route.test.ts` exits 0).
+    - Test 3 (existing dedup-within-import) continues to pass — verifying the ON CONFLICT path correctly deduplicates duplicates within a single bulk insert.
+    - Test 4 specifically asserts that NO timeline event is emitted when created === 0 (D-10 invariant: aggregate-only timeline emission, guarded by `created > 0`).
+    - **Test 8a** asserts the URL-only dedup branch independently — `idx_scan` on `contacts_linkedin_url_unique_idx` increased between POSTs, confirming the partial UNIQUE was consulted (WARNING 4 fix).
+    - **Test 8b** asserts the name+company-only dedup branch independently — no URLs in CSV, narrowed SELECT returned the 3 existing tuples (WARNING 4 fix).
+    - **Test 8c** asserts re-import-of-archived succeeds — archived row stays archived, NEW active row created with the same URL, response `{created:1, skipped:0}` (BLOCKER 1 fix invariant).
+    - The full suite (`npm run test:run`) exits 0.
+  </acceptance_criteria>
+  <done>Test coverage extended to pin: bulk-insert path, URL-only dedup branch, name+company-only dedup branch, re-import-of-archived success, and aggregate-only timeline.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Browser file upload → POST /api/contacts/import (multipart)</td>
+<td>Bearer-token-authenticated; CSV file is user-controlled. Papa.parse extracts rows; row fields flow into a bulk SQL INSERT.</td>
+</tr>
+<tr>
+<td>Validated CSV rows → narrowed SELECT IN-list</td>
+<td>Each lowercased name+company tuple becomes a bound parameter in the <code>sql.join</code> IN-clause.</td>
+</tr>
+<tr>
+<td>Validated CSV rows → bulk INSERT values array</td>
+<td>Drizzle&#39;s query builder parameter-binds every column value automatically — no manual escaping.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-06-14</td>
+<td>T / I (SQL injection)</td>
+<td>Narrowed SELECT IN-list with user-controlled name+company keys</td>
+<td>mitigate</td>
+<td>Same mitigation as Plan 2 T-06-05: keys are interpolated via <code>sql.join(keys.map((k) =&gt; sql\</code>${k}`), sql`, `)<code>— each key bound as a separate parameter. No</code>sql.raw<code>, no string concatenation. The greppable regression gate in Task 1 acceptance criteria explicitly forbids </code>sql.raw` in this file.</td>
+</tr>
+<tr>
+<td>T-06-15</td>
+<td>T</td>
+<td>Bulk INSERT values array</td>
+<td>mitigate</td>
+<td>Drizzle&#39;s <code>.values(rows)</code> parameter-binds every column value via the prepared-statement mechanism. No user input flows into the SQL string directly. The greppable regression for <code>sql.raw</code> covers this file.</td>
+</tr>
+<tr>
+<td>T-06-16</td>
+<td>D (denial of service)</td>
+<td>Unbounded CSV upload</td>
+<td>accept</td>
+<td>The route does not impose an explicit row-count limit on the CSV; Papa.parse will consume the whole file. Browser-side LinkedIn export caps at ~30k rows; single-user app makes resource exhaustion impractical. If observed in practice, add a <code>parsed.data.length &gt; MAX</code> guard in a follow-up — not Phase 6 scope.</td>
+</tr>
+<tr>
+<td>T-06-17</td>
+<td>D (denial of service)</td>
+<td>Narrowed SELECT IN-list with extreme key count (e.g., 30k entries)</td>
+<td>mitigate</td>
+<td>Postgres&#39;s IN-list size limit is implementation-bounded (typically OK up to ~100k items via parameter binding, much higher than via inline literals). The narrowing branch already limits the working set to CSV-keyed tuples; the worst case is &quot;narrowed SELECT returns all of contacts&quot; which is exactly the previous full-table SELECT scan we are replacing. Strict improvement.</td>
+</tr>
+<tr>
+<td>T-06-18</td>
+<td>I (information disclosure)</td>
+<td>Aggregate error message includes raw exception via <code>${String(err)}</code></td>
+<td>accept</td>
+<td>Same disclosure surface as the existing per-row error reporting (lines 141 of pre-Phase-6 file). No new information leak; the error reaches an authenticated user only.</td>
+</tr>
+<tr>
+<td>T-06-19</td>
+<td>T (data integrity)</td>
+<td>Re-import of an archived linkedin_url incorrectly skipped via ON CONFLICT</td>
+<td><strong>mitigate by Plan 01 schema predicate</strong></td>
+<td>Plan 01&#39;s partial UNIQUE index predicate is <code>WHERE linkedin_url IS NOT NULL AND archived_at IS NULL</code> (BLOCKER 1 fix). The archived-row scope is excluded from the UNIQUE constraint, so re-importing a previously-archived URL creates a fresh active row instead of silently no-opping. Test 8c (Task 2) pins this invariant: seed an archived contact with <code>linkedin_url=&#39;X&#39;</code>, POST a CSV row with the same URL, assert response <code>{created:1, skipped:0}</code> AND that the new row&#39;s <code>archived_at IS NULL</code>. No SUMMARY-level escalation needed — this is fully resolved at the schema layer.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. Greppable regression: `grep -v '^#' src/app/api/contacts/import/route.ts | grep -c "for.*await db\.insert(contacts)"` returns `0` (D-21).
+2. Greppable security: `grep -c "sql.raw" src/app/api/contacts/import/route.ts` returns `0`.
+3. Bulk-insert presence: `grep -c "onConflictDoNothing({ target: contacts.linkedinUrl })" src/app/api/contacts/import/route.ts` returns exactly `1`.
+4. Soft-delete invariant: `grep -c "isNull(contacts.archivedAt)" src/app/api/contacts/import/route.ts` returns exactly `1` (the narrowed SELECT).
+5. `npx tsc --noEmit` exits 0.
+6. `npm run test:run -- src/app/api/contacts/import/route.test.ts` exits 0 with all 9 tests passing.
+7. `npm run test:run` (full suite) exits 0.
+8. `npm run build` exits 0.
+</verification><success_criteria>
+- POST /api/contacts/import issues exactly one bulk INSERT and one narrowed SELECT per call (regardless of CSV row count) — verified by Test 8a/8b's split-branch coverage and by code review of the handler shape.
+- URL dedup happens DB-side via ON CONFLICT against the ACTIVE-rows-only partial UNIQUE index from Plan 1 — verified by Test 4 (pre-existing active row → created=0) AND by Test 8c (archived row does NOT block re-import → created=1).
+- Name+company dedup uses a narrowed SELECT keyed only on CSV-row tuples — verified by Test 5 and Test 8b (null-URL rows deduped by name+company branch alone).
+- The two dedup branches are pinned INDEPENDENTLY by Tests 8a and 8b (WARNING 4 fix) — each branch has its own evidence path.
+- Empty CSV is a no-op — verified by Test 7 (header-only CSV, no rows, no SQL writes, no timeline).
+- Timeline event emitted at most once per call, guarded by `created > 0` — verified by Test 4 (created=0 → no event).
+- The re-import-of-archived invariant is preserved at the schema layer (BLOCKER 1 fix) — verified by Test 8c. No SUMMARY-level escalation required.
+</success_criteria><output>
+After completion, create `.planning/phases/06-performance/06-04-SUMMARY.md` capturing:
+- The exact tuple-key expression chosen for the narrowed SELECT (lower-pipe-concatenation per the plan, or another equivalent).
+- The `returning({ id: contacts.id })` row count behavior on PGlite vs neon-http (any divergence noted).
+- Confirmation that Test 8c passes: the archived row stays archived, a fresh active row is created with the same URL — pinning the CONTEXT §Out-of-scope re-import invariant at the data-layer.
+- Whether the 1500-contact production import workload has observable behavioral change (estimated, not benchmarked).
+</output>
+</content>
+</invoke>
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-04-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

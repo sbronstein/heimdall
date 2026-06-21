@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+verified: 2026-05-14T18:00:00Z
+status: human_needed
+score: 4/4 must-haves verified
+overrides_applied: 0
+human_verification:</p>
+<ul>
+<li>test: &quot;Confirm GET /api/job-leads/[id]/recommendations meta envelope shape is acceptable for all consumers&quot;
+expected: &quot;Either (a) CR-01 is acknowledged as intentional (nested meta inside data) and all CLI/UI callers confirmed to use body.data.meta, or (b) the route is fixed to use paginated() placing meta at the top-level envelope per API-V1 contract&quot;
+why_human: &quot;The route returns success({recommendations, meta:{...}}) producing body.data.meta rather than the standard body.meta. The test enforces this shape by accessing body.data.meta. The review flagged this as CR-01 (critical). Whether this is an intentional deviation or a contract regression that needs fixing before phase is considered complete requires a human decision — automated checks cannot determine consumer intent.&quot;</li>
+</ul>
+<hr>
+<h1>Phase 6: Performance Verification Report</h1>
+<p><strong>Phase Goal:</strong> The 1500-contact dataset operations (import, scrape match, triage categorize) run without N+1 round-trips, and hot-path columns are indexed
+<strong>Verified:</strong> 2026-05-14T18:00:00Z
+<strong>Status:</strong> human_needed
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>/api/job-leads/[id]/prospects</code> runs inside <code>db.transaction()</code> performing single bulk prospect insert + inline <code>matchConnections</code> + status flip atomically</td>
+<td>VERIFIED</td>
+<td><code>src/app/api/job-leads/[id]/prospects/route.ts:66</code> — <code>db.transaction(async (tx) =&gt; {...})</code> wraps <code>tx.insert(prospects)</code>, <code>matchConnections(tx, id, ...)</code>, and <code>tx.update(jobLeads)</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>match-connections.ts</code> performs single bulk bridge insert via <code>onConflictDoNothing()</code> (no per-row loop)</td>
+<td>VERIFIED</td>
+<td><code>src/features/job-leads/lib/match-connections.ts:137</code> — <code>tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code>. Grep confirms 0 <code>for.*await.*tx.insert</code> patterns</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>/api/contacts/import/categorize</code> updates all contacts in a single SQL statement (not per-row)</td>
+<td>VERIFIED</td>
+<td><code>src/app/api/contacts/import/categorize/route.ts:58-65</code> — single <code>db.execute(sql\</code>UPDATE contacts ... FROM (VALUES ${valuesList})`)<code>. Grep confirms 0 </code>for.*await db.update` patterns</td>
+</tr>
+<tr>
+<td>4</td>
+<td>All 5 hot-path indexes (<code>contacts(archived_at)</code>, <code>contacts(linkedin_url)</code> partial UNIQUE, <code>contacts(company_id)</code>, <code>contacts(linkedin_connection_date)</code>, <code>companies(name)</code>) declared in schema and applied via migration 0008</td>
+<td>VERIFIED</td>
+<td><code>drizzle/schema/contacts.ts:60-70</code> (4 entries) + <code>drizzle/schema/companies.ts:62</code> (1 entry). Migration <code>0008_phase6_indexes.sql</code> contains 5 DDL statements. Journal entry idx=8 tag=<code>0008_phase6_indexes</code> confirmed present</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>/api/contacts/import</code> and <code>match-connections.ts</code> no longer do full-table <code>contacts</code> scans — dedup pushed DB-side</td>
+<td>VERIFIED</td>
+<td><code>import/route.ts</code>: single <code>onConflictDoNothing({target: contacts.linkedinUrl, where: sql\</code>...`})<code>+ narrowed</code>sql.join<code>SELECT (not</code>SELECT * FROM contacts<code>). </code>match-connections.ts<code>: narrowed token-keyed SELECT with </code>isNull(archivedAt)<code>guard and</code>sql.join` parameterized IN-list</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 4/4 ROADMAP Success Criteria verified (SC#1 = truths 1+2, SC#2 = truth 3, SC#3 = truth 4, SC#4 = truth 5)</p>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/job-leads/[id]/prospects/route.ts</code></td>
+<td>Transaction wrap + inline matchConnections + logTimeline post-commit</td>
+<td>VERIFIED</td>
+<td><code>db.transaction</code> at line 66; <code>matchConnections(tx,...)</code> at line 73; <code>logTimeline</code> after <code>await db.transaction(...)</code> at line 96</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/match-connections.ts</code></td>
+<td>Narrowed contacts SELECT + bulk bridge insert via tx</td>
+<td>VERIFIED</td>
+<td>Token-set narrowing at lines 56-79; single <code>tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code> at line 137</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/categorize/route.ts</code></td>
+<td>Single <code>db.execute(sql\</code>UPDATE contacts ... FROM (VALUES)`)`</td>
+<td>VERIFIED</td>
+<td>Single bulk UPDATE at lines 58-65; empty-input early return at line 23-25</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.ts</code></td>
+<td>Bulk INSERT + <code>onConflictDoNothing</code> + narrowed name+company SELECT</td>
+<td>VERIFIED</td>
+<td>Narrowed SELECT lines 113-129; bulk insert with <code>onConflictDoNothing({target, where})</code> lines 140-175</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.ts</code></td>
+<td>Pure read — no db.update/insert/delete; buildRecommendations wired</td>
+<td>VERIFIED</td>
+<td>Zero <code>db.update</code>, <code>db.insert</code>, <code>db.delete</code> references; <code>computeBridgeScore</code> only in comment (not imported); <code>buildRecommendations</code> called at line 42</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/contacts.ts</code></td>
+<td>4 index declarations (3 btree + 1 partial uniqueIndex)</td>
+<td>VERIFIED</td>
+<td>Lines 60-70: <code>contacts_archived_at_idx</code>, <code>contacts_linkedin_url_unique_idx</code> (partial UNIQUE), <code>contacts_company_id_idx</code>, <code>contacts_linkedin_connection_date_idx</code></td>
+</tr>
+<tr>
+<td><code>drizzle/schema/companies.ts</code></td>
+<td>1 index declaration on name</td>
+<td>VERIFIED</td>
+<td>Line 62: <code>companies_name_idx</code></td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/0008_phase6_indexes.sql</code></td>
+<td>5 DDL statements (4 CREATE INDEX + 1 CREATE UNIQUE INDEX with partial predicate)</td>
+<td>VERIFIED</td>
+<td>5 statements; partial UNIQUE predicate <code>WHERE &quot;contacts&quot;.&quot;linkedin_url&quot; IS NOT NULL AND &quot;contacts&quot;.&quot;archived_at&quot; IS NULL</code> confirmed</td>
+</tr>
+<tr>
+<td><code>drizzle/migrations/meta/_journal.json</code></td>
+<td>Journal entry idx=8 tag=0008_phase6_indexes</td>
+<td>VERIFIED</td>
+<td>Entry present at idx=8</td>
+</tr>
+<tr>
+<td><code>src/lib/db/__phase6_indexes__.test.ts</code></td>
+<td>pg_indexes regression test with 2 assertions (index presence + partial predicate)</td>
+<td>VERIFIED</td>
+<td>2 <code>it()</code> blocks: names check and <code>LINKEDIN_URL IS NOT NULL AND ARCHIVED_AT IS NULL</code> predicate assertion</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/categorize/route.test.ts</code></td>
+<td>6 tests (happy path, single-statement evidence, RETURNING count, empty input, idempotency, Zod validation)</td>
+<td>VERIFIED</td>
+<td>6 <code>it()</code> blocks confirmed</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.test.ts</code></td>
+<td>9 tests (3 original + Tests 4, 5, 7, 8a, 8b, 8c)</td>
+<td>VERIFIED</td>
+<td>9 <code>it()</code> blocks confirmed including Test 8c (re-import-of-archived)</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/prospects/route.test.ts</code></td>
+<td>4+ tests (existing + bridges, rollback, idempotency)</td>
+<td>VERIFIED</td>
+<td>10 <code>it()</code> blocks — includes Test 7 (bridges), Test 8 (rollback pinning zero prospects/bridges/timeline), Test 9 (idempotency 400 on second call)</td>
+</tr>
+<tr>
+<td><code>src/app/api/job-leads/[id]/recommendations/route.test.ts</code></td>
+<td>6 tests (happy path, no-writes, no-timeline, empty, idempotency, 404)</td>
+<td>VERIFIED</td>
+<td>6 <code>it()</code> blocks confirmed</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>prospects/route.ts</code></td>
+<td><code>match-connections.ts</code></td>
+<td><code>matchConnections(tx, id, validated.prospects)</code> inside <code>db.transaction</code></td>
+<td>VERIFIED</td>
+<td>Line 73 of route.ts; <code>matchConnections</code> exported from match-connections.ts with <code>tx: Tx</code> as first arg</td>
+</tr>
+<tr>
+<td><code>match-connections.ts</code></td>
+<td><code>prospect_bridge_unique</code> constraint</td>
+<td><code>tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code></td>
+<td>VERIFIED</td>
+<td>Line 137; <code>onConflictDoNothing()</code> without target lets Postgres infer the <code>prospect_bridge_unique</code> constraint</td>
+</tr>
+<tr>
+<td><code>contacts/import/route.ts</code></td>
+<td><code>contacts_linkedin_url_unique_idx</code> (migration 0008)</td>
+<td><code>.onConflictDoNothing({target: contacts.linkedinUrl, where: sql\</code>...`})`</td>
+<td>VERIFIED</td>
+<td>Lines 171-174; WHERE clause mirrors partial index predicate exactly</td>
+</tr>
+<tr>
+<td><code>drizzle/schema/contacts.ts</code></td>
+<td><code>0008_phase6_indexes.sql</code></td>
+<td>Schema declarations → <code>npm run db:generate</code></td>
+<td>VERIFIED</td>
+<td>Migration emits all 5 expected DDL statements matching schema declarations</td>
+</tr>
+<tr>
+<td><code>categorize/route.ts</code></td>
+<td>single SQL statement</td>
+<td><code>db.execute(sql\</code>UPDATE contacts SET ... FROM (VALUES ...)`)`</td>
+<td>VERIFIED</td>
+<td>Lines 58-65; one <code>db.execute</code> call per PATCH request</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>Not applicable: Phase 6 modified API routes and library functions (not components that render dynamic data from state). The routes are backend-only mutations/reads — their &quot;data flow&quot; is the SQL round-trip itself, verified at Level 2-3.</p>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Check</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>db.transaction</code> wrap present in prospects route</td>
+<td><code>grep -q &quot;db.transaction&quot; src/app/api/job-leads/[id]/prospects/route.ts</code></td>
+<td>Found at line 66</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No per-row bridge insert</td>
+<td><code>grep -c &quot;for.*await.*tx.insert&quot; src/features/job-leads/lib/match-connections.ts</code></td>
+<td>0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No per-row contact UPDATE</td>
+<td><code>grep -c &quot;for.*await db.update&quot; src/app/api/contacts/import/categorize/route.ts</code></td>
+<td>0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No per-row contact INSERT</td>
+<td><code>grep -v &#39;^#&#39; src/app/api/contacts/import/route.ts | grep -c &quot;for.*await db.insert(contacts)&quot;</code></td>
+<td>0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Recommendations route is pure read</td>
+<td><code>grep -v &#39;^#&#39; recommendations/route.ts | grep -c &quot;db\.update|db\.insert|db\.delete&quot;</code></td>
+<td>0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>computeBridgeScore NOT imported in recommendations</td>
+<td><code>grep -c &quot;computeBridgeScore&quot; recommendations/route.ts</code></td>
+<td>1 (comment only, confirmed)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>No sql.raw in modified files</td>
+<td>grep for sql.raw in 4 key files</td>
+<td>2 matches — both in comments (&quot;NOT sql.raw&quot;)</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Migration journal at idx=8</td>
+<td><code>_journal.json</code> entry for tag <code>0008_phase6_indexes</code></td>
+<td>idx=8 confirmed</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Partial UNIQUE predicate contains both halves</td>
+<td>grep migration SQL for <code>IS NOT NULL AND</code></td>
+<td>Present: <code>WHERE &quot;contacts&quot;.&quot;linkedin_url&quot; IS NOT NULL AND &quot;contacts&quot;.&quot;archived_at&quot; IS NULL</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>ROADMAP SC#1 updated to /prospects</td>
+<td><code>grep &quot;api/job-leads/\[id\]/prospects&quot; .planning/ROADMAP.md</code></td>
+<td>Found in SC#1 text</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>ROADMAP HTML companion updated</td>
+<td><code>grep &quot;api/job-leads/\[id\]/prospects&quot; .planning/views/ROADMAP.html</code></td>
+<td>Found</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<p>Step 7c: No phase-declared probes found. Not a migration/tooling phase that uses <code>scripts/*/tests/probe-*.sh</code>. SKIPPED.</p>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PERF-A1</td>
+<td>06-02, 06-05</td>
+<td>Bulk-insert prospects + eliminate recommendations N+1</td>
+<td>SATISFIED</td>
+<td><code>/prospects</code> route uses <code>tx.insert(prospects).values(rows)</code>; recommendations route has 0 db.update calls. Note: REQUIREMENTS.md text still references <code>/api/job-leads/[id]/search</code> (stale — not updated when ROADMAP SC#1 was refreshed in Plan 02). Implementation satisfies the ROADMAP contract.</td>
+</tr>
+<tr>
+<td>PERF-A2</td>
+<td>06-02</td>
+<td>Bulk-insert prospect bridges in <code>match-connections.ts</code></td>
+<td>SATISFIED</td>
+<td><code>tx.insert(prospectBridges).values(bridgeValues).onConflictDoNothing()</code> at match-connections.ts:137</td>
+</tr>
+<tr>
+<td>PERF-A3</td>
+<td>06-03</td>
+<td>Batch closeness updates in <code>/api/contacts/import/categorize</code></td>
+<td>SATISFIED</td>
+<td>Single <code>db.execute(sql\</code>UPDATE contacts ... FROM (VALUES)`)` replacing per-row loop</td>
+</tr>
+<tr>
+<td>PERF-A4</td>
+<td>06-01</td>
+<td>Add 5 hot-path index() definitions + migration</td>
+<td>SATISFIED</td>
+<td>5 indexes in schema (4 contacts + 1 companies), 5 DDL in 0008 migration, pg_indexes regression test pinning both index names and partial predicate</td>
+</tr>
+<tr>
+<td>PERF-A5</td>
+<td>06-02, 06-04</td>
+<td>Eliminate full contacts table scans in import + match-connections</td>
+<td>SATISFIED</td>
+<td><code>import/route.ts</code> uses narrowed <code>sql.join</code> IN-list SELECT + <code>onConflictDoNothing</code>; <code>match-connections.ts</code> uses token-set narrowed SELECT</td>
+</tr>
+</tbody></table>
+<p>All 5 PERF-A requirements satisfied by implementation evidence. REQUIREMENTS.md Traceability status column still shows &quot;Pending&quot; — this is a doc state lag, not an implementation gap (ROADMAP is the authoritative contract).</p>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>recommendations/route.ts</code></td>
+<td>44-51</td>
+<td><code>meta</code> nested inside <code>data</code> via <code>success({recommendations, meta:{...}})</code> — deviates from API-V1 <code>ApiResponse&lt;T&gt;</code> contract where <code>meta</code> is top-level</td>
+<td>WARNING (from 06-REVIEW.md CR-01)</td>
+<td>CLI/UI consumers accessing <code>body.meta</code> get <code>undefined</code>; must use <code>body.data.meta</code> instead. Tests enforce the non-standard shape (line 104: <code>body.data.meta.totalBridges</code>). Advisory per review workflow rules but flagged for human decision</td>
+</tr>
+<tr>
+<td><code>prospects/route.ts</code></td>
+<td>78-79</td>
+<td><code>prospectCount: rows.length</code> (requested count, not inserted count) — no RETURNING on prospect insert to capture actual insertedCount</td>
+<td>WARNING (from 06-REVIEW.md CR-02)</td>
+<td>Functionally correct today (no prospects dedup), but fragile if future dedup is added. Advisory per review workflow rules</td>
+</tr>
+</tbody></table>
+<p>No <code>TBD</code>, <code>FIXME</code>, or <code>XXX</code> debt markers found in any Phase 6 modified files.</p>
+<h3>Human Verification Required</h3>
+<h4>1. CR-01: <code>GET /recommendations</code> meta envelope shape</h4>
+<p><strong>Test:</strong> Call <code>GET /api/job-leads/{id}/recommendations</code> from a CLI consumer (e.g., <code>claude</code> skill or curl with bearer token). Check whether <code>body.meta</code> (top-level) returns <code>undefined</code> vs <code>body.data.meta</code> (nested) returns the counts.</p>
+<p><strong>Expected:</strong> Either (a) confirm all callers already use <code>body.data.meta</code> and the nested shape is intentional — in which case add an <code>overrides:</code> entry to this VERIFICATION.md frontmatter accepting the deviation; OR (b) fix the route to use <code>paginated({ recommendations }, { totalProspects, totalBridges, totalContacts })</code> and update the test assertions from <code>body.data.meta.*</code> to <code>body.meta.*</code>.</p>
+<p><strong>Why human:</strong> The route produces <code>{ success: true, data: { recommendations: [...], meta: {...} } }</code>. The standard <code>ApiResponse&lt;T&gt;</code> type and <code>paginated()</code> helper place <code>meta</code> at the top level. Whether this is an acceptable deviation or a contract regression depends on what consumers exist (the skill at <code>.claude/skills/scrape-linkedin-connections/</code> may parse this response). Automated grep cannot determine consumer intent.</p>
+<h3>Gaps Summary</h3>
+<p>No implementation gaps found. All 4 ROADMAP Success Criteria are verifiably satisfied in the codebase. The single human verification item (CR-01 meta envelope shape in the recommendations route) is not a blocking gap against the phase goal — the route is a pure read as required (no N+1 writes), the phase goal is about N+1 elimination and indexing — but the envelope deviation from API-V1 needs a human decision before the phase can be fully signed off.</p>
+<p>The two advisory issues from the code review (CR-01 envelope shape, CR-02 prospectCount from request length) do not block the Phase 6 performance goal but should be resolved in a follow-up or explicitly accepted via overrides.</p>
+<hr>
+<p><em>Verified: 2026-05-14T18:00:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

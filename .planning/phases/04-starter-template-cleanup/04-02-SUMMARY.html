@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 02
+subsystem: ui
+tags: [cleanup, starter-template, deletion, infobar, nextjs-app-router]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 04-starter-template-cleanup-01
+provides: DEBT-A1 products + product-route cleanup that established the atomic-commit-per-DEBT pattern and the pre-existing prioritization.ts:70 deferred-items entry
+provides:</li>
+<li>DEBT-A2 satisfied — three starter dashboard routes deleted (exclusive, workspaces, billing)</li>
+<li>Infobar UI machinery (4 files, ~960 LOC) removed transitively (infobar.tsx 805 lines + info-button.tsx + info-sidebar.tsx + infoconfig.ts)</li>
+<li>Dashboard layout simplified to plain KBar/SidebarProvider/AppSidebar/SidebarInset/SearchCommand chrome (no right-side info panel)</li>
+<li>PageContainer and Heading no longer carry the infoContent?: InfobarContent prop
+affects: [04-starter-template-cleanup-03, 04-starter-template-cleanup-04, 04-starter-template-cleanup-05]</li>
+</ul>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;Load-bearing edit ordering for transitive deletion: drop props first (turns call sites into TS errors), delete consumers next, strip wrappers, delete the providing module LAST so build never goes red without its consumers&#39; breakage being deterministic&quot;</p>
+<p>key-files:
+  created: []
+  modified:
+    - src/app/dashboard/layout.tsx
+    - src/components/layout/page-container.tsx
+    - src/components/ui/heading.tsx
+  deleted:
+    - src/app/dashboard/exclusive/page.tsx
+    - src/app/dashboard/workspaces/page.tsx
+    - src/app/dashboard/workspaces/team/[[...rest]]/page.tsx
+    - src/app/dashboard/billing/page.tsx
+    - src/components/ui/infobar.tsx
+    - src/components/ui/info-button.tsx
+    - src/components/layout/info-sidebar.tsx
+    - src/config/infoconfig.ts</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;D-04 (transitive removal): infobar.tsx deleted alongside its 3 satellite files + wrapper strip + prop removal, not in isolation&quot;</li>
+<li>&quot;D-06 (no replacement panel): dashboard layout simplified with no replacement slot for InfoSidebar&quot;</li>
+<li>&quot;D-11 (route directories): three starter route dirs deleted outright; Next.js framework default 404 takes over per PD-05&quot;</li>
+<li>&quot;D-19 (atomic-per-DEBT commit): one commit ca82a84 covers all 11 file changes for DEBT-A2&quot;</li>
+<li>&quot;Edit ordering per specifics: prop-drop first, delete starter pages, delete machinery satellites, strip layout wrapper, delete infobar.tsx LAST&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Transitive-deletion ordering: surface every consumer as a TS error before deleting them, so the deletion driver list is deterministic rather than guessed&quot;</li>
+<li>&quot;Scout-confirmed call-site exclusivity: confirm via grep that infoContent&#39;s only callers are the routes being deleted before dropping the prop, so no Heimdall feature page is silently affected&quot;</li>
+</ul>
+<p>requirements-completed:</p>
+<ul>
+<li>DEBT-A2</li>
+</ul>
+<h2>duration: 7min
+completed: 2026-05-13</h2>
+<h1>Phase 4 Plan 02: DEBT-A2 — Starter Routes + Infobar Machinery Teardown Summary</h1>
+<p><strong>Three starter dashboard routes deleted (exclusive, workspaces, billing) plus complete transitive teardown of the 805-line Infobar UI machinery (infobar.tsx, info-button.tsx, info-sidebar.tsx, infoconfig.ts) — single atomic commit, ~1,440 LOC removed.</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~7 min</li>
+<li><strong>Started:</strong> 2026-05-13T02:30:00Z (approximate)</li>
+<li><strong>Completed:</strong> 2026-05-13T02:36:35Z</li>
+<li><strong>Tasks:</strong> 3 (executed atomically; single commit at end per D-19)</li>
+<li><strong>Files changed:</strong> 11 (8 deletions, 3 modifications)</li>
+<li><strong>LOC delta:</strong> +8 / -1,439 (per <code>git show --stat</code>)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Deleted 4 starter dashboard route files across 3 route directories (<code>/dashboard/exclusive</code>, <code>/dashboard/workspaces</code>, <code>/dashboard/workspaces/team/[[...rest]]</code>, <code>/dashboard/billing</code>)</li>
+<li>Deleted 4 Infobar machinery files: <code>src/components/ui/infobar.tsx</code> (805 lines), <code>src/components/ui/info-button.tsx</code>, <code>src/components/layout/info-sidebar.tsx</code>, <code>src/config/infoconfig.ts</code></li>
+<li>Stripped <code>InfobarProvider</code> + <code>&lt;InfoSidebar side=&#39;right&#39; /&gt;</code> wrapper from <code>src/app/dashboard/layout.tsx</code> — dashboard layout now matches the D-06 &quot;AFTER&quot; diagram exactly</li>
+<li>Dropped <code>infoContent?: InfobarContent</code> prop (and the <code>InfoButton</code> invocation) from <code>src/components/layout/page-container.tsx</code> and <code>src/components/ui/heading.tsx</code></li>
+<li>Verified zero Heimdall feature pages were affected — every <code>infoContent={...}</code> call site (4 total) was owned by the 4 deleted starter routes (pre-existing scout claim confirmed)</li>
+<li>Grep cleanliness: <code>grep -rn &#39;Infobar|InfoSidebar|InfoButton|infoContent&#39; src/</code> returns zero hits post-commit</li>
+</ul>
+<h2>Task Commits</h2>
+<p>Per D-19, this plan ships as a <strong>single atomic commit</strong> covering all 3 tasks:</p>
+<ol>
+<li><strong>Task 1: Drop <code>infoContent</code> prop from PageContainer and Heading</strong> — included in <code>ca82a84</code></li>
+<li><strong>Task 2: Delete four starter route directories (exclusive, workspaces, billing)</strong> — included in <code>ca82a84</code></li>
+<li><strong>Task 3: Delete Infobar machinery files + strip wrapper from dashboard layout + atomic commit</strong> — <code>ca82a84</code></li>
+</ol>
+<p>The plan&#39;s <code>&lt;done&gt;</code> block on Task 1 and Task 2 explicitly says <strong>do not commit between tasks</strong> because the build is intentionally red mid-plan until Task 3 deletes the consumers. The atomic commit lands all 11 files at once.</p>
+<p><strong>Atomic commit:</strong> <code>ca82a84</code> — <code>feat(04): DEBT-A2 — delete starter routes + Infobar machinery</code></p>
+<h2>Files Created / Modified / Deleted</h2>
+<h3>Modified (3)</h3>
+<ul>
+<li><code>src/app/dashboard/layout.tsx</code> — Removed <code>InfoSidebar</code> and <code>InfobarProvider</code> imports; stripped the <code>&lt;InfobarProvider defaultOpen={false}&gt;...&lt;InfoSidebar side=&#39;right&#39; /&gt;&lt;/InfobarProvider&gt;</code> wrapper. New layout: <code>&lt;KBar&gt;&lt;SidebarProvider&gt;&lt;AppSidebar /&gt;&lt;SidebarInset&gt;{Header + children}&lt;/SidebarInset&gt;&lt;/SidebarProvider&gt;&lt;SearchCommand /&gt;&lt;/KBar&gt;</code>.</li>
+<li><code>src/components/layout/page-container.tsx</code> — Removed <code>import type { InfobarContent }</code>; dropped the <code>infoContent?: InfobarContent</code> prop from both the destructured params and the type annotation; removed <code>infoContent={infoContent}</code> from both <code>&lt;Heading&gt;</code> call sites (scrollable + non-scrollable branches).</li>
+<li><code>src/components/ui/heading.tsx</code> — Rewritten without <code>InfoButton</code> import, <code>InfobarContent</code> import, the <code>infoContent?: InfobarContent</code> field, or the <code>{infoContent &amp;&amp; &lt;InfoButton .../&gt;}</code> JSX block. Heading now renders only the <code>&lt;h2&gt;</code> title and <code>&lt;p&gt;</code> description.</li>
+</ul>
+<h3>Deleted (8)</h3>
+<ul>
+<li><code>src/app/dashboard/exclusive/page.tsx</code> — Starter Clerk org Pro-plan gating demo</li>
+<li><code>src/app/dashboard/workspaces/page.tsx</code> — Starter Clerk workspaces page</li>
+<li><code>src/app/dashboard/workspaces/team/[[...rest]]/page.tsx</code> — Starter Clerk team workspaces page</li>
+<li><code>src/app/dashboard/billing/page.tsx</code> — Starter billing demo page</li>
+<li><code>src/components/ui/infobar.tsx</code> (805 lines) — The headline DEBT-A2 deletion target; was the sole <code>InfobarContent</code>/<code>InfobarProvider</code>/<code>useInfobar</code> provider</li>
+<li><code>src/components/ui/info-button.tsx</code> — InfoButton component (consumed only by Heading)</li>
+<li><code>src/components/layout/info-sidebar.tsx</code> — Right-side info panel (consumed only by dashboard/layout.tsx)</li>
+<li><code>src/config/infoconfig.ts</code> — Static <code>InfobarContent</code> config for the 4 starter routes (workspacesInfoContent, teamInfoContent, billingInfoContent, productInfoContent — the productInfoContent was already orphaned in 04-01)</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>Atomic commit per D-19:</strong> Confirmed by Phase 3 + Phase 4 plan 01 precedent — one commit per DEBT-Ax requirement. All 11 file changes shipped as <code>ca82a84</code>.</li>
+<li><strong>Edit ordering per <code>&lt;specifics&gt;</code>:</strong> Dropped <code>infoContent</code> prop FIRST (Task 1) so every remaining call site surfaced as a TS error, which deterministically drove Task 2&#39;s route deletions. Then deleted machinery satellites, stripped layout wrapper, and deleted <code>infobar.tsx</code> LAST so the providing module disappeared only after every consumer was gone.</li>
+<li><strong>Build verified per spec:</strong> <code>npm run build</code> introduces NO new errors beyond the pre-existing <code>src/features/job-leads/lib/prioritization.ts:70</code> failure (logged in <code>deferred-items.md</code> by 04-01). DEBT-A2 verification is grep-cleanliness + no-new-errors, not a clean build (which would require resolving the deferred prioritization.ts:70 blocker first).</li>
+<li><strong>org-switcher.tsx left alone:</strong> The orphan component <code>src/components/org-switcher.tsx</code> retains two <code>router.push(&#39;/dashboard/workspaces&#39;)</code> references. Per CONTEXT.md <code>&lt;deferred&gt;</code>, this component is not named in DEBT-A2 and is explicitly deferred. Acceptable.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written. Edit ordering followed <code>&lt;specifics&gt;</code> verbatim; no auto-fixes were needed; no architectural changes (Rule 4) were encountered.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><strong><code>npm run build</code> does not exit 0</strong> — but this is the pre-existing <code>prioritization.ts:70</code> failure documented in <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code> by Plan 04-01. Per the executor objective, DEBT-A2 verification is &quot;grep cleanliness (zero <code>infoContent</code> hits, zero <code>InfobarProvider</code> hits) + <code>npm run build</code> NOT introducing any NEW errors beyond the documented prioritization.ts:70 one.&quot; Build output confirms only the pre-existing error remains; no new errors introduced.</li>
+</ul>
+<h2>CLAUDE.md Compliance</h2>
+<p>Project CLAUDE.md directives reviewed pre-commit:</p>
+<ul>
+<li><strong>No new server actions</strong> — All deletions; no new code paths. ✓</li>
+<li><strong>TypeScript strict mode</strong> — All edits are clean: removed unused imports (<code>InfobarContent</code>, <code>InfoButton</code>); no new <code>any</code> types; no unused-variable warnings. ✓</li>
+<li><strong>Named exports</strong> — <code>Heading</code> remains a named export; <code>PageContainer</code> remains a default export per Next.js page/layout convention but the prop signature is unchanged otherwise. ✓</li>
+<li><strong>No raw SQL / no API route changes</strong> — N/A (pure UI cleanup). ✓</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<p>Files claimed deleted:</p>
+<ul>
+<li><code>src/components/ui/infobar.tsx</code> — MISSING (correct: deleted) ✓</li>
+<li><code>src/components/ui/info-button.tsx</code> — MISSING (correct: deleted) ✓</li>
+<li><code>src/components/layout/info-sidebar.tsx</code> — MISSING (correct: deleted) ✓</li>
+<li><code>src/config/infoconfig.ts</code> — MISSING (correct: deleted) ✓</li>
+<li><code>src/app/dashboard/exclusive/</code> — MISSING (correct: directory deleted) ✓</li>
+<li><code>src/app/dashboard/workspaces/</code> — MISSING (correct: directory deleted) ✓</li>
+<li><code>src/app/dashboard/billing/</code> — MISSING (correct: directory deleted) ✓</li>
+</ul>
+<p>Files claimed modified:</p>
+<ul>
+<li><code>src/app/dashboard/layout.tsx</code> — FOUND, no Infobar references ✓</li>
+<li><code>src/components/layout/page-container.tsx</code> — FOUND, no infoContent references ✓</li>
+<li><code>src/components/ui/heading.tsx</code> — FOUND, no InfoButton/InfobarContent/infoContent references ✓</li>
+</ul>
+<p>Commits:</p>
+<ul>
+<li><code>ca82a84</code> — FOUND, subject <code>feat(04): DEBT-A2 — delete starter routes + Infobar machinery</code> ✓</li>
+</ul>
+<p>Grep cleanliness:</p>
+<ul>
+<li><code>grep -rn &#39;Infobar|InfoSidebar|InfoButton|infoContent&#39; src/</code> → zero hits ✓</li>
+</ul>
+<h2>Next Plan Readiness</h2>
+<ul>
+<li><strong>04-03 (DEBT-A3 kanban removal):</strong> No file-set overlap with this plan — disjoint per CONTEXT.md <code>&lt;plan_grouping&gt;</code>. Ready.</li>
+<li><strong>04-04 (DEBT-A5 unused import):</strong> Touches <code>src/app/api/job-leads/[id]/search/route.ts</code> only — disjoint. Ready.</li>
+<li><strong>04-05 (DEBT-A4 + verification, Wave 2):</strong> Blocked on Wave 1 completion (this plan is Wave 1, plan 2 of 4). Once 04-03 and 04-04 land, Wave 2 can proceed.</li>
+<li><strong>Pre-existing <code>prioritization.ts:70</code> build error:</strong> Still blocking <code>npm run build</code> clean exit for all Phase 4 plans. Recommended follow-up tracked in <code>deferred-items.md</code>.</li>
+</ul>
+<hr>
+<p><em>Phase: 04-starter-template-cleanup</em>
+<em>Plan: 02</em>
+<em>Completed: 2026-05-13</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

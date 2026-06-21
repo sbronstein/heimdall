@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 03
+subsystem: testing
+tags: [vitest, pglite, api-routes, csv-parsing, timeline, cursor-pagination, soft-delete]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 02-test-infrastructure/01
+provides: createTestDb() PGlite harness + callRoute() helper + npm test scripts</li>
+<li>phase: 02-test-infrastructure/02
+provides: Pure-logic test coverage establishing vi.hoisted + Proxy as canonical pattern</li>
+</ul>
+<p>provides:</p>
+<ul>
+<li>src/app/api/applications/[id]/status/route.test.ts — 4 tests: valid transition, invalid transition, not-found, Zod failure + timeline side-effect</li>
+<li>src/app/api/contacts/import/route.test.ts — 3 tests: happy path with fixture, missing file, dedup-within-import + timeline side-effect</li>
+<li>src/app/api/contacts/import/<strong>fixtures</strong>/linkedin-connections.csv — synthetic LinkedIn export with preamble, header, 3 valid rows, 1 malformed row</li>
+<li>src/app/api/contacts/route.test.ts — 4 tests: cursor pagination, hasMore, empty result, soft-delete exclusion</li>
+</ul>
+<p>affects: [02-test-infrastructure, 03-security-hardening, 04-api-cleanup, 05-job-leads]</p>
+<p>tech-stack:
+  added: []
+  patterns:
+    - vi.hoisted + Proxy indirection for @/lib/db mock — allows per-test fresh PGlite binding without vi.doMock gymnastics
+    - Dynamic import() inside each it() block — ensures route sees the mocked singleton on every test
+    - Timeline side-effect assertion via dbRef.current.select().from(timelineEvents) — D-07 contract enforced
+    - Cursor ordering via explicit updatedAt seed values — makes pagination assertions deterministic
+    - as unknown as double-cast for Proxy return type — required when PGlite Drizzle type lacks string-index signature</p>
+<p>key-files:
+  created:
+    - src/app/api/applications/[id]/status/route.test.ts
+    - src/app/api/contacts/import/route.test.ts
+    - src/app/api/contacts/import/<strong>fixtures</strong>/linkedin-connections.csv
+    - src/app/api/contacts/route.test.ts</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;vi.hoisted + Proxy mandated over vi.doMock — single mock registration, per-test rebind via dbRef.current = await createTestDb() in beforeEach&quot;</li>
+<li>&quot;Proxy cast requires (dbRef.current as unknown as Record&lt;string|symbol, unknown&gt;) — PGlite Drizzle type lacks string-index signature, direct cast fails strict TS overlap check&quot;</li>
+<li>&quot;PATCH handler needs as unknown as Parameters<typeof callRoute>[0] cast — narrower params type { id: string } vs RouteHandler&#39;s Record&lt;string,string&gt;&quot;</li>
+<li>&quot;Dynamic import() inside each it() block keeps route module isolated per test without module cache clearing&quot;</li>
+<li>&quot;Explicit updatedAt seed values (2026-01-01, 01-02, 01-03) make cursor = oldest-visible assertions deterministic&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;DB-integration tests: vi.hoisted + Proxy + dynamic import() inside each it() + dbRef.current seed in beforeEach&quot;</li>
+<li>&quot;Timeline side-effect verification: query timelineEvents after route call, assert eventType/title/metadata — no separate mock of @/lib/db/timeline&quot;</li>
+<li>&quot;Cursor assertion pattern: body.meta.cursor === data[data.length-1].updatedAt.toISOString() (oldest visible, not newest)&quot;</li>
+<li>&quot;Soft-delete exclusion test: update archivedAt, call GET, assert archived contact absent, cursor uses oldest non-archived&quot;</li>
+</ul>
+<p>requirements-completed: [TEST-A2]</p>
+<h2>duration: 5min
+completed: &quot;2026-05-12&quot;</h2>
+<h1>Phase 2 Plan 03: DB-Backed API Route Integration Tests Summary</h1>
+<p><strong>Three colocated route.test.ts files + LinkedIn CSV fixture give DB-backed integration coverage: status-transition + timeline side-effect (4 tests), CSV import + preamble strip + dedup (3 tests), cursor-paginated GET + soft-delete filter (4 tests) — 11 tests, all passing</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~5 min</li>
+<li><strong>Started:</strong> 2026-05-12T22:30:03Z</li>
+<li><strong>Completed:</strong> 2026-05-12T22:34:49Z</li>
+<li><strong>Tasks:</strong> 3</li>
+<li><strong>Files modified:</strong> 4 (3 test files created, 1 fixture CSV created)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Established <code>vi.hoisted</code> + Proxy as the canonical DB-singleton swap pattern for all DB-integration tests — no <code>vi.doMock</code> anywhere</li>
+<li><code>PATCH /api/applications/[id]/status</code> fully covered: valid <code>researching→applied</code> transition sets <code>appliedDate</code>, writes exactly one <code>timeline_events</code> row with correct <code>eventType</code>/<code>applicationId</code>/<code>metadata.from+to</code>; invalid transition returns 400 with zero timeline rows; not-found returns 404; Zod failure returns 400</li>
+<li><code>POST /api/contacts/import</code> covered with a colocated synthetic CSV fixture containing LinkedIn preamble, 3 valid rows, 1 malformed row; happy path verifies <code>contacts</code> row count, <code>importSource</code>/<code>closeness</code>/<code>tags</code>, and <code>timeline_events</code> row with <code>contacts_imported</code> eventType; dedup-within-import test confirms <code>created:1 skipped:1</code> for duplicate URLs</li>
+<li><code>GET /api/contacts</code> covered with deterministic cursor ordering via explicit <code>updatedAt</code> seed values; <code>meta.cursor</code> asserted as oldest-visible contact&#39;s ISO timestamp; <code>hasMore:true</code> and soft-delete exclusion both covered</li>
+<li>74 total tests passing (63 pure-logic from 02-02 + 11 new DB-integration); <code>npx tsc --noEmit</code> passes with zero errors outside the known pre-existing <code>prioritization.ts</code>/<code>scrape-connections.ts</code> TS2802 issues</li>
+</ul>
+<h2>Test File it() Counts</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>it() count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>src/app/api/applications/[id]/status/route.test.ts</td>
+<td>4</td>
+</tr>
+<tr>
+<td>src/app/api/contacts/import/route.test.ts</td>
+<td>3</td>
+</tr>
+<tr>
+<td>src/app/api/contacts/route.test.ts</td>
+<td>4</td>
+</tr>
+<tr>
+<td><strong>Total new</strong></td>
+<td><strong>11</strong></td>
+</tr>
+<tr>
+<td><strong>Grand total (all test files)</strong></td>
+<td><strong>74</strong></td>
+</tr>
+</tbody></table>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically:</p>
+<ol>
+<li><strong>Task 1: Application status PATCH + timeline side-effect</strong> - <code>7613beb</code> (test)</li>
+<li><strong>Task 2: Contacts/import CSV + timeline + envelope</strong> - <code>505f22c</code> (test)</li>
+<li><strong>Task 3: Contacts GET pagination envelope + soft-delete + Rule 1 tsc fixes</strong> - <code>bfbb587</code> (test)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>src/app/api/applications/[id]/status/route.test.ts</code> — 4 it() blocks covering valid transition, invalid transition, not-found, Zod failure; happy-path asserts timeline row eventType/applicationId/metadata</li>
+<li><code>src/app/api/contacts/import/route.test.ts</code> — 3 it() blocks: fixture happy path, missing-file 400, dedup-within-import</li>
+<li><code>src/app/api/contacts/import/__fixtures__/linkedin-connections.csv</code> — synthetic LinkedIn export: 3 preamble lines + blank + header + 3 valid rows + 1 malformed row (missing First Name)</li>
+<li><code>src/app/api/contacts/route.test.ts</code> — 4 it() blocks: cursor/hasMore happy path, hasMore:true, empty result, soft-delete exclusion</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>vi.hoisted + Proxy mandated</strong>: Single <code>vi.mock(&#39;@/lib/db&#39;, ...)</code> registration with Proxy getter reading through <code>dbRef.current</code>. Each <code>beforeEach</code> rebinds <code>dbRef.current = await createTestDb()</code>. No <code>vi.doMock</code> or <code>afterEach(() =&gt; vi.resetModules())</code> needed.</li>
+<li><strong>Dynamic import() per it()</strong>: <code>const { PATCH } = await import(&#39;@/app/api/applications/[id]/status/route&#39;)</code> inside each test ensures the route module sees the already-registered mock on every test. Using top-level static import would resolve before vi.mock runs.</li>
+<li><strong>Explicit updatedAt seeds</strong>: Contacts seeded with <code>new Date(&#39;2026-01-01T00:00:00.000Z&#39;)</code> etc. to make <code>desc(updatedAt)</code> ordering deterministic — avoids millisecond-level race conditions in timestamp-based cursor tests.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] TypeScript strict-mode cast for Proxy get handler</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 (tsc --noEmit verification pass)</li>
+<li><strong>Issue:</strong> <code>(dbRef.current as Record&lt;string | symbol, unknown&gt;)</code> fails TS2352 — <code>PgliteDatabase &amp; { $client: PGlite }</code> doesn&#39;t overlap sufficiently with <code>Record&lt;string|symbol, unknown&gt;</code> because the Drizzle type lacks a string-index signature</li>
+<li><strong>Fix:</strong> Changed to <code>(dbRef.current as unknown as Record&lt;string | symbol, unknown&gt;)</code> — double-cast through <code>unknown</code> is the correct pattern for non-overlapping types</li>
+<li><strong>Files modified:</strong> All 3 test files</li>
+<li><strong>Verification:</strong> <code>npx tsc --noEmit</code> zero errors in new test files</li>
+<li><strong>Committed in:</strong> <code>bfbb587</code> (Task 3 commit)</li>
+</ul>
+<p><strong>2. [Rule 1 - Bug] TypeScript narrow-params cast for PATCH handler in callRoute()</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 3 (tsc --noEmit verification pass)</li>
+<li><strong>Issue:</strong> <code>PATCH</code> handler type is <code>(request: Request, { params }: { params: Promise&lt;{ id: string }&gt; }) =&gt; Promise&lt;Response&gt;</code> — narrower than <code>callRoute</code>&#39;s <code>RouteHandler</code> which has <code>ctx?: { params: Promise&lt;Record&lt;string, string&gt;&gt; }</code> (optional, wider). TypeScript rejects the assignment without a cast.</li>
+<li><strong>Fix:</strong> <code>callRoute(PATCH as unknown as Parameters&lt;typeof callRoute&gt;[0], ...)</code> at all 4 call sites in the status route test</li>
+<li><strong>Files modified:</strong> <code>src/app/api/applications/[id]/status/route.test.ts</code></li>
+<li><strong>Verification:</strong> <code>npx tsc --noEmit</code> zero errors</li>
+<li><strong>Committed in:</strong> <code>bfbb587</code> (Task 3 commit)</li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 2 auto-fixed (both Rule 1 — TypeScript type correctness under strict mode)
+<strong>Impact on plan:</strong> Both fixes necessary for <code>npx tsc --noEmit</code> pass criterion. Runtime behavior unchanged — tests ran correctly before tsc fixes too. No scope creep.</p>
+<h2>Fixture Data Confirmation</h2>
+<p>All names, emails, companies, and LinkedIn URLs in <code>__fixtures__/linkedin-connections.csv</code> are synthetic:</p>
+<ul>
+<li>Names: Alice Anderson, Bob Brown, Carol Chen (clearly fictional)</li>
+<li>Emails: <code>alice@example.com</code>, <code>bob@example.com</code>, <code>carol@example.com</code> (example.com domain, RFC 2606)</li>
+<li>LinkedIn URLs: <code>https://linkedin.com/in/alice-anderson</code> etc. (not real profiles)</li>
+<li>Companies: Acme Corp, Beta Ltd, Gamma Inc, Delta Co (generic placeholder names)</li>
+<li>No real-person information in the test corpus (T-02-06 mitigated)</li>
+</ul>
+<h2>Cursor Assertion Confirmation</h2>
+<p>The GET /api/contacts test asserts <code>meta.cursor</code> as the <strong>oldest visible</strong> contact&#39;s <code>updatedAt.toISOString()</code>, not the newest. This matches the source at <code>contacts/route.ts</code> line 91: <code>data[data.length - 1].updatedAt.toISOString()</code> — where <code>data[data.length - 1]</code> is the oldest (last item after <code>orderBy desc(updatedAt)</code>). The soft-delete test explicitly verifies the cursor uses the oldest REMAINING non-archived contact, not the archived one.</p>
+<h2>Mock Pattern Confirmation</h2>
+<p>All 3 test files use <code>vi.hoisted</code> + Proxy indirection exclusively. <code>grep -c &#39;vi.doMock&#39;</code> returns 0 for all 3 files.</p>
+<h2>Known Stubs</h2>
+<p>None — all assertions use real database rows, real route handler responses, and real timeline inserts via the un-mocked <code>logTimeline</code>.</p>
+<h2>Threat Flags</h2>
+<p>None — no new network endpoints, auth paths, or file access patterns introduced. Fixture data is entirely synthetic (T-02-06 mitigated).</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li><code>--reporter=basic</code> flag is not valid in Vitest 4.1.6; used default reporter for all verification runs.</li>
+<li>Shell bracket escaping makes direct <code>npx vitest run &quot;src/app/api/applications/[id]/...&quot;</code> fail; used <code>npm run test:run -- &quot;status/route.test&quot;</code> pattern instead.</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<p>All files confirmed present:</p>
+<ul>
+<li><code>src/app/api/applications/[id]/status/route.test.ts</code> — FOUND</li>
+<li><code>src/app/api/contacts/import/route.test.ts</code> — FOUND</li>
+<li><code>src/app/api/contacts/import/__fixtures__/linkedin-connections.csv</code> — FOUND</li>
+<li><code>src/app/api/contacts/route.test.ts</code> — FOUND</li>
+<li><code>.planning/phases/02-test-infrastructure/02-03-SUMMARY.md</code> — FOUND</li>
+</ul>
+<p>All commits confirmed:</p>
+<ul>
+<li><code>7613beb</code> — test(02-03): applications status PATCH + timeline side-effect — FOUND</li>
+<li><code>505f22c</code> — test(02-03): contacts/import CSV + timeline + envelope — FOUND</li>
+<li><code>bfbb587</code> — test(02-03): contacts GET pagination envelope + soft-delete — FOUND</li>
+<li><code>d772841</code> — docs(02-03): complete DB-backed API route integration tests plan — FOUND</li>
+</ul>
+<p>All plan verification checks passed:</p>
+<ul>
+<li>74 tests pass (<code>npm run test:run</code> exits 0)</li>
+<li><code>npx tsc --noEmit</code> 0 new errors</li>
+<li>No real env/name/key references in test files (count: 0)</li>
+<li><code>eventType</code> occurrences in status test: 2 (&gt;=2 required)</li>
+<li><code>contacts_imported</code> occurrences in import test: 2 (&gt;=1 required)</li>
+<li><code>archivedAt</code> occurrences in contacts GET test: 2 (&gt;=1 required)</li>
+<li><code>vi.doMock</code> occurrences in any test file: 0 (must be 0)</li>
+</ul>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>All TEST-A2 DB-integration surfaces covered (D-11.1 read path, D-11.2 canTransition enforcement, D-11.3 logTimeline side-effect, D-11.4 CSV parsing)</li>
+<li>02-04 (BUG-01 regression tests) can proceed — harness is stable and all 74 tests pass</li>
+<li><code>npx tsc --noEmit</code> passes with zero new errors</li>
+</ul>
+<hr>
+<p><em>Phase: 02-test-infrastructure</em>
+<em>Completed: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

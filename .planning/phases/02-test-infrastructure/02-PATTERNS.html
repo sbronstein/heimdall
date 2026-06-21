@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 2: Test Infrastructure - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-05-12
+<strong>Files analyzed:</strong> 14 new files
+<strong>Analogs found:</strong> 14 / 14 (note: no test-file analogs exist — this is a greenfield test harness. Analogs are configuration/wiring patterns and the source-under-test modules whose signatures the tests must respect.)</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>vitest.config.ts</code></td>
+<td>config</td>
+<td>n/a</td>
+<td><code>drizzle.config.ts</code>, <code>next.config.ts</code></td>
+<td>wiring-pattern</td>
+</tr>
+<tr>
+<td><code>src/test-utils/pglite.ts</code></td>
+<td>utility (test infra)</td>
+<td>DB bootstrap</td>
+<td><code>src/lib/db/index.ts</code>, <code>drizzle/seed.ts</code></td>
+<td>wiring-pattern</td>
+</tr>
+<tr>
+<td><code>src/test-utils/call-route.ts</code></td>
+<td>utility (test infra)</td>
+<td>request-response</td>
+<td>API route handler signature (<code>src/app/api/contacts/route.ts</code>)</td>
+<td>signature-mirror</td>
+</tr>
+<tr>
+<td><code>src/lib/api/types.test.ts</code></td>
+<td>test (pure logic)</td>
+<td>transform</td>
+<td><code>src/lib/api/types.ts</code> (source under test)</td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/lib/domain/pipeline.test.ts</code></td>
+<td>test (pure logic)</td>
+<td>transform</td>
+<td><code>src/lib/domain/pipeline.ts</code> (source under test)</td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/lib/api/filters.test.ts</code></td>
+<td>test (pure logic)</td>
+<td>transform</td>
+<td><code>src/lib/api/filters.ts</code> (source under test)</td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/prioritization.test.ts</code></td>
+<td>test (pure logic)</td>
+<td>transform</td>
+<td><code>src/features/job-leads/lib/prioritization.ts</code></td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/features/job-leads/lib/seniority.test.ts</code></td>
+<td>test (pure logic)</td>
+<td>transform</td>
+<td><code>src/features/job-leads/lib/seniority.ts</code></td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/import/route.test.ts</code></td>
+<td>test (DB integration)</td>
+<td>request-response</td>
+<td><code>src/app/api/contacts/import/route.ts</code> + <code>__fixtures__/linkedin-connections.csv</code></td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/app/api/applications/[id]/status/route.test.ts</code></td>
+<td>test (DB integration)</td>
+<td>request-response</td>
+<td><code>src/app/api/applications/[id]/status/route.ts</code></td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/app/api/contacts/route.test.ts</code></td>
+<td>test (DB integration)</td>
+<td>request-response, CRUD</td>
+<td><code>src/app/api/contacts/route.ts</code></td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/components/layout/app-sidebar.test.tsx</code></td>
+<td>test (component, SSR + hydration)</td>
+<td>render-only</td>
+<td><code>src/components/layout/app-sidebar.tsx</code>, <code>src/components/user-avatar-profile.tsx</code></td>
+<td>source-mirror</td>
+</tr>
+<tr>
+<td><code>src/features/.../__fixtures__/linkedin-connections.csv</code></td>
+<td>fixture</td>
+<td>data</td>
+<td>LinkedIn export format documented inline in <code>route.ts</code> (lines 13-21, 39-48)</td>
+<td>format-mirror</td>
+</tr>
+<tr>
+<td><code>package.json</code> (modify)</td>
+<td>config</td>
+<td>n/a</td>
+<td>existing <code>scripts</code> block</td>
+<td>additive</td>
+</tr>
+</tbody></table>
+<h2>Pattern Assignments</h2>
+<h3><code>vitest.config.ts</code> (config)</h3>
+<p><strong>Analog:</strong> <code>drizzle.config.ts</code> + <code>tsconfig.json</code> path aliases</p>
+<p><strong>Imports + define pattern</strong> (<code>drizzle.config.ts</code> lines 1-13):</p>
+<pre><code class="language-ts">import { config } from &#39;dotenv&#39;;
+import { defineConfig } from &#39;drizzle-kit&#39;;
+
+config({ path: &#39;.env.local&#39; });
+
+export default defineConfig({
+  out: &#39;./drizzle/migrations&#39;,
+  schema: &#39;./drizzle/schema/index.ts&#39;,
+  dialect: &#39;postgresql&#39;,
+  dbCredentials: {
+    url: process.env.DATABASE_URL!
+  }
+});
+</code></pre>
+<p><strong>Path-alias resolution</strong> (must mirror <code>tsconfig.json</code> lines 21-28):</p>
+<pre><code class="language-json">&quot;paths&quot;: {
+  &quot;@/*&quot;: [&quot;./src/*&quot;],
+  &quot;~/*&quot;: [&quot;./public/*&quot;]
+}
+</code></pre>
+<p><strong>Apply pattern:</strong> Use <code>defineConfig</code> from <code>vitest/config</code>. Default <code>environment: &#39;node&#39;</code>. Wire path alias <code>@/*</code> → <code>./src/*</code> via <code>resolve.alias</code> so test files can do <code>import { canTransition } from &#39;@/lib/domain/pipeline&#39;</code> (D-09, D-10). Single config — no projects mode. The jsdom test opts in via <code>// @vitest-environment jsdom</code> pragma at the top of the file.</p>
+<p><strong>Project convention reminders</strong> (from <code>CLAUDE.md</code> + CONVENTIONS):</p>
+<ul>
+<li>Single quotes, 2-space indent, no trailing commas, no semicolon omission</li>
+<li><code>process.env.DATABASE_URL!</code> non-null assertion is the established env pattern</li>
+</ul>
+<hr>
+<h3><code>src/test-utils/pglite.ts</code> (utility)</h3>
+<p><strong>Analog:</strong> <code>src/lib/db/index.ts</code> (Drizzle client wiring) + <code>drizzle/seed.ts</code> (programmatic Drizzle setup)</p>
+<p><strong>Singleton + drizzle init pattern</strong> (<code>src/lib/db/index.ts</code> lines 1-7):</p>
+<pre><code class="language-ts">import { neon } from &#39;@neondatabase/serverless&#39;;
+import { drizzle } from &#39;drizzle-orm/neon-http&#39;;
+import * as schema from &#39;../../../drizzle/schema&#39;;
+
+const sql = neon(process.env.DATABASE_URL!);
+
+export const db = drizzle(sql, { schema });
+</code></pre>
+<p><strong>Programmatic drizzle init from a script</strong> (<code>drizzle/seed.ts</code> lines 1-8):</p>
+<pre><code class="language-ts">import { config } from &#39;dotenv&#39;;
+config({ path: &#39;.env.local&#39; });
+import { neon } from &#39;@neondatabase/serverless&#39;;
+import { drizzle } from &#39;drizzle-orm/neon-http&#39;;
+import { pipelineStages } from &#39;./schema&#39;;
+
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
+</code></pre>
+<p><strong>Apply pattern:</strong> Export a single named helper <code>createTestDb()</code> (per D-05, D-08, CD-04, CD-05). Internally:</p>
+<ol>
+<li>Construct a fresh PGlite instance (<code>new PGlite()</code>).</li>
+<li>Bind it to Drizzle via <code>drizzle()</code> — use <code>drizzle-orm/pglite</code> adapter (the planner picks the exact import; the wiring shape mirrors <code>neon-http</code> above with the same <code>{ schema }</code> second argument).</li>
+<li>Apply migrations from <code>drizzle/migrations/</code> (CD-04 — planner picks <code>migrate()</code> vs. <code>drizzle-kit push</code> vs. raw SQL replay; the contract is: every test gets a freshly-migrated PGlite with no leakage).</li>
+<li>Return the <code>db</code> instance; caller is responsible for <code>vi.mock(&#39;@/lib/db&#39;, () =&gt; ({ db }))</code> binding (D-05, D-07 — <code>logTimeline</code> reaches the same singleton, so the timeline assertions just query <code>timelineEvents</code> table after the route runs).</li>
+</ol>
+<p><strong>Migration file count to apply</strong> (<code>drizzle/migrations/</code> directory):</p>
+<ul>
+<li><code>0000_luxuriant_redwing.sql</code> through <code>0006_add_job_leads.sql</code> — 7 files total + <code>meta/</code></li>
+</ul>
+<hr>
+<h3><code>src/test-utils/call-route.ts</code> (utility)</h3>
+<p><strong>Analog:</strong> Route handler signatures across <code>src/app/api/**/route.ts</code></p>
+<p><strong>Standard route handler signatures</strong> (from <code>src/app/api/applications/[id]/status/route.ts</code> lines 15-18 and <code>src/app/api/contacts/route.ts</code> lines 41, 99):</p>
+<pre><code class="language-ts">// No-params route:
+export async function GET(request: Request) { ... }
+export async function POST(request: Request) { ... }
+
+// With-params route (Next.js 16 async params):
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) { ... }
+</code></pre>
+<p><strong>Apply pattern:</strong> Export <code>callRoute(handler, { method, body, params, searchParams })</code> per the specifics block (line 147 of CONTEXT.md). Internally builds a <code>new Request(url, { method, body: JSON.stringify(body) })</code>, wraps <code>params</code> in <code>Promise.resolve(...)</code>, awaits the handler, and returns the parsed JSON body alongside the <code>Response</code> status. Mirrors the exact shape Next.js passes so route handlers run unchanged.</p>
+<hr>
+<h3><code>src/lib/api/types.test.ts</code> (test — pure logic, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/lib/api/types.ts</code></p>
+<p><strong>Source signatures to assert against</strong> (lines 1-39 of source):</p>
+<pre><code class="language-ts">export type ApiResponse&lt;T&gt; = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  meta?: { total?: number; cursor?: string | null; hasMore?: boolean };
+};
+
+export function success&lt;T&gt;(data: T, status = 200): Response
+export function created&lt;T&gt;(data: T): Response  // delegates to success(data, 201)
+export function paginated&lt;T&gt;(data: T[], meta: {...}): Response
+export function error(message: string, status = 400): Response
+</code></pre>
+<p><strong>Cross-reference for error envelope</strong> (<code>src/lib/api/errors.ts</code> lines 1-21):</p>
+<pre><code class="language-ts">export function notFound(entity: string)        // 404, { success: false, error: `${entity} not found` }
+export function validationError(message: string) // 400, { success: false, error: message }
+export function serverError(error: unknown)     // 500, console.error then { success: false, error: &#39;Internal server error&#39; }
+</code></pre>
+<p><strong>Apply pattern:</strong></p>
+<ul>
+<li>Call each factory directly, <code>await response.json()</code>, assert envelope shape: <code>{ success: true, data: ... }</code> for happy paths, <code>{ success: false, error: ... }</code> for errors (D-11.1).</li>
+<li>Assert correct status codes (200 default, 201 for <code>created</code>, 400 default for <code>error</code>, 404 for <code>notFound</code>, 500 for <code>serverError</code>).</li>
+<li><code>serverError</code> writes to <code>console.error(&#39;API Error:&#39;, err)</code> — spy on it; required so <code>no-console: warn</code> doesn&#39;t break and so the assertion is deterministic.</li>
+</ul>
+<hr>
+<h3><code>src/lib/domain/pipeline.test.ts</code> (test — pure logic, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/lib/domain/pipeline.ts</code></p>
+<p><strong>Transition graph</strong> (source lines 1-44):</p>
+<pre><code class="language-ts">const validTransitions: Record&lt;string, string[]&gt; = {
+  researching: [&#39;applied&#39;, &#39;withdrawn&#39;],
+  applied: [&#39;recruiter_screen&#39;, &#39;rejected&#39;, &#39;ghosted&#39;, &#39;withdrawn&#39;, &#39;on_hold&#39;],
+  // ...
+  offer: [&#39;negotiating&#39;, &#39;accepted&#39;, &#39;rejected&#39;, &#39;withdrawn&#39;],
+  negotiating: [&#39;accepted&#39;, &#39;rejected&#39;, &#39;withdrawn&#39;],
+  on_hold: [&#39;applied&#39;, &#39;recruiter_screen&#39;, &#39;phone_interview&#39;, &#39;withdrawn&#39;, &#39;ghosted&#39;]
+};
+
+const terminalStates = [&#39;accepted&#39;, &#39;rejected&#39;, &#39;withdrawn&#39;, &#39;ghosted&#39;];
+</code></pre>
+<p><strong>Functions to test</strong> (source lines 46-55):</p>
+<pre><code class="language-ts">export function canTransition(from: string, to: string): boolean {
+  if (terminalStates.includes(from)) return false;
+  return validTransitions[from]?.includes(to) ?? false;
+}
+export function isTerminalState(status: string): boolean { ... }
+export { validTransitions, terminalStates };
+</code></pre>
+<p><strong>Apply pattern</strong> (D-11.2):</p>
+<ul>
+<li>Valid forward moves: <code>expect(canTransition(&#39;researching&#39;, &#39;applied&#39;)).toBe(true)</code>, etc. — iterate the <code>validTransitions</code> map.</li>
+<li>Blocked from terminal: <code>for (const t of terminalStates) expect(canTransition(t, &#39;applied&#39;)).toBe(false)</code>.</li>
+<li>Blocked invalid jumps: <code>expect(canTransition(&#39;researching&#39;, &#39;offer&#39;)).toBe(false)</code>, <code>expect(canTransition(&#39;applied&#39;, &#39;accepted&#39;)).toBe(false)</code>.</li>
+<li><code>isTerminalState</code> exhaustive: every value of <code>applicationStatusValues</code> (imported from <code>@/lib/domain/types</code>) returns the right boolean.</li>
+</ul>
+<hr>
+<h3><code>src/lib/api/filters.test.ts</code> (test — pure logic, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/lib/api/filters.ts</code> (lines 1-19, full file):</p>
+<pre><code class="language-ts">export function parseArrayParam(param: string | null): string[] | null { ... }
+export function parseCursor(param: string | null): Date | null {
+  if (!param) return null;
+  const date = new Date(param);
+  return isNaN(date.getTime()) ? null : date;
+}
+export function parseLimit(param: string | null, max = 100): number {
+  const limit = parseInt(param || &#39;20&#39;, 10);
+  if (isNaN(limit) || limit &lt; 1) return 20;
+  return Math.min(limit, max);
+}
+</code></pre>
+<p><strong>Apply pattern</strong> (D-12 — keep small, ~5 cases each per specifics line 148):</p>
+<ul>
+<li><code>parseCursor</code>: valid ISO string returns Date, invalid string returns null, null returns null, empty string returns null (treated as falsy → null per <code>if (!param)</code>).</li>
+<li><code>parseLimit</code>: null → 20, valid number → that number, <code>&#39;0&#39;</code> → 20 (because <code>&lt; 1</code>), value above max → clamped to max, non-numeric → 20.</li>
+<li><code>parseArrayParam</code>: comma-list → trimmed array, <code>&#39;a, , b&#39;</code> → <code>[&#39;a&#39;,&#39;b&#39;]</code>, null → null.</li>
+</ul>
+<hr>
+<h3><code>src/features/job-leads/lib/prioritization.test.ts</code> (test — pure logic, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/features/job-leads/lib/prioritization.ts</code></p>
+<p><strong>Formula and weights</strong> (source lines 4-43):</p>
+<pre><code class="language-ts">const closenessWeights: Record&lt;string, number&gt; = {
+  close_friend: 100, close_colleague: 90, friend: 75, colleague: 60,
+  career_contact: 45, acquaintance: 30, linkedin_only: 15, never_met: 5
+};
+
+function recencyWeight(lastContactDate: Date | null): number {
+  if (!lastContactDate) return 0;
+  const daysSince = (Date.now() - lastContactDate.getTime()) / (1000 * 60 * 60 * 24);
+  return Math.max(0, 100 - daysSince / 3.65);
+}
+
+export function computeBridgeScore(prospect: Prospect, contact: Contact): number {
+  const seniority = seniorityWeights[prospect.seniorityLevel] ?? 15;
+  const closeness = closenessWeights[contact.closeness ?? &#39;acquaintance&#39;] ?? 30;
+  const recency = recencyWeight(contact.lastContactDate);
+  return Math.round(0.4 * seniority + 0.35 * closeness + 0.25 * recency);
+}
+</code></pre>
+<p><strong><code>buildRecommendations</code> aggregation</strong> (source lines 45-76):</p>
+<pre><code class="language-ts">// Overall contact score = max of their bridge scores
+for (const rec of byContact.values()) {
+  rec.score = Math.max(...rec.prospects.map((p) =&gt; p.bridgeScore));
+  rec.prospects.sort((a, b) =&gt; b.bridgeScore - a.bridgeScore);
+}
+return Array.from(byContact.values()).sort((a, b) =&gt; b.score - a.score);
+</code></pre>
+<p><strong>Apply pattern</strong> (D-11.5):</p>
+<ul>
+<li>Weight composition: feed a known <code>Prospect</code> (e.g. <code>seniorityLevel: &#39;vp&#39;</code> → weight 85) and <code>Contact</code> (<code>closeness: &#39;close_friend&#39;</code> → 100, <code>lastContactDate: new Date()</code> → ~100). Assert <code>Math.round(0.4*85 + 0.35*100 + 0.25*100)</code> = 94.</li>
+<li>Bounds: assert <code>0 &lt;= score &lt;= 100</code> across a fuzz of inputs (use <code>@faker-js/faker</code> from <code>devDependencies</code> per CONTEXT line 117).</li>
+<li>Monotonicity sanity: raising <code>seniority</code> from <code>ic</code> (20) to <code>c_suite</code> (100) with all else equal must increase the score.</li>
+<li><code>buildRecommendations</code>: when same contact appears in multiple bridges, overall <code>score === max(prospects[].bridgeScore)</code> and <code>prospects</code> array is sorted desc.</li>
+</ul>
+<p><strong>Type signature reminders</strong> (from <code>src/lib/domain/types.ts</code> and <code>prioritization.ts</code>):</p>
+<pre><code class="language-ts">export type ProspectWithBridge = Prospect &amp; { bridge: ProspectBridge };
+export type PrioritizedRecommendation = {
+  contact: Contact;
+  score: number;
+  prospects: Array&lt;{ prospect: Prospect; bridgeScore: number }&gt;;
+};
+</code></pre>
+<hr>
+<h3><code>src/features/job-leads/lib/seniority.test.ts</code> (test — pure logic, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/features/job-leads/lib/seniority.ts</code></p>
+<p><strong>Rules table</strong> (source lines 9-45):</p>
+<pre><code class="language-ts">const rules: SeniorityRule[] = [
+  { patterns: /\b(chief|ceo|cto|cfo|coo|cmo|cpo|c-suite)\b/i, level: &#39;c_suite&#39;, weight: 100 },
+  { patterns: /\b(vp|vice\s+president)\b/i, level: &#39;vp&#39;, weight: 85 },
+  { patterns: /\bdirector\b/i, level: &#39;director&#39;, weight: 70 },
+  { patterns: /\b(senior\s+manager|head\s+of)\b/i, level: &#39;senior_manager&#39;, weight: 55 },
+  { patterns: /\bmanager\b/i, level: &#39;manager&#39;, weight: 40 },
+  { patterns: /\b(senior|staff|principal|lead)\b/i, level: &#39;senior_ic&#39;, weight: 30 },
+  { patterns: /\b(entry|intern|junior|associate)\b/i, level: &#39;entry_level&#39;, weight: 10 }
+];
+</code></pre>
+<p><strong>Function shape</strong> (source lines 50-66):</p>
+<pre><code class="language-ts">export function inferSeniority(title: string): { level: SeniorityLevel; weight: number }
+</code></pre>
+<p><strong>Apply pattern</strong> (D-12):</p>
+<ul>
+<li>One assertion per rule with a representative title: <code>&#39;Chief Data Officer&#39;</code> → <code>c_suite/100</code>, <code>&#39;VP of Engineering&#39;</code> → <code>vp/85</code>, <code>&#39;Senior Director&#39;</code> → <code>director/70</code> (director wins because rules array order), etc.</li>
+<li>Edge cases: empty string → <code>unknown/15</code>, <code>&#39;Software Engineer&#39;</code> (matches roleWordPattern only) → <code>ic/20</code>, gibberish <code>&#39;Banana&#39;</code> → <code>unknown/15</code>.</li>
+<li>Order-sensitivity: <code>&#39;Senior Manager&#39;</code> must hit the <code>senior_manager</code> rule BEFORE the looser <code>senior</code> rule (regression guard for rule order changes).</li>
+</ul>
+<hr>
+<h3><code>src/app/api/contacts/import/route.test.ts</code> (test — DB integration, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/app/api/contacts/import/route.ts</code></p>
+<p><strong>Route shape</strong> (source lines 23-48):</p>
+<pre><code class="language-ts">export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get(&#39;file&#39;);
+    const defaultCloseness = defaultClosenessSchema.parse(
+      formData.get(&#39;defaultCloseness&#39;) || &#39;acquaintance&#39;
+    );
+    if (!file || !(file instanceof File)) return validationError(&#39;CSV file is required&#39;);
+
+    let text = await file.text();
+    // LinkedIn CSV exports include a notes preamble before the actual headers.
+    const headerIndex = text.indexOf(&#39;First Name&#39;);
+    if (headerIndex &gt; 0) text = text.substring(headerIndex);
+
+    const parsed = Papa.parse&lt;LinkedInRow&gt;(text, {
+      header: true, skipEmptyLines: true,
+      transformHeader: (h: string) =&gt; h.trim()
+    });
+    ...
+</code></pre>
+<p><strong>Expected LinkedIn CSV columns</strong> (source lines 13-21):</p>
+<pre><code class="language-ts">interface LinkedInRow {
+  &#39;First Name&#39;?: string;
+  &#39;Last Name&#39;?: string;
+  &#39;Email Address&#39;?: string;
+  &#39;Company&#39;?: string;
+  &#39;Position&#39;?: string;
+  &#39;Connected On&#39;?: string;
+  &#39;URL&#39;?: string;
+}
+</code></pre>
+<p><strong>Timeline side-effect</strong> (source lines 145-151):</p>
+<pre><code class="language-ts">if (created &gt; 0) {
+  await logTimeline({
+    eventType: &#39;contacts_imported&#39;,
+    title: `Imported ${created} contacts from LinkedIn CSV`,
+    metadata: { created, skipped, errors: errors.length }
+  });
+}
+</code></pre>
+<p><strong>Apply pattern</strong> (D-11.4 + D-11.3):</p>
+<ol>
+<li><code>beforeEach</code>: <code>const db = await createTestDb(); vi.mock(&#39;@/lib/db&#39;, () =&gt; ({ db }))</code>.</li>
+<li>Happy path: build a <code>FormData</code> with a sample LinkedIn CSV (UTF-8, header row present, 3 valid rows). Construct <code>new Request(&#39;http://localhost/api/contacts/import&#39;, { method: &#39;POST&#39;, body: formData })</code>. Call <code>POST(request)</code>. Assert response is <code>{ success: true, data: { created: 3, skipped: 0, errors: [] } }</code> and that <code>db.select().from(contacts)</code> returns 3 rows.</li>
+<li>Edge case (preamble): CSV with LinkedIn&#39;s notes-preamble text before <code>First Name</code> — must still parse (verifies the <code>headerIndex &gt; 0</code> strip logic).</li>
+<li>Edge case (malformed row): one row missing <code>First Name</code> — must record an error in <code>errors[]</code> but not crash. Other valid rows succeed.</li>
+<li>Edge case (empty file): <code>validationError(&#39;CSV file is required&#39;)</code> returns <code>{ success: false, error: ... }</code> with status 400.</li>
+<li>Timeline assertion (D-07, D-11.3): after success, query the real <code>timeline_events</code> table via PGlite; expect exactly one row with <code>eventType: &#39;contacts_imported&#39;</code> and a <code>title</code> matching <code>/Imported 3 contacts/</code>.</li>
+</ol>
+<p><strong>Fixture location</strong> (D-04, CONTEXT line 33):</p>
+<ul>
+<li><code>src/app/api/contacts/import/__fixtures__/linkedin-connections.csv</code> — colocated with the test. No global fixtures dir.</li>
+</ul>
+<hr>
+<h3><code>src/app/api/applications/[id]/status/route.test.ts</code> (test — DB integration, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/app/api/applications/[id]/status/route.ts</code></p>
+<p><strong>Validation + transition flow</strong> (source lines 15-77):</p>
+<pre><code class="language-ts">export async function PATCH(request: Request, { params }: { params: Promise&lt;{ id: string }&gt; }) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { status: newStatus } = statusChangeSchema.parse(body);
+
+    const [application] = await db.select().from(applications).where(eq(applications.id, id));
+    if (!application) return notFound(&#39;Application&#39;);
+
+    const oldStatus = application.status;
+    if (!canTransition(oldStatus, newStatus)) {
+      return validationError(`Invalid transition: ${oldStatus} -&gt; ${newStatus}`);
+    }
+
+    const [updated] = await db.update(applications).set({
+      status: newStatus, statusChangedAt: new Date(), updatedAt: new Date(),
+      ...(newStatus === &#39;applied&#39; &amp;&amp; !application.appliedDate ? { appliedDate: new Date() } : {}),
+      lastActivityDate: new Date()
+    }).where(eq(applications.id, id)).returning();
+
+    const [company] = await db.select({ name: companies.name })
+      .from(companies).where(eq(companies.id, application.companyId));
+
+    await logTimeline({
+      eventType: &#39;application_status_changed&#39;,
+      title: `${company?.name || &#39;Unknown&#39;}: ${oldStatus.replace(&#39;_&#39;, &#39; &#39;)} -&gt; ${newStatus.replace(&#39;_&#39;, &#39; &#39;)}`,
+      applicationId: id, companyId: application.companyId,
+      metadata: { from: oldStatus, to: newStatus }
+    });
+
+    return success(updated);
+  } catch (err) { ... }
+}
+</code></pre>
+<p><strong>Apply pattern</strong> (D-11.1, D-11.2, D-11.3 — the write-path + transition + timeline + envelope trifecta):</p>
+<ol>
+<li>Seed a <code>company</code> and <code>application</code> (status <code>&#39;researching&#39;</code>) in PGlite via Drizzle inserts (use the same shape as <code>drizzle/seed.ts</code> for pipeline_stages, adapt for the entity).</li>
+<li>Valid transition: <code>callRoute(PATCH, { method: &#39;PATCH&#39;, body: { status: &#39;applied&#39; }, params: { id } })</code>. Assert 200, <code>{ success: true, data: { status: &#39;applied&#39;, ... } }</code>, and that <code>timeline_events</code> has one new row with <code>eventType: &#39;application_status_changed&#39;</code>.</li>
+<li>Invalid transition: body <code>{ status: &#39;offer&#39; }</code> from <code>&#39;researching&#39;</code> → assert 400, <code>{ success: false, error: /Invalid transition/ }</code>.</li>
+<li>Not found: random UUID → 404, <code>{ success: false, error: &#39;Application not found&#39; }</code>.</li>
+<li>Zod failure: body <code>{ status: &#39;made_up_status&#39; }</code> → 400, <code>{ success: false, error: ... }</code>.</li>
+</ol>
+<hr>
+<h3><code>src/app/api/contacts/route.test.ts</code> (test — DB integration, node env)</h3>
+<p><strong>Source under test:</strong> <code>src/app/api/contacts/route.ts</code></p>
+<p><strong>GET pattern with cursor pagination</strong> (source lines 41-97):</p>
+<pre><code class="language-ts">const limit = parseLimit(searchParams.get(&#39;limit&#39;));
+const cursor = parseCursor(searchParams.get(&#39;cursor&#39;));
+// ... build conditions[], execute query, paginated()
+return paginated(data, {
+  cursor: data.length &gt; 0 ? data[data.length - 1].updatedAt.toISOString() : null,
+  hasMore
+});
+</code></pre>
+<p><strong>POST pattern (create + timeline)</strong> (source lines 99-137):</p>
+<pre><code class="language-ts">const validated = createContactSchema.parse(body);
+const [contact] = await db.insert(contacts).values(values).returning();
+await logTimeline({
+  eventType: &#39;contact_added&#39;,
+  title: `Added ${validated.firstName} ${validated.lastName} (${validated.relationship || &#39;contact&#39;})`,
+  contactId: contact.id, companyId: validated.companyId || undefined
+});
+return created(contact);
+</code></pre>
+<p><strong>Apply pattern</strong> — pick this as the representative &quot;read endpoint&quot; for envelope shape coverage (D-11.1):</p>
+<ul>
+<li><code>GET</code> empty: <code>{ success: true, data: [], meta: { cursor: null, hasMore: false } }</code>.</li>
+<li><code>GET</code> with seeded contacts: assert <code>data.length</code>, <code>meta.hasMore</code>, status 200.</li>
+<li><code>POST</code> happy path: 201, envelope <code>{ success: true, data: &lt;Contact&gt; }</code>, plus a <code>timeline_events</code> row with <code>eventType: &#39;contact_added&#39;</code> and matching <code>contactId</code> (D-11.3).</li>
+<li><code>POST</code> invalid body (e.g. empty <code>firstName</code>): 400, <code>{ success: false, error: ... }</code>.</li>
+</ul>
+<hr>
+<h3><code>src/components/layout/app-sidebar.test.tsx</code> (test — BUG-01 regression, mixed env)</h3>
+<p><strong>Sources under test:</strong></p>
+<ul>
+<li><code>src/components/layout/app-sidebar.tsx</code> (lines 49-198 — default export <code>AppSidebar</code>; uses <code>useUser</code> from <code>@clerk/nextjs</code>, <code>usePathname</code>/<code>useRouter</code> from <code>next/navigation</code>)</li>
+<li><code>src/components/user-avatar-profile.tsx</code> (lines 13-39 — named export <code>UserAvatarProfile</code>)</li>
+</ul>
+<p><strong>Key risk locations</strong> (the BUG-01 footprint per CONTEXT line 92):</p>
+<ul>
+<li><code>app-sidebar.tsx</code> line 148: <code>UserAvatarProfile</code> inside <code>SidebarMenuButton</code> (this is the <code>&lt;button&gt;</code> parent). The SSR output must NOT contain a <code>&lt;div&gt;</code> descendant of any <code>&lt;button&gt;</code>.</li>
+<li><code>app-sidebar.tsx</code> line 164: <code>UserAvatarProfile</code> inside <code>DropdownMenuLabel</code> (second render — also must survive).</li>
+<li><code>user-avatar-profile.tsx</code> line 19: outermost element is <code>&lt;span class=&#39;flex items-center gap-2&#39;&gt;</code> — this is the post-fix structure. The SSR test asserts this <code>&lt;span&gt;</code> shows up.</li>
+</ul>
+<p><strong>Clerk dependency to mock</strong> (<code>app-sidebar.tsx</code> lines 34, 43):</p>
+<pre><code class="language-ts">import { useUser } from &#39;@clerk/nextjs&#39;;
+import { SignOutButton } from &#39;@clerk/nextjs&#39;;
+</code></pre>
+<p><strong>Apply pattern</strong> (D-14, D-15, D-16):</p>
+<p><strong>File layout — one file, two describes</strong> (per specifics CONTEXT line 145):</p>
+<pre><code>// SSR describe block — default node environment
+describe(&#39;AppSidebar SSR structural (BUG-01)&#39;, ...)
+
+// Hydration describe block — opted into jsdom
+// @vitest-environment jsdom
+describe(&#39;AppSidebar hydration mount (BUG-01)&#39;, ...)
+</code></pre>
+<p>The pragma <code>// @vitest-environment jsdom</code> must be on its own line at the top of the file (vitest only honors per-file pragmas, not per-describe). If both envs are required in one file, the planner may need to split into <code>app-sidebar.ssr.test.tsx</code> (node) and <code>app-sidebar.hydration.test.tsx</code> (jsdom). This is a wiring detail to confirm; the contract from D-14 is &quot;two tests, BUG-01 fence visible in one place.&quot;</p>
+<p><strong>Clerk mock pattern</strong> (D-16):</p>
+<pre><code class="language-ts">vi.mock(&#39;@clerk/nextjs&#39;, () =&gt; ({
+  useUser: () =&gt; ({
+    user: {
+      fullName: &#39;Steve Bronstein&#39;,
+      imageUrl: &#39;https://img.clerk.com/test&#39;,
+      emailAddresses: [{ emailAddress: &#39;steve@bronstein.org&#39; }]
+    }
+  }),
+  SignOutButton: ({ children }: { children?: React.ReactNode }) =&gt; children ?? null
+}));
+</code></pre>
+<p>Also stub <code>next/navigation</code>: <code>usePathname() → &#39;/dashboard/overview&#39;</code>, <code>useRouter() → { push: vi.fn() }</code>.</p>
+<p><strong>SSR structural assertions</strong> (D-14 bullet 1):</p>
+<pre><code class="language-ts">import { renderToString } from &#39;react-dom/server&#39;;
+import AppSidebar from &#39;@/components/layout/app-sidebar&#39;;
+
+const html = renderToString(&lt;AppSidebar /&gt;);
+// Assert 1: no &lt;div&gt; inside any &lt;button&gt;
+expect(html).not.toMatch(/&lt;button[^&gt;]*&gt;[^&lt;]*(?:&lt;(?!\/button)[^&gt;]*&gt;)*?&lt;div\b/i);
+// Or parse with a DOM lib (jsdom is available even in node tests if imported directly) and walk
+// every &lt;button&gt;, verify .querySelector(&#39;div&#39;) is null.
+
+// Assert 2: UserAvatarProfile rendered in SSR output — its &lt;span class=&#39;flex items-center gap-2&#39;&gt;
+// outermost is a stable signature.
+expect(html).toContain(&#39;flex items-center gap-2&#39;);
+// Stronger assertion: name + email from the mock user appear in markup
+expect(html).toContain(&#39;Steve Bronstein&#39;);
+expect(html).toContain(&#39;steve@bronstein.org&#39;);
+</code></pre>
+<p><strong>Hydration mount assertions</strong> (D-14 bullet 2, D-15):</p>
+<pre><code class="language-ts">// @vitest-environment jsdom  (top of file)
+import { hydrateRoot } from &#39;react-dom/client&#39;;
+import { renderToString } from &#39;react-dom/server&#39;;
+
+const html = renderToString(&lt;AppSidebar /&gt;);
+const container = document.createElement(&#39;div&#39;);
+container.innerHTML = html;
+document.body.appendChild(container);
+
+const errorSpy = vi.spyOn(console, &#39;error&#39;).mockImplementation(() =&gt; {});
+hydrateRoot(container, &lt;AppSidebar /&gt;);
+// Flush microtasks / wait a tick so React commits.
+await new Promise((r) =&gt; setTimeout(r, 0));
+
+const hydrationCalls = errorSpy.mock.calls.filter(([msg]) =&gt;
+  typeof msg === &#39;string&#39; &amp;&amp; (/hydrat/i.test(msg) || /did not match/i.test(msg))
+);
+expect(hydrationCalls).toEqual([]);
+errorSpy.mockRestore();
+</code></pre>
+<p><strong>Default-export note:</strong> <code>AppSidebar</code> is a <strong>default export</strong> (<code>app-sidebar.tsx</code> line 49: <code>export default function AppSidebar()</code>). Per CONVENTIONS this is the legacy shape — the test imports it as a default. Do not change the export to fix conventions; that is out of scope for this phase.</p>
+<hr>
+<h3>Fixture: <code>src/app/api/contacts/import/__fixtures__/linkedin-connections.csv</code></h3>
+<p><strong>Analog:</strong> LinkedIn CSV column shape documented in <code>src/app/api/contacts/import/route.ts</code> lines 13-21 and the preamble-strip logic at lines 39-42.</p>
+<p><strong>Apply pattern:</strong> Generate a CSV with:</p>
+<ol>
+<li>A LinkedIn-style preamble (3-4 lines of notes text) followed by a blank line, then the header row starting with <code>First Name</code>. The route strips everything before the first occurrence of <code>First Name</code>.</li>
+<li>Header row: <code>First Name,Last Name,Email Address,Company,Position,Connected On,URL</code>.</li>
+<li>~3-5 happy-path rows with realistic data.</li>
+<li>At least one malformed row variant (missing <code>First Name</code> or empty fields) for the edge-case test (D-11.4).</li>
+<li>UTF-8 encoding. No BOM unless adding a separate fixture for that specific edge case.</li>
+</ol>
+<hr>
+<h2>Shared Patterns</h2>
+<h3><code>vi.mock(&#39;@/lib/db&#39;)</code> to wire PGlite into the singleton</h3>
+<p><strong>Source:</strong> <code>src/lib/db/index.ts</code> (singleton) + <code>src/lib/db/timeline.ts</code> line 1 (<code>import { db } from &#39;./index&#39;;</code>)</p>
+<p><strong>Apply to:</strong> Every test that exercises an API route or <code>logTimeline</code>.</p>
+<p><strong>Canonical pattern: <code>vi.hoisted</code> + Proxy indirection.</strong> Mandated by 02-03 (all tasks). Do NOT use <code>vi.doMock</code> — it requires <code>afterEach(() =&gt; vi.resetModules())</code> for isolation and is not the canonical pattern here.</p>
+<pre><code class="language-ts">import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+
+const dbRef = vi.hoisted(() =&gt; ({ current: null as Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt; | null }));
+
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({
+  get db() {
+    if (!dbRef.current) throw new Error(&#39;createTestDb() must run before any @/lib/db access&#39;);
+    return dbRef.current;
+  }
+}));
+
+beforeEach(async () =&gt; {
+  dbRef.current = await createTestDb();
+});
+</code></pre>
+<p>Once <code>@/lib/db</code> is mocked, <code>logTimeline</code> (which imports <code>db</code> from <code>./index</code>) automatically writes to the PGlite-backed instance. No second mock of <code>@/lib/db/timeline</code> needed (D-07).</p>
+<h3>Envelope assertions</h3>
+<p><strong>Source:</strong> <code>src/lib/api/types.ts</code> lines 1-10 (<code>ApiResponse&lt;T&gt;</code>) + <code>src/lib/api/errors.ts</code> lines 1-21</p>
+<p><strong>Apply to:</strong> Every API-route test.</p>
+<pre><code class="language-ts">const res = await POST(request);
+const body = await res.json();
+
+// Success:
+expect(res.status).toBe(201);
+expect(body).toMatchObject({ success: true, data: expect.any(Object) });
+
+// Error:
+expect(res.status).toBe(400);
+expect(body).toMatchObject({ success: false, error: expect.any(String) });
+</code></pre>
+<h3>Timeline side-effect assertion</h3>
+<p><strong>Source:</strong> <code>src/lib/db/timeline.ts</code> lines 17-22 (single insert into <code>timeline_events</code>)</p>
+<p><strong>Apply to:</strong> Every write-path API test under <code>D-11.3</code>.</p>
+<pre><code class="language-ts">import { timelineEvents } from &#39;../../../drizzle/schema&#39;;
+
+await POST(request);
+
+const rows = await db.select().from(timelineEvents);
+expect(rows).toHaveLength(1);
+expect(rows[0]).toMatchObject({
+  eventType: &#39;contact_added&#39;,
+  title: expect.stringContaining(&#39;Added &#39;),
+  contactId: expect.any(String)
+});
+</code></pre>
+<h3>Path-alias imports (mirror <code>tsconfig.json</code>)</h3>
+<p><strong>Source:</strong> <code>tsconfig.json</code> lines 21-28</p>
+<p><strong>Apply to:</strong> All test files.</p>
+<pre><code class="language-ts">import { canTransition } from &#39;@/lib/domain/pipeline&#39;;
+import { computeBridgeScore } from &#39;@/features/job-leads/lib/prioritization&#39;;
+import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+</code></pre>
+<p>Vitest config must wire the same alias via <code>resolve.alias</code> for these imports to resolve.</p>
+<h3>Naming + style (CONVENTIONS.md + CLAUDE.md)</h3>
+<p><strong>Apply to:</strong> All test files.</p>
+<ul>
+<li>File names: kebab-case + <code>.test.ts</code> (D-03). For React component tests: <code>.test.tsx</code>.</li>
+<li>Test functions/variables: camelCase.</li>
+<li>Single quotes, 2-space indent, no trailing commas, semicolons present.</li>
+<li>Named exports only for helpers (<code>createTestDb</code>, <code>callRoute</code>).</li>
+<li>Path alias <code>@/*</code> everywhere; never relative-walk from <code>src/</code> (the exception is API routes that use deep <code>../../../../drizzle/schema</code> — tests should still use <code>@/lib/...</code> for helpers but matching schema imports can either stay relative or use <code>@/...</code> depending on whether the planner adds a <code>drizzle</code> alias).</li>
+</ul>
+<h2>No Analog Found</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(none)</td>
+<td></td>
+<td></td>
+<td>Every new file has a config, wiring, or source-under-test analog. The &quot;no existing tests&quot; situation makes this entire phase greenfield for <em>test</em> analogs, but the <strong>wiring</strong> (drizzle.config, db/index.ts singleton) and <strong>source-under-test</strong> files give the planner concrete signatures and behaviors to assert against, which is what tests actually need.</td>
+</tr>
+</tbody></table>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong></p>
+<ul>
+<li><code>src/lib/</code> (api helpers, db, domain)</li>
+<li><code>src/app/api/</code> (all route handlers)</li>
+<li><code>src/features/job-leads/lib/</code> (prioritization, seniority)</li>
+<li><code>src/components/layout/</code> and <code>src/components/</code> (BUG-01 components)</li>
+<li><code>drizzle/</code> (schema, migrations, seed)</li>
+<li>Root config files (<code>tsconfig.json</code>, <code>next.config.ts</code>, <code>drizzle.config.ts</code>, <code>package.json</code>)</li>
+</ul>
+<p><strong>Files scanned:</strong> ~18 source files read in full; directory listings of api routes and migrations.</p>
+<p><strong>Pattern extraction date:</strong> 2026-05-12</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

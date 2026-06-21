@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-06-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-06-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 05-job-leads-completion
+plan: 06
+type: execute
+wave: 3
+depends_on:</p>
+<ul>
+<li>05-04
+files_modified:</li>
+<li>.claude/skills/scrape-linkedin-connections/SKILL.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</li>
+<li>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md
+autonomous: true
+requirements:</li>
+<li>JL-B1</li>
+<li>JL-B2</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;A skill exists at .claude/skills/scrape-linkedin-connections/SKILL.md with frontmatter (name, description, argument-hint, allowed-tools) and a prompt body&quot;
+    - &quot;The skill prompt body covers both invocation modes: with a job-lead UUID/URL argument (single-lead processing) and with no argument (drain the queued queue)&quot;
+    - &quot;The skill documents the canonical LinkedIn nav: job posting → company page → employees → 2nd-degree filter in linkedin-navigation.md&quot;
+    - &quot;The skill documents the Heimdall API contract (auth pattern + four endpoints) in heimdall-api.md&quot;
+    - &quot;The skill documents known failure modes mapped to D-09&#39;s five error categories in troubleshooting.md&quot;
+    - &quot;All four files use plain markdown (no HTML companion), reside under .claude/skills/scrape-linkedin-connections/, and are committed to the repo&quot;
+  artifacts:
+    - path: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md&quot;
+      provides: &quot;Skill entry point (YAML frontmatter + prompt body)&quot;
+      contains: &quot;name: scrape-linkedin-connections&quot;
+    - path: &quot;.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md&quot;
+      provides: &quot;Canonical LinkedIn navigation cheat-sheet for agent-browser&quot;
+      contains: &quot;2nd-degree&quot;
+    - path: &quot;.claude/skills/scrape-linkedin-connections/references/heimdall-api.md&quot;
+      provides: &quot;Heimdall API endpoint summary + bearer-token auth instructions&quot;
+      contains: &quot;POST /api/job-leads/[id]/prospects&quot;
+    - path: &quot;.claude/skills/scrape-linkedin-connections/references/troubleshooting.md&quot;
+      provides: &quot;Mapping from observed failure modes to D-09 error categories&quot;
+      contains: &quot;LinkedIn navigation failed&quot;
+  key_links:
+    - from: &quot;.claude/skills/scrape-linkedin-connections/SKILL.md&quot;
+      to: &quot;.claude/skills/scrape-linkedin-connections/references/&quot;
+      via: &quot;Markdown link references to the three reference docs&quot;
+      pattern: &quot;references/(linkedin-navigation|heimdall-api|troubleshooting)\.md&quot;
+    - from: &quot;.claude/skills/scrape-linkedin-connections/references/heimdall-api.md&quot;
+      to: &quot;Heimdall REST API (Plan 04 routes)&quot;
+      via: &quot;Documents POST /prospects, PATCH /status, POST /search, GET /job-leads?status=&quot;
+  pattern: &quot;/api/job-leads&quot;
+</p>
+<hr>
+<objective>
+Create the Claude Code skill at `.claude/skills/scrape-linkedin-connections/` that drives `vercel-labs/agent-browser` through the canonical LinkedIn navigation, claims queued leads, scrapes 2nd-degree prospects, and writes results back through the Plan 04 REST routes using the bearer token from Plan 02. This is the OUT-OF-APP workflow that JL-B1 and JL-B2 deliver.<p>Purpose: D-01 / D-02 / D-03 / D-04 / D-10 / CD-07 — the skill replaces the brittle in-app Playwright path. It must accept either a job-lead UUID/URL argument (one-shot mode) or no argument (drain mode), drive agent-browser interactively, and write results back via REST. The supporting references docs reduce the SKILL.md prompt body to the workflow only.</p>
+<p>Output: Four markdown files under <code>.claude/skills/scrape-linkedin-connections/</code> — one entry-point SKILL.md and three reference docs the prompt body links to.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/phases/05-job-leads-completion/05-CONTEXT.md
+@.planning/phases/05-job-leads-completion/05-PATTERNS.md
+@.planning/phases/05-job-leads-completion/05-02-PLAN.md
+@.planning/phases/05-job-leads-completion/05-04-PLAN.md
+@CLAUDE.md<interfaces>
+SKILL.md frontmatter draft (CONTEXT.md `<specifics>`):
+```yaml
+---
+name: scrape-linkedin-connections
+description: "Scrape 2nd-degree LinkedIn connections at a target company. Drives vercel-labs/agent-browser through job → company → employees → 2nd-degree filter, extracts prospects, writes them back to Heimdall."
+argument-hint: "[job-lead-id-or-url]"
+allowed-tools:
+  - Read
+  - Bash
+---
+```<p>Reference for frontmatter shape: <code>~/.claude/skills/gsd-review/SKILL.md</code> (user-global; the <code>allowed-tools</code> + <code>argument-hint</code> keys match the Claude Code skill convention).</p>
+<p>Heimdall API routes the skill calls (post Plan 04):</p>
+<ul>
+<li><code>GET /api/job-leads?status=queued&amp;limit=50</code> — drain mode: fetch the queue (sorted by updatedAt ASC implicitly via the underlying list endpoint&#39;s <code>desc(updatedAt)</code> — skill processes newest-first; per D-10 the user can also see the table and choose)</li>
+<li><code>PATCH /api/job-leads/[id]/status</code> body <code>{ status: &#39;searching&#39; }</code> — claim a lead</li>
+<li><code>POST /api/job-leads/[id]/prospects</code> body <code>{ prospects: ScrapedProspect[] }</code> — bulk-write results on success (this automatically flips status to &#39;found&#39; per Plan 04)</li>
+<li><code>PATCH /api/job-leads/[id]/status</code> body <code>{ status: &#39;failed&#39;, lastError: &#39;&lt;Category&gt;: &lt;detail&gt;&#39; }</code> — on failure</li>
+</ul>
+<p>Auth: <code>Authorization: Bearer $(cat ~/.heimdall/api-token)</code> header on every request (Plan 02 middleware bypass).</p>
+<p>agent-browser invocation (CONTEXT.md D-04, D-05): the skill prompt instructs Claude to call <code>agent-browser</code> via Bash. Exact subcommand names (<code>agent-browser snapshot</code>, <code>agent-browser click @e&lt;n&gt;</code>, <code>agent-browser ai chat</code>, etc.) are determined at skill-invocation time by reading the agent-browser README — the skill prompt should reference the README rather than encode subcommands that may shift between versions. The skill attaches to (or launches against) the <code>~/.heimdall/linkedin-profile/</code> user-data-dir so the LinkedIn session persists.</p>
+<p>D-09 error categories (kept in lockstep with the failure banner in Plan 05):</p>
+<ol>
+<li><code>Timeout</code></li>
+<li><code>LinkedIn navigation failed</code></li>
+<li><code>No prospects found</code></li>
+<li><code>Browser unavailable</code></li>
+<li><code>Unknown error</code></li>
+</ol>
+<p>ScrapedProspect shape (from Plan 01, src/features/job-leads/lib/types.ts):</p>
+<pre><code class="language-typescript">type ScrapedProspect = {
+  name: string;              // required, 1-200 chars
+  title: string | null;      // 0-300 chars
+  linkedinUrl: string | null; // must be a valid URL
+  profileSnippet: string | null;
+  mutualConnectionNames: string[]; // 0-50 items, each 1-200 chars
+};
+</code></pre>
+<p>API request examples (the skill prompt body shows these as bash snippets):</p>
+<pre><code class="language-bash"># Drain mode
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -H &quot;Authorization: Bearer $TOKEN&quot; &quot;http://localhost:4000/api/job-leads?status=queued&amp;limit=50&quot;
+
+# Claim
+curl -s -X PATCH -H &quot;Authorization: Bearer $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;status&quot;:&quot;searching&quot;}&#39; &quot;http://localhost:4000/api/job-leads/$LEAD_ID/status&quot;
+
+# Write success
+curl -s -X POST -H &quot;Authorization: Bearer $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \
+  -d &quot;{\&quot;prospects\&quot;:$JSON}&quot; &quot;http://localhost:4000/api/job-leads/$LEAD_ID/prospects&quot;
+
+# Write failure
+curl -s -X PATCH -H &quot;Authorization: Bearer $TOKEN&quot; -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;status&quot;:&quot;failed&quot;,&quot;lastError&quot;:&quot;Timeout: navigation exceeded 30000ms on /jobs/&lt;id&gt;&quot;}&#39; \
+  &quot;http://localhost:4000/api/job-leads/$LEAD_ID/status&quot;
+</code></pre>
+<p>Heimdall dev server runs on port 4000 (per package.json <code>dev</code> script: <code>next dev -p 4000</code>).
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Create SKILL.md (entry point + prompt body)</name>
+  <read_first>
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md §D-01 through §D-04, §D-10 through §D-11, §CD-07 (skill structure + drain semantics + prompt depth)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"NEW SKILL.md" (lines 169–189 for frontmatter shape)
+    - $HOME/.claude/skills/gsd-review/SKILL.md (external reference for frontmatter format — only if accessible; otherwise rely on the pattern in PATTERNS.md)
+  </read_first>
+  <files>.claude/skills/scrape-linkedin-connections/SKILL.md</files>
+  <action>
+    Create `.claude/skills/scrape-linkedin-connections/SKILL.md` with two parts: YAML frontmatter and prompt body.<pre><code>**Frontmatter** (exact shape — use single-quote scalars and 2-space indentation):
+```yaml
+---
+name: scrape-linkedin-connections
+description: &#39;Scrape 2nd-degree LinkedIn connections at a target company. Drives vercel-labs/agent-browser through job → company → employees → 2nd-degree filter, extracts prospects, writes them back to Heimdall.&#39;
+argument-hint: &#39;[job-lead-id-or-url]&#39;
+allowed-tools:
+  - Read
+  - Bash
+---
+```
+
+**Prompt body** — write a directive Markdown body that walks Claude through these steps. Use clear section headers; reference the three companion docs in `references/` via Markdown links. Per CD-07, the first version is detailed; trim later if it bloats. Cover these sections in order:
+
+1. **`## Overview`** — one paragraph: you (Claude) are about to scrape LinkedIn 2nd-degree connections at the target company for a Heimdall job lead, using vercel-labs/agent-browser. Link to `references/linkedin-navigation.md` for the canonical nav path and `references/heimdall-api.md` for the API contract.
+
+2. **`## Setup` — prerequisites the user must have done before invoking** (do not run these automatically; they are user actions):
+   - `~/.heimdall/api-token` exists and `.env.local` has `API_TOKEN_HASH=$(sha256 of that token)` and `SINGLE_USER_EMAIL=steve@bronstein.org`
+   - Heimdall dev server is running (`npm run dev` → port 4000)
+   - `vercel-labs/agent-browser` is installed and runnable from Bash (instruction: read the agent-browser README at install time to find the current install method — the skill does not pin a specific version)
+   - LinkedIn is signed in inside the visible Chrome window at `~/.heimdall/linkedin-profile/` (if expired, the user re-logs in manually)
+
+3. **`## Argument parsing`** — what the `$ARGUMENTS` variable contains:
+   - Empty / absent → drain mode (Section 4)
+   - UUID-shaped (8-4-4-4-12 hex) → claim this specific lead by ID (Section 5)
+   - Starts with `https://` → URL mode: POST `/api/job-leads` first to create the lead, then proceed as if a UUID
+
+4. **`## Drain mode` (no arg)** — explicit steps (per D-10):
+   - `curl -s -H &quot;Authorization: Bearer $(cat ~/.heimdall/api-token)&quot; &#39;http://localhost:4000/api/job-leads?status=queued&amp;limit=50&#39;` to fetch the queue
+   - Print the leads as a table (id, companyName, roleTitle, updatedAt → queued-since-ago) so the user can see what is about to be processed
+   - Ask the user (via Claude Code&#39;s interactive prompt): &quot;Process all N? Process the first then ask again? Skip and exit?&quot;
+   - For each lead the user approves: follow the single-lead steps (Section 5), narrating each agent-browser action
+   - On any failure: write `&#39;&lt;Category&gt;: &lt;detail&gt;&#39;` to `last_error` via PATCH /status to `&#39;failed&#39;` and CONTINUE to the next lead (do not abort the batch — D-10 step 5)
+   - At the end: print a summary &quot;N processed, M succeeded, K failed (categories: ...)&quot;
+
+5. **`## Single-lead mode` (UUID or URL arg)** — explicit steps:
+   1. Claim: `PATCH /api/job-leads/&lt;lead-id&gt;/status` body `{ &quot;status&quot;: &quot;searching&quot; }` with the bearer token. If 400 (state-machine rejection) — the lead is not in `&#39;queued&#39;` status (someone else may have claimed it, or it&#39;s stale `&#39;scraped&#39;`); abort with category `LinkedIn navigation failed` if reportable, else just exit silently.
+   2. Open agent-browser in `ai chat` mode (or whatever the current subcommand is per the agent-browser README). Attach to the existing Chrome user-data-dir at `~/.heimdall/linkedin-profile/` (if agent-browser supports `--user-data-dir`; if not, instruct the user to ensure LinkedIn is signed in in the visible Chrome window manually).
+   3. Navigate to the lead&#39;s `linkedinJobUrl` (you can pull this from the GET /job-leads response or PATCH /status response). Wait for the page to settle.
+   4. Read `references/linkedin-navigation.md` for the canonical nav: click the company name link at the top of the job posting → on the company page click the &quot;X employees&quot; link → on the people-search page apply the &quot;2nd-degree connections&quot; filter.
+   5. Extract prospects from the result page(s). For each visible prospect, capture name, title, the LinkedIn profile URL (must be a valid URL — drop the row if it does not parse), an optional profileSnippet (the visible blurb), and the array of mutualConnectionNames if surfaced.
+   6. If zero prospects after pagination terminates: write `&#39;No prospects found: &lt;reason&gt;&#39;` via PATCH /status to `&#39;failed&#39;` and exit with a clear message.
+   7. On success: POST the prospects array to `/api/job-leads/&lt;lead-id&gt;/prospects` (this also flips the lead to `&#39;found&#39;` and emits the timeline event per Plan 04).
+   8. Confirm success via the response envelope (`{ success: true, data: { insertedCount, lead } }`).
+
+6. **`## Error handling`** — map observable failures to D-09 categories:
+   - `Timeout: &lt;detail&gt;` for navigation/load timeouts
+   - `LinkedIn navigation failed: &lt;detail&gt;` for missing buttons/links, captchas, sign-in redirects
+   - `No prospects found: &lt;detail&gt;` when the people-search returns zero rows
+   - `Browser unavailable: &lt;detail&gt;` when agent-browser cannot start, the user-data-dir is locked, or Chrome is not running
+   - `Unknown error: &lt;detail&gt;` for anything else; include the first 200 chars of the error message
+   - All categorized errors are written via `PATCH /api/job-leads/&lt;lead-id&gt;/status` body `{ &quot;status&quot;: &quot;failed&quot;, &quot;lastError&quot;: &quot;&lt;Category&gt;: &lt;detail&gt;&quot; }`. See `references/troubleshooting.md` for known failure patterns.
+
+7. **`## Constraints`** — what NOT to do:
+   - Do NOT mock or skip writing to Heimdall — the user expects the DB to be updated
+   - Do NOT proceed if the bearer-token call returns 401 — re-check `.env.local` and `~/.heimdall/api-token` consistency
+   - Do NOT loop on a stuck navigation — set a budget (e.g., 5 minutes per lead) and emit `Timeout: ...` on overrun
+   - Do NOT batch claim multiple leads before scraping them; D-10 + D-11 require per-lead claim → scrape → write
+
+Body length: ~120–180 lines of markdown content (medium-detail per CD-07; the references docs hold the navigation specifics). Final file size (frontmatter + body): under 6 KB.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f .claude/skills/scrape-linkedin-connections/SKILL.md && head -15 .claude/skills/scrape-linkedin-connections/SKILL.md | grep -c "^name: scrape-linkedin-connections$" | xargs -I{} test {} -eq 1 && head -15 .claude/skills/scrape-linkedin-connections/SKILL.md | grep -c "argument-hint" | xargs -I{} test {} -eq 1 && grep -c "drain" .claude/skills/scrape-linkedin-connections/SKILL.md | xargs -I{} test {} -ge 1 && grep -c "linkedin-navigation.md" .claude/skills/scrape-linkedin-connections/SKILL.md | xargs -I{} test {} -ge 1 && grep -c "heimdall-api.md" .claude/skills/scrape-linkedin-connections/SKILL.md | xargs -I{} test {} -ge 1 && grep -c "troubleshooting.md" .claude/skills/scrape-linkedin-connections/SKILL.md | xargs -I{} test {} -ge 1</automated>
+  </verify>
+  <acceptance_criteria>
+    - File `.claude/skills/scrape-linkedin-connections/SKILL.md` exists
+    - File starts with `---` YAML frontmatter fence
+    - Frontmatter contains `name: scrape-linkedin-connections`, a non-empty `description:`, `argument-hint: '[job-lead-id-or-url]'`, and an `allowed-tools:` list including at least `Read` and `Bash`
+    - Body contains explicit sections covering: overview, setup prerequisites, argument parsing (drain vs UUID vs URL), drain mode steps, single-lead mode steps, error category mapping, constraints
+    - Body links to all three companion docs by relative path (`references/linkedin-navigation.md`, `references/heimdall-api.md`, `references/troubleshooting.md`)
+    - Body explicitly mentions all five D-09 error categories (Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error)
+    - Body documents the `PATCH /api/job-leads/<id>/status` body shape `{ "status": "failed", "lastError": "<Category>: <detail>" }`
+    - Final file size between 2 KB and 8 KB (sanity bound — not so small it's empty, not so large it bloats the prompt)
+  </acceptance_criteria>
+  <done>
+    A Claude Code session can be invoked with `claude /scrape-linkedin-connections` (drain) or `claude /scrape-linkedin-connections <lead-id>` (single) and follow a complete, self-contained workflow that ends with the lead in `'found'` or `'failed'` state in the Heimdall DB.
+  </done>
+</task><task type="auto">
+  <name>Task 2: Create the three references/ docs</name>
+  <read_first>
+    - .planning/phases/05-job-leads-completion/05-CONTEXT.md §D-03, §D-09 (skill structure, error categories)
+    - .planning/phases/05-job-leads-completion/05-PATTERNS.md §"NEW references/" (lines 192–198 — content sourcing)
+    - .planning/codebase/CONCERNS.md §"LinkedIn Scraper — Entire Feature Is Brittle" (lines 124–148 — known failure modes, useful for troubleshooting.md)
+    - src/features/job-leads/lib/scrape-connections.ts (the deleted-in-Plan-07 file — its nav strategy is the source for the linkedin-navigation.md cheat-sheet)
+  </read_first>
+  <files>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md, .claude/skills/scrape-linkedin-connections/references/heimdall-api.md, .claude/skills/scrape-linkedin-connections/references/troubleshooting.md</files>
+  <action>
+    Create three reference docs as plain markdown under `.claude/skills/scrape-linkedin-connections/references/`. No HTML companion needed (per user's global CLAUDE.md, the HTML mirror rule applies to `.planning/` only; `.claude/skills/` is a separate concern).<pre><code>**A. `linkedin-navigation.md`** — the canonical navigation cheat-sheet. Mirror the four-step flow that `scrape-connections.ts` (the deleted file) follows, but documented for an LLM driving agent-browser, not Playwright. Sections:
+- **Step 1: Open the job posting** — navigate to `lead.linkedinJobUrl`. Wait for the page title and the &quot;About the job&quot; panel to render. Note that LinkedIn sometimes redirects to a sign-in page if the session is stale — that is `LinkedIn navigation failed`.
+- **Step 2: Click the company name link** — at the top of the job posting, beneath the role title, there is a link to the company&#39;s LinkedIn page (e.g., `linkedin.com/company/&lt;slug&gt;`). It&#39;s typically the first anchor matching `a[href*=&quot;/company/&quot;]` near the top. Click that.
+- **Step 3: Click the employees link** — on the company page, there is a &quot;X employees&quot; or &quot;View all employees&quot; link. Click it. This lands on the people-search page filtered to the company.
+- **Step 4: Apply the 2nd-degree connections filter** — on the people-search page, open the &quot;Connections&quot; filter dropdown and select &quot;2nd&quot;. The result set now shows 2nd-degree connections at the target company.
+- **Step 5: Paginate and extract** — for each result card, capture name, title, profile URL, and the mutual-connections subline if visible. Click &quot;Next&quot; to paginate. Per CONTEXT.md `&lt;out_of_scope&gt;` carry-forward (JL2-04), do NOT paginate beyond page 10.
+- **Selectors that have worked historically** (from the deleted scraper):
+  - Profile links: `a[href*=&quot;/in/&quot;]`
+  - Company links: `a[href*=&quot;/company/&quot;]`
+  - Next button: `button[aria-label=&quot;Next&quot;]`
+  - Mutual-connections text: spans containing &quot;mutual connection&quot; / &quot;and X others&quot;
+  - Treat these as hints, not guarantees — LinkedIn may have changed the DOM since 2026-05-13. If the LLM cannot find a button, that&#39;s `LinkedIn navigation failed`.
+Length: ~80–150 lines.
+
+**B. `heimdall-api.md`** — the API contract summary for the skill. Sections:
+- **Auth** — every request needs `Authorization: Bearer $(cat ~/.heimdall/api-token)`. The middleware in `src/proxy.ts` validates SHA-256(token) against `API_TOKEN_HASH` and requires `SINGLE_USER_EMAIL` to be set.
+- **`GET /api/job-leads?status=queued&amp;limit=50`** — drain-mode list. Returns `{ success: true, data: JobLead[], meta: { cursor, hasMore } }`. Each JobLead has `id`, `linkedinJobUrl`, `roleTitle`, `companyName`, `status`, `lastError`, `updatedAt`.
+- **`PATCH /api/job-leads/&lt;id&gt;/status`** — body `{ status, lastError? }`. Valid transitions (D-08): `queued → searching` (claim), `searching → found` (success — but the prospects route does this automatically; use this only if you write status without writing prospects, which is rare), `searching → failed` (failure with lastError), `failed → queued` (manual retry — typically the UI does this, not the skill).
+- **`POST /api/job-leads/&lt;id&gt;/prospects`** — body `{ prospects: ScrapedProspect[] }` (max 200 items). Each prospect has `name` (required, 1-200 chars), `title` (0-300 chars or null), `linkedinUrl` (valid URL or null), `mutualConnectionNames` (array of 0-50 strings each 1-200 chars). Returns `{ success: true, data: { insertedCount, lead } }`. Side-effect: flips the lead to `&#39;found&#39;` and emits a `job_lead_search_complete` timeline event.
+- **Response envelope** — every route returns `{ success, data?, error?, meta? }`. On `success: false`, the `error` field has a human-readable string; the skill MUST surface this to the user when an API call returns non-success.
+- **Example curl scripts** — include the four scripts from the `&lt;interfaces&gt;` block above (drain, claim, write success, write failure).
+Length: ~100–180 lines.
+
+**C. `troubleshooting.md`** — known failure modes mapped to the five D-09 categories. Sections:
+- **`Timeout`** — page load &gt; 30s, click on a stale ref, network stall. Capture the operation and elapsed ms. The deleted scraper used 30s navigation budget + 5s settle waits; that was too tight on busy LinkedIn pages. With agent-browser the LLM should retry once before declaring Timeout.
+- **`LinkedIn navigation failed`** — sign-in redirect (LinkedIn dropped the session), captcha challenge (LinkedIn detected automation; the user must intervene), the expected button/link is not visible (LinkedIn changed the DOM), the company name link is missing (the job posting is for a stealth company), the &quot;employees&quot; link is missing (the company has &lt; 11 employees and no public count).
+- **`No prospects found`** — after pagination through page 10 (or the result set ends earlier), zero 2nd-degree connections at this company. Not a bug — write this as a categorized failure so the UI can show &quot;you have no 2nd-degree warm intros here&quot; rather than silently leaving the lead in `searching`.
+- **`Browser unavailable`** — agent-browser cannot find a runnable Chrome, the user-data-dir is locked by another Chrome process, the binary is not installed, the `~/.heimdall/linkedin-profile/` directory is missing.
+- **`Unknown error`** — anything else. Include the first 200 chars of the error message verbatim. If the same Unknown error happens twice in a drain run, the skill should pause and ask the user before continuing.
+- **Manual recovery section** — short steps for the user when the skill repeatedly fails:
+  1. Open the visible Chrome at `~/.heimdall/linkedin-profile/` and confirm LinkedIn is signed in
+  2. Manually navigate to the failing lead&#39;s `linkedinJobUrl` and confirm the company link is clickable
+  3. If captcha appears: solve it manually in the visible Chrome, then re-run the skill
+Length: ~80–140 lines.
+
+All three files use plain markdown (no YAML frontmatter — only SKILL.md has frontmatter). Use single-quote string literals if any code blocks include strings; 2-space indentation in YAML blocks if any.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md && test -f .claude/skills/scrape-linkedin-connections/references/heimdall-api.md && test -f .claude/skills/scrape-linkedin-connections/references/troubleshooting.md && grep -c "2nd-degree" .claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md | xargs -I{} test {} -ge 1 && grep -cE "POST /api/job-leads/\[id\]/prospects|POST /api/job-leads/<id>/prospects" .claude/skills/scrape-linkedin-connections/references/heimdall-api.md | xargs -I{} test {} -ge 1 && grep -cE "Timeout|LinkedIn navigation failed|No prospects found|Browser unavailable|Unknown error" .claude/skills/scrape-linkedin-connections/references/troubleshooting.md | xargs -I{} test {} -ge 5</automated>
+  </verify>
+  <acceptance_criteria>
+    - All three files exist under `.claude/skills/scrape-linkedin-connections/references/`
+    - `linkedin-navigation.md` documents the four-step nav (job → company → employees → 2nd-degree filter) explicitly, in order
+    - `linkedin-navigation.md` lists the four selector hints (`a[href*="/in/"]`, `a[href*="/company/"]`, `button[aria-label="Next"]`, mutual-connections text) with a note that they are hints, not guarantees
+    - `heimdall-api.md` documents all four endpoints the skill calls: GET /job-leads?status=, PATCH /status, POST /prospects, POST /search (the retry endpoint, mainly for context)
+    - `heimdall-api.md` documents the bearer-token auth header and the SHA-256(token) === API_TOKEN_HASH invariant
+    - `heimdall-api.md` documents the `{ success, data, error, meta }` response envelope
+    - `troubleshooting.md` covers all five D-09 categories (Timeout, LinkedIn navigation failed, No prospects found, Browser unavailable, Unknown error)
+    - `troubleshooting.md` includes a manual recovery section for the user
+    - None of the three reference files contains YAML frontmatter (frontmatter is SKILL.md-only)
+    - Each reference file is between 1 KB and 12 KB
+  </acceptance_criteria>
+  <done>
+    The three reference docs reduce the SKILL.md prompt body to the workflow — when an LLM running the skill encounters a navigation question, an API question, or a failure question, it knows which reference to consult.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill body → Claude Code session</td>
+<td>The skill prompt is read by Claude; instructions that send the bearer token via curl cross into the user&#39;s shell environment</td>
+</tr>
+<tr>
+<td>Reference docs → skill body</td>
+<td>The skill prompt links to references; reference content is read by Claude on demand</td>
+</tr>
+<tr>
+<td>Skill → agent-browser (Bash)</td>
+<td>The skill spawns Bash subprocesses; agent-browser drives a local Chrome with persistent LinkedIn cookies</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-05-06-01</td>
+<td>Information Disclosure</td>
+<td>Bearer token in shell history</td>
+<td>mitigate</td>
+<td>Skill body uses <code>$(cat ~/.heimdall/api-token)</code> inline rather than echoing the token; shell history may capture the literal command line but not the resolved token value (depending on shell). Single-user environment — accept the residual risk per CONTEXT.md <code>&lt;deferred&gt;</code>.</td>
+</tr>
+<tr>
+<td>T-05-06-02</td>
+<td>Tampering</td>
+<td>Reference doc drift from API contract</td>
+<td>mitigate</td>
+<td><code>heimdall-api.md</code> documents the four endpoints with their request/response shapes; if Plan 04 routes change after this phase, the doc must be updated in sync. Mitigation: the doc is a single source of truth and lives next to the skill, so any developer modifying the routes will see the reference.</td>
+</tr>
+<tr>
+<td>T-05-06-03</td>
+<td>Spoofing</td>
+<td>Skill executed against a different Heimdall instance</td>
+<td>accept</td>
+<td>The skill is local-developer tooling pinned to <code>http://localhost:4000</code> (or whatever Heimdall dev server URL the user runs); the user controls the <code>~/.heimdall/api-token</code> and the <code>API_TOKEN_HASH</code> in <code>.env.local</code>. Multi-instance scenarios are out of scope.</td>
+</tr>
+<tr>
+<td>T-05-06-04</td>
+<td>Repudiation</td>
+<td>Skill failures not surfaced</td>
+<td>mitigate</td>
+<td>Every skill failure path writes a <code>PATCH /status</code> to <code>&#39;failed&#39;</code> with a categorized <code>lastError</code>; the UI (Plan 05) renders that to the user; the API timeline event provides an audit trail</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `test -d .claude/skills/scrape-linkedin-connections` and `test -d .claude/skills/scrape-linkedin-connections/references` both succeed
+- `ls .claude/skills/scrape-linkedin-connections/` returns SKILL.md and a references directory
+- `ls .claude/skills/scrape-linkedin-connections/references/` returns three .md files
+- `grep -lE "^name: scrape-linkedin-connections$" .claude/skills/scrape-linkedin-connections/SKILL.md` matches
+- A dry-run-style smoke test (manual): `claude /scrape-linkedin-connections` parses the frontmatter and loads the body without error. Not automatable in CI without mocking the Claude Code CLI; smoke is acknowledged manual per D-25 layer 3.
+</verification><success_criteria>
+1. `.claude/skills/scrape-linkedin-connections/SKILL.md` exists with valid YAML frontmatter and a complete prompt body covering both drain and single-lead modes.
+2. The skill explicitly walks through the four-step LinkedIn navigation (job → company → employees → 2nd-degree filter) and references the cheat-sheet doc for selector hints.
+3. The skill documents the Heimdall API contract (auth + four endpoints) and the categorized failure format (D-09 five categories with `<Category>: <detail>` shape).
+4. The skill writes results back via REST routes (POST /prospects on success, PATCH /status on failure) — no direct DB access path is documented anywhere in the skill.
+5. The three reference docs (`linkedin-navigation.md`, `heimdall-api.md`, `troubleshooting.md`) are plain markdown, under 12 KB each, and cover the navigation cheat-sheet, the API contract, and the categorized failure modes respectively.
+</success_criteria><output>
+After completion, create `.planning/phases/05-job-leads-completion/05-06-SUMMARY.md` recording:
+- Final SKILL.md size (KB) and line count
+- The five D-09 categories each grep'd in troubleshooting.md (count of occurrences)
+- Whether agent-browser-specific subcommand names were pinned in the prompt body or left as "consult the agent-browser README" pointers (per D-04 + the CONTEXT.md "needs research" item)
+- Confirmation that no plaintext token appears in any skill file (only the `$(cat ~/.heimdall/api-token)` template)
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-06-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

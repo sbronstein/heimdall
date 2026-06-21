@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>README</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/spikes/002-stagehand-linkedin-navigate/README.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>spike: 002
+name: stagehand-linkedin-navigate
+type: standard
+validates: &quot;Given an authenticated Stagehand session (via the headed-launch flow or BROWSER_CDP_ENDPOINT) starting on a LinkedIn job posting, when observe()/act() runs natural-language steps for company → employees → 2nd-degree filter, then the browser lands on a company-filtered people search.&quot;
+verdict: SUPERSEDED
+related: [001]
+tags: [stagehand, navigation, linkedin, superseded]</h2>
+<h1>Spike 002: stagehand-linkedin-navigate</h1>
+<blockquote>
+<p><strong>SUPERSEDED 2026-05-13.</strong> See <code>../MANIFEST.md</code> &quot;Status&quot; section. This spike was never executed.</p>
+</blockquote>
+<h2>What This Validates</h2>
+<p><strong>Given</strong> Stagehand attached/launched and on a LinkedIn job posting URL,
+<strong>when</strong> <code>observe()</code> → <code>act()</code> runs in sequence for three steps —</p>
+<ol>
+<li>click the company name link on the job posting</li>
+<li>click the employees list link on the company page</li>
+<li>apply the 2nd-degree connections filter —
+<strong>then</strong> the browser ends up on <code>https://www.linkedin.com/search/results/people/?currentCompany=[...]&amp;network=[&quot;S&quot;]</code> (or equivalent client-side filtered state).</li>
+</ol>
+<p>This is the <strong>core question</strong>: does the LLM-driven a11y-tree-with-refs approach actually beat brittle selectors on the very flow that scrape-connections.ts struggles with?</p>
+<h2>Research</h2>
+<p>Pattern from Stagehand docs: prefer <code>observe()</code> → <code>act(actions[0])</code> over <code>act(&quot;free-form instruction&quot;)</code> for click steps. <code>observe()</code> returns enumerated candidate elements with selectors; <code>act()</code> consumes one. This gives the LLM one bite at element identification rather than two and degrades more gracefully when LinkedIn restructures the DOM.</p>
+<p>For the filter step, we use the freer-form <code>act(&quot;...&quot;)</code> because the filter UI is multi-stage (open chip → select option → apply) and harder to enumerate in one observe call.</p>
+<p>The success criteria check both URL pattern (<code>/search/results/people</code> + <code>currentCompany=</code>) and the optional 2nd-degree URL param (<code>network=</code> or <code>%22S%22</code>). If LinkedIn applies the filter client-side without a URL update, the verdict drops to PARTIAL and requires manual inspection.</p>
+<h2>How to Run</h2>
+<pre><code class="language-bash">cd .planning/spikes/_pkg
+npm install                       # first time only
+npx playwright install chromium   # first time only
+npm run spike:002 -- &#39;https://www.linkedin.com/jobs/view/&lt;id&gt;&#39;
+</code></pre>
+<p>Use a job posting at a company where you have 2nd-degree connections (otherwise the filter will return an empty list and the verdict is harder to read). The spike runs through the same headed-Chromium-with-persistent-profile flow as spike 001 — if you&#39;re not signed in, it pauses for an interactive login.</p>
+<h2>What to Expect</h2>
+<p>Per-step logs:</p>
+<ul>
+<li><code>[auth]</code> lines — login check / interactive pause if needed</li>
+<li><code>[nav]</code> lines — URL after each Playwright navigation</li>
+<li><code>[act]</code> lines — <code>observe()</code> candidate counts and <code>act()</code> results per step</li>
+<li><code>[verdict]</code> ending with PASS / PARTIAL / FAIL</li>
+<li><code>[metrics]</code> — token counts per primitive</li>
+</ul>
+<p>Approximate token budget for one run: 3 × <code>observe()</code> + 3-5 × <code>act()</code>. With Claude Sonnet 4.5, expect roughly 5k–15k input + 1k–3k output tokens total. Capture the real numbers in Results below.</p>
+<h2>Observability</h2>
+<p>Step tags:</p>
+<ul>
+<li><code>init</code> / <code>auth</code> / <code>nav</code> — setup, login state, page navigation</li>
+<li><code>act</code> — every observe()/act() call, with truncated payload of candidate elements</li>
+<li><code>warn</code> — non-fatal surprises (no filter UI found, unexpected URL pattern)</li>
+<li><code>check</code> — final URL pattern analysis</li>
+<li><code>verdict</code> — PASS / PARTIAL / FAIL</li>
+<li><code>metrics</code> — token accounting</li>
+</ul>
+<h2>Investigation Trail</h2>
+<p><em>To be filled in after first run. Capture: which step (if any) failed, how the LLM described elements that don&#39;t exist, surprises about LinkedIn&#39;s response to the agent-driven clicks, anti-bot warnings, whether the 2nd-degree filter applied via URL or client-side state only.</em></p>
+<h2>Results</h2>
+<ul>
+<li><strong>Verdict:</strong> PENDING</li>
+<li><strong>Evidence (URL trail):</strong></li>
+<li><strong>Token cost (Sonnet 4.5):</strong></li>
+<li><strong>Approximate USD per run:</strong></li>
+<li><strong>Surprises:</strong></li>
+<li><strong>Comparison to current Playwright behavior:</strong></li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/spikes/002-stagehand-linkedin-navigate/README.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

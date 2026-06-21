@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/01-critical-bug-fix/01-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 1: Critical Bug Fix - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-12
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>Eliminate the React hydration crash that breaks sidebar navigation after large LinkedIn imports, and guard the unsafe <code>emailAddresses[0]</code> array access that can crash on edge-case Clerk users.</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>BUG-01: Remove the SSR/CSR hydration mismatch in <code>app-sidebar.tsx</code> and confirm <code>UserAvatarProfile</code> renders valid HTML inside <code>SidebarMenuButton</code>.</li>
+<li>BUG-02: Add optional-chain guard on <code>emailAddresses[0]</code> access in two known files.</li>
+</ul>
+<p><strong>Out of scope (deferred to other phases):</strong></p>
+<ul>
+<li>Vitest harness and the BUG-01 regression test (TEST-A3) — Phase 2.</li>
+<li>Any other hydration audits, codebase-wide unsafe-Clerk-pattern sweeps.</li>
+<li>The unrelated dirty files in the working tree (Job Leads scrape work, package.json, etc.) — Phase 5 and others.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Sweep Scope</h3>
+<ul>
+<li><strong>D-01:</strong> Fix only the two known sites. No codebase-wide sweep this phase.<ul>
+<li><code>src/components/user-avatar-profile.tsx:31</code> — <code>user?.emailAddresses[0].emailAddress</code> → <code>user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;</code></li>
+<li><code>src/components/layout/user-nav.tsx:38</code> — <code>user.emailAddresses[0].emailAddress</code> → <code>user?.emailAddresses[0]?.emailAddress ?? &#39;&#39;</code></li>
+</ul>
+</li>
+<li><strong>D-02:</strong> Do NOT grep for or fix other unsafe Clerk property chains (firstName, primaryEmailAddress, etc.) — those would be a new audit and belong in a different phase if needed.</li>
+</ul>
+<h3>Verification Approach</h3>
+<ul>
+<li><strong>D-03:</strong> Verification is dev-server smoke only, not a full repro of the 1500-contact import.<ul>
+<li>Start <code>npm run dev</code>, open <code>/dashboard/overview</code> and <code>/dashboard/networking</code>.</li>
+<li>Open browser DevTools console; confirm <strong>no React hydration warnings</strong> appear.</li>
+<li>Click each sidebar nav link; confirm each routes correctly.</li>
+</ul>
+</li>
+<li><strong>D-04:</strong> Do not attempt to synthesize a &quot;no-email Clerk user&quot; state to repro BUG-02 — the optional-chain guard is mechanical and structurally cannot fail at the patched lines.</li>
+<li><strong>D-05:</strong> No regression test is added in this phase. TEST-A3 (test for the BUG-01 hydration mismatch) is owned by Phase 2 (Test Infrastructure).</li>
+</ul>
+<h3>Pre-Existing Edits (working-tree state)</h3>
+<ul>
+<li><strong>D-06:</strong> The working tree already contains partial fixes for BUG-01, uncommitted:<ul>
+<li><code>src/components/user-avatar-profile.tsx</code> — root <code>&lt;div&gt;</code> and inner <code>showInfo</code> <code>&lt;div&gt;</code> already migrated to <code>&lt;span&gt;</code>.</li>
+<li><code>src/components/layout/app-sidebar.tsx</code> — the <code>{user &amp;&amp; &lt;UserAvatarProfile ... /&gt;}</code> guard already removed at lines 148 and 166; now renders <code>UserAvatarProfile</code> unconditionally with <code>user={user ?? null}</code>.</li>
+</ul>
+</li>
+<li><strong>D-07:</strong> Strategy: <strong>audit then accept.</strong> Before locking BUG-01 as done, the planner/executor must:<ol>
+<li>Read the current <code>user-avatar-profile.tsx</code> and <code>app-sidebar.tsx</code>.</li>
+<li>Confirm the edits match the fix prescribed in <code>bug.md</code> (root + inner <code>&lt;span&gt;</code>, no <code>{user &amp;&amp; ...}</code> guard, <code>user ?? null</code> passed through).</li>
+<li>If they match, include them in the Phase 1 commit. If they diverge, fix the divergence first.</li>
+</ol>
+</li>
+<li><strong>D-08:</strong> Do NOT <code>git restore</code> or revert the working-tree edits — they are correct, just uncommitted.</li>
+</ul>
+<h3>Dirty-Tree Handling</h3>
+<ul>
+<li><strong>D-09:</strong> Phase 1 commits <strong>only</strong> the BUG-01/BUG-02 files. Surgical <code>git add &lt;file&gt;</code> per file:<ul>
+<li><code>src/components/user-avatar-profile.tsx</code></li>
+<li><code>src/components/layout/app-sidebar.tsx</code></li>
+<li><code>src/components/layout/user-nav.tsx</code></li>
+</ul>
+</li>
+<li><strong>D-10:</strong> Leave the following dirty files in the working tree, untouched by Phase 1:<ul>
+<li><code>src/features/job-leads/lib/linkedin-browser.ts</code> — Phase 5 (Job Leads)</li>
+<li><code>src/features/job-leads/lib/scrape-connections.ts</code> — Phase 5</li>
+<li><code>src/features/job-leads/lib/scrape-job-page.ts</code> — Phase 5</li>
+<li><code>src/app/api/job-leads/[id]/search/route.ts</code> — Phase 5</li>
+<li><code>package.json</code> / <code>package-lock.json</code> — unclear ownership; investigate later</li>
+<li><code>docs/summary.md</code>, <code>.planning/config.json</code> — out of scope this phase</li>
+</ul>
+</li>
+<li><strong>D-11:</strong> Do not stash or commit the unrelated changes. They stay in place.</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li>Commit message wording, ordering of edits within the patch, and whether to commit BUG-01 and BUG-02 as one or two commits — at the executor&#39;s discretion. Recommended default: one commit per requirement (one for BUG-01, one for BUG-02) for clean git history and easy revert.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Bug Specification</h3>
+<ul>
+<li><code>bug.md</code> — Full symptom, root-cause, fix prescription for BUG-01. Two problems: <code>{user &amp;&amp; ...}</code> SSR/CSR mismatch + invalid <code>&lt;div&gt;</code> inside <code>&lt;button&gt;</code> HTML nesting. Lists files to edit.</li>
+</ul>
+<h3>Project &amp; Requirements</h3>
+<ul>
+<li><code>.planning/PROJECT.md</code> — Project overview, constraints (no server actions, all mutations via REST API, Clerk single-user lock).</li>
+<li><code>.planning/REQUIREMENTS.md</code> — BUG-01 + BUG-02 acceptance criteria.</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 1: Critical Bug Fix&quot; — Phase 1 success criteria.</li>
+</ul>
+<h3>Codebase Maps</h3>
+<ul>
+<li><code>.planning/codebase/CONCERNS.md</code> §&quot;Known Bugs&quot; — Current-state description of the hydration crash and the unsafe <code>emailAddresses[0]</code> access; confirms that <code>&lt;span&gt;</code> migration is partially done.</li>
+<li><code>.planning/codebase/STACK.md</code> — Next.js 16 App Router, Clerk auth library context.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — Code style (single quotes, 2-space indent, named exports, kebab-case files).</li>
+</ul>
+<h3>Coding Conventions</h3>
+<ul>
+<li><code>CLAUDE.md</code> — Project-level conventions: TypeScript strict mode, named exports, Server Components by default.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><code>src/components/user-avatar-profile.tsx</code> — already accepts <code>user: ... | null</code> and uses optional chaining throughout. The component is robust to a null user; the only failure mode left is the <code>emailAddresses[0].emailAddress</code> chain.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>Optional chaining for Clerk user fields:</strong> the rest of <code>user-avatar-profile.tsx</code> already uses <code>user?.imageUrl</code>, <code>user?.fullName?.slice(...)</code>, etc. The fix is to extend this pattern one level deeper into the array index.</li>
+<li><strong><code>&#39;use client&#39;</code> for components touching Clerk hooks:</strong> both <code>app-sidebar.tsx</code> and <code>user-nav.tsx</code> are client components — server-only rendering paths cannot be used here.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong><code>AppSidebar</code> → <code>UserAvatarProfile</code>:</strong> <code>app-sidebar.tsx</code> renders <code>UserAvatarProfile</code> twice — once inside <code>SidebarMenuButton</code> (line 148) and once inside the dropdown header (line 164). Both must render valid HTML and survive a null user.</li>
+<li><strong><code>useUser()</code> hook:</strong> Clerk&#39;s <code>useUser()</code> returns <code>undefined</code> on the server and <code>{ user, isSignedIn, isLoaded }</code> on the client. Any conditional render gated on <code>user</code> is an SSR/CSR mismatch waiting to happen. The fix relies on <code>UserAvatarProfile</code> itself handling <code>user === null</code> — it already does.</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>The fix is mechanical and fully specified in <code>bug.md</code> + current code state. No external research is required.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li>The fix surface is <strong>three files, ~4 line changes total</strong>. This is a small phase, not a multi-day effort.</li>
+<li>Verification is a 2-minute dev-server smoke check. If the planner is generating a multi-step plan, it should reflect this minimal scope — not invent ceremony.</li>
+<li>The planner should explicitly call out the &quot;audit pre-existing working-tree edits&quot; step (D-07) as a discrete task before committing — otherwise an executor might just stage and commit blindly.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Codebase-wide hydration audit</strong> — sweep for other <code>useUser()</code> / <code>useAuth()</code> conditional renders that could cause SSR/CSR mismatches. Not done this phase; consider if BUG-01 recurs elsewhere.</li>
+<li><strong>Codebase-wide unsafe Clerk-property sweep</strong> — grep for unguarded <code>firstName</code>, <code>primaryEmailAddress</code>, etc. accesses. Not done this phase.</li>
+<li><strong>No-email user repro harness</strong> — programmatically synthesize a Clerk user with <code>emailAddresses: []</code> to repro BUG-02 in a controlled way. Belongs in Phase 2 (Test Infrastructure) as part of TEST-A3 or a related test.</li>
+<li><strong>Hydration regression test</strong> (TEST-A3) — formally owned by Phase 2.</li>
+<li><strong>Unrelated dirty files</strong> — Job Leads scrape work, package.json changes, docs/summary.md, .planning/config.json: handled by their owning phases (Phase 5 for Job Leads, etc.).</li>
+</ul>
+</deferred><hr>
+<p><em>Phase: 1-Critical Bug Fix</em>
+<em>Context gathered: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/01-critical-bug-fix/01-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

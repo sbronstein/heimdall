@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>deferred-items</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 4 — Deferred Items</h1>
+<p>Pre-existing issues discovered during execution but explicitly out of scope per the SCOPE BOUNDARY rule in <code>execute-plan.md</code> (&quot;Only auto-fix issues DIRECTLY caused by the current task&#39;s changes&quot;).</p>
+<h2>Pre-Existing <code>npm run build</code> TypeScript Failure (not caused by DEBT-A1)</h2>
+<p><strong>Discovered during:</strong> Plan 04-01 execution (Task 1 verification)</p>
+<p><strong>Error:</strong></p>
+<pre><code>./src/features/job-leads/lib/prioritization.ts:70:21
+Type error: Type &#39;MapIterator&lt;PrioritizedRecommendation&gt;&#39; can only be iterated through
+when using the &#39;--downlevelIteration&#39; flag or with a &#39;--target&#39; of &#39;es2015&#39; or higher.
+
+  68 |
+  69 |   // Overall contact score = max of their bridge scores
+&gt; 70 |   for (const rec of byContact.values()) {
+     |                     ^
+  71 |     rec.score = Math.max(...rec.prospects.map((p) =&gt; p.bridgeScore));
+</code></pre>
+<p><strong>Verification it is pre-existing:</strong> Stashed all Plan 04-01 deletions, ran <code>npm run build</code> against clean <code>HEAD</code> (commit <code>b592d28 docs(04): create phase plan</code>) — same error reproduces. The error is in <code>src/features/job-leads/lib/prioritization.ts</code> which was last touched by commit <code>8562eba Add job leads feature: LinkedIn URL → prioritized intro recommendations</code> and is fully unrelated to the products feature being deleted.</p>
+<p><strong>Root cause:</strong> <code>tsconfig.json</code> <code>&quot;target&quot;: &quot;es5&quot;</code> (project default) does not permit <code>Map.values()</code> iteration without <code>--downlevelIteration</code>. The file uses <code>for (const rec of byContact.values())</code> which requires either <code>target: es2015+</code> or <code>downlevelIteration: true</code>. This is a tsconfig-level setting that was never updated when the feature shipped.</p>
+<p><strong>Why deferred:</strong> Per SCOPE BOUNDARY rule, this is out of scope for DEBT-A1 (products feature deletion). The plan-level <code>npm run build exits 0</code> success criterion was written under the assumption that <code>main</code> builds clean; it does not. Fixing this requires editing either <code>tsconfig.json</code> (<code>target</code>/<code>downlevelIteration</code>) or <code>src/features/job-leads/lib/prioritization.ts</code> (rewrite to <code>Array.from(byContact.values())</code>), neither of which is part of any DEBT-Ax requirement.</p>
+<p><strong>Impact on Plan 04-01 verification:</strong> The plan&#39;s &quot;npm run build exits 0&quot; task-verification line cannot pass on top of a <code>main</code> branch that already fails. The deletion verification (no orphan imports of <code>@/features/products</code>, <code>@/constants/mock-api</code>, <code>Product</code>/<code>SaleUser</code>/<code>recentSalesData</code>) was performed via <code>grep</code> and passes cleanly. Build output confirms the only failure is the unrelated pre-existing <code>prioritization.ts</code> error — there are no new errors caused by the deletions.</p>
+<p><strong>Recommended follow-up:</strong></p>
+<ul>
+<li>Add a new DEBT entry (DEBT-A6 or BUILD-A1) in a follow-on phase to either:<ul>
+<li>Bump <code>tsconfig.json</code> <code>target</code> from <code>es5</code> to <code>es2015</code> (or <code>es2020</code>), OR</li>
+<li>Set <code>&quot;downlevelIteration&quot;: true</code> in <code>tsconfig.json</code>, OR</li>
+<li>Refactor <code>src/features/job-leads/lib/prioritization.ts</code> to use <code>Array.from(byContact.values())</code>.</li>
+</ul>
+</li>
+<li>Phase 4&#39;s other plans (04-02..04-05) will hit the same pre-existing failure on their own build verifications. Either fix it as a sixth tiny plan early in Phase 4 or accept the same scope-out treatment across the phase.</li>
+</ul>
+<h2>Pre-Existing Dirty Working Tree (orchestrator note)</h2>
+<p>The orchestrator prompt stated &quot;the working tree is clean — pre-existing Phase 5 WIP has been stashed&quot;, but at executor startup <code>git status</code> showed:</p>
+<ul>
+<li><code>M .planning/config.json</code></li>
+<li><code>M .planning/STATE.md</code></li>
+<li><code>?? .claude/</code></li>
+</ul>
+<p>None of these overlap with DEBT-A1&#39;s <code>files_modified</code> set, so they did not affect this plan&#39;s execution. Left untouched.</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

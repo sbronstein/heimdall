@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 02-test-infrastructure
+plan: 01
+subsystem: testing
+tags: [vitest, pglite, test-harness, drizzle, typescript]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 01-critical-bug-fix
+provides: Baseline codebase with Drizzle schema, migrations, and production db singleton</li>
+</ul>
+<p>provides:</p>
+<ul>
+<li>Vitest 4.1.6 test runner with node environment and @/* path alias</li>
+<li>npm test and npm run test:run scripts</li>
+<li>src/test-utils/pglite.ts — createTestDb() returning fresh PGlite-backed Drizzle instance</li>
+<li>src/test-utils/call-route.ts — callRoute() helper for invoking Next.js route handlers</li>
+</ul>
+<p>affects: [02-test-infrastructure, 03-security-hardening, 04-api-cleanup, 05-job-leads]</p>
+<p>tech-stack:
+  added:
+    - vitest@^4.1.6
+    - &quot;@electric-sql/pglite@^0.4.5&quot;
+  patterns:
+    - PGlite raw SQL replay of drizzle/migrations/*.sql for in-process Postgres in tests (CD-04)
+    - Per-call fresh PGlite instance for test isolation (CD-05)
+    - callRoute() helper wraps params in Promise.resolve for Next.js 16 async-params shape
+    - vitest.config.ts with passWithNoTests to handle Vitest 4 exit-code behavior</p>
+<p>key-files:
+  created:
+    - vitest.config.ts
+    - src/test-utils/pglite.ts
+    - src/test-utils/call-route.ts
+  modified:
+    - package.json
+    - package-lock.json</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;passWithNoTests: true required in vitest.config.ts — Vitest 4 exits code 1 on no test files (unlike earlier versions)&quot;</li>
+<li>&quot;Raw SQL replay via pglite.exec() chosen for migration bootstrap (CD-04) — avoids drizzle-kit toolchain at runtime&quot;</li>
+<li>&quot;drizzle-orm/pglite adapter drizzle(pglite, { schema }) matches production src/lib/db/index.ts shape exactly&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;createTestDb(): import from @/test-utils/pglite, call in beforeEach, use with vi.mock(&#39;@/lib/db&#39;)&quot;</li>
+<li>&quot;callRoute(handler, opts): invoke route handlers without a test HTTP server&quot;</li>
+</ul>
+<p>requirements-completed:</p>
+<ul>
+<li>TEST-A1</li>
+</ul>
+<h2>duration: 15min
+completed: &quot;2026-05-12&quot;</h2>
+<h1>Phase 2 Plan 01: Vitest + PGlite Test Harness Setup Summary</h1>
+<p><strong>Vitest 4.1.6 + PGlite in-process Postgres harness wired to Drizzle schema via raw SQL migration replay, with callRoute() helper for Next.js 16 route handler testing</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> ~15 min</li>
+<li><strong>Started:</strong> 2026-05-12</li>
+<li><strong>Completed:</strong> 2026-05-12</li>
+<li><strong>Tasks:</strong> 3</li>
+<li><strong>Files modified:</strong> 5</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Installed vitest@^4.1.6 and @electric-sql/pglite@^0.4.5 as devDependencies</li>
+<li>Added <code>&quot;test&quot;: &quot;vitest&quot;</code> and <code>&quot;test:run&quot;: &quot;vitest run&quot;</code> npm scripts</li>
+<li>Created <code>vitest.config.ts</code> with node environment, globals, @/* path alias, and passWithNoTests</li>
+<li>Created <code>src/test-utils/pglite.ts</code> exporting <code>createTestDb()</code> that bootstraps a fresh in-memory PGlite with all 7 migrations replayed, bound to Drizzle with the full schema barrel</li>
+<li>Created <code>src/test-utils/call-route.ts</code> exporting <code>callRoute()</code> that wraps Next.js 16 async-params handlers and returns <code>{ status, body, response }</code></li>
+<li><code>npm run test:run</code> exits 0 with no test files (vitest confirms clean runner state)</li>
+</ul>
+<h2>Task Commits</h2>
+<p>Each task was committed atomically:</p>
+<ol>
+<li><strong>Task 1: Install Vitest + PGlite devDependencies, add npm test scripts</strong> - <code>1153299</code> (feat)</li>
+<li><em><em>Task 2: Write vitest.config.ts with node env and @/</em> path alias</em>* - <code>5931cb5</code> (feat)</li>
+<li><strong>Task 3: Write PGlite harness (createTestDb) and route-call helper (callRoute)</strong> - <code>d7208df</code> (feat)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>package.json</code> - Added test/test:run scripts; vitest and @electric-sql/pglite in devDependencies</li>
+<li><code>package-lock.json</code> - Updated with resolved packages (35 added)</li>
+<li><code>vitest.config.ts</code> - Vitest config: node env, globals: true, src/**/*.test.{ts,tsx} include, @/-&gt;./src alias, passWithNoTests: true</li>
+<li><code>src/test-utils/pglite.ts</code> - createTestDb(): fresh PGlite, 7 migration files replayed in order, drizzle(pglite, { schema }) returned</li>
+<li><code>src/test-utils/call-route.ts</code> - callRoute(handler, opts): builds Request, wraps params in Promise.resolve, awaits handler, returns { status, body, response }</li>
+</ul>
+<h2>Decisions Made</h2>
+<ul>
+<li><strong>passWithNoTests: true</strong>: Vitest 4 changed behavior — it exits code 1 when no test files match the include glob (earlier versions exit 0). Added <code>passWithNoTests: true</code> to honor the plan&#39;s success criterion that <code>npm run test:run</code> exits 0 on a clean checkout.</li>
+<li><strong>Raw SQL replay (CD-04)</strong>: Used <code>pglite.exec(sql)</code> to replay each <code>drizzle/migrations/*.sql</code> file in lexicographic order. Chosen over <code>drizzle-kit push</code> or <code>migrate()</code> because it&#39;s simpler, has no runtime dependency on drizzle-kit, and the <code>0000_</code> prefix naming guarantees correct order.</li>
+<li><strong>Path resolution via import.meta.url</strong>: Migration directory computed as <code>path.join(path.dirname(fileURLToPath(import.meta.url)), &#39;../../drizzle/migrations&#39;)</code> so the helper works regardless of test working directory.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<h3>Auto-fixed Issues</h3>
+<p><strong>1. [Rule 1 - Bug] Added passWithNoTests: true to vitest.config.ts</strong></p>
+<ul>
+<li><strong>Found during:</strong> Task 2 (vitest.config.ts verification)</li>
+<li><strong>Issue:</strong> Plan success criterion requires <code>npm run test:run</code> to exit 0 with no tests. Vitest 4.1.6 exits code 1 when no test files match the include glob — behavior changed from earlier Vitest versions.</li>
+<li><strong>Fix:</strong> Added <code>passWithNoTests: true</code> to the <code>test</code> config block.</li>
+<li><strong>Files modified:</strong> vitest.config.ts</li>
+<li><strong>Verification:</strong> <code>npx vitest run</code> now exits 0 with message &quot;No test files found, exiting with code 0&quot;</li>
+<li><strong>Committed in:</strong> <code>5931cb5</code> (Task 2 commit)</li>
+</ul>
+<hr>
+<p><strong>Total deviations:</strong> 1 auto-fixed (1 Rule 1 bug)
+<strong>Impact on plan:</strong> Minor — passWithNoTests is an idiomatic Vitest option. No scope creep.</p>
+<h2>Issues Encountered</h2>
+<ul>
+<li>Pre-existing TypeScript errors in <code>src/features/job-leads/lib/prioritization.ts</code> (TS2802 MapIterator downlevelIteration) and <code>src/features/job-leads/lib/scrape-connections.ts</code> (TS2802 NodeListOf iteration). These are out-of-scope pre-existing issues; no new type errors introduced by this plan&#39;s files.</li>
+</ul>
+<h2>User Setup Required</h2>
+<p>None - no external service configuration required. Test runner is fully local and in-process.</p>
+<h2>Next Phase Readiness</h2>
+<ul>
+<li>Test runner is active: <code>npm run test:run</code> exits 0</li>
+<li><code>createTestDb()</code> available at <code>@/test-utils/pglite</code> for DB-touching tests</li>
+<li><code>callRoute()</code> available at <code>@/test-utils/call-route</code> for route handler tests</li>
+<li>Plans 02-02, 02-03, 02-04 can now write tests against pure logic, DB-backed routes, and BUG-01 regression surface</li>
+</ul>
+<hr>
+<p><em>Phase: 02-test-infrastructure</em>
+<em>Completed: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

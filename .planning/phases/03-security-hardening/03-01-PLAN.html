@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>03-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/03-security-hardening/03-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 03-security-hardening
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/proxy.ts</li>
+<li>src/middleware.ts</li>
+<li>src/middleware.test.ts
+autonomous: true
+requirements:</li>
+<li>SEC-A1
+tags:</li>
+<li>clerk</li>
+<li>middleware</li>
+<li>auth</li>
+<li>security
+must_haves:
+  truths:<ul>
+<li>&quot;Next.js auto-loads middleware at <code>src/middleware.ts</code> (file rename activates enforcement for the first time per PD-01)&quot;</li>
+<li>&quot;The protected-route matcher list inside <code>clerkMiddleware</code> covers both <code>/dashboard(.*)</code> and <code>/api/(.*)</code>&quot;</li>
+<li>&quot;An unauthenticated request to any <code>/api/*</code> path returns HTTP 401 with body <code>{ success: false, error: &#39;Unauthorized&#39; }</code> (API-V1 envelope preserved per CD-02)&quot;</li>
+<li>&quot;An authenticated request whose Clerk session email is not <code>steve@bronstein.org</code> is redirected to <code>/auth/sign-in</code> (single-user lock applied to both route classes per D-03)&quot;</li>
+<li>&quot;Public auth pages under <code>/auth/*</code> remain reachable without a session (the protected matcher list is <code>[dashboard, api]</code> only — D-05)&quot;</li>
+<li>&quot;Every <code>route.ts</code> under <code>src/app/api/**</code> has a URL path that matches the protected matcher pattern <code>/api/(.*)</code> (route-enumeration assertion — D-07 layer 2)&quot;</li>
+<li>&quot;<code>npm run test:run</code> exits 0 with the new middleware tests passing&quot;</li>
+<li>&quot;<code>npm run build</code> still succeeds after the rename + matcher expansion&quot;
+artifacts:</li>
+<li>path: &quot;src/middleware.ts&quot;
+provides: &quot;Active Next.js middleware: clerkMiddleware + matcher expansion + explicit /api/* 401 envelope short-circuit&quot;
+contains: &quot;clerkMiddleware&quot;
+exports: [&quot;default&quot;, &quot;config&quot;]</li>
+<li>path: &quot;src/middleware.test.ts&quot;
+provides: &quot;Two layers of verification — middleware behavior unit tests + route-enumeration assertion&quot;
+contains: &quot;describe&quot;
+key_links:</li>
+<li>from: &quot;src/middleware.ts&quot;
+to: &quot;@clerk/nextjs/server&quot;
+via: &quot;clerkMiddleware, createRouteMatcher, auth.protect&quot;
+pattern: &quot;clerkMiddleware|createRouteMatcher&quot;</li>
+<li>from: &quot;src/middleware.ts&quot;
+to: &quot;next/server&quot;
+via: &quot;NextResponse.json for explicit /api/* 401&quot;
+pattern: &quot;NextResponse\.json&quot;</li>
+<li>from: &quot;src/middleware.test.ts&quot;
+to: &quot;src/app/api/**/route.ts&quot;
+via: &quot;glob enumeration in route-coverage describe block&quot;
+pattern: &quot;src/app/api&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Activate the dead `clerkMiddleware()` file by renaming `src/proxy.ts` to `src/middleware.ts` (which Next.js auto-loads), expand the protected-route matcher to cover `/api/(.*)` in addition to `/dashboard(.*)`, and add an explicit 401-envelope short-circuit for unauthenticated `/api/*` requests so the API-V1 `{ success, data, error, meta }` contract is preserved for CLI consumers.<p>Purpose: Close SEC-A1 — every <code>/api/*</code> route currently authenticates against zero callers. After this plan, the middleware is the single chokepoint enforcing both Clerk session presence and the <code>steve@bronstein.org</code> email lock on every API path. Per D-06, no per-route <code>auth()</code> calls are added inside <code>src/app/api/**/route.ts</code> — middleware-only enforcement to avoid drift across 32 route files.</p>
+<p>Output:</p>
+<ul>
+<li><code>src/middleware.ts</code> (renamed from <code>src/proxy.ts</code> via <code>git mv</code>, with expanded matcher and explicit <code>/api/*</code> envelope short-circuit)</li>
+<li><code>src/middleware.test.ts</code> (new — two-layer verification: middleware behavior + route-enumeration assertion)</objective></li>
+</ul>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/03-security-hardening/03-CONTEXT.md
+@.planning/codebase/CONCERNS.md
+@CLAUDE.md
+@src/proxy.ts
+@src/lib/api/types.ts
+@src/lib/api/errors.ts
+@vitest.config.ts
+@src/components/layout/app-sidebar.ssr.test.tsx<interfaces>
+<!-- Existing source-of-truth excerpts the executor needs. No code authoring required from these — quote when implementing. --><p>From <code>src/proxy.ts</code> (current shape — moved verbatim then edited):</p>
+<ul>
+<li><code>import { clerkMiddleware, createRouteMatcher } from &#39;@clerk/nextjs/server&#39;</code></li>
+<li><code>import { NextRequest, NextResponse } from &#39;next/server&#39;</code></li>
+<li><code>const ALLOWED_EMAIL = &#39;steve@bronstein.org&#39;</code></li>
+<li><code>const isProtectedRoute = createRouteMatcher([&#39;/dashboard(.*)&#39;])</code> — expand to <code>[&#39;/dashboard(.*)&#39;, &#39;/api/(.*)&#39;]</code></li>
+<li><code>export default clerkMiddleware(async (auth, req: NextRequest) =&gt; { ... })</code></li>
+<li><code>export const config = { matcher: [ &#39;/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)&#39;, &#39;/(api|trpc)(.*)&#39; ] }</code></li>
+</ul>
+<p>From <code>src/lib/api/types.ts</code> (envelope contract to preserve):</p>
+<ul>
+<li><code>type ApiResponse&lt;T&gt; = { success: boolean; data?: T; error?: string; meta?: {...} }</code></li>
+<li>401 short-circuit body MUST be <code>{ success: false, error: &#39;Unauthorized&#39; }</code></li>
+</ul>
+<p>From <code>src/components/layout/app-sidebar.ssr.test.tsx</code> (Phase 2 mocking pattern to follow):</p>
+<ul>
+<li><code>vi.mock(&#39;@clerk/nextjs&#39;, () =&gt; ({ ... }))</code> — the Phase 2 surface</li>
+<li>For middleware testing the executor should <code>vi.mock(&#39;@clerk/nextjs/server&#39;, () =&gt; ({ clerkMiddleware: ..., createRouteMatcher: ... }))</code> — note this is <code>/server</code> not the client <code>@clerk/nextjs</code> mocked in Phase 2</li>
+</ul>
+<p>API route surface to enumerate (32 paths under <code>src/app/api/</code>):</p>
+<ul>
+<li>glob target: <code>src/app/api/**/route.ts</code></li>
+<li>every derived URL path MUST start with <code>/api/</code> and thus MUST match <code>/api/(.*)</code></interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Rename proxy.ts → middleware.ts, expand matcher, add /api/* 401 envelope short-circuit</name>
+  <files>src/proxy.ts (deleted), src/middleware.ts (created via git mv)</files>
+  <read_first>
+    - `src/proxy.ts` (full file — this is what gets moved and edited)
+    - `.planning/phases/03-security-hardening/03-CONTEXT.md` §"Decisions" D-01..D-06 + CD-02
+    - `src/lib/api/types.ts` (envelope contract — body shape for the 401)
+    - `src/lib/api/errors.ts` (existing 4xx response helpers — for reference; do NOT import inside middleware since middleware runs at edge runtime and these helpers use `Response.json`; use `NextResponse.json` instead)
+  </read_first>
+  <behavior>
+    - Behavior 1: Next.js loads `src/middleware.ts` automatically (no manual config wiring). After rename, requests to `/dashboard/foo` and `/api/foo` BOTH flow through the middleware.
+    - Behavior 2: Unauthenticated request to `/api/anything` returns HTTP 401 with JSON body `{ success: false, error: 'Unauthorized' }` (not a redirect, not HTML) — preserves API-V1 envelope for CLI per CD-02.
+    - Behavior 3: Unauthenticated request to `/dashboard/anything` continues to be handled by `auth.protect()`'s default redirect-to-sign-in (existing behavior, unchanged by this plan).
+    - Behavior 4: Authenticated request whose session email !== 'steve@bronstein.org' is redirected to `/auth/sign-in` for BOTH `/dashboard/*` and `/api/*` (D-03 — email lock applies equally).
+    - Behavior 5: Public `/auth/*` paths pass through without invoking `auth.protect()` (the protected matcher list is `[dashboard, api]` only — D-05).
+  </behavior>
+  <action>
+    Use `git mv src/proxy.ts src/middleware.ts` (CD-01 — preserves blame/history). Then edit `src/middleware.ts`:<pre><code>1. Expand the `createRouteMatcher` call argument list from `[&#39;/dashboard(.*)&#39;]` to `[&#39;/dashboard(.*)&#39;, &#39;/api/(.*)&#39;]` (D-02).
+
+2. Add an explicit `/api/*` envelope short-circuit at the top of the `clerkMiddleware` async callback, BEFORE the existing `auth.protect()` call. Use `req.nextUrl.pathname.startsWith(&#39;/api/&#39;)` to detect API paths. For an API path without a valid session, return `NextResponse.json({ success: false, error: &#39;Unauthorized&#39; }, { status: 401 })`. Determine &quot;without a valid session&quot; by calling `await auth()` (without `.protect()`) first and checking if `userId` is falsy — this avoids `auth.protect()`&#39;s default redirect for `/api/*` (CD-02, confirmed via Clerk docs: `auth.protect()` redirects unauthenticated callers to sign-in by default, which yields HTML not JSON 401 — wrong shape for the CLI).
+
+3. For `/dashboard/*` paths, preserve the existing `auth.protect()` behavior (HTML redirect to sign-in is correct for browser callers).
+
+4. The email-lock check applies to both classes: after a session is confirmed present (via `userId`), check `sessionClaims?.email` and if non-empty and !== &#39;steve@bronstein.org&#39;, return `NextResponse.redirect(new URL(&#39;/auth/sign-in&#39;, req.url))` for BOTH path classes (D-03).
+
+5. Keep the existing `export const config = { matcher: [...] }` block unchanged — the outer matcher already covers both `/api/*` and non-static dashboard paths; the gate logic happens via `isProtectedRoute` inside the callback per D-05.
+
+Maintain the file&#39;s existing imports (`clerkMiddleware`, `createRouteMatcher`, `NextRequest`, `NextResponse`) — no new imports required. Use named identifiers only; no fenced code blocks elsewhere in the codebase need to change. Per D-06, do NOT add `auth()` calls to any `src/app/api/**/route.ts` file.
+
+Run `npm run build` after the edit to confirm the rename + matcher expansion compiles cleanly (Next.js 16 must successfully detect the new middleware location).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run build 2>&amp;1 | tail -20 &amp;&amp; test -f src/middleware.ts &amp;&amp; test ! -f src/proxy.ts &amp;&amp; grep -q "/api/(.*)" src/middleware.ts &amp;&amp; grep -q "success: false" src/middleware.ts &amp;&amp; grep -q "status: 401" src/middleware.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/middleware.ts` exists; `src/proxy.ts` does not (verified via `test -f` and `test ! -f`)
+    - `git log --follow src/middleware.ts` shows history from the prior `src/proxy.ts` (blame preserved per CD-01)
+    - `src/middleware.ts` contains the literal substring `/api/(.*)` in the `createRouteMatcher` argument
+    - `src/middleware.ts` contains a `NextResponse.json(...)` call with `success: false` and `status: 401`
+    - `src/middleware.ts` contains the literal substring `startsWith('/api/')` (path-class detection for the envelope short-circuit)
+    - `src/middleware.ts` still contains the existing `ALLOWED_EMAIL = 'steve@bronstein.org'` constant and the redirect-to-`/auth/sign-in` branch for wrong-email sessions
+    - `npm run build` exits 0 (Next.js compiles the renamed middleware without warnings about a missing matcher or unrecognized middleware location)
+    - No new file is created under `src/app/api/**/route.ts` (D-06: no per-route auth calls — middleware-only)
+  </acceptance_criteria>
+  <done>The middleware is active for the first time, gates both `/dashboard/*` and `/api/*` with the single-user email lock, and returns a proper `{ success: false, error: 'Unauthorized' }` 401 JSON envelope for unauthenticated `/api/*` callers. `npm run build` is green.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Write middleware unit test + route-enumeration assertion (src/middleware.test.ts)</name>
+  <files>src/middleware.test.ts</files>
+  <read_first>
+    - `src/middleware.ts` (the file just produced by Task 1 — test target)
+    - `src/components/layout/app-sidebar.ssr.test.tsx` (Phase 2 vi.mock pattern — Clerk mocking template)
+    - `src/components/layout/app-sidebar.hydration.test.tsx` (Phase 2 jsdom test pattern for reference)
+    - `vitest.config.ts` (env=node default, glob `src/**/*.test.{ts,tsx}`, `passWithNoTests: true`)
+    - `.planning/phases/03-security-hardening/03-CONTEXT.md` §"Decisions" D-07..D-09 (verification strategy)
+  </read_first>
+  <behavior>
+    - Behavior 1 (describe block A — unauthenticated `/api/*` returns 401 envelope): A `NextRequest` to `/api/companies` with no Clerk session produces a `NextResponse` with `status === 401` and JSON body `{ success: false, error: 'Unauthorized' }`. Tests at least two representative API paths (e.g. `/api/companies` and `/api/job-leads/abc/search`) to cover both list and nested-dynamic shapes.
+    - Behavior 2 (describe block B — unauthenticated `/dashboard/*` triggers Clerk's protect): A `NextRequest` to `/dashboard/overview` with no Clerk session causes `auth.protect()` to be invoked (the mock records the call); the response is NOT the JSON 401 envelope (it goes down the Clerk-redirect path). The test asserts on the mock-call shape, not on Clerk's actual redirect.
+    - Behavior 3 (describe block C — wrong-email session redirected to /auth/sign-in): A `NextRequest` to `/api/companies` OR `/dashboard/overview` with a Clerk session whose `sessionClaims.email === 'attacker@example.com'` produces a `NextResponse.redirect` with location `/auth/sign-in`. The email-lock check fires for BOTH route classes (D-03).
+    - Behavior 4 (describe block D — public `/auth/*` passes through): A `NextRequest` to `/auth/sign-in` does NOT invoke `auth.protect()` and does NOT return the envelope short-circuit (mock `auth.protect` is not called; response is undefined / pass-through).
+    - Behavior 5 (describe block E — route-enumeration assertion): Glob `src/app/api/**/route.ts` from the test, derive each URL path by stripping `src/app` prefix and removing the trailing `/route.ts` (e.g. `src/app/api/companies/route.ts` → `/api/companies`, `src/app/api/companies/[id]/route.ts` → `/api/companies/[id]`). Assert that for every derived path, the regex `/^\/api\/(.*)/` matches (this proves the protected-matcher pattern `'/api/(.*)'` covers the entire current route surface — catches the failure mode where a route is added that escapes the matcher). Asserts the glob returns >= 32 paths.
+  </behavior>
+  <action>
+    Create `src/middleware.test.ts` (Vitest, node environment — the default in `vitest.config.ts`; no `@vitest-environment` pragma needed). Structure as five `describe` blocks per the behaviors above.<pre><code>Mocking approach:
+- `vi.mock(&#39;@clerk/nextjs/server&#39;, ...)` — replace `clerkMiddleware` with a passthrough that invokes the user callback with a stub `auth` object. The stub `auth()` returns `{ userId, sessionClaims }` configurable per test via a shared variable (e.g. `let mockAuthReturn`). The stub `auth.protect()` is a `vi.fn()` that records calls and returns the same `{ userId, sessionClaims }` shape — sufficient because the middleware reads those fields from its return.
+- `createRouteMatcher` mock — return a real function that does string-prefix matching against the same `[&#39;/dashboard(.*)&#39;, &#39;/api/(.*)&#39;]` patterns; for the test path&#39;s `req.nextUrl.pathname`, return true if it starts with `/dashboard` or `/api/`.
+
+Construct `NextRequest` instances directly: `import { NextRequest } from &#39;next/server&#39;` then `new NextRequest(new URL(&#39;http://localhost/api/companies&#39;))`. The middleware import should be the default export of `src/middleware.ts`.
+
+For the unauthenticated-`/api/*` 401 test (behavior 1):
+- Set `mockAuthReturn` to `{ userId: null, sessionClaims: null }`.
+- Invoke the middleware default export with the constructed `NextRequest`.
+- Assert returned `Response.status === 401` and `await response.json()` equals `{ success: false, error: &#39;Unauthorized&#39; }`.
+
+For the wrong-email test (behavior 3):
+- Set `mockAuthReturn` to `{ userId: &#39;user_xyz&#39;, sessionClaims: { email: &#39;attacker@example.com&#39; } }`.
+- Invoke middleware for `/api/companies` AND for `/dashboard/overview`.
+- For each, assert returned response is a `NextResponse.redirect` (check `response.status` is 307 or 308 AND `response.headers.get(&#39;location&#39;)` contains `/auth/sign-in`).
+
+For the route-enumeration assertion (behavior 5):
+- `import { globSync } from &#39;node:fs&#39;` if available (Node 22 supports), OR use `fast-glob` if already in deps, OR `import { readdirSync } from &#39;node:fs&#39;` recursive — Phase 2 already targets Node 22 (`.nvmrc`). Simplest: `readdirSync(&#39;src/app/api&#39;, { recursive: true, withFileTypes: true })`, filter to `route.ts` files, derive paths.
+- Build the regex once: `const apiMatcher = /^\/api\/(.*)/`.
+- For each derived path, `expect(apiMatcher.test(derivedPath)).toBe(true)`.
+- `expect(derivedPaths.length).toBeGreaterThanOrEqual(32)` (current count per CONTEXT.md is 32 — assertion is `&gt;=` not `===` so future-route additions don&#39;t break the test).
+
+Do NOT attempt per-route HTTP-level sweep tests (D-08 — middleware runs before handlers; would require mocking middleware to reach them, defeats the point).
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/middleware.test.ts 2>&amp;1 | tail -30</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/middleware.test.ts` exists with five `describe` blocks (one per behavior 1–5)
+    - `npm run test:run -- src/middleware.test.ts` exits 0 with all describes passing
+    - `npm run test:run` (full suite) exits 0 — no regressions to Phase 2 tests
+    - Test file contains a `vi.mock('@clerk/nextjs/server', ...)` call (Phase 2 pattern adapted for the `/server` subpath)
+    - Test file contains a glob/readdir traversal of `src/app/api/` filtering to `route.ts` files
+    - Test file asserts the glob result length is `>= 32`
+    - Test file asserts the regex `/^\/api\/(.*)/` matches every derived API path
+    - Test file constructs `NextRequest` instances and invokes the default export of `src/middleware.ts` directly (not via HTTP)
+    - Test file does NOT mock the middleware itself (D-08 — middleware is the system under test, not a stub)
+    - Test file does NOT add any per-route handler imports (D-06 + D-08 — only the middleware module is imported)
+  </acceptance_criteria>
+  <done>Two layers of verification per D-07 land in a single test file: (1) middleware behavior tests prove the 401 envelope, wrong-email redirect, and `/auth/*` passthrough; (2) route-enumeration assertion proves every current `/api/*` path falls under the protected matcher. Suite is green; pre-push hook will catch matcher drift on every future commit.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Anonymous internet → <code>/api/*</code></td>
+<td>Untrusted (no session) HTTP callers; previously had ZERO authentication enforcement at any layer per CONCERNS.md §&quot;Security Considerations → No Authentication on Any API Route&quot;</td>
+</tr>
+<tr>
+<td>Authenticated non-owner Clerk session → <code>/api/*</code></td>
+<td>Any Clerk-issued session for an email !== <code>steve@bronstein.org</code>; CLI parity assumes single-user, so a second user&#39;s session reaching the API surface is a confidentiality breach</td>
+</tr>
+<tr>
+<td><code>/auth/sign-in</code>, <code>/auth/sign-up</code></td>
+<td>Public auth pages — MUST remain reachable without a session to support the sign-in flow</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T1 (T-03-01)</td>
+<td>Spoofing / Information Disclosure / Tampering</td>
+<td>All 32 <code>src/app/api/**/route.ts</code> handlers</td>
+<td>mitigate</td>
+<td>Task 1 activates <code>src/middleware.ts</code> via <code>git mv</code> and expands <code>createRouteMatcher</code> to include <code>/api/(.*)</code>. Every unauthenticated <code>/api/*</code> request short-circuits with <code>NextResponse.json({ success: false, error: &#39;Unauthorized&#39; }, { status: 401 })</code> BEFORE reaching the route handler. Per D-06 the middleware is the single chokepoint — no per-route drift. Closes the &quot;0/34 routes authenticate&quot; gap recorded in CONCERNS.md.</td>
+</tr>
+<tr>
+<td>T2 (T-03-02)</td>
+<td>Spoofing / Elevation of Privilege</td>
+<td><code>src/middleware.ts</code> email-lock branch</td>
+<td>mitigate</td>
+<td>The existing <code>ALLOWED_EMAIL = &#39;steve@bronstein.org&#39;</code> check is preserved in the rename and explicitly applies to BOTH <code>/dashboard/*</code> and <code>/api/*</code> per D-03. Wrong-email Clerk sessions get redirected to <code>/auth/sign-in</code> for both classes. Tested in <code>src/middleware.test.ts</code> describe block C against both path classes.</td>
+</tr>
+<tr>
+<td>T3 (T-03-03)</td>
+<td>Spoofing / Auth-bypass via matcher gap</td>
+<td><code>createRouteMatcher</code> argument list in <code>src/middleware.ts</code></td>
+<td>mitigate</td>
+<td>Task 2 ships a route-enumeration assertion (D-07 layer 2) that globs <code>src/app/api/**/route.ts</code> at test time and asserts every derived path matches the regex <code>/^\/api\/(.*)/</code>. If a future route is added under a path that escapes the matcher pattern (e.g. accidentally placed under <code>src/app/v2-api/</code>), <code>npm run test:run</code> fails — caught at pre-push by the Phase 2 husky hook.</td>
+</tr>
+<tr>
+<td>T6 (T-03-06)</td>
+<td>Information Disclosure</td>
+<td>Clerk&#39;s default <code>auth.protect()</code> redirect on <code>/api/*</code></td>
+<td>mitigate</td>
+<td>CD-02: Clerk&#39;s default behavior on unauthenticated <code>/api/*</code> is an HTML redirect to <code>/auth/sign-in</code>, which leaks app structure to the CLI consumer and breaks the API-V1 envelope contract. Task 1 adds an explicit <code>req.nextUrl.pathname.startsWith(&#39;/api/&#39;)</code> short-circuit that returns the standard 401 envelope <code>{ success: false, error: &#39;Unauthorized&#39; }</code> instead. Verified by Task 2 describe block A.</td>
+</tr>
+</tbody></table>
+<h2>Residual Risk</h2>
+<ul>
+<li>T1: <strong>low</strong> — middleware is auto-loaded by Next.js framework convention (not opt-in config), short-circuit is in test coverage, and the matcher gate is enumeration-tested.</li>
+<li>T2: <strong>low</strong> — email-lock branch is unchanged from existing <code>src/proxy.ts</code> behavior and now actually fires (previously was dead code).</li>
+<li>T3: <strong>low</strong> — the route-enumeration test runs on every push via the existing husky pre-push hook (Phase 2 D-04), so matcher drift is caught before remote.</li>
+<li>T6: <strong>low</strong> — envelope short-circuit is explicit + asserted; CLI consumers continue to see uniform <code>{ success: false, error }</code> shape.</li>
+</ul>
+<p><strong>Block-on-high count: 0.</strong> ASVS L1 gate clears.
+</threat_model></p>
+<verification>
+After both tasks complete:<ol>
+<li><code>test -f src/middleware.ts &amp;&amp; test ! -f src/proxy.ts</code> — rename succeeded</li>
+<li><code>git log --follow src/middleware.ts</code> shows the prior <code>src/proxy.ts</code> history (blame preserved)</li>
+<li><code>grep -E &quot;(/api/\(\.\*\)|success: false|status: 401|startsWith\(&#39;/api/&#39;\))&quot; src/middleware.ts | wc -l</code> returns &gt;= 4</li>
+<li><code>npm run build</code> exits 0</li>
+<li><code>npm run test:run -- src/middleware.test.ts</code> passes all five describes</li>
+<li><code>npm run test:run</code> (full suite) passes — no regressions to Phase 2 (<code>pipeline</code>, <code>envelope</code>, <code>app-sidebar.ssr</code>, <code>app-sidebar.hydration</code>, CSV-parse, bridge-score, status-transition tests)</li>
+<li>Smoke verify (manual / dev-server, optional sanity check — not blocking): <code>curl -i http://localhost:4000/api/companies</code> (no session cookie) returns <code>HTTP/1.1 401</code> with body <code>{&quot;success&quot;:false,&quot;error&quot;:&quot;Unauthorized&quot;}</code>. This is informational; the automated tests above are the binding gate.</verification></li>
+</ol>
+<success_criteria>
+SEC-A1 satisfied:
+- Middleware is active (rename done; Next.js auto-loads `src/middleware.ts`)
+- Every `/api/*` route is gated by Clerk session + `steve@bronstein.org` email lock
+- Unauthenticated `/api/*` callers receive `{ success: false, error: 'Unauthorized' }` with HTTP 401 (envelope preserved for CLI per CD-02)
+- Two-layer automated verification ships in `src/middleware.test.ts`:
+  - Layer 1: middleware behavior unit tests (401 envelope, wrong-email redirect, public `/auth/*` passthrough)
+  - Layer 2: route-enumeration assertion (every `src/app/api/**/route.ts` path matches the protected matcher pattern)
+- `npm run build` and `npm run test:run` both exit 0
+- No per-route `auth()` calls added (D-06 — middleware is the single chokepoint)
+</success_criteria><output>
+After completion, create `.planning/phases/03-security-hardening/03-01-SUMMARY.md` documenting:
+- Confirmation that `git mv src/proxy.ts src/middleware.ts` was used (CD-01)
+- The exact form of the `/api/*` envelope short-circuit (CD-02 decision applied)
+- Current `/api/*` route count from the enumeration test (expected: 32 per CONTEXT.md PD-01)
+- Any deviation from D-07 (e.g. if Clerk's `auth()` signature in the installed version required adjustments to the mock)
+- Note for follow-on doc updates: `.planning/codebase/ARCHITECTURE.md` §"Entry Points → Clerk Middleware (`src/proxy.ts`)" and `CLAUDE.md` "Single-user Clerk lock in middleware" both reference the old filename and the inaccurate "currently active" claim — flag for Phase 3 wrap-up doc-correction step.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/03-security-hardening/03-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

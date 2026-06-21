@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 2: Test Infrastructure - Context</h1>
+<p><strong>Gathered:</strong> 2026-05-12
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>Stand up a Vitest test harness against the TypeScript codebase, pin the load-bearing logic surfaces with assertions, and add a regression test that fails if the BUG-01 hydration crash is reintroduced.</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>TEST-A1: Vitest + TypeScript wiring, PGlite-backed Drizzle test DB harness, <code>npm test</code> script.</li>
+<li>TEST-A2: Coverage for API envelope shape, <code>canTransition()</code>, <code>logTimeline()</code> side-effect, LinkedIn CSV parsing, bridge-score computation — plus <code>parseCursor</code>/<code>parseLimit</code> (filters.ts) and <code>inferSeniority</code> (seniority.ts) as adjacent cheap wins.</li>
+<li>TEST-A3: Regression test pinning the BUG-01 fix. Two assertions: SSR-only structural test (no <code>&lt;div&gt;</code> inside <code>&lt;button&gt;</code>, <code>UserAvatarProfile</code> present in SSR output) <strong>and</strong> hydration-mount test with <code>console.error</code> spy for React hydration warnings.</li>
+</ul>
+<p><strong>Out of scope (deferred to other phases):</strong></p>
+<ul>
+<li>Auth-gate test sweep across all 34 <code>/api/*</code> routes — Phase 3 (Security Hardening).</li>
+<li>Coverage of <code>match-connections.ts</code> and the Job Leads scraper modules — Phase 5 (Job Leads Completion) will rework these.</li>
+<li>Playwright/E2E test runner — not needed; existing Playwright usage is browser automation, not a test harness.</li>
+<li>CI integration (GitHub Actions test step). Husky pre-push currently runs <code>bun run build</code>; whether to also run <code>npm test</code> there is Claude&#39;s discretion (recommended: yes, fast tests only).</li>
+<li>Test coverage thresholds, coverage reporting tooling.</li>
+<li>Migration of <code>drizzle/seed.ts</code> patterns into test fixtures.</li>
+</ul>
+</domain><decisions>
+## Implementation Decisions<h3>Framework &amp; Layout (carried forward from Phase 1)</h3>
+<ul>
+<li><strong>D-01:</strong> Test runner is <strong>Vitest</strong> — confirmed by ROADMAP.md and <code>.planning/codebase/TESTING.md</code>. No Jest, no node-tap, no alternative.</li>
+<li><strong>D-02:</strong> Tests are <strong>colocated</strong> with source: <code>src/lib/domain/pipeline.test.ts</code> next to <code>src/lib/domain/pipeline.ts</code>. No top-level <code>tests/</code> directory.</li>
+<li><strong>D-03:</strong> File naming: <code>[file].test.ts</code>. Use <code>.test.ts</code> not <code>.spec.ts</code> for consistency across the repo.</li>
+<li><strong>D-04:</strong> Test fixtures (e.g., LinkedIn CSV sample rows) live next to the test that consumes them: <code>src/features/.../__fixtures__/linkedin-connections.csv</code>. No shared global fixtures directory.</li>
+</ul>
+<h3>DB Harness</h3>
+<ul>
+<li><strong>D-05:</strong> Use <strong>PGlite</strong> (<code>@electric-sql/pglite</code>) as the in-process Postgres for tests. Real SQL engine, supports JSONB and text arrays (both used heavily by Heimdall). No network, no Neon test branch, no <code>vi.mock(&#39;@/lib/db&#39;)</code> for routes that touch the DB.</li>
+<li><strong>D-06:</strong> Schema is applied to PGlite via Drizzle migrations from <code>drizzle/migrations/</code>. The planner/researcher should pick the exact wiring (one-time bootstrap per test file via <code>beforeAll</code>, vs. shared per-suite instance via test context) — open to either approach as long as schema state is isolated between tests.</li>
+<li><strong>D-07:</strong> Tests <strong>do NOT mock</strong> <code>@/lib/db/timeline</code>. The <code>logTimeline()</code> side-effect is verified by querying the real <code>timeline_events</code> table in PGlite after the API route runs — assert one row exists with the expected <code>eventType</code>, <code>title</code>, and entity IDs.</li>
+<li><strong>D-08:</strong> Pure-logic tests (<code>canTransition</code>, <code>computeBridgeScore</code>, <code>parseCursor</code>, <code>parseLimit</code>, <code>inferSeniority</code>, CSV parsing) do <strong>NOT</strong> need the PGlite harness — they receive plain inputs and return plain outputs. Use PGlite only for tests that exercise SQL.</li>
+</ul>
+<h3>Test Environment Strategy</h3>
+<ul>
+<li><strong>D-09:</strong> Single <code>vitest.config.ts</code> defaults to <code>environment: &#39;node&#39;</code>. The one jsdom test (the BUG-01 hydration mount) opts in via <code>// @vitest-environment jsdom</code> pragma at the top of the file.</li>
+<li><strong>D-10:</strong> No <code>vitest.config.dom.ts</code> second config, no projects mode, no <code>environmentMatchGlobs</code>. One <code>npm test</code> command runs everything.</li>
+</ul>
+<h3>TEST-A2 Coverage Scope</h3>
+<ul>
+<li><strong>D-11:</strong> Cover the 5 surfaces named in REQUIREMENTS TEST-A2:<ol>
+<li>API response envelope shape — assert routes return <code>{ success: true, data: ... }</code> or <code>{ success: false, error: ... }</code>; pick representative routes (one read, one write, one error path).</li>
+<li><code>canTransition()</code> — valid forward moves, blocked transitions from terminal states, blocked invalid jumps (e.g., <code>researching → offer</code>).</li>
+<li><code>logTimeline()</code> side-effect — every write API route under test must produce a real <code>timeline_events</code> row.</li>
+<li>LinkedIn CSV parsing — happy path + at least one malformed-row edge case (missing column, UTF-8 BOM, empty fields).</li>
+<li><code>computeBridgeScore</code> — weight composition (0.4 seniority + 0.35 closeness + 0.25 recency), bounds (0..100), monotonicity sanity check.</li>
+</ol>
+</li>
+<li><strong>D-12:</strong> Plus two adjacent surfaces flagged as critical-but-untested in <code>.planning/codebase/TESTING.md</code>:<ul>
+<li><code>parseCursor</code> / <code>parseLimit</code> in <code>src/lib/api/filters.ts</code> — date parsing edge cases, bounds enforcement.</li>
+<li><code>inferSeniority</code> in <code>src/features/job-leads/lib/seniority.ts</code> — title-to-seniority enum mapping; feeds bridge-score, so drift here masks bridge-score regressions.</li>
+</ul>
+</li>
+<li><strong>D-13:</strong> <strong>Do NOT</strong> add coverage for <code>match-connections.ts</code>, the Job Leads scrapers, or the LinkedIn <code>linkedin-browser.ts</code> module. Phase 5 will rewrite parts of these; test investment now would be discarded.</li>
+</ul>
+<h3>TEST-A3 Regression Strategy</h3>
+<ul>
+<li><strong>D-14:</strong> <strong>Two tests</strong>, one file, for the BUG-01 regression — both are required to call TEST-A3 done:<ul>
+<li><strong>SSR structural test</strong> (node environment): use <code>renderToString</code> or React Testing Library&#39;s server-render API on <code>&lt;AppSidebar /&gt;</code> with a mock signed-in Clerk user. Parse the HTML and assert:<ul>
+<li>No <code>&lt;div&gt;</code> element appears inside any <code>&lt;button&gt;</code> element.</li>
+<li><code>UserAvatarProfile</code>&#39;s markup appears in the SSR output (catches re-introduction of <code>{user &amp;&amp; &lt;UserAvatarProfile /&gt;}</code> gating).</li>
+</ul>
+</li>
+<li><strong>Hydration mount test</strong> (jsdom environment, opted in via pragma): SSR-render <code>&lt;AppSidebar /&gt;</code>, then <code>hydrateRoot</code> it into a jsdom <code>&lt;div&gt;</code>. Spy on <code>console.error</code>; assert no call matches React&#39;s hydration warning patterns (<code>/hydrat/i</code>, <code>/did not match/i</code>).</li>
+<li><strong>(Implementation: the two tests live in two separate files — <code>src/components/layout/app-sidebar.ssr.test.tsx</code> and <code>src/components/layout/app-sidebar.hydration.test.tsx</code> — because <code>@vitest-environment</code> is file-scope only; a single file cannot mix <code>node</code> and <code>jsdom</code> environments. The &quot;one file&quot; wording above predates this constraint being verified; the substantive contract — two assertions, both required to call TEST-A3 done — is unchanged. See 02-04-PLAN.md objective for rationale.)</strong></li>
+</ul>
+</li>
+<li><strong>D-15:</strong> The hydration test relies on React&#39;s warning text being reasonably stable. If React ever changes the warning format, the test should be updated — flakiness is acceptable cost; the structural test gives the deterministic backstop.</li>
+<li><strong>D-16:</strong> Mock Clerk&#39;s <code>useUser()</code> in the BUG-01 test via <code>vi.mock(&#39;@clerk/nextjs&#39;)</code> — return a fixed user object. Do not pull in the Clerk runtime.</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><strong>CD-01:</strong> Husky pre-push hook integration: whether to add <code>npm test</code> alongside <code>bun run build</code>. Recommended default: yes, but only if the full suite stays under ~10s. Otherwise CI-only.</li>
+<li><strong>CD-02:</strong> Order of plan tasks (<code>Wave 1: Vitest install + PGlite harness + npm test script</code>, then <code>Wave 2: TEST-A2 + TEST-A3</code> etc.) — planner to decide based on dependency analysis.</li>
+<li><strong>CD-03:</strong> Whether to commit a <code>tsconfig.test.json</code> separate from the main <code>tsconfig.json</code> for type-relaxed test files — at the planner&#39;s discretion based on whether default tsconfig already covers <code>*.test.ts</code>.</li>
+<li><strong>CD-04:</strong> Exact PGlite bootstrap mechanism (programmatic migration runner vs. drizzle-kit push vs. raw SQL dump) — planner picks based on what&#39;s most reliable. The contract is: every test that needs DB gets a freshly-migrated PGlite instance with no leakage.</li>
+<li><strong>CD-05:</strong> Whether each PGlite test file gets its own DB instance vs. shared with cleanup between tests — planner&#39;s call. Default suggestion: per-file instance for isolation, with a fixture helper that returns a fresh <code>db</code> per test if cheap enough.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>Requirements &amp; Roadmap</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;TEST-A1, TEST-A2, TEST-A3&quot; — Acceptance criteria for this phase.</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 2: Test Infrastructure&quot; — Goal statement and 3 success criteria.</li>
+<li><code>.planning/phases/01-critical-bug-fix/01-CONTEXT.md</code> §&quot;D-05&quot; — Phase 1 explicitly handed BUG-01 regression test to this phase.</li>
+</ul>
+<h3>Codebase Maps (read before designing tests)</h3>
+<ul>
+<li><code>.planning/codebase/TESTING.md</code> — Current testing state (none). Lists unit-test, integration-test, and E2E candidates with file paths. Suggested Vitest mock structure and test naming conventions. <strong>This is the most important reference for this phase.</strong></li>
+<li><code>.planning/codebase/STACK.md</code> — Confirms Vitest as the natural fit; documents Next.js 16 App Router, Neon serverless HTTP driver, Drizzle ORM.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — Naming patterns (kebab-case files, camelCase functions, named exports), TypeScript strict mode.</li>
+</ul>
+<h3>Bug References (for TEST-A3)</h3>
+<ul>
+<li><code>bug.md</code> — Symptom and root-cause description for BUG-01 (hydration mismatch + invalid HTML nesting). Lists the exact files that broke.</li>
+<li><code>src/components/layout/app-sidebar.tsx</code> — The component under regression test. Note: <code>UserAvatarProfile</code> is rendered twice (line 148 inside <code>SidebarMenuButton</code>, line 164 in dropdown header). Both must survive the structural assertion.</li>
+<li><code>src/components/user-avatar-profile.tsx</code> — Renders the <code>&lt;span&gt;</code> markup that must appear in SSR output.</li>
+</ul>
+<h3>Load-Bearing Modules (for TEST-A2)</h3>
+<ul>
+<li><code>src/lib/api/types.ts</code> — Defines <code>ApiResponse&lt;T&gt;</code> envelope; tests should import this type.</li>
+<li><code>src/lib/domain/pipeline.ts</code> — <code>canTransition</code>, <code>isTerminalState</code>, valid-transitions graph.</li>
+<li><code>src/lib/db/timeline.ts</code> — <code>logTimeline()</code> insert into <code>timeline_events</code>.</li>
+<li><code>src/lib/api/filters.ts</code> — <code>parseCursor</code>, <code>parseLimit</code> (D-12).</li>
+<li><code>src/features/job-leads/lib/prioritization.ts</code> — <code>computeBridgeScore</code>, <code>buildRecommendations</code>.</li>
+<li><code>src/features/job-leads/lib/seniority.ts</code> — <code>inferSeniority</code> (D-12).</li>
+<li><code>drizzle/schema/index.ts</code> — Schema barrel; needed by PGlite harness to apply migrations.</li>
+<li><code>drizzle/migrations/</code> — Migration files to apply against PGlite.</li>
+</ul>
+<h3>Coding Conventions</h3>
+<ul>
+<li><code>CLAUDE.md</code> — Project-level conventions: TypeScript strict mode, named exports, no server actions.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>drizzle/seed.ts</code></strong> — Already uses Drizzle programmatically to insert seed data. Patterns here translate directly to test-fixture seeding inside PGlite.</li>
+<li><strong><code>src/lib/api/types.ts</code></strong> — Exports both <code>ApiResponse&lt;T&gt;</code> type and the response factory functions (<code>success</code>, <code>created</code>, <code>error</code>, <code>paginated</code>). Tests can import and use these directly to construct expected responses.</li>
+<li><strong><code>@faker-js/faker</code></strong> — Already in <code>devDependencies</code>. Use for generating realistic-looking test data (names, companies, dates).</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong><code>vi.mock</code> style</strong> — Already telegraphed in <code>.planning/codebase/TESTING.md</code>: <code>vi.mock(&#39;@/lib/db&#39;, () =&gt; ({ db: mockDb }))</code>. We override this for DB-touching tests by binding the real PGlite <code>db</code> via the same module path.</li>
+<li><strong>Named exports throughout</strong> — Tests import explicit symbols (<code>import { canTransition } from &#39;@/lib/domain/pipeline&#39;</code>). No default-export reach-arounds.</li>
+<li><strong>Path alias <code>@/*</code> → <code>./src/*</code></strong> — Tests use the same alias; Vitest config must mirror tsconfig path resolution.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Drizzle client singleton (<code>src/lib/db/index.ts</code>)</strong> — Initialized at module load with <code>neon(process.env.DATABASE_URL!)</code>. Test setup must replace this with a PGlite-backed Drizzle instance <strong>before</strong> any API-route module is imported. Cleanest pattern: <code>vi.mock(&#39;@/lib/db&#39;)</code> returning a per-test PGlite-backed <code>db</code>, then call route handlers normally.</li>
+<li><strong><code>logTimeline</code> reaches into the same <code>db</code> singleton</strong> — once the singleton is replaced with PGlite, <code>logTimeline</code> writes to PGlite automatically. No separate mock needed.</li>
+<li><strong>API route handlers receive standard <code>Request</code> objects</strong> — tests construct <code>new Request(&#39;http://localhost/api/...&#39;, { method: &#39;POST&#39;, body: JSON.stringify(...) })</code> and call the route&#39;s <code>POST</code>/<code>GET</code>/etc. function directly. No Next.js test server needed.</li>
+</ul>
+<h3>What the Planner Does NOT Need to Research</h3>
+<ul>
+<li>Vitest framework choice (D-01, locked).</li>
+<li>File colocation pattern (D-02, locked).</li>
+<li>PGlite as DB harness (D-05, locked).</li>
+<li>Single-config + pragma for env switching (D-09, locked).</li>
+<li>Whether to write TEST-A3 (D-14, locked — both tests required).</li>
+</ul>
+<h3>What the Planner DOES Need to Research / Decide</h3>
+<ul>
+<li>PGlite + Drizzle wiring specifics — exact API to apply migrations programmatically (Drizzle&#39;s <code>migrate()</code> function, or <code>pushSchema</code>, or raw SQL execution from migration files).</li>
+<li>Whether <code>next/server</code> <code>Request</code>/<code>Response</code> types Just Work in test handlers, or whether they need a polyfill in node environment.</li>
+<li>Whether <code>@clerk/nextjs</code> mocking introduces import-time side effects that fight Vitest&#39;s module resolver.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li>TEST-A3 should be <strong>one test file</strong> (e.g., <code>src/components/layout/app-sidebar.test.tsx</code>) with two <code>describe</code> blocks — one for SSR structural, one for hydration mount. The hydration block opens with <code>// @vitest-environment jsdom</code>. This keeps the BUG-01 fence visible in one place. <em>(Superseded by D-14&#39;s implementation note: the <code>@vitest-environment</code> pragma is file-scope only, so the two tests live in two files. The contract — two assertions, both required — is unchanged.)</em></li>
+<li>The PGlite harness setup file should live at <code>src/test-utils/pglite.ts</code> (or <code>src/lib/test-utils/</code>) and export a single helper: <code>async function createTestDb(): Promise&lt;DbInstance&gt;</code>. Tests <code>import { createTestDb } from &#39;@/test-utils/pglite&#39;</code> and use it in <code>beforeAll</code> or <code>beforeEach</code>.</li>
+<li>For API-route tests, the harness should also offer a small helper to call a route handler: <code>async function callRoute(handler, { method, body, params })</code>. Eliminates <code>new Request(...)</code> boilerplate in every test.</li>
+<li>The <code>parseCursor</code> / <code>parseLimit</code> tests should be a separate <code>filters.test.ts</code> file with ~5 cases each — keep it small.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Auth-gate test sweep</strong> — verify every <code>/api/*</code> route returns 401 without a Clerk session. Owned by Phase 3 (Security Hardening), SEC-A1.</li>
+<li><strong><code>match-connections.ts</code> coverage</strong> — Job Leads recommendation pipeline. Phase 5 will rewrite parts of this; testing now is throwaway work.</li>
+<li><strong>LinkedIn scraper tests</strong> — Playwright-driven E2E coverage of <code>scrape-job-page.ts</code>, <code>scrape-connections.ts</code>. Phase 5 owns those modules and their behavior changes.</li>
+<li><strong>Coverage tooling / thresholds</strong> — <code>c8</code> or <code>@vitest/coverage-v8</code>, coverage reporting in CI, per-directory thresholds. Not in scope this phase; can be added later as a small infra phase or folded into Phase 6 (Performance) if desired.</li>
+<li><strong>CI integration</strong> — adding a GitHub Actions step that runs <code>npm test</code>. Out of scope; the Husky pre-push hook covers local-only enforcement for now.</li>
+<li><strong><code>tsconfig.test.json</code></strong> — possible but not predetermined. The planner can introduce one if vitest&#39;s default tsconfig handling proves insufficient.</li>
+<li><strong><code>drizzle-kit push</code> against PGlite vs. running migration files</strong> — implementation detail; planner chooses.</li>
+</ul>
+</deferred><hr>
+<p><em>Phase: 2-Test Infrastructure</em>
+<em>Context gathered: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/02-test-infrastructure/02-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

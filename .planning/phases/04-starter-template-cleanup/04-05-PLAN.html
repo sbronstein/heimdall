@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-05-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-05-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 05
+type: execute
+wave: 2
+depends_on:</p>
+<ul>
+<li>04-01</li>
+<li>04-02</li>
+<li>04-03</li>
+<li>04-04
+files_modified:</li>
+<li><strong>CLEANUP</strong>/cleanup.md</li>
+<li><strong>CLEANUP</strong>/clerk</li>
+<li><strong>CLEANUP</strong>/kanban</li>
+<li><strong>CLEANUP</strong>/sentry</li>
+<li><strong>CLEANUP</strong>/scripts</li>
+<li>src/<strong>cleanup</strong>.test.ts
+autonomous: true
+requirements:</li>
+<li>DEBT-A4
+tags:</li>
+<li>cleanup</li>
+<li>starter-template</li>
+<li>deletion</li>
+<li>verification</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;<strong>CLEANUP</strong>/ directory no longer exists at repo root (SC #2)&quot;
+    - &quot;A filesystem-existence Vitest test file exists at src/<strong>cleanup</strong>.test.ts asserting every Phase 4 deletion target is absent (D-16)&quot;
+    - &quot;The test asserts the string <code>computeBridgeScore</code> is not present in src/app/api/job-leads/[id]/search/route.ts (D-16, SC #4)&quot;
+    - &quot;npm run test:run exits 0 (test passes against the post-cleanup tree)&quot;
+    - &quot;npm run build exits 0 against the fully-cleaned tree&quot;
+    - &quot;package.json contains no <code>cleanup</code> script entry tied to <strong>CLEANUP</strong>/scripts/cleanup.js (CD-05 check)&quot;
+    - &quot;D-13: <strong>CLEANUP</strong>/ directory removed entirely (clerk/, kanban/, sentry/, scripts/, cleanup.md all gone)&quot;
+    - &quot;D-14: <strong>CLEANUP</strong>/ removal sequenced LAST (Wave 2 depends_on [04-01, 04-02, 04-03, 04-04]) — prevents accidental cleanup-script invocation against half-cleaned state&quot;
+    - &quot;D-16: filesystem-existence Vitest test at src/<strong>cleanup</strong>.test.ts pins all Phase 4 deletions; runs in node env without PGlite&quot;
+    - &quot;D-17: no runtime HTTP 404 smoke test — Next.js&#39;s route resolver IS the contract&quot;
+    - &quot;D-18: plan grouping (4 disjoint Wave-1 plans + 1 verification Wave-2 plan) followed&quot;
+    - &quot;D-19: atomic commit per DEBT-Ax preserved (one commit for DEBT-A4 plus a test+verify commit)&quot;
+  artifacts:
+    - path: &quot;src/<strong>cleanup</strong>.test.ts&quot;
+      provides: &quot;Filesystem-existence assertion test that pins all Phase 4 deletions (D-16)&quot;
+    - path: &quot;.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md&quot;
+      provides: &quot;Plan completion record + end-of-phase verification report&quot;
+  key_links:
+    - from: &quot;src/<strong>cleanup</strong>.test.ts&quot;
+      to: &quot;all Phase 4 deletion targets&quot;
+      via: &quot;fs.existsSync(path) === false assertion&quot;
+      pattern: &quot;test runs in Vitest node environment with no PGlite (D-16)&quot;
+    - from: &quot;<strong>CLEANUP</strong>/&quot;
+      to: &quot;(absent)&quot;
+      via: &quot;rm -rf&quot;
+  pattern: &quot;fs.existsSync(&#39;<strong>CLEANUP</strong>&#39;) === false&quot;
+</p>
+<hr>
+<objective>
+Execute DEBT-A4 (delete `__CLEANUP__/` directory) AND ship the end-of-phase verification test. This plan is sequenced as Wave 2 (depends on plans 04-01, 04-02, 04-03, 04-04) for two reasons:<ol>
+<li><strong>Safety (D-14):</strong> <code>__CLEANUP__/scripts/cleanup.js</code> can overwrite real source files with template versions when invoked (e.g., <code>node __CLEANUP__/scripts/cleanup.js kanban</code> would overwrite the now-deleted kanban files with template versions). Sequencing <code>rm -rf __CLEANUP__/</code> LAST makes &quot;accidentally run the cleanup script against a half-cleaned tree&quot; structurally impossible.</li>
+<li><strong>Verification correctness (D-16):</strong> The filesystem-existence assertion test must run against the FINAL post-cleanup tree. Putting it in any earlier wave would have it pass against an intermediate state and miss later regressions.</li>
+</ol>
+<p>Per D-16 in CONTEXT.md, verification has two layers:</p>
+<ul>
+<li>A Vitest filesystem-existence test asserting all Phase 4 deletion targets are absent + a string assertion that <code>computeBridgeScore</code> is not present in the search route.</li>
+<li>A clean <code>npm run build</code> exit. (Existing Phase 2 husky pre-push hook already runs <code>npm run build</code> + <code>npm run test:run</code>; this plan ships the new test that the pre-push hook will then run on every push.)</li>
+</ul>
+<p>Per D-17, do NOT add a runtime HTTP test that spins up a dev server and curls the deleted routes — filesystem existence + clean build IS the contract Next.js&#39;s framework-default 404 already guarantees.</p>
+<p>Output: One deleted top-level directory (<code>__CLEANUP__/</code>), one new test file (<code>src/__cleanup__.test.ts</code>), one atomic commit. After this commit, ROADMAP SC #1–4 are all directly verifiable by running <code>npm run test:run &amp;&amp; npm run build</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/04-starter-template-cleanup/04-CONTEXT.md
+@.planning/codebase/CONCERNS.md
+@.planning/phases/02-test-infrastructure/02-CONTEXT.md
+@.planning/phases/04-starter-template-cleanup/04-01-PLAN.md
+@.planning/phases/04-starter-template-cleanup/04-02-PLAN.md
+@.planning/phases/04-starter-template-cleanup/04-03-PLAN.md
+@.planning/phases/04-starter-template-cleanup/04-04-PLAN.md
+@vitest.config.ts
+@__CLEANUP__/cleanup.md
+@CLAUDE.md<interfaces>
+<!-- __CLEANUP__/ directory contents at repo root (entire tree gets `rm -rf`'d): -->
+__CLEANUP__/
+  cleanup.md        — Owner intent doc; line 33 says "Once you've finished cleaning up features you don't need, delete the __CLEANUP__ folder."
+  clerk/            — Template "after Clerk removal" versions of providers, nav, etc. (NEVER USED)
+  kanban/           — Template "after kanban removal" versions of providers, store, etc. (NEVER USED)
+  sentry/           — Template "after Sentry removal" instrumentation. (NEVER USED)
+  scripts/          — Cleanup-script implementation (cleanup.js + config). Can overwrite real source.<!-- Vitest config (Phase 2 — no edits needed for this plan, just reuse): -->
+<p>vitest.config.ts:</p>
+<ul>
+<li>environment: &#39;node&#39;</li>
+<li>globals: true</li>
+<li>include: [&#39;src/**/*.test.{ts,tsx}&#39;]  &lt;-- new test file MUST live under src/</li>
+<li>passWithNoTests: true</li>
+</ul>
+<!-- Phase 2 established the colocated *.test.ts pattern. This new test is a single-file Phase-4-phase artifact, not colocated with any one module — D-16 recommends `src/__cleanup__.test.ts` (top-level under src/) to be discoverable as a phase artifact. --><!-- Deletion targets the test must assert (all from CONTEXT.md D-16): -->
+<p>PATHS that must NOT exist post-Phase-4:
+  src/features/products              (plan 04-01)
+  src/app/dashboard/product          (plan 04-01)
+  src/constants/mock-api.ts          (plan 04-01)
+  src/app/dashboard/exclusive        (plan 04-02)
+  src/app/dashboard/workspaces       (plan 04-02)
+  src/app/dashboard/billing          (plan 04-02)
+  src/components/ui/infobar.tsx      (plan 04-02)
+  src/components/ui/info-button.tsx  (plan 04-02)
+  src/components/layout/info-sidebar.tsx  (plan 04-02)
+  src/config/infoconfig.ts           (plan 04-02)
+  src/app/dashboard/kanban           (plan 04-03)
+  src/features/kanban                (plan 04-03)
+  <strong>CLEANUP</strong>                        (this plan)</p>
+<p>SOURCE STRING that must NOT appear (per D-16, plan 04-04):
+  <code>computeBridgeScore</code> in src/app/api/job-leads/[id]/search/route.ts
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Pre-flight check + delete __CLEANUP__/ directory (DEBT-A4)</name>
+  <files>
+    __CLEANUP__/cleanup.md,
+    __CLEANUP__/clerk,
+    __CLEANUP__/kanban,
+    __CLEANUP__/sentry,
+    __CLEANUP__/scripts
+  </files>
+  <action>
+    Per D-13, D-14, CD-05 in CONTEXT.md:<pre><code>1. Pre-flight CD-05 check: confirm `package.json` has no `cleanup` script tied to `__CLEANUP__/scripts/cleanup.js`:
+   `grep -c &quot;__CLEANUP__\|cleanup\.js&quot; package.json` should return `0`. The scout-confirmed scripts in `package.json` are: dev, build, start, lint, lint:fix, lint:strict, format, format:check, prepare, db:generate, db:migrate, db:push, db:studio, db:seed, test, test:run. None reference the cleanup script. If a `cleanup` script is found, REMOVE that line from `package.json` and include it in the same commit.
+2. Verify no source file references the cleanup directory:
+   `grep -rn &quot;__CLEANUP__&quot; src/` MUST return zero hits.
+3. Confirm Wave 1 prerequisite plans are landed — `git log` should show four commits with subjects containing `DEBT-A1`, `DEBT-A2`, `DEBT-A3`, `DEBT-A5` (in any order). If any are missing, STOP — this plan is Wave 2 and requires Wave 1 completion.
+4. `rm -rf __CLEANUP__/` — entire top-level directory removed in one operation. Use `git rm -r __CLEANUP__/` for clean staging.
+5. Verify post-deletion:
+   - `test ! -d __CLEANUP__` succeeds.
+   - `git status` shows only the expected deletions (and any pending edits from Task 2).
+   - `npm run build` exits 0.
+
+Do NOT touch `scripts/` at the repo root — per CONTEXT.md `&lt;deferred&gt;`, that&#39;s Heimdall tooling (`generate-import-data.py`, `parse-paste.py`), not the cleanup script. Only `__CLEANUP__/scripts/` (the cleanup-script implementation) is deleted, and it goes with its parent directory.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test ! -d __CLEANUP__ &amp;&amp; ! grep -rn "__CLEANUP__" src/ &amp;&amp; npm run build</automated>
+  </verify>
+  <done>
+    `__CLEANUP__/` does not exist. No source file references the directory. `package.json` has no `cleanup` script entry. `npm run build` exits 0.
+  </done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Author filesystem-existence verification test (D-16)</name>
+  <files>
+    src/__cleanup__.test.ts
+  </files>
+  <behavior>
+    - Test 1 (forEach loop per CD-03): every path in the deleted-paths array returns `false` from `fs.existsSync(path)`. Path list is the 13 entries listed in `<interfaces>` "PATHS that must NOT exist post-Phase-4".
+    - Test 2: reading `src/app/api/job-leads/[id]/search/route.ts` as UTF-8 yields a string that does NOT match the regex `/computeBridgeScore/` (asserts SC #4 the structural way, complementing the build-warning gate).
+    - Both tests pass against the current (post-Wave-1, post-Task-1) tree. The whole test file runs in <50ms (D-16 — fast deterministic check).
+    - The test catches any future regression that re-introduces a deleted starter-template path or re-imports `computeBridgeScore` into the search route.
+  </behavior>
+  <action>
+    Per D-16, PD-05, CD-03 in CONTEXT.md and the Phase 2 Vitest harness (`vitest.config.ts` already includes `src/**/*.test.{ts,tsx}` — no config change needed):<pre><code>Create `src/__cleanup__.test.ts` with the following structure (use `import { describe, it, expect } from &#39;vitest&#39;` + `node:fs` + `node:path`):
+
+```ts
+import { describe, it, expect } from &#39;vitest&#39;;
+import { existsSync, readFileSync } from &#39;node:fs&#39;;
+import { resolve } from &#39;node:path&#39;;
+
+// Phase 4 deletion targets. Asserts the post-cleanup tree state per
+// .planning/phases/04-starter-template-cleanup/04-CONTEXT.md D-16.
+const deletedPaths = [
+  &#39;src/features/products&#39;,
+  &#39;src/app/dashboard/product&#39;,
+  &#39;src/constants/mock-api.ts&#39;,
+  &#39;src/app/dashboard/exclusive&#39;,
+  &#39;src/app/dashboard/workspaces&#39;,
+  &#39;src/app/dashboard/billing&#39;,
+  &#39;src/components/ui/infobar.tsx&#39;,
+  &#39;src/components/ui/info-button.tsx&#39;,
+  &#39;src/components/layout/info-sidebar.tsx&#39;,
+  &#39;src/config/infoconfig.ts&#39;,
+  &#39;src/app/dashboard/kanban&#39;,
+  &#39;src/features/kanban&#39;,
+  &#39;__CLEANUP__&#39;
+];
+
+describe(&#39;Phase 4 starter-template cleanup&#39;, () =&gt; {
+  it.each(deletedPaths)(&#39;removes %s&#39;, (relPath) =&gt; {
+    expect(existsSync(resolve(process.cwd(), relPath))).toBe(false);
+  });
+
+  it(&#39;removes unused computeBridgeScore import from job-leads search route&#39;, () =&gt; {
+    const file = resolve(
+      process.cwd(),
+      &#39;src/app/api/job-leads/[id]/search/route.ts&#39;
+    );
+    const content = readFileSync(file, &#39;utf-8&#39;);
+    expect(content).not.toMatch(/computeBridgeScore/);
+  });
+});
+```
+
+Notes on implementation choices:
+- **`it.each(deletedPaths)`** (CD-03 recommended `forEach`; Vitest&#39;s `it.each` is the canonical Vitest equivalent and gives one named test per path so failures point at the specific regression). Either `it.each` or a single `it()` with a `forEach` is acceptable per CD-03; `it.each` produces clearer test output.
+- **`process.cwd()`** as the root — Vitest runs from the repo root by default (the Phase 2 tests use the same pattern in PGlite migrations replay). No need for `__dirname`/`fileURLToPath` boilerplate here since the test is at top of `src/` and paths are relative to the project.
+- **`readFileSync` not async** — these are filesystem assertions; sync is fine and matches the test&#39;s sub-50ms target.
+- Do NOT import from Drizzle, PGlite, the route under test, or any application code. This is a pure filesystem test (per D-16 — node environment, no PGlite).
+
+After writing, run `npm run test:run` and confirm:
+- The full Phase 2 + new Phase 4 suite exits 0.
+- The new test file shows 14 passing tests (13 forEach + 1 string assertion).
+- Total suite runtime stays under the Phase 2 CD-01 10-second threshold (the new test contributes &lt;100ms).
+
+If `npm run test:run` fails on any of the 14 assertions, STOP — that means a Wave 1 deletion was incomplete. Re-run the failing plan before proceeding.
+</code></pre>
+  </action>
+  <verify>
+    <automated>test -f src/__cleanup__.test.ts &amp;&amp; npm run test:run</automated>
+  </verify>
+  <done>
+    `src/__cleanup__.test.ts` exists, contains the 13-path forEach assertion + the source-string assertion, and `npm run test:run` exits 0. The full suite still completes under 10 seconds.
+  </done>
+</task><task type="auto">
+  <name>Task 3: Final build verification + atomic commit (DEBT-A4 + verification artifact)</name>
+  <files>
+    .planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md
+  </files>
+  <action>
+    1. Run the full Phase 4 verification suite locally:
+       - `npm run test:run` — MUST exit 0 (includes the new filesystem-existence test from Task 2).
+       - `npm run build` — MUST exit 0, no warnings naming `computeBridgeScore`, `Infobar`, `Product`, `SaleUser`, `recentSalesData`, or any of the deleted route paths. This satisfies ROADMAP SC #4 (and confirms SC #1, SC #2, SC #3 because the build would fail on dangling imports if any deletion was incomplete).
+       - Optional: `git diff --stat HEAD~4 HEAD --` to confirm the four Wave 1 commits landed cleanly. The summary should report the net file count delta (expect ~25-30 files deleted, ~5 files edited, 1 new test file added).
+    2. Commit DEBT-A4 + the verification artifact atomically per D-19. The summary file gets staged with the other artifacts to make the phase-completion commit self-contained:
+       ```
+       git add __CLEANUP__ src/__cleanup__.test.ts .planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md
+       # (also add package.json if Task 1 found and stripped a cleanup script)
+       git commit -m "feat(04): DEBT-A4 — rm __CLEANUP__/ + add filesystem-existence verification test"
+       ```
+       (Match Phase 3's commit style. The pre-push hook will run `npm run build` + `npm run test:run` per Phase 2's pre-push gate — this is the final gate.)
+    3. End-of-phase report — write `.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md` covering:
+       - Net diff stats (files deleted / edited / added).
+       - Confirmation of all five DEBT-Ax commits in `git log` order.
+       - Test suite size delta (Phase 2 baseline + 14 new assertions in `__cleanup__.test.ts`).
+       - Build runtime delta (expect a small decrease — 805-line `infobar.tsx` no longer bundles).
+       - Confirmation of ROADMAP SC #1–4 satisfaction.
+       - Any CD-* decisions exercised (e.g., did CD-01 delete `data.ts`? did CD-05 strip a `cleanup` script from package.json?).
+       - Any deviations from CONTEXT.md (expected: none).
+  </action>
+  <verify>
+    <automated>npm run test:run &amp;&amp; npm run build &amp;&amp; git log -5 --oneline | grep -q "DEBT-A4" &amp;&amp; test -f .planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md</automated>
+  </verify>
+  <done>
+    `npm run test:run` and `npm run build` both exit 0 against the final tree. `git log` contains five atomic commits, one per DEBT-Ax. The phase-completion summary file exists. Phase 4 is structurally complete.
+  </done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(n/a)</td>
+<td>No new trust boundary. The cleanup-script directory is the only mutating capability removed; all four Wave 1 plans were pure deletions.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-04-11</td>
+<td>Tampering</td>
+<td><code>__CLEANUP__/scripts/cleanup.js</code> (filesystem-mutating Node script committed at repo root)</td>
+<td>mitigate</td>
+<td>Reduces attack surface by removing a committed script with <code>--force</code>-bypassable safety checks (per <code>__CLEANUP__/cleanup.md</code> line 22: &quot;Use <code>--force</code> to skip this check&quot;). After deletion, no committed script in the repo can overwrite real source from template files. Wave 2 sequencing (D-14) ensures the script is gone before any future developer or AI could accidentally invoke it against a partially-cleaned tree.</td>
+</tr>
+<tr>
+<td>T-04-12</td>
+<td>Repudiation</td>
+<td>Phase 4 deletion set (cross-plan)</td>
+<td>mitigate</td>
+<td>The new <code>src/__cleanup__.test.ts</code> provides a permanent, version-controlled assertion that the Phase 4 deletions stayed deleted. Any future commit that re-introduces a starter-template path will fail the test in the husky pre-push gate (Phase 2 CD-01). This is durable verification, not a one-time check.</td>
+</tr>
+<tr>
+<td>T-04-13</td>
+<td>Information Disclosure</td>
+<td><code>__CLEANUP__/clerk/</code>, <code>__CLEANUP__/sentry/</code> (template files)</td>
+<td>mitigate</td>
+<td>Removes committed reference copies of &quot;what the app looks like with auth/observability stripped&quot; — these were instructive for the starter template but are zero-value-and-misleading for Heimdall. Smaller repo = smaller surface for misreading historical context as current.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+After all three tasks (and end-of-phase):
+- `test ! -d __CLEANUP__` succeeds.
+- `src/__cleanup__.test.ts` exists and asserts 13 deleted paths + 1 source-string assertion.
+- `npm run test:run` exits 0; the new test file reports 14 passing assertions.
+- `npm run build` exits 0 with no warnings matching `computeBridgeScore`, `Infobar`, `Product`, `SaleUser`, `recentSalesData`, or any deleted route path.
+- `git log -5 --oneline` shows five commits, one each for DEBT-A1, A2, A3, A4, A5 (atomic per D-19).
+- `.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md` exists and reports phase-completion state.<p>End-of-phase, ROADMAP SC #1–4 are ALL directly verifiable:</p>
+<ul>
+<li>SC #1: <code>fs.existsSync(&#39;src/app/dashboard/product&#39;) === false</code> (asserted by <code>__cleanup__.test.ts</code>); deleted routes return 404 by Next.js framework default.</li>
+<li>SC #2: <code>fs.existsSync(&#39;src/features/products&#39;) === false</code>, <code>fs.existsSync(&#39;src/components/ui/infobar.tsx&#39;) === false</code>, <code>fs.existsSync(&#39;__CLEANUP__&#39;) === false</code> (all asserted by <code>__cleanup__.test.ts</code>).</li>
+<li>SC #3: <code>grep -q &quot;Removed in Phase 4&quot; .planning/PROJECT.md</code> succeeds (recorded by plan 04-03); kanban directories deleted.</li>
+<li>SC #4: <code>grep &quot;computeBridgeScore&quot; src/app/api/job-leads/[id]/search/route.ts</code> returns nothing (asserted by <code>__cleanup__.test.ts</code>); <code>npm run build</code> exits 0 with no <code>computeBridgeScore</code> warning.</verification></li>
+</ul>
+<success_criteria>
+Plan is complete when:
+1. `__CLEANUP__/` does not exist at the repo root.
+2. `src/__cleanup__.test.ts` exists, runs in Vitest node environment, and asserts all 13 deletion targets + the `computeBridgeScore` absence.
+3. `npm run test:run` exits 0; new test produces 14 passing assertions.
+4. `npm run build` exits 0 against the final post-cleanup tree.
+5. `package.json` contains no `cleanup` script tied to `__CLEANUP__/scripts/cleanup.js` (CD-05).
+6. One atomic git commit with `DEBT-A4` in the subject.
+7. `.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md` exists and reports satisfaction of ROADMAP SC #1–4.
+</success_criteria><output>
+After completion, the SUMMARY file (`.planning/phases/04-starter-template-cleanup/04-starter-template-cleanup-05-SUMMARY.md`) serves as the end-of-phase verification report. It should reference the four Wave 1 SUMMARY files and confirm:
+- All five DEBT-Ax requirements addressed.
+- All four ROADMAP SC #1–4 verifiable on a clean checkout.
+- The new `__cleanup__.test.ts` enters the husky pre-push gate as a permanent regression guard.
+- Any CD-* decisions exercised, documented for the milestone retrospective.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-05-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>INTEGRATIONS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/codebase/INTEGRATIONS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>External Integrations</h1>
+<p><strong>Analysis Date:</strong> 2026-05-12</p>
+<h2>APIs &amp; External Services</h2>
+<p><strong>Authentication:</strong></p>
+<ul>
+<li>Clerk - User authentication, session management, organizations, billing<ul>
+<li>SDK/Client: <code>@clerk/nextjs</code> v6, <code>@clerk/themes</code> v2</li>
+<li>Middleware: <code>src/proxy.ts</code> — <code>clerkMiddleware</code> protects <code>/dashboard/**</code>; single-user lockdown enforced (only <code>steve@bronstein.org</code> passes)</li>
+<li>Auth URLs: <code>/auth/sign-in</code>, <code>/auth/sign-up</code> configured via env vars</li>
+<li>Sign-in page: <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code></li>
+<li>Sign-up page: <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code></li>
+<li>Providers component wraps app: <code>src/components/layout/providers.tsx</code></li>
+<li>Clerk Organizations: configured (workspaces feature, RBAC, billing)</li>
+<li>Clerk Billing: configured via Clerk Dashboard (Stripe used only for payment processing)</li>
+<li>Required env vars: <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code>, <code>CLERK_SECRET_KEY</code></li>
+<li>Optional: <code>WEBHOOK_SECRET</code> for Clerk webhooks</li>
+</ul>
+</li>
+</ul>
+<p><strong>LinkedIn (scraped, not official API):</strong></p>
+<ul>
+<li>LinkedIn job pages - Scraped for company name, role title, location<ul>
+<li>Implementation: <code>src/features/job-leads/lib/scrape-job-page.ts</code></li>
+<li>Method: direct HTTP fetch + cheerio HTML parsing (no auth required)</li>
+<li>Invoked from: <code>src/app/api/job-leads/route.ts</code> POST handler</li>
+</ul>
+</li>
+<li>LinkedIn people/company search - Scraped for employee connections<ul>
+<li>Implementation: <code>src/features/job-leads/lib/scrape-connections.ts</code>, <code>src/features/job-leads/lib/linkedin-browser.ts</code></li>
+<li>Method: Playwright Chromium browser automation; requires logged-in LinkedIn session</li>
+<li>Session storage: <code>~/.heimdall/linkedin-profile/</code> (persistent profile or <code>storage-state.json</code>)</li>
+<li>Invoked from: <code>src/app/api/job-leads/[id]/search/route.ts</code> POST handler (async fire-and-forget)</li>
+</ul>
+</li>
+</ul>
+<p><strong>GitHub API (read-only, unauthenticated):</strong></p>
+<ul>
+<li>Used only in auth pages to display star count for the template repo</li>
+<li>Endpoint: <code>https://api.github.com/repos/kiranism/next-shadcn-dashboard-starter</code></li>
+<li>No auth required; 24h cache via Next.js <code>revalidate: 86400</code></li>
+<li>Files: <code>src/app/auth/sign-in/[[...sign-in]]/page.tsx</code>, <code>src/app/auth/sign-up/[[...sign-up]]/page.tsx</code></li>
+</ul>
+<h2>Data Storage</h2>
+<p><strong>Databases:</strong></p>
+<ul>
+<li>Neon Postgres (serverless)<ul>
+<li>Connection: <code>DATABASE_URL</code> env var</li>
+<li>Client: <code>@neondatabase/serverless</code> HTTP driver + <code>drizzle-orm/neon-http</code></li>
+<li>Initialization: <code>src/lib/db/index.ts</code> — exports singleton <code>db</code> instance</li>
+<li>ORM: Drizzle ORM v0.45.1</li>
+<li>Schema: <code>drizzle/schema/</code> — one file per table, all exported from <code>drizzle/schema/index.ts</code></li>
+<li>Tables: <code>companies</code>, <code>contacts</code>, <code>applications</code>, <code>interactions</code>, <code>tasks</code>, <code>notes</code>, <code>pipeline_stages</code>, <code>timeline_events</code>, <code>recruiters</code>, <code>search_metrics</code>, <code>job_leads</code>, <code>prospects</code>, <code>prospect_bridges</code></li>
+<li>Migrations: <code>drizzle/migrations/</code> — managed with <code>drizzle-kit</code></li>
+<li>Key patterns: UUID PKs, <code>created_at</code>/<code>updated_at</code> on all tables, soft deletes via <code>archived_at</code>, JSONB for semi-structured data, Postgres text arrays for tags</li>
+</ul>
+</li>
+</ul>
+<p><strong>File Storage:</strong></p>
+<ul>
+<li>Local filesystem only<ul>
+<li>LinkedIn browser profile: <code>~/.heimdall/linkedin-profile/</code> (Playwright persistent context)</li>
+<li>LinkedIn session state: <code>~/.heimdall/linkedin-profile/storage-state.json</code></li>
+<li>No cloud file storage (no S3, GCS, or Vercel Blob detected)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Caching:</strong></p>
+<ul>
+<li>None (no Redis, Memcached, or Upstash detected)</li>
+<li>Next.js built-in fetch caching used in auth pages (24h revalidation)</li>
+</ul>
+<h2>Authentication &amp; Identity</h2>
+<p><strong>Auth Provider:</strong> Clerk</p>
+<ul>
+<li>Implementation: JWT-based sessions via Clerk middleware</li>
+<li>Access control: Single-user lockdown in <code>src/proxy.ts</code> — email must match <code>steve@bronstein.org</code></li>
+<li>Protected routes: <code>/dashboard/**</code> — all others are public</li>
+<li>Session claims: <code>sessionClaims.email</code> used for email check</li>
+</ul>
+<h2>Monitoring &amp; Observability</h2>
+<p><strong>Error Tracking:</strong></p>
+<ul>
+<li>Sentry - configured in <code>env.example.txt</code> but currently disabled<ul>
+<li><code>src/instrumentation.ts</code> - <code>register()</code> is a no-op (&quot;Sentry removed to reduce dev server memory footprint&quot;)</li>
+<li><code>src/instrumentation-client.ts</code> - no-op</li>
+<li>Would require: <code>NEXT_PUBLIC_SENTRY_DSN</code>, <code>NEXT_PUBLIC_SENTRY_ORG</code>, <code>NEXT_PUBLIC_SENTRY_PROJECT</code>, <code>SENTRY_AUTH_TOKEN</code></li>
+</ul>
+</li>
+</ul>
+<p><strong>Logs:</strong></p>
+<ul>
+<li><code>console.log</code> / <code>console.error</code> throughout (no structured logging framework)</li>
+<li>Notable: LinkedIn scraper logs extensively to console during operation (<code>src/features/job-leads/lib/scrape-connections.ts</code>)</li>
+</ul>
+<h2>CI/CD &amp; Deployment</h2>
+<p><strong>Hosting:</strong></p>
+<ul>
+<li>Vercel (inferred; <code>@neondatabase/serverless</code> HTTP driver is required for Vercel&#39;s serverless/edge environment; <code>eslint-config-next</code> v16 alignment)</li>
+<li>No <code>vercel.json</code> present — default Vercel Next.js detection applies</li>
+</ul>
+<p><strong>CI Pipeline:</strong></p>
+<ul>
+<li>None detected (no <code>.github/workflows/</code>, no CircleCI, no Buildkite config)</li>
+<li>Pre-commit only: <code>husky</code> + <code>lint-staged</code> run Prettier on staged files</li>
+</ul>
+<h2>Environment Configuration</h2>
+<p><strong>Required env vars:</strong></p>
+<ul>
+<li><code>DATABASE_URL</code> - Neon Postgres connection string (used in <code>src/lib/db/index.ts</code>)</li>
+<li><code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> - Clerk public key</li>
+<li><code>CLERK_SECRET_KEY</code> - Clerk server secret key</li>
+</ul>
+<p><strong>Optional env vars:</strong></p>
+<ul>
+<li><code>NEXT_PUBLIC_CLERK_SIGN_IN_URL</code> - Default: <code>/auth/sign-in</code></li>
+<li><code>NEXT_PUBLIC_CLERK_SIGN_UP_URL</code> - Default: <code>/auth/sign-up</code></li>
+<li><code>NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL</code> - Default: <code>/dashboard/overview</code></li>
+<li><code>NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL</code> - Default: <code>/dashboard/overview</code></li>
+<li><code>WEBHOOK_SECRET</code> - Clerk webhook secret (format: <code>whsec_...</code>)</li>
+<li><code>BROWSER_CDP_ENDPOINT</code> - Chrome CDP URL for remote LinkedIn scraping (e.g., <code>http://host.docker.internal:3005</code>)</li>
+<li><code>BROWSER_WS_ENDPOINT</code> - Playwright WebSocket server URL for remote scraping</li>
+<li><code>NEXT_PUBLIC_SENTRY_DSN</code> - Sentry DSN (currently unused)</li>
+<li><code>NEXT_PUBLIC_SENTRY_ORG</code> - Sentry org (currently unused)</li>
+<li><code>NEXT_PUBLIC_SENTRY_PROJECT</code> - Sentry project (currently unused)</li>
+<li><code>SENTRY_AUTH_TOKEN</code> - Sentry source maps token (currently unused)</li>
+<li><code>NEXT_PUBLIC_SENTRY_DISABLED</code> - Disable Sentry in dev (currently unused)</li>
+</ul>
+<p><strong>Secrets location:</strong></p>
+<ul>
+<li><code>.env.local</code> (gitignored); template in <code>env.example.txt</code></li>
+</ul>
+<h2>Webhooks &amp; Callbacks</h2>
+<p><strong>Incoming:</strong></p>
+<ul>
+<li>Clerk webhooks - infrastructure present (<code>WEBHOOK_SECRET</code> env var defined in template)<ul>
+<li>No active webhook handler route detected in <code>src/app/api/</code></li>
+<li>Would be implemented at <code>/api/webhooks/clerk</code> or similar</li>
+</ul>
+</li>
+</ul>
+<p><strong>Outgoing:</strong></p>
+<ul>
+<li>None detected</li>
+</ul>
+<h2>LinkedIn Browser Automation — Deployment Modes</h2>
+<p>The LinkedIn scraping system supports three operating modes (configured via env vars):</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Env Var</th>
+<th>When Used</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Local headed</td>
+<td>(none)</td>
+<td>Development: launches Chromium directly with persistent profile</td>
+</tr>
+<tr>
+<td>Remote CDP</td>
+<td><code>BROWSER_CDP_ENDPOINT</code></td>
+<td>Docker: connects to host Chrome via Chrome DevTools Protocol</td>
+</tr>
+<tr>
+<td>Remote WS</td>
+<td><code>BROWSER_WS_ENDPOINT</code></td>
+<td>Playwright server: connects over WebSocket, uses saved storage state</td>
+</tr>
+</tbody></table>
+<p>Session setup script: <code>src/features/job-leads/lib/linkedin-browser.ts</code> — <code>launchSetup()</code> and <code>getContext()</code> exports.</p>
+<hr>
+<p><em>Integration audit: 2026-05-12</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/codebase/INTEGRATIONS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

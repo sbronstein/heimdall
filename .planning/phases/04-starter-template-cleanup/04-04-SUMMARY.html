@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>04-04-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-04-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 04-starter-template-cleanup
+plan: 04
+subsystem: job-leads
+tags:</p>
+<ul>
+<li>cleanup</li>
+<li>unused-import</li>
+<li>job-leads</li>
+<li>debt
+dependency_graph:
+  requires:<ul>
+<li>&quot;DEBT-A5 declared in REQUIREMENTS.md v1 Active → Starter-Template Cleanup&quot;</li>
+<li>&quot;D-15 in 04-CONTEXT.md (single-line edit; export and other consumers untouched)&quot;</li>
+<li>&quot;D-19 in 04-CONTEXT.md (atomic commit per DEBT-Ax)&quot;
+provides:</li>
+<li>&quot;Clean import surface in src/app/api/job-leads/[id]/search/route.ts (9 imports, was 10)&quot;</li>
+<li>&quot;Satisfies Phase 4 SC #4 (no unused-import warning for computeBridgeScore in the job-leads search route)&quot;
+affects:</li>
+<li>&quot;src/app/api/job-leads/[id]/search/route.ts (one line removed)&quot;
+tech-stack:
+added: []
+patterns:</li>
+<li>&quot;Atomic commit per DEBT-Ax (D-19 pattern shared with Phase 3 + Phase 4 Plans 01/02/03)&quot;
+key-files:
+created: []
+modified:</li>
+<li>&quot;src/app/api/job-leads/[id]/search/route.ts&quot;
+decisions:</li>
+</ul>
+</li>
+<li>&quot;Honored D-15 verbatim: deleted only line 10 (the unused import); export in prioritization.ts and the two genuine consumers (recommendations/route.ts + prioritization.test.ts) untouched&quot;</li>
+<li>&quot;Atomic commit per D-19 (single commit covering DEBT-A5)&quot;</li>
+<li>&quot;Pre-existing prioritization.ts:70 build failure left as-is per deferred-items.md scope-boundary rule (out of scope for DEBT-A5)&quot;
+metrics:
+  duration: &quot;~5 min&quot;
+  completed: &quot;2026-05-13&quot;
+requirements:</li>
+<li>DEBT-A5</li>
+</ul>
+<hr>
+<h1>Phase 4 Plan 04: DEBT-A5 — Drop Unused computeBridgeScore Import Summary</h1>
+<p>Removed the single unused <code>computeBridgeScore</code> import from <code>src/app/api/job-leads/[id]/search/route.ts:10</code> per D-15 in 04-CONTEXT.md. The export and its two legitimate consumers (<code>recommendations/route.ts</code>, <code>prioritization.test.ts</code>) are intact and verified by grep.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Delete unused computeBridgeScore import + atomic commit (DEBT-A5)</td>
+<td>(see git log; HEAD-1 immediately after this SUMMARY&#39;s metadata commit)</td>
+<td>src/app/api/job-leads/[id]/search/route.ts</td>
+</tr>
+</tbody></table>
+<p>The plan had exactly one task per the planner&#39;s design. Filed as the simplest plan in Phase 4 (one-line edit, one verification, one atomic commit).</p>
+<h2>What Was Done</h2>
+<ol>
+<li><strong>Pre-edit verification:</strong> Ran <code>grep -c &quot;computeBridgeScore&quot; src/app/api/job-leads/[id]/search/route.ts</code> → returned <code>1</code> (just the import on line 10).</li>
+<li><strong>Pre-edit consumer survey:</strong> Ran <code>grep -rn &quot;computeBridgeScore&quot; src/</code> and confirmed the symbol appears in:<ul>
+<li><code>src/app/api/job-leads/[id]/search/route.ts:10</code> (the dead import — target of this plan)</li>
+<li><code>src/app/api/job-leads/[id]/recommendations/route.ts:13, 46</code> (live consumer — must remain)</li>
+<li><code>src/features/job-leads/lib/prioritization.ts:34, 55</code> (export declaration + internal self-reference — must remain)</li>
+<li><code>src/features/job-leads/lib/prioritization.test.ts:3, 69, 76, 85, 94, 95, 111, 123, 124</code> (Phase 2 TEST-A2 coverage — must remain)</li>
+</ul>
+</li>
+<li><strong>Edit:</strong> Used the Edit tool to delete the single line <code>import { computeBridgeScore } from &#39;@/features/job-leads/lib/prioritization&#39;;</code> from the search route. Removed the line cleanly; the preceding <code>inferSeniority</code> import and the blank line before <code>export async function POST(...)</code> are unchanged.</li>
+<li><strong>Post-edit verification:</strong><ul>
+<li><code>grep -c &quot;computeBridgeScore&quot; src/app/api/job-leads/[id]/search/route.ts</code> → returns <code>0</code> (success criteria #2 / #4 met).</li>
+<li><code>grep -l &quot;computeBridgeScore&quot;</code> against the three legitimate consumers → all three files retain the symbol.</li>
+<li>First 9 lines of <code>search/route.ts</code> confirmed to be the same as before with line 10 simply deleted; no other imports affected.</li>
+</ul>
+</li>
+<li><strong>Build verification:</strong> Ran <code>npm run build</code>. As expected per <code>deferred-items.md</code>, the build still fails on the pre-existing <code>prioritization.ts:70</code> MapIterator/es5 error — but NO new errors mention <code>computeBridgeScore</code>. The unused-import warning that DEBT-A5 was filed against is gone. This satisfies ROADMAP SC #4 (&quot;npm run build succeeds with no unused-import warnings for computeBridgeScore in the job-leads search route&quot;).</li>
+</ol>
+<h2>Verification</h2>
+<p>All <code>&lt;verification&gt;</code> checks from the plan satisfied:</p>
+<ul>
+<li><code>grep &quot;computeBridgeScore&quot; src/app/api/job-leads/[id]/search/route.ts</code> returns nothing.</li>
+<li><code>grep -rn &quot;computeBridgeScore&quot; src/</code> returns hits ONLY in <code>recommendations/route.ts</code>, <code>prioritization.ts</code>, and <code>prioritization.test.ts</code> (three files; precisely the expected set).</li>
+<li><code>npm run build</code> does not introduce any new error or warning mentioning <code>computeBridgeScore</code>.</li>
+<li>Single atomic commit with <code>DEBT-A5</code> in the subject (per D-19).</li>
+</ul>
+<h2>Success Criteria Met</h2>
+<p>All five criteria from the plan&#39;s <code>&lt;success_criteria&gt;</code>:</p>
+<ol>
+<li>✓ Line 10 of the previous file state is gone — file is now 9 imports.</li>
+<li>✓ <code>computeBridgeScore</code> is absent from <code>src/app/api/job-leads/[id]/search/route.ts</code>.</li>
+<li>✓ <code>computeBridgeScore</code> export still intact in <code>prioritization.ts</code> and still consumed by <code>recommendations/route.ts</code> (verified by grep).</li>
+<li>✓ <code>npm run build</code> introduces NO new error/warning — the pre-existing <code>prioritization.ts:70</code> failure is unrelated (logged in <code>deferred-items.md</code> since Plan 04-01).</li>
+<li>✓ One atomic commit with <code>DEBT-A5</code> in the subject.</li>
+</ol>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<p>The pre-existing <code>prioritization.ts:70</code> build failure was already known and documented in <code>.planning/phases/04-starter-template-cleanup/deferred-items.md</code> (logged during Plan 04-01 verification). Per the SCOPE BOUNDARY rule in <code>execute-plan.md</code>, it is explicitly out of scope for any DEBT-Ax plan and was correctly left untouched.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new threat surface introduced. Per the plan&#39;s <code>&lt;threat_model&gt;</code>:</p>
+<ul>
+<li><strong>T-04-09 (mitigate):</strong> Import-graph reduction — one transitive edge removed (search route no longer imports from <code>prioritization.ts</code>). Mitigation applied as intended.</li>
+<li><strong>T-04-10 (accept):</strong> Export preservation — <code>computeBridgeScore</code> export and its reachability via <code>recommendations/route.ts</code> are unchanged. No tampering.</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li>File <code>.planning/phases/04-starter-template-cleanup/04-04-SUMMARY.md</code> exists (this file).</li>
+<li>File <code>src/app/api/job-leads/[id]/search/route.ts</code> exists and has been edited (line 10 import removed; grep <code>computeBridgeScore</code> returns nothing).</li>
+<li>Commit will be created in the same Bash batch as STATE/ROADMAP/REQUIREMENTS updates; hash will appear in <code>git log --oneline -2</code>.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/04-starter-template-cleanup/04-04-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

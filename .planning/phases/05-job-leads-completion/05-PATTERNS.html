@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/05-job-leads-completion/05-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 5: Job Leads Completion - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-05-13
+<strong>Files analyzed:</strong> 17 (5 new / 7 modified / 5 deleted)
+<strong>Analogs found:</strong> 14 / 17 (3 deletions have no analog by design; 1 skill-asset is a first-of-kind in-repo file pattern but has user-global SKILL.md analogs)</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified/Deleted File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>NEW</strong> <code>src/app/api/job-leads/[id]/prospects/route.ts</code></td>
+<td>api-route (POST)</td>
+<td>bulk-insert, request-response</td>
+<td><code>src/app/api/contacts/import/route.ts</code> (POST, bulk-with-timeline) + <code>src/app/api/contacts/import/categorize/route.ts</code> (PATCH, validated bulk body)</td>
+<td>exact (composite)</td>
+</tr>
+<tr>
+<td><strong>NEW</strong> <code>scripts/generate-api-token.ts</code></td>
+<td>script (TS, one-shot CLI)</td>
+<td>file-I/O, hash-and-print</td>
+<td><code>scripts/import-linkedin.ts</code> (TS script, .env.local + neon + main() + process.exit)</td>
+<td>role-match (only TS script in <code>scripts/</code>; not a DB script but mirrors top-level shape and shebang-style entry)</td>
+</tr>
+<tr>
+<td><strong>NEW</strong> <code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td>skill-asset (frontmatter + prompt body)</td>
+<td>event-driven (Claude reasons over a11y tree)</td>
+<td>No in-repo analog. <strong>User-global reference:</strong> <code>~/.claude/skills/gsd-review/SKILL.md</code> for frontmatter shape (<code>name</code>, <code>description</code>, <code>argument-hint</code>, <code>allowed-tools</code> keys + <code>---</code> fences + prompt body following).</td>
+<td>external-only</td>
+</tr>
+<tr>
+<td><strong>NEW</strong> <code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code></td>
+<td>skill-asset (reference doc)</td>
+<td>request-response (read by Claude during skill run)</td>
+<td>No in-repo analog. Style reference: any <code>.planning/*.md</code> reference doc with checklists.</td>
+<td>external-only</td>
+</tr>
+<tr>
+<td><strong>NEW</strong> <code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code></td>
+<td>skill-asset (reference doc)</td>
+<td>request-response</td>
+<td>No in-repo analog. Content is derived from this PATTERNS.md and the bulk-prospects route signature.</td>
+<td>external-only</td>
+</tr>
+<tr>
+<td><strong>NEW</strong> <code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code></td>
+<td>skill-asset (reference doc)</td>
+<td>request-response</td>
+<td>No in-repo analog.</td>
+<td>external-only</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>src/proxy.ts</code></td>
+<td>middleware (auth, route-matcher)</td>
+<td>request-response</td>
+<td>self (existing pattern in the same file) — extend the early <code>isApiPath</code> branch (lines 12–32) with a bearer-token bypass <em>before</em> <code>auth()</code> is called</td>
+<td>exact (extension of an existing branch)</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>src/app/api/job-leads/[id]/status/route.ts</code> (currently GET-only)</td>
+<td>api-route (PATCH new + GET keep)</td>
+<td>request-response, state-machine</td>
+<td><code>src/app/api/applications/[id]/status/route.ts</code> (PATCH with <code>canTransition</code> + Zod + Drizzle update + timeline event)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>src/app/api/job-leads/[id]/search/route.ts</code></td>
+<td>api-route (POST → thin status-flip)</td>
+<td>request-response</td>
+<td><code>src/app/api/applications/[id]/status/route.ts</code> (PATCH state-machine — apply same shape but POST-without-body, fixed target <code>queued</code>); plus self (drop the fire-and-forget IIFE at lines 39–96 entirely)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>src/app/api/job-leads/route.ts</code> (GET extension)</td>
+<td>api-route (GET filter extension)</td>
+<td>request-response</td>
+<td><code>src/app/api/tasks/route.ts</code> GET handler (<code>parseArrayParam(&#39;status&#39;)</code> + <code>inArray(tasks.status, statuses as ...)</code> + cursor + cursor-pagination)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>feature-component (client, <code>&#39;use client&#39;</code>)</td>
+<td>event-driven (click → fetch → toast)</td>
+<td><code>src/features/contacts/components/interaction-form.tsx</code> (toast on success/error + REST fetch + router.refresh)</td>
+<td>role-match (replace <code>Find Connections</code> button + remove <code>SearchProgress</code> import + add copy-to-clipboard + error banner)</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>drizzle/schema/enums.ts</code></td>
+<td>schema (pgEnum)</td>
+<td>n/a</td>
+<td>self (line 160 <code>jobLeadStatusEnum</code> — append <code>&#39;queued&#39;</code> and <code>&#39;failed&#39;</code>)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>drizzle/schema/job-leads.ts</code></td>
+<td>schema (table column add)</td>
+<td>n/a</td>
+<td>self (lines 36–39 timestamp column pattern: <code>archivedAt: timestamp(&#39;archived_at&#39;)</code>); for <code>last_error</code>: <code>roleTitle: text(&#39;role_title&#39;)</code> (line 20, nullable text)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>NEW</strong> <code>drizzle/migrations/&lt;auto&gt;_add_queued_failed_status_and_error_columns.sql</code></td>
+<td>migration (DDL)</td>
+<td>n/a</td>
+<td><code>drizzle/migrations/0002_shocking_preak.sql</code> (single-line <code>ALTER TYPE ... ADD VALUE &#39;x&#39; BEFORE &#39;y&#39;</code> — pre-existing analog for non-transactional enum-add); for column adds: <code>drizzle/migrations/0001_volatile_mastermind.sql</code> (<code>ALTER TABLE ... ADD COLUMN ... timestamp;</code> pattern)</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>MOD</strong> <code>env.example.txt</code></td>
+<td>config (env template)</td>
+<td>n/a</td>
+<td>self (existing structure: section header + <code>KEY=</code> lines) — add <code>API_TOKEN_HASH=</code> and <code>SINGLE_USER_EMAIL=</code> placeholders</td>
+<td>exact</td>
+</tr>
+<tr>
+<td><strong>DELETE</strong> <code>src/features/job-leads/lib/scrape-connections.ts</code></td>
+<td>feature-lib (Playwright)</td>
+<td>n/a (removal)</td>
+<td>No analog — file is being removed. Cleanup verification: <code>src/__cleanup__.test.ts</code> pattern (lines 8–22 <code>deletedPaths</code> array + <code>expect(existsSync(...)).toBe(false)</code>)</td>
+<td>cleanup-test-match</td>
+</tr>
+<tr>
+<td><strong>DELETE</strong> <code>src/features/job-leads/components/search-progress.tsx</code></td>
+<td>feature-component (polling)</td>
+<td>n/a (removal)</td>
+<td>Same cleanup pattern as above</td>
+<td>cleanup-test-match</td>
+</tr>
+<tr>
+<td><strong>DELETE (or in-place edit)</strong> <code>Find Connections</code> button block in <code>src/features/job-leads/components/job-lead-detail.tsx</code></td>
+<td>feature-component fragment</td>
+<td>n/a (removal)</td>
+<td>Same cleanup pattern; the <em>file</em> survives, only the button + <code>SearchProgress</code> + <code>useCallback handleFindConnections</code> go</td>
+<td>partial — file remains, content changes</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3>NEW <code>src/app/api/job-leads/[id]/prospects/route.ts</code> (api-route, bulk-insert with timeline)</h3>
+<p><strong>Primary analog:</strong> <code>src/app/api/contacts/import/route.ts</code> (POST handler — bulk row insertion with deduplication and a single timeline-event-on-success)
+<strong>Secondary analog:</strong> <code>src/app/api/contacts/import/categorize/route.ts</code> (PATCH — Zod-validated array body; same <code>bulkCategorizeSchema = z.object({ updates: z.array(...) })</code> shape)
+<strong>State-machine analog:</strong> <code>src/app/api/applications/[id]/status/route.ts</code> (canTransition + <code>notFound(&#39;Application&#39;)</code> + Drizzle <code>.set({ status, updatedAt: new Date() })</code> + timeline event with metadata)</p>
+<p><strong>Imports pattern</strong> (compose from <code>src/app/api/contacts/import/route.ts</code> lines 1–9 + <code>src/app/api/applications/[id]/status/route.ts</code> lines 1–9):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { jobLeads, prospects } from &#39;../../../../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+import { created } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+import { z } from &#39;zod&#39;;
+</code></pre>
+<p><strong>Zod schema pattern</strong> (per CONTEXT.md D-22; shape mirrors <code>bulkCategorizeSchema</code> in <code>src/app/api/contacts/import/categorize/route.ts</code> lines 9–16):</p>
+<pre><code class="language-typescript">const prospectSchema = z.object({
+  name: z.string().min(1).max(200),
+  title: z.string().max(300).nullable(),
+  linkedinUrl: z.string().url().nullable(),
+  mutualConnectionNames: z.array(z.string().max(200)).max(50)
+});
+const bulkBody = z.object({ prospects: z.array(prospectSchema).max(200) });
+</code></pre>
+<p><strong>Route handler shell</strong> (copy from <code>src/app/api/applications/[id]/status/route.ts</code> lines 15–77 — the <code>async function PATCH(request, { params })</code> shape, except this is <code>POST</code>):</p>
+<pre><code class="language-typescript">export async function POST(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { prospects: scraped } = bulkBody.parse(body);
+
+    // Verify lead exists and is in &#39;searching&#39; status (D-08 state-machine guard)
+    const [lead] = await db.select().from(jobLeads).where(eq(jobLeads.id, id)).limit(1);
+    if (!lead) return notFound(&#39;Job lead&#39;);
+    if (lead.status !== &#39;searching&#39;) {
+      return validationError(`Cannot write prospects to lead in status &#39;${lead.status}&#39;`);
+    }
+
+    // Single bulk insert — array values (NOT a for-loop; the perf antipattern at
+    // src/app/api/job-leads/[id]/search/route.ts:47-57 is what this route avoids)
+    const rows = scraped.map((p) =&gt; ({
+      jobLeadId: id,
+      name: p.name,
+      title: p.title,
+      linkedinUrl: p.linkedinUrl,
+      // seniorityLevel: skill writes &#39;unknown&#39;; planner may infer here via inferSeniority(p.title)
+    }));
+    await db.insert(prospects).values(rows);
+
+    // Flip lead to &#39;found&#39;, clear error state, set prospectCount
+    const [updated] = await db
+      .update(jobLeads)
+      .set({
+        status: &#39;found&#39;,
+        prospectCount: rows.length,
+        lastError: null,
+        lastErrorAt: null,
+        updatedAt: new Date()
+      })
+      .where(eq(jobLeads.id, id))
+      .returning();
+
+    // Timeline event — copy shape from src/app/api/job-leads/[id]/search/route.ts:75-85
+    await logTimeline({
+      eventType: &#39;job_lead_search_complete&#39;,
+      title: `Found ${rows.length} prospects at ${lead.companyName}`,
+      companyId: lead.companyId || undefined,
+      metadata: { jobLeadId: id, prospectCount: rows.length }
+    });
+
+    return created({ insertedCount: rows.length, lead: updated });
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>Error handling pattern</strong> (copy from <code>src/lib/api/errors.ts</code> + <code>src/app/api/contacts/import/route.ts</code> lines 154–157):</p>
+<ul>
+<li><code>z.ZodError</code> → <code>validationError(err.issues[0].message)</code> (400)</li>
+<li><code>!lead</code> → <code>notFound(&#39;Job lead&#39;)</code> (404)</li>
+<li>unknown → <code>serverError(err)</code> (500 + <code>console.error(&#39;API Error:&#39;, err)</code>)</li>
+</ul>
+<hr>
+<h3>NEW <code>scripts/generate-api-token.ts</code> (script, file-I/O)</h3>
+<p><strong>Primary analog:</strong> <code>scripts/import-linkedin.ts</code> (only existing TS script in <code>scripts/</code>)</p>
+<p><strong>Imports pattern</strong> (copy from <code>scripts/import-linkedin.ts</code> lines 1–11, drop the DB bits):</p>
+<pre><code class="language-typescript">import { config } from &#39;dotenv&#39;;
+config({ path: &#39;.env.local&#39; });
+import * as fs from &#39;fs&#39;;
+import * as path from &#39;path&#39;;
+import * as os from &#39;os&#39;;
+import { randomBytes, createHash } from &#39;crypto&#39;;
+</code></pre>
+<p><strong>Entry-point pattern</strong> (copy <code>scripts/import-linkedin.ts</code> lines 30–131 shape — top-level <code>async function main()</code> + <code>main().catch(...)</code> with <code>process.exit</code>):</p>
+<pre><code class="language-typescript">async function main() {
+  // 1. Generate 32-byte random hex
+  const token = randomBytes(32).toString(&#39;hex&#39;);
+  // 2. SHA-256 hash
+  const hash = createHash(&#39;sha256&#39;).update(token).digest(&#39;hex&#39;);
+  // 3. Write token to ~/.heimdall/api-token (chmod 600)
+  const dir = path.join(os.homedir(), &#39;.heimdall&#39;);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const tokenPath = path.join(dir, &#39;api-token&#39;);
+  fs.writeFileSync(tokenPath, token, { mode: 0o600 });
+  // 4. Print hash + instructions to stdout
+  console.log(`Token written to ${tokenPath}.`);
+  console.log(`Add to .env.local:\n  API_TOKEN_HASH=${hash}`);
+  process.exit(0);
+}
+
+main().catch((err) =&gt; {
+  console.error(&#39;Fatal error:&#39;, err);
+  process.exit(1);
+});
+</code></pre>
+<p><strong>Run pattern</strong> (the script must be invokable via <code>npx tsx scripts/generate-api-token.ts</code> — same pattern as <code>db:seed</code> in <code>package.json:23</code> which uses <code>npx tsx</code>). Planner may also add a <code>package.json</code> script entry, e.g. <code>&quot;token:generate&quot;: &quot;tsx scripts/generate-api-token.ts&quot;</code>, to align with existing scripts shape.</p>
+<hr>
+<h3>NEW <code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> (skill-asset)</h3>
+<p><strong>No in-repo analog</strong> — this is the first <code>.claude/skills/*/SKILL.md</code> file in the heimdall repo.</p>
+<p><strong>External reference for frontmatter shape:</strong> <code>~/.claude/skills/gsd-review/SKILL.md</code> (user-global). Concrete frontmatter pattern to copy:</p>
+<pre><code class="language-yaml">---
+name: scrape-linkedin-connections
+description: &quot;Scrape 2nd-degree LinkedIn connections at a target company. Drives vercel-labs/agent-browser through job → company → employees → 2nd-degree filter, extracts prospects, writes them back to Heimdall.&quot;
+argument-hint: &quot;[job-lead-id-or-url]&quot;
+allowed-tools:
+  - Read
+  - Bash
+---
+</code></pre>
+<p><strong>Notes for planner (per CONTEXT.md D-03, CD-07, and specifics):</strong></p>
+<ul>
+<li>Body should walk Claude (in Claude Code) through: arg parsing → claim lead (PATCH /status to <code>searching</code>) → bash-call <code>agent-browser</code> → reason over a11y tree → POST /prospects → on failure PATCH /status to <code>failed</code> with <code>last_error</code>.</li>
+<li>Reference the four supporting files in <code>references/</code> via Markdown links (those files are skill-asset siblings).</li>
+<li>Single-quote scalar style + 2-space YAML indentation in the frontmatter to match the repo&#39;s Prettier conventions (single quotes, 2-space) per CONVENTIONS.md.</li>
+</ul>
+<hr>
+<h3>NEW <code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code>, <code>heimdall-api.md</code>, <code>troubleshooting.md</code></h3>
+<p><strong>No in-repo analog.</strong> These are plain Markdown documentation files Claude reads during a skill run.</p>
+<p><strong>Style guidance:</strong> Use the same warm earth-tone HTML conventions are <em>not</em> applicable (these are referenced by Claude, not rendered as HTML companions per the user&#39;s global CLAUDE.md note — they&#39;re under <code>.claude/skills/</code>, not <code>.planning/</code>). Pure markdown.</p>
+<p><strong>heimdall-api.md content source:</strong> This PATTERNS.md (the bulk-prospects POST shape, the <code>/api/job-leads?status=queued</code> filter shape, the <code>/api/job-leads/[id]/status</code> PATCH shape, the <code>Authorization: Bearer &lt;token&gt;</code> header).</p>
+<hr>
+<h3>MOD <code>src/proxy.ts</code> (middleware — extend with bearer-token bypass)</h3>
+<p><strong>Analog:</strong> self — extend the existing <code>isApiPath</code> branch (lines 12–32).</p>
+<p><strong>Existing pattern to preserve</strong> (<code>src/proxy.ts</code> lines 12–32):</p>
+<pre><code class="language-typescript">if (isApiPath) {
+  const { userId, sessionClaims } = await auth();
+  if (!userId) {
+    return NextResponse.json(
+      { success: false, error: &#39;Unauthorized&#39; },
+      { status: 401 }
+    );
+  }
+  // ... email lock check ...
+  return;
+}
+</code></pre>
+<p><strong>Bearer-token bypass to add — BEFORE the <code>await auth()</code> call</strong> (per CONTEXT.md D-19 / D-21 and the specifics block):</p>
+<pre><code class="language-typescript">if (isApiPath) {
+  // D-19/D-21: long-lived bearer token bypass for Claude Code skill (single-user only)
+  const authHeader = req.headers.get(&#39;authorization&#39;);
+  if (authHeader?.startsWith(&#39;Bearer &#39;)) {
+    const token = authHeader.slice(&#39;Bearer &#39;.length).trim();
+    const hash = await sha256Hex(token);
+    const expected = process.env.API_TOKEN_HASH;
+    const singleUser = process.env.SINGLE_USER_EMAIL;
+    if (expected &amp;&amp; hash === expected &amp;&amp; singleUser === ALLOWED_EMAIL) {
+      // Bypass Clerk entirely — return undefined to let the request through
+      return;
+    }
+    // Invalid token → fall through to Clerk session check (returns 401 envelope below)
+  }
+
+  // ... existing Clerk session check (lines 19–31 preserved as-is) ...
+}
+</code></pre>
+<p><strong><code>sha256Hex</code> helper</strong> — add at top of file or import from a new <code>src/lib/auth/token.ts</code> (planner decides). Pattern (Web Crypto, Edge-compatible since middleware runs at the edge):</p>
+<pre><code class="language-typescript">async function sha256Hex(input: string): Promise&lt;string&gt; {
+  const buf = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest(&#39;SHA-256&#39;, buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) =&gt; b.toString(16).padStart(2, &#39;0&#39;))
+    .join(&#39;&#39;);
+}
+</code></pre>
+<p><strong>Note on file rename:</strong> CONTEXT.md says &quot;the middleware in <code>src/middleware.ts</code> (Phase 3) is extended&quot; — but the actual file is <code>src/proxy.ts</code> (confirmed <code>ls</code>). Phase 3&#39;s 03-01-PLAN renamed <code>src/proxy.ts</code> → <code>src/middleware.ts</code> per ROADMAP.md, but the rename did not land — the file is still <code>src/proxy.ts</code> and is referenced as such by <code>src/proxy.test.ts</code>. <strong>The planner edits <code>src/proxy.ts</code> directly</strong> unless they also want to land the rename (recommend: leave the rename out; out-of-scope for Phase 5).</p>
+<p><strong>Test analog</strong> — <code>src/proxy.test.ts</code> is the existing test harness (vi.hoisted + Proxy mock of <code>@clerk/nextjs/server</code>). New test cases to add (per CONTEXT.md D-25 layer 1 bullet 4):</p>
+<ul>
+<li>Bearer token present + valid hash + <code>SINGLE_USER_EMAIL</code> set → returns <code>undefined</code> (pass-through), Clerk <code>auth()</code> is NOT called</li>
+<li>Bearer token present + invalid hash → falls through to Clerk; returns 401 envelope</li>
+<li>Bearer token absent → existing behavior unchanged</li>
+<li><code>SINGLE_USER_EMAIL</code> env not set → bearer token rejected even with valid hash (multi-tenant safety)</li>
+</ul>
+<hr>
+<h3>MOD <code>src/app/api/job-leads/[id]/status/route.ts</code> (extend GET-only file with PATCH)</h3>
+<p><strong>Primary analog:</strong> <code>src/app/api/applications/[id]/status/route.ts</code> (PATCH state-machine handler)</p>
+<p><strong>Existing GET to preserve</strong> (<code>src/app/api/job-leads/[id]/status/route.ts</code> lines 7–30 unchanged; the polling client is being deleted but the endpoint itself stays for the timeline-page or for any external poller).</p>
+<p><strong>PATCH to add</strong> (copy from <code>src/app/api/applications/[id]/status/route.ts</code> lines 11–77, swap table + enum):</p>
+<pre><code class="language-typescript">import { jobLeads } from &#39;../../../../../../drizzle/schema&#39;;
+import { z } from &#39;zod&#39;;
+import { jobLeadStatusValues } from &#39;@/lib/domain/types&#39;;
+
+// D-08: Job-lead state machine (new local function or moved to src/lib/domain/job-lead-pipeline.ts)
+const jobLeadTransitions: Record&lt;string, string[]&gt; = {
+  pending: [&#39;scraping&#39;],
+  scraping: [&#39;scraped&#39;, &#39;pending&#39;],
+  scraped: [&#39;queued&#39;],
+  queued: [&#39;searching&#39;],
+  searching: [&#39;found&#39;, &#39;failed&#39;],
+  found: [&#39;ready&#39;, &#39;actioned&#39;, &#39;archived&#39;],
+  failed: [&#39;queued&#39;],   // retry path
+  ready: [&#39;actioned&#39;, &#39;archived&#39;],
+  actioned: [&#39;archived&#39;],
+  archived: []
+};
+
+function canJobLeadTransition(from: string, to: string): boolean {
+  return jobLeadTransitions[from]?.includes(to) ?? false;
+}
+
+const statusChangeSchema = z.object({
+  status: z.enum(jobLeadStatusValues),       // values array updated in domain/types.ts to include &#39;queued&#39; + &#39;failed&#39;
+  lastError: z.string().max(220).nullable().optional()  // CD-02: fold error-write into PATCH /status
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { status: newStatus, lastError } = statusChangeSchema.parse(body);
+
+    const [lead] = await db.select().from(jobLeads).where(eq(jobLeads.id, id)).limit(1);
+    if (!lead) return notFound(&#39;Job lead&#39;);
+
+    if (!canJobLeadTransition(lead.status, newStatus)) {
+      return validationError(`Invalid transition: ${lead.status} -&gt; ${newStatus}`);
+    }
+
+    const updateSet: Record&lt;string, unknown&gt; = {
+      status: newStatus,
+      updatedAt: new Date()
+    };
+    if (newStatus === &#39;failed&#39;) {
+      updateSet.lastError = lastError ?? null;
+      updateSet.lastErrorAt = new Date();
+    } else if (newStatus === &#39;queued&#39; || newStatus === &#39;found&#39;) {
+      // Retry-from-failed and success-write clear error fields
+      updateSet.lastError = null;
+      updateSet.lastErrorAt = null;
+    }
+
+    const [updated] = await db
+      .update(jobLeads)
+      .set(updateSet)
+      .where(eq(jobLeads.id, id))
+      .returning();
+
+    // Timeline event — pattern from src/app/api/applications/[id]/status/route.ts:62-68
+    const eventType =
+      newStatus === &#39;queued&#39; ? &#39;job_lead_search_queued&#39;
+      : newStatus === &#39;failed&#39; ? &#39;job_lead_search_failed&#39;
+      : newStatus === &#39;searching&#39; ? &#39;job_lead_search_claimed&#39;
+      : &#39;job_lead_status_changed&#39;;
+
+    await logTimeline({
+      eventType,
+      title: `${lead.companyName || &#39;Job lead&#39;}: ${lead.status} -&gt; ${newStatus}`,
+      companyId: lead.companyId || undefined,
+      metadata: { jobLeadId: id, from: lead.status, to: newStatus, lastError: lastError ?? null }
+    });
+
+    return success(updated);
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+</code></pre>
+<hr>
+<h3>MOD <code>src/app/api/job-leads/[id]/search/route.ts</code> (convert to thin status-flip)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/applications/[id]/status/route.ts</code> (state-machine pattern) + <code>src/app/api/job-leads/[id]/status/route.ts</code> PATCH (sibling — once added per above)</p>
+<p><strong>What to delete</strong> (per CONTEXT.md D-12 + D-13):</p>
+<ul>
+<li>The import <code>scrapeConnections</code> (line 7) and <code>matchConnections</code> (line 8 if no other caller after deletes — planner verifies) and <code>inferSeniority</code> (line 9, may stay if needed elsewhere)</li>
+<li>The fire-and-forget IIFE block (lines 39–96)</li>
+<li>The hardcoded synchronous status flip to <code>&#39;searching&#39;</code> (lines 33–36)</li>
+</ul>
+<p><strong>What the file becomes</strong> (a thin <code>scraped → queued</code> or <code>failed → queued</code> flip; recommended new shape per CONTEXT.md D-13):</p>
+<pre><code class="language-typescript">import { db } from &#39;@/lib/db&#39;;
+import { jobLeads } from &#39;../../../../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+import { success } from &#39;@/lib/api/types&#39;;
+import { notFound, serverError, validationError } from &#39;@/lib/api/errors&#39;;
+import { logTimeline } from &#39;@/lib/db/timeline&#39;;
+
+export async function POST(
+  _request: Request,
+  { params }: { params: Promise&lt;{ id: string }&gt; }
+) {
+  try {
+    const { id } = await params;
+    const [lead] = await db.select().from(jobLeads).where(eq(jobLeads.id, id)).limit(1);
+    if (!lead) return notFound(&#39;Job lead&#39;);
+
+    // Allowed entry states: &#39;scraped&#39; (first time) or &#39;failed&#39; (retry)
+    if (lead.status !== &#39;scraped&#39; &amp;&amp; lead.status !== &#39;failed&#39;) {
+      return validationError(`Cannot queue lead in status &#39;${lead.status}&#39;`);
+    }
+
+    const [updated] = await db
+      .update(jobLeads)
+      .set({
+        status: &#39;queued&#39;,
+        lastError: null,
+        lastErrorAt: null,
+        updatedAt: new Date()
+      })
+      .where(eq(jobLeads.id, id))
+      .returning();
+
+    await logTimeline({
+      eventType: &#39;job_lead_search_queued&#39;,
+      title: `Queued for connection scrape: ${lead.companyName || &#39;Unknown&#39;}`,
+      companyId: lead.companyId || undefined,
+      metadata: { jobLeadId: id, from: lead.status, to: &#39;queued&#39; }
+    });
+
+    return success(updated);
+  } catch (err) {
+    return serverError(err);
+  }
+}
+</code></pre>
+<p><strong>Alt-path</strong> (CONTEXT.md D-13): if no callers remain after UI changes, delete the route file entirely. The UI&#39;s retry button (D-16 / CD-02) currently targets <code>/search</code> per the superseded D-02; planner verifies whether the retry button is moved to call <code>PATCH /status</code> instead and removes <code>/search</code> accordingly.</p>
+<hr>
+<h3>MOD <code>src/app/api/job-leads/route.ts</code> (extend GET with <code>status</code> filter)</h3>
+<p><strong>Analog:</strong> <code>src/app/api/tasks/route.ts</code> GET handler (lines 23–60) — closest existing route with <code>parseArrayParam(&#39;status&#39;)</code> + <code>inArray(table.status, statuses as ...)</code> + cursor pagination</p>
+<p><strong>Imports to add</strong> (compose with current <code>src/app/api/job-leads/route.ts</code> lines 1–10):</p>
+<pre><code class="language-typescript">import { desc, isNull, inArray, lt, sql } from &#39;drizzle-orm&#39;;
+import { parseArrayParam, parseCursor, parseLimit } from &#39;@/lib/api/filters&#39;;
+import { jobLeadStatusValues } from &#39;@/lib/domain/types&#39;;   // values array updated to include &#39;queued&#39; + &#39;failed&#39;
+</code></pre>
+<p><strong>Concrete change to current <code>src/app/api/job-leads/route.ts</code> lines 17–32</strong> (insert between cursor parse and the <code>where</code> build, exactly mirroring <code>src/app/api/tasks/route.ts</code> lines 28 + 34–36):</p>
+<pre><code class="language-typescript">const statuses = parseArrayParam(searchParams.get(&#39;status&#39;));
+
+const conditions = [isNull(jobLeads.archivedAt)];
+
+if (statuses) {
+  conditions.push(
+    inArray(jobLeads.status, statuses as (typeof jobLeadStatusValues)[number][])
+  );
+}
+
+if (cursor) {
+  conditions.push(lt(jobLeads.updatedAt, cursor));
+}
+</code></pre>
+<p>Rest of the GET handler (lines 28–52) unchanged.</p>
+<hr>
+<h3>MOD <code>src/features/job-leads/components/job-lead-detail.tsx</code></h3>
+<p><strong>Primary analog:</strong> <code>src/features/contacts/components/interaction-form.tsx</code> (use-client component with REST fetch + sonner toast on success/failure)
+<strong>Clipboard analog:</strong> No in-repo <code>navigator.clipboard</code> usage exists today (<code>grep</code> returns zero hits) — the new copy-skill-invocation button is a first-of-kind for this codebase. Use standard <code>navigator.clipboard.writeText(...)</code> per the specifics block.
+<strong>Badge analog:</strong> <code>src/components/ui/badge.tsx</code> — use <code>&lt;Badge variant=&#39;secondary&#39;&gt;</code> for <code>queued</code>, <code>&lt;Badge variant=&#39;destructive&#39;&gt;</code> for <code>failed</code>, or pass the explicit Tailwind classes from CONTEXT.md specifics (<code>bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200</code>).</p>
+<p><strong>Imports to update</strong> (current <code>src/features/job-leads/components/job-lead-detail.tsx</code> lines 1–11):</p>
+<pre><code class="language-typescript">&#39;use client&#39;;
+
+import { useCallback, useState } from &#39;react&#39;;
+import { Button } from &#39;@/components/ui/button&#39;;
+import { Badge } from &#39;@/components/ui/badge&#39;;
+import { IconCopy, IconArrowLeft, IconRefresh } from &#39;@tabler/icons-react&#39;;
+import { toast } from &#39;sonner&#39;;
+import Link from &#39;next/link&#39;;
+import type { JobLead } from &#39;@/lib/domain/types&#39;;
+import { ScrapeResults } from &#39;./scrape-results&#39;;
+import { TriageTrigger } from &#39;./triage-trigger&#39;;
+import { RecommendationList } from &#39;./recommendation-list&#39;;
+// DELETED: import { SearchProgress } from &#39;./search-progress&#39;;   // D-12
+</code></pre>
+<p><strong>Copy-skill-invocation handler</strong> (the new feature; pattern blended from <code>src/features/contacts/components/interaction-form.tsx</code> lines 33–67):</p>
+<pre><code class="language-typescript">const handleCopyInvocation = useCallback(async () =&gt; {
+  try {
+    await navigator.clipboard.writeText(`claude /scrape-linkedin-connections ${lead.id}`);
+    toast.success(&#39;Skill invocation copied — paste in Claude Code&#39;);
+  } catch {
+    toast.error(&#39;Failed to copy to clipboard&#39;);
+  }
+}, [lead.id]);
+</code></pre>
+<p><strong>Retry handler</strong> (per CONTEXT.md D-16 — retry button for <code>failed</code> status):</p>
+<pre><code class="language-typescript">const handleRetry = useCallback(async () =&gt; {
+  try {
+    const res = await fetch(`/api/job-leads/${lead.id}/search`, { method: &#39;POST&#39; });
+    const json = await res.json();
+    if (json.success) {
+      setLead((prev) =&gt; ({ ...prev, status: &#39;queued&#39;, lastError: null, lastErrorAt: null }));
+      toast.success(&#39;Re-queued for connection scrape&#39;);
+    } else {
+      toast.error(json.error || &#39;Retry failed&#39;);
+    }
+  } catch {
+    toast.error(&#39;Retry failed&#39;);
+  }
+}, [lead.id]);
+</code></pre>
+<p><strong><code>queued</code> badge block</strong> (replaces lines 60–67 of the current file):</p>
+<pre><code class="language-tsx">{lead.status === &#39;queued&#39; &amp;&amp; (
+  &lt;div className=&#39;space-y-2&#39;&gt;
+    &lt;Badge variant=&#39;secondary&#39;&gt;queued for connection scrape&lt;/Badge&gt;
+    &lt;Button variant=&#39;secondary&#39; onClick={handleCopyInvocation}&gt;
+      &lt;IconCopy className=&#39;mr-1 h-4 w-4&#39; /&gt;
+      Copy skill invocation
+    &lt;/Button&gt;
+    &lt;p className=&#39;text-muted-foreground text-xs&#39;&gt;
+      Paste in Claude Code (this directory) to run.
+    &lt;/p&gt;
+  &lt;/div&gt;
+)}
+</code></pre>
+<p><strong><code>failed</code> error banner block</strong> (new; styling from CONTEXT.md specifics, structure mirrors any inline-callout in the codebase — closest visual analog is <code>src/components/ui/alert.tsx</code> if planner wants to use the primitive directly):</p>
+<pre><code class="language-tsx">{lead.status === &#39;failed&#39; &amp;&amp; (
+  &lt;div className=&#39;rounded-md border border-destructive/30 bg-destructive/10 p-4&#39;&gt;
+    &lt;p className=&#39;font-medium&#39;&gt;
+      {lead.lastError?.split(&#39;:&#39;)[0] || &#39;Scrape failed&#39;}
+    &lt;/p&gt;
+    &lt;p className=&#39;text-muted-foreground text-sm&#39;&gt;
+      {lead.lastError?.split(&#39;:&#39;).slice(1).join(&#39;:&#39;).trim() || &#39;No detail captured&#39;}
+    &lt;/p&gt;
+    &lt;Button onClick={handleRetry} variant=&#39;outline&#39; className=&#39;mt-2&#39;&gt;
+      &lt;IconRefresh className=&#39;mr-1 h-4 w-4&#39; /&gt;
+      Retry
+    &lt;/Button&gt;
+  &lt;/div&gt;
+)}
+</code></pre>
+<p><strong>Lines to remove</strong> (CONTEXT.md D-12 + D-16):</p>
+<ul>
+<li>Line 9 <code>import { SearchProgress } ...</code></li>
+<li>Lines 24, 26–34, 36–46 (<code>isSearching</code> state, <code>handleFindConnections</code>, <code>handleSearchComplete</code>)</li>
+<li>Lines 60–75 (<code>Find Connections</code> button + <code>SearchProgress</code> rendering)</li>
+</ul>
+<hr>
+<h3>MOD <code>drizzle/schema/enums.ts</code> (add <code>queued</code> + <code>failed</code> to <code>jobLeadStatusEnum</code>)</h3>
+<p><strong>Analog:</strong> self — <code>drizzle/schema/enums.ts</code> lines 160–169 (the existing <code>jobLeadStatusEnum</code> definition)</p>
+<p><strong>Change</strong> (insert <code>&#39;queued&#39;</code> after <code>&#39;scraped&#39;</code>, append <code>&#39;failed&#39;</code> at end — order matters because Drizzle Kit generates <code>ALTER TYPE ... ADD VALUE ... AFTER ...</code> SQL based on the array order):</p>
+<pre><code class="language-typescript">export const jobLeadStatusEnum = pgEnum(&#39;job_lead_status&#39;, [
+  &#39;pending&#39;,
+  &#39;scraping&#39;,
+  &#39;scraped&#39;,
+  &#39;queued&#39;,       // NEW (D-06) — inserted after &#39;scraped&#39;
+  &#39;searching&#39;,
+  &#39;found&#39;,
+  &#39;ready&#39;,
+  &#39;actioned&#39;,
+  &#39;archived&#39;,
+  &#39;failed&#39;        // NEW (D-06) — appended; terminal-recoverable
+]);
+</code></pre>
+<p><strong>Parallel update in <code>src/lib/domain/types.ts</code> lines 205–214</strong> — the <code>jobLeadStatusValues</code> <code>as const</code> array MUST be kept in sync (per CONVENTIONS.md &quot;Enum value arrays in <code>src/lib/domain/types.ts</code> are shared between Zod schemas in API routes and UI option lists&quot;):</p>
+<pre><code class="language-typescript">export const jobLeadStatusValues = [
+  &#39;pending&#39;, &#39;scraping&#39;, &#39;scraped&#39;, &#39;queued&#39;,
+  &#39;searching&#39;, &#39;found&#39;, &#39;ready&#39;, &#39;actioned&#39;, &#39;archived&#39;, &#39;failed&#39;
+] as const;
+</code></pre>
+<hr>
+<h3>MOD <code>drizzle/schema/job-leads.ts</code> (add <code>last_error</code> + <code>last_error_at</code> columns)</h3>
+<p><strong>Analog:</strong> self — <code>drizzle/schema/job-leads.ts</code> lines 36–40 (existing nullable-timestamp pattern: <code>archivedAt: timestamp(&#39;archived_at&#39;)</code>)
+<strong>Secondary analog (text-nullable):</strong> lines 20–22 (<code>roleTitle: text(&#39;role_title&#39;)</code>, <code>companyName: text(&#39;company_name&#39;)</code> — nullable text columns)</p>
+<p><strong>Change</strong> (append between <code>prospectCount</code> and <code>createdAt</code>, OR with the other metadata columns — planner picks):</p>
+<pre><code class="language-typescript">export const jobLeads = pgTable(&#39;job_leads&#39;, {
+  // ... existing columns 15–34 ...
+
+  // Error state (D-07) — written by the skill on failure, cleared on retry/success
+  lastError: text(&#39;last_error&#39;),
+  lastErrorAt: timestamp(&#39;last_error_at&#39;),
+
+  // Metadata (existing)
+  createdAt: timestamp(&#39;created_at&#39;).defaultNow().notNull(),
+  updatedAt: timestamp(&#39;updated_at&#39;).defaultNow().notNull(),
+  archivedAt: timestamp(&#39;archived_at&#39;)
+});
+</code></pre>
+<p><strong>Note on timezone:</strong> Existing schema columns (<code>outreachDate</code>, <code>linkedinConnectionDate</code>, etc.) do not pass <code>{ withTimezone: true }</code>. CONTEXT.md D-07 says &quot;timestamp with time zone&quot; — planner should override to <code>timestamp(&#39;last_error_at&#39;, { withTimezone: true })</code> if strictly following D-07. Recommended: match existing schema convention (no <code>withTimezone</code>) for consistency unless the planner has a reason to break pattern.</p>
+<hr>
+<h3>NEW <code>drizzle/migrations/&lt;auto&gt;_add_queued_failed_status_and_error_columns.sql</code></h3>
+<p><strong>Primary analog (enum-add):</strong> <code>drizzle/migrations/0002_shocking_preak.sql</code> (single-line <code>ALTER TYPE ... ADD VALUE ... BEFORE ...</code>)
+<strong>Secondary analog (column-add):</strong> <code>drizzle/migrations/0001_volatile_mastermind.sql</code> (multiple <code>ALTER TABLE ... ADD COLUMN</code> statements separated by <code>--&gt; statement-breakpoint</code>)</p>
+<p><strong>Existing pattern</strong> (<code>drizzle/migrations/0002_shocking_preak.sql</code> full content, 1 line):</p>
+<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;contact_closeness&quot; ADD VALUE &#39;career_contact&#39; BEFORE &#39;acquaintance&#39;;
+</code></pre>
+<p><strong>Existing column-add pattern</strong> (<code>drizzle/migrations/0001_volatile_mastermind.sql</code> lines 3–8):</p>
+<pre><code class="language-sql">ALTER TABLE &quot;contacts&quot; ADD COLUMN &quot;closeness&quot; &quot;contact_closeness&quot; DEFAULT &#39;acquaintance&#39;;--&gt; statement-breakpoint
+ALTER TABLE &quot;contacts&quot; ADD COLUMN &quot;outreach_date&quot; timestamp;--&gt; statement-breakpoint
+...
+</code></pre>
+<p><strong>Generated migration shape</strong> (per CONTEXT.md D-23 — what Drizzle Kit will likely emit, verified by <code>npm run db:generate -- --name=add_queued_failed_status_and_error_columns</code>):</p>
+<pre><code class="language-sql">ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE &#39;queued&#39; AFTER &#39;scraped&#39;;--&gt; statement-breakpoint
+ALTER TYPE &quot;public&quot;.&quot;job_lead_status&quot; ADD VALUE &#39;failed&#39; AFTER &#39;archived&#39;;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error&quot; text;--&gt; statement-breakpoint
+ALTER TABLE &quot;job_leads&quot; ADD COLUMN &quot;last_error_at&quot; timestamp;
+</code></pre>
+<p><strong>D-23 fallback:</strong> Postgres <code>ALTER TYPE ADD VALUE</code> is non-transactional. If Drizzle Kit wraps the migration in a <code>BEGIN</code>/<code>COMMIT</code>, Postgres will reject. Hand-edit to use <code>ADD VALUE IF NOT EXISTS</code> and remove any transaction wrapping (the existing <code>0002</code> migration is non-transactional by construction — it&#39;s just one statement). The 0001 migration&#39;s <code>--&gt; statement-breakpoint</code> markers separate statements but do not wrap them in a transaction at the Drizzle migration runner level.</p>
+<hr>
+<h3>MOD <code>env.example.txt</code></h3>
+<p><strong>Analog:</strong> self — existing pattern is section header (<code># ====...</code>) + <code>KEY=    # Example: value</code> lines.</p>
+<p><strong>Additions</strong> (per CONTEXT.md D-19 and D-21):</p>
+<pre><code class="language-text"># =================================================================
+# Heimdall Service-Token Bypass (Phase 5)
+# =================================================================
+# Generate via: npx tsx scripts/generate-api-token.ts
+# The script writes the raw token to ~/.heimdall/api-token (chmod 600)
+# and prints the SHA-256 hash to paste below.
+
+API_TOKEN_HASH=     # Example: 64-char hex SHA-256 of the raw token
+SINGLE_USER_EMAIL=  # Example: steve@bronstein.org — must match middleware ALLOWED_EMAIL
+</code></pre>
+<hr>
+<h3>DELETE <code>src/features/job-leads/lib/scrape-connections.ts</code>, <code>src/features/job-leads/components/search-progress.tsx</code></h3>
+<p><strong>Analog (deletion verification test):</strong> <code>src/__cleanup__.test.ts</code> lines 8–22 (<code>deletedPaths</code> array + <code>it.each(...)</code> asserting <code>existsSync(...) === false</code>)</p>
+<p><strong>Test addition pattern</strong> (append to existing <code>src/__cleanup__.test.ts</code>, mirroring the Phase 4 block — per CONTEXT.md D-26):</p>
+<pre><code class="language-typescript">// Phase 5 deletion targets. Per .planning/phases/05-job-leads-completion/05-CONTEXT.md D-12.
+const phase5DeletedPaths = [
+  &#39;src/features/job-leads/lib/scrape-connections.ts&#39;,
+  &#39;src/features/job-leads/components/search-progress.tsx&#39;
+];
+
+describe(&#39;Phase 5 in-app scraper deletion&#39;, () =&gt; {
+  it.each(phase5DeletedPaths)(&#39;removes %s&#39;, (relPath) =&gt; {
+    expect(existsSync(resolve(process.cwd(), relPath))).toBe(false);
+  });
+
+  it(&#39;removes scrapeConnections import from job-leads search route&#39;, () =&gt; {
+    const file = resolve(process.cwd(), &#39;src/app/api/job-leads/[id]/search/route.ts&#39;);
+    const content = readFileSync(file, &#39;utf-8&#39;);
+    expect(content).not.toMatch(/scrapeConnections/);
+  });
+
+  it(&#39;removes SearchProgress import from job-lead detail&#39;, () =&gt; {
+    const file = resolve(process.cwd(), &#39;src/features/job-leads/components/job-lead-detail.tsx&#39;);
+    const content = readFileSync(file, &#39;utf-8&#39;);
+    expect(content).not.toMatch(/SearchProgress/);
+  });
+});
+</code></pre>
+<p><strong>Planner verification step</strong> — before deleting <code>scrape-connections.ts</code>, grep for <code>scrapeConnections</code> and <code>ScrapedProspect</code> callers:</p>
+<ul>
+<li><code>scrapeConnections</code> is imported only by <code>src/app/api/job-leads/[id]/search/route.ts:7</code> (will be removed in same change)</li>
+<li><code>ScrapedProspect</code> type is imported by <code>src/features/job-leads/lib/match-connections.ts:4</code> — <strong>type must be relocated</strong> to <code>src/features/job-leads/lib/types.ts</code> (or <code>src/lib/domain/types.ts</code>) before deletion (per CONTEXT.md <code>&lt;code_context&gt;</code> &quot;Reusable Assets&quot; bullet 6)</li>
+</ul>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>Authentication (CLERK + bearer-token bypass)</h3>
+<p><strong>Source:</strong> <code>src/proxy.ts</code> (existing Clerk middleware, lines 12–32) — extended in Phase 5
+<strong>Apply to:</strong> All <code>/api/job-leads/[id]/*</code> routes (<code>prospects</code>, <code>status</code>, <code>search</code>) — these are reached either via Clerk session (browser) OR bearer token (skill). Routes themselves do NOT add per-route <code>auth()</code> calls; the middleware is the sole gate (Phase 3 pattern preserved).</p>
+<h3>Response envelope</h3>
+<p><strong>Source:</strong> <code>src/lib/api/types.ts</code> (<code>success</code>, <code>created</code>, <code>paginated</code>, <code>error</code>) + <code>src/lib/api/errors.ts</code> (<code>notFound</code>, <code>validationError</code>, <code>serverError</code>)
+<strong>Apply to:</strong> Every new/modified API route in this phase — <code>POST /prospects</code>, <code>PATCH /status</code>, <code>POST /search</code>, <code>GET /job-leads?status=</code></p>
+<h3>Timeline event emission</h3>
+<p><strong>Source:</strong> <code>src/lib/db/timeline.ts</code> (<code>logTimeline({ eventType, title, ...entityIds, metadata })</code>)
+<strong>Apply to:</strong> Every write in this phase</p>
+<ul>
+<li><code>POST /prospects</code> (success) → <code>job_lead_search_complete</code> (reuse existing event type from <code>src/app/api/job-leads/[id]/search/route.ts:76</code>)</li>
+<li><code>PATCH /status status=searching</code> → <code>job_lead_search_claimed</code> (new event type)</li>
+<li><code>PATCH /status status=found</code> → folded into <code>job_lead_search_complete</code> via the bulk-prospects route — <code>PATCH /status status=found</code> standalone is uncommon (prospects route does the flip)</li>
+<li><code>PATCH /status status=failed</code> → <code>job_lead_search_failed</code> (new event type)</li>
+<li><code>PATCH /status status=queued</code> (and <code>POST /search</code> thin route) → <code>job_lead_search_queued</code> (new event type)</li>
+</ul>
+<h3>Zod validation</h3>
+<p><strong>Source:</strong> Each route defines schemas at the top of the file (per CONVENTIONS.md &quot;Zod schemas defined at the top of each API route file, not in a shared schemas directory&quot;)
+<strong>Apply to:</strong> <code>POST /prospects</code> (<code>bulkBody</code>), <code>PATCH /status</code> (<code>statusChangeSchema</code> with optional <code>lastError</code>), <code>GET /job-leads?status=</code> (uses <code>parseArrayParam</code> + <code>inArray</code> — no body to validate)</p>
+<h3>Drizzle bulk-insert (NOT for-loop)</h3>
+<p><strong>Source:</strong> Conspicuously <em>absent</em> from current codebase — see <code>src/features/job-leads/lib/match-connections.ts:104-111</code> and <code>src/app/api/job-leads/[id]/search/route.ts:47-57</code> for the antipatterns being replaced.
+<strong>Pattern to apply</strong> (<code>src/app/api/job-leads/[id]/prospects/route.ts</code>):</p>
+<pre><code class="language-typescript">await db.insert(prospects).values(rows);   // rows: Array — single round-trip
+</code></pre>
+<p><strong>Closest existing analog of correct pattern:</strong> <code>scripts/import-linkedin.ts:115</code> (<code>await db.insert(contacts).values(batch);</code> — batched in groups of 50). The new route should NOT batch (the prospect count is bounded at 200 per D-22, well under any single-statement limit).</p>
+<h3>Filesystem-existence cleanup test</h3>
+<p><strong>Source:</strong> <code>src/__cleanup__.test.ts</code> (Phase 4 pattern)
+<strong>Apply to:</strong> Deletions of <code>scrape-connections.ts</code> and <code>search-progress.tsx</code></p>
+<h3>Vitest + PGlite + callRoute API test harness</h3>
+<p><strong>Source:</strong> <code>src/test-utils/pglite.ts</code> + <code>src/test-utils/call-route.ts</code> + existing test pattern in <code>src/app/api/applications/[id]/status/route.test.ts</code> (vi.hoisted + Proxy mock of <code>@/lib/db</code>)
+<strong>Apply to:</strong> New tests for <code>POST /prospects/route.test.ts</code>, <code>PATCH /status/route.test.ts</code>, <code>POST /search/route.test.ts</code> (the thin status-flip variant), <code>GET /job-leads/route.test.ts</code> (status filter)</p>
+<h3>Middleware test (vi.mock of <code>@clerk/nextjs/server</code>)</h3>
+<p><strong>Source:</strong> <code>src/proxy.test.ts</code> (the configurable <code>mockAuthReturn</code> pattern + <code>clerkMiddleware</code> stub + <code>createRouteMatcher</code> regex stub)
+<strong>Apply to:</strong> Bearer-token-bypass test additions (per CONTEXT.md D-25 bullet 4)</p>
+<hr>
+<h2>No Analog Found</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code></td>
+<td>skill-asset (frontmatter + prompt)</td>
+<td>event-driven</td>
+<td>First <code>.claude/skills/</code> file in this repo. Reference user-global <code>~/.claude/skills/gsd-review/SKILL.md</code> for frontmatter shape.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/linkedin-navigation.md</code></td>
+<td>skill-asset (reference doc)</td>
+<td>request-response</td>
+<td>First skill reference doc in this repo. Plain markdown; no rendering convention beyond standard Claude Code skill conventions.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/heimdall-api.md</code></td>
+<td>skill-asset (reference doc)</td>
+<td>request-response</td>
+<td>Same as above. Content derives from this PATTERNS.md.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/scrape-linkedin-connections/references/troubleshooting.md</code></td>
+<td>skill-asset (reference doc)</td>
+<td>request-response</td>
+<td>Same as above. Content derives from the deleted <code>scrape-connections.ts</code> debug logs (categorize known failure modes per CONTEXT.md D-09&#39;s five error categories).</td>
+</tr>
+</tbody></table>
+<p><strong>Note on <code>scripts/generate-api-token.ts</code>:</strong> Initially flagged as &quot;first TS script in scripts/&quot; but <code>scripts/import-linkedin.ts</code> already exists (162-line TS script with <code>dotenv</code>, neon, drizzle, top-level <code>main()</code> + <code>process.exit</code>). The new token-gen script is <em>not</em> a first-of-kind in shape — only in role (crypto-and-fs vs DB-import). Analog row is <code>scripts/import-linkedin.ts</code> with role-match quality.</p>
+<hr>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong></p>
+<ul>
+<li><code>src/app/api/**/route.ts</code> — all 32+ API routes</li>
+<li><code>src/features/job-leads/**</code> — entire job-leads feature</li>
+<li><code>src/features/contacts/components/*.tsx</code> — for client-component / toast / fetch patterns</li>
+<li><code>src/components/ui/*.tsx</code> — badge/alert primitives</li>
+<li><code>drizzle/schema/*.ts</code> + <code>drizzle/migrations/*.sql</code> — schema + migration shape</li>
+<li><code>scripts/*.ts</code> — TS scripts</li>
+<li><code>src/test-utils/*</code> + <code>src/app/api/**/route.test.ts</code> + <code>src/proxy.test.ts</code> + <code>src/__cleanup__.test.ts</code> — test patterns</li>
+<li><code>~/.claude/skills/*/SKILL.md</code> — user-global skill frontmatter shape (for SKILL.md only; no in-repo analog)</li>
+</ul>
+<p><strong>Files scanned:</strong> ~50 source files read in full or with targeted offset/limit reads.</p>
+<p><strong>Pattern extraction date:</strong> 2026-05-13</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/05-job-leads-completion/05-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

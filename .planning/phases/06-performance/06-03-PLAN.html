@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/06-performance/06-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 06-performance
+plan: 03
+type: execute
+wave: 2
+depends_on: [06-01]
+files_modified:</p>
+<ul>
+<li>src/app/api/contacts/import/categorize/route.ts</li>
+<li>src/app/api/contacts/import/categorize/route.test.ts
+autonomous: true
+requirements: [PERF-A3]
+tags: [drizzle, sql-template, bulk-update, unnest, contacts]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;PATCH /api/contacts/import/categorize updates all selected contacts in a single SQL round-trip (D-05)&quot;
+    - &quot;The bulk UPDATE uses Drizzle&#39;s sql template tag with parameter binding — every uuid and every closeness value is interpolated as <code>${var}</code> (no sql.raw, no string concatenation)&quot;
+    - &quot;The SQL uses LITERAL table/column identifiers (<code>UPDATE contacts SET closeness = data.cl, updated_at = NOW() ... WHERE contacts.id = data.id</code>) — no <code>${pgTable}</code> interpolation (WARNING 2 fix: that interpolation form has no precedent in this repo and behavior on v0.45.1 is unverified)&quot;
+    - &quot;The <code>updated_at</code> column on every touched contact row is set to NOW() in the same UPDATE (Drizzle does not auto-update — must be explicit, per CONVENTIONS.md)&quot;
+    - &quot;Response envelope is unchanged: { updated, total } — <code>updated</code> reflects rows actually mutated (from RETURNING id .length); for N input ids of which M exist, response MUST be <code>{ success: true, data: { updated: M, total: N } }</code> (WARNING 6 fix)&quot;
+    - &quot;The greppable N+1 anti-pattern <code>for (...) { await db.update(contacts)</code> does NOT survive in categorize/route.ts (D-21)&quot;
+    - &quot;Existing route shell preserved: Zod parse → ... → success/validationError/serverError&quot;
+    - &quot;D-06: the CLAUDE.md no-raw-SQL guard is respected — Drizzle&#39;s <code>sql</code> template tag inside <code>db.execute()</code> is the documented escape for batched UPDATE/INSERT and is NOT the handwritten string-concatenated SQL the guard forbids; an inline one-line comment on the <code>db.execute()</code> call documents this exception&quot;
+    - &quot;D-07: the response shape is unchanged — <code>{ updated, total }</code> envelope from <code>success()</code>; <code>updated</code> reflects rows actually mutated (derived from RETURNING id .length); <code>total</code> is the input ids array length&quot;
+    - &quot;D-17: this plan is Wave 2 / Plan 2b — one of four parallel code-change atomics blocked on Wave 1 (Plan 01) and disjoint from Plans 02/04/05 in its file set (categorize/route.ts + route.test.ts only)&quot;
+    - &quot;D-19: PGlite-backed route tests assert post-conditions (row counts on UPDATE, idempotency under retry, response-shape pin); the Phase 2 harness (src/test-utils/{pglite,call-route}.ts) is reused without modification&quot;
+  artifacts:
+    - path: &quot;src/app/api/contacts/import/categorize/route.ts&quot;
+      provides: &quot;Single-round-trip bulk UPDATE via db.execute(sql<code>UPDATE contacts SET ... FROM unnest(...)</code>); response shape unchanged&quot;
+      contains: &quot;db.execute(sql&quot;
+    - path: &quot;src/app/api/contacts/import/categorize/route.test.ts&quot;
+      provides: &quot;PGlite test coverage: bulk-update behavior, RETURNING-based updated count, empty-input early return, idempotency under retry, response-shape pin&quot;
+      contains: &quot;expect.objectContaining({ updated:&quot;
+  key_links:
+    - from: &quot;src/app/api/contacts/import/categorize/route.ts&quot;
+      to: &quot;drizzle-orm sql template tag&quot;
+      via: &quot;db.execute(sql<code>UPDATE contacts SET closeness = data.cl, updated_at = NOW() FROM (SELECT * FROM unnest(${ids}::uuid[], ${closenesses}::contact_closeness[]) AS d(id, cl)) AS data WHERE contacts.id = data.id RETURNING id</code>)&quot;
+  pattern: &quot;FROM \(SELECT \* FROM unnest\(&quot;
+</p>
+<hr>
+<objective>
+Replace the per-row UPDATE loop in `PATCH /api/contacts/import/categorize` with a single `UPDATE ... FROM unnest()` statement executed via Drizzle's `sql` template tag (the documented escape per D-06 for batched UPDATEs). One SQL round-trip closes out PERF-A3 for the 1500-contact triage workflow.<p>WARNING 2 fix: the SQL uses LITERAL table/column identifiers (<code>UPDATE contacts SET closeness = data.cl ... WHERE contacts.id = data.id</code>) — NOT <code>${contacts}</code> / <code>${contacts.id}</code> pgTable interpolation. The literal form has analog precedent in <code>metrics/dashboard/route.ts</code> and avoids relying on Drizzle v0.45.1 behavior (whether the bare <code>&quot;contacts&quot;</code> identifier is emitted for a pgTable interpolation) that has no repo precedent. The table-interpolation form is deferred to a future v2 cleanup.</p>
+<p>Purpose: PERF-A3 (batched closeness updates).
+Output: 1 route rewritten, 1 test file extended with bulk-update + idempotency + empty-input coverage.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/REQUIREMENTS.md
+@.planning/phases/06-performance/06-CONTEXT.md
+@.planning/phases/06-performance/06-PATTERNS.md
+@.planning/codebase/CONVENTIONS.md
+@CLAUDE.md
+@src/app/api/contacts/import/categorize/route.ts
+@src/app/api/metrics/dashboard/route.ts
+@src/app/api/tasks/route.ts
+@src/lib/domain/types.ts
+@drizzle/schema/contacts.ts
+@drizzle/schema/enums.ts<interfaces>
+<!-- Drizzle sql template surface used in this plan. Existing usage limited to WHERE-clause composition; UPDATE via db.execute with LITERAL identifiers is the new pattern (06-PATTERNS.md §"src/app/api/contacts/import/categorize/route.ts" + WARNING 2 fix). --><p>From drizzle-orm (sql template tag):</p>
+<pre><code class="language-typescript">// Already imported and used in src/app/api/metrics/dashboard/route.ts:9 and
+// src/app/api/tasks/route.ts (the established import shape).
+import { sql } from &#39;drizzle-orm&#39;;
+
+// Parameter binding (SAFE — what this plan uses):
+sql`UPDATE contacts SET closeness = data.cl FROM (SELECT * FROM unnest(${ids}::uuid[], ${vals}::contact_closeness[]) AS d(id, cl)) AS data WHERE contacts.id = data.id`
+// → each ${var} becomes a $1, $2, ... parameter bound by the driver. Postgres
+//   parses the array literal at execute time. No injection surface.
+// Note: `contacts` and `contacts.id` are LITERAL identifiers in the template
+//   string — NOT Drizzle pgTable interpolations. This matches the analog in
+//   metrics/dashboard/route.ts where literal table names appear in raw SQL.
+
+// pgTable interpolation (NOT USED HERE — WARNING 2 fix):
+sql`UPDATE ${contacts} ...`
+// → has no precedent in this repo. Drizzle v0.45.1 *may* emit `&quot;contacts&quot;` for a
+//   pgTable interpolation, but unverified — could produce malformed SQL at runtime.
+//   Deferred to a future cleanup with explicit testing; not in Phase 6 scope.
+
+// sql.raw (FORBIDDEN here — string concatenation, would re-open SQL injection):
+sql.raw(`UPDATE contacts SET closeness = &#39;${userInput}&#39; WHERE ...`)
+// → planner MUST NOT use this for the closeness/id arrays.
+</code></pre>
+<p>From src/lib/domain/types.ts:</p>
+<pre><code class="language-typescript">// The Zod enum used to validate `closeness` values; same value set is the
+// contact_closeness enum type in Postgres (declared in drizzle/schema/enums.ts).
+export const contactClosenessValues: readonly [...] = [...] as const;
+// (planner reads the actual contents during implementation — exact tier list)
+</code></pre>
+<p>From the pglite drizzle adapter (db.execute return shape):</p>
+<pre><code class="language-typescript">// db.execute(sql`...`) returns { rows: unknown[] } on Postgres.
+// For an UPDATE with RETURNING, rows contains one entry per updated row.
+// .length is the standard way to derive `updated` count.
+</code></pre>
+</interfaces><convention_anchor>
+CONVENTIONS.md §"Drizzle ORM Conventions":
+- "Query builder only — no raw SQL except for `sql` template tag in complex WHERE conditions"
+- D-06 extends this: `sql` template tag inside `db.execute()` IS the standard escape for batched UPDATE/INSERT. Document this exception inline with a one-line comment on the `db.execute()` call.<p>Renaming trade-off (WARNING 2 follow-up note for the implementer): the literal <code>contacts</code> identifier in the SQL string is NOT auto-refactored if the table is ever renamed. This is an acceptable trade-off for Phase 6 because (a) <code>contacts</code> is the most-load-bearing table name in the codebase, unlikely to be renamed, and (b) the <code>${pgTable}</code> interpolation form has no analog precedent and unknown behavior on v0.45.1. A future v2 cleanup may revisit table-interpolation across all routes once a precedent is established.
+</convention_anchor>
+</context></p>
+<tasks><task type="auto" tdd="true">
+  <name>Task 1: Replace per-row UPDATE loop with single UPDATE ... FROM unnest() via db.execute(sql`...`) using LITERAL identifiers</name>
+  <files>src/app/api/contacts/import/categorize/route.ts</files>
+  <read_first>
+    - src/app/api/contacts/import/categorize/route.ts (full file, 38 lines) — the entire handler is being rewritten; only the Zod schema (lines 9-16) and the try/catch shell stay.
+    - src/app/api/metrics/dashboard/route.ts:9 — the established `import { sql, ... } from 'drizzle-orm'` pattern; add `sql` to categorize's drizzle-orm import. Also reference for LITERAL table identifiers inside the sql template tag (the analog precedent for WARNING 2 fix).
+    - src/lib/domain/types.ts — find the line that declares `contactClosenessValues` and confirm the corresponding Postgres enum type name. The Postgres enum type for closeness is `contact_closeness` (per drizzle/schema/enums.ts — read that file during implementation to confirm).
+    - .planning/phases/06-performance/06-CONTEXT.md D-05 (the canonical SQL shape + the parameter-binding refinement note), D-06 (CLAUDE.md no-raw-SQL guard exception), D-07 (response shape unchanged).
+    - .planning/phases/06-performance/06-PATTERNS.md §"src/app/api/contacts/import/categorize/route.ts" — full guidance + row-count derivation strategies.
+  </read_first>
+  <behavior>
+    - Test 1 (happy path — bulk update of 3 contacts): N updates result in N modified rows with closeness column updated to the requested values.
+    - Test 2 (new — bulk UPDATE is ONE statement, not N): use the same-timestamp heuristic — after Test 1's PATCH, all 3 contacts have `updated_at` within a single millisecond window. Use `expect(Math.abs(t1 - t2)).toBeLessThan(50)`.
+    - Test 3 (new — RETURNING-based updated count + response-shape pin per WARNING 6): pass 3 valid ids + 1 id that does NOT exist in the contacts table. The response envelope MUST be `{ success: true, data: { updated: 3, total: 4 } }` — identical envelope and field semantics to the pre-rewrite handler. This test pins both the response shape AND the M-of-N semantics with N=4, M=3.
+    - Test 4 (new — empty input early-return): pass `{ updates: [] }`. Response: `{ success: true, data: { updated: 0, total: 0 } }`. No SQL executed (verify by checking that `updated_at` on a pre-seeded contact is NOT changed by the call).
+    - Test 5 (new — idempotency under retry): call PATCH twice with the same 3 updates. First call: `updated: 3`. Second call: `updated: 3` again (the updates are idempotent — same closeness value re-written). Both `updated_at` timestamps from the second call are strictly greater than the first call's timestamps (proves the UPDATE actually ran the second time, not skipped). DB row count of contacts unchanged across both calls.
+    - Test 6 (Zod validation): PATCH with `{updates: [{contactId: 'not-a-uuid', closeness: 'close_friend'}]}`. Response: 400 with `body.error` containing the Zod issue. No rows mutated.
+  </behavior>
+  <action>
+    Rewrite the handler body of `src/app/api/contacts/import/categorize/route.ts` per D-05.<pre><code>Imports (replace the current `drizzle-orm` import line):
+```typescript
+import { sql } from &#39;drizzle-orm&#39;;
+```
+(The `eq` import goes away — no per-row WHERE-by-id is needed after the rewrite. The `contacts` schema import remains but is used only for the .returning() typing reference in `result.rows as Array&lt;{ id: string }&gt;` — it is NOT interpolated into the SQL string.)
+
+Keep unchanged:
+- The Zod schema `bulkCategorizeSchema` (lines 9-16) — the request contract.
+- The `try { ... } catch (err) { ZodError → validationError; default → serverError }` shell.
+- The `success({ updated, total })` response envelope.
+
+Replace the handler body (WARNING 2 fix — use LITERAL table/column identifiers, NOT `${contacts}`):
+```typescript
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { updates } = bulkCategorizeSchema.parse(body);
+
+    // Empty-input early return — no SQL issued. Cheap defensive path.
+    if (updates.length === 0) {
+      return success({ updated: 0, total: 0 });
+    }
+
+    // Build parallel arrays for the unnest() driver. Order is preserved
+    // between ids[i] and closenesses[i] — same index = same update pair.
+    const ids = updates.map((u) =&gt; u.contactId);
+    const closenesses = updates.map((u) =&gt; u.closeness);
+
+    // Single round-trip bulk UPDATE.
+    // CLAUDE.md &quot;no raw SQL&quot; guard: `sql` template tag inside db.execute()
+    // is the documented Drizzle escape for batched UPDATE/INSERT (D-06).
+    // Parameter binding: ${ids} and ${closenesses} are interpolated as
+    // bound parameters (NOT string-concatenated), preserving SQL safety.
+    // RETURNING id gives the count of actually-mutated rows for the response.
+    //
+    // Identifiers (`contacts`, `contacts.id`) are LITERAL in the template —
+    // not `${contacts}` / `${contacts.id}` pgTable interpolations. The
+    // literal form has analog precedent in metrics/dashboard/route.ts and
+    // avoids relying on Drizzle v0.45.1 pgTable-interpolation behavior that
+    // has no repo precedent (WARNING 2 fix). Trade-off: a future `contacts`
+    // table rename would require updating this SQL by hand — accepted.
+    const result = await db.execute(sql`
+      UPDATE contacts
+      SET closeness = data.cl,
+          updated_at = NOW()
+      FROM (
+        SELECT * FROM unnest(${ids}::uuid[], ${closenesses}::contact_closeness[])
+        AS d(id, cl)
+      ) AS data
+      WHERE contacts.id = data.id
+      RETURNING id
+    `);
+
+    const updated = (result.rows as Array&lt;{ id: string }&gt;).length;
+    return success({ updated, total: updates.length });
+  } catch (err) {
+    if (err instanceof z.ZodError) return validationError(err.issues[0].message);
+    return serverError(err);
+  }
+}
+```
+
+Key points the implementer MUST verify during coding:
+- `${ids}` and `${closenesses}` are Drizzle `sql`-tag interpolations of plain JS arrays. Drizzle&#39;s neon-http and pglite drivers pass these through as parameterized array bindings. NO `sql.raw`. NO string concatenation.
+- The table name `contacts` and column reference `contacts.id` are LITERAL identifiers in the template string — NOT `${contacts}` or `${contacts.id}` Drizzle pgTable interpolations. This matches the analog in `metrics/dashboard/route.ts` (WARNING 2 fix). Anywhere else this plan had introduced `${pgTable}` interpolation, replace with the literal identifier.
+- The `::uuid[]` and `::contact_closeness[]` casts after the array placeholders are SQL-side casts of the bound parameter, NOT runtime string casts. They are required because Postgres needs to know the element type of the unnest() input.
+- The `RETURNING id` is mandatory for the `updated` count — `result.rowCount` is NOT reliable across the neon-http and pglite drivers (some return `null`, some return the wrong number). The `.length` of returned rows is the deterministic source.
+- The handler keeps the existing schema-array contact closeness enum value list intact — Zod already validates each closeness against `contactClosenessValues` at parse time (line 13), so by the time the SQL runs, every `cl` in the unnest input is guaranteed to be a valid enum member.
+
+Do NOT add transactions — the single statement is already atomic by Postgres&#39;s MVCC semantics. Wrapping in `db.transaction(async (tx) =&gt; ...)` would add an unnecessary HTTP round-trip on neon-http with no benefit.
+
+Do NOT log a timeline event from this handler — the existing route does not emit `logTimeline()` (visual confirmation: zero `logTimeline` references in the current file). Preserve that absence per D-19 invariant.
+
+Do NOT use `${contacts}` or `${contacts.id}` Drizzle table-interpolation anywhere in the SQL template — the literal form is mandatory.
+</code></pre>
+  </action>
+  <verify>
+    <automated>grep -v '^#' src/app/api/contacts/import/categorize/route.ts | grep -c "for.*await db\.update\|for.*of.*db\.update" | grep -q "^0$" && grep -v '^#' src/app/api/contacts/import/categorize/route.ts | grep -q "db.execute(sql" && grep -v '^#' src/app/api/contacts/import/categorize/route.ts | grep -q "UPDATE contacts" && ! grep -q "sql.raw" src/app/api/contacts/import/categorize/route.ts && ! grep -E '\$\{contacts(\.[a-zA-Z]+)?\}' src/app/api/contacts/import/categorize/route.ts && echo "Bulk UPDATE present, literal identifiers, no N+1, no sql.raw, no \${pgTable} interpolation"</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/app/api/contacts/import/categorize/route.ts` contains exactly one `db.execute(sql\`...\`)` call.
+    - The SQL string contains `UPDATE contacts` (literal identifier — NOT `UPDATE ${contacts}`), `FROM (SELECT * FROM unnest(`, `::uuid[]`, `::contact_closeness[]`, `WHERE contacts.id = data.id` (literal identifier — NOT `WHERE ${contacts.id} = data.id`), and `RETURNING id` — all of them.
+    - The file contains ZERO `${contacts}` or `${contacts.id}` Drizzle pgTable interpolations inside any `sql\`...\`` template (verified by grep: `grep -E '\$\{contacts(\.[a-zA-Z]+)?\}' src/app/api/contacts/import/categorize/route.ts` returns no matches).
+    - The route imports `sql` from `drizzle-orm` and NO LONGER imports `eq` (no per-row WHERE-by-id remains).
+    - There is NO `for` loop over `updates` calling `db.update(...)` (verified by greppable regression per D-21).
+    - There is NO `sql.raw(...)` call anywhere in the file (verified by grep — this is the SQL-injection prevention gate from the threat model).
+    - The empty-input early-return path is present (`if (updates.length === 0) return success({ updated: 0, total: 0 })`).
+    - Response shape is `{ updated, total }` (unchanged from current per D-07).
+    - **Response-shape acceptance criterion (WARNING 6 fix):** For an input with N input ids of which M exist in the DB, the response MUST be `{ success: true, data: { updated: M, total: N } }` — identical envelope and field semantics to the pre-rewrite handler. Test 3 pins this with N=4, M=3.
+    - One inline comment on the `db.execute(...)` call references "D-06" or "CLAUDE.md exception" or "Drizzle escape for batched UPDATE".
+    - One inline comment near the SQL template references "literal identifier" or "WARNING 2 fix" or "deferred to v2 cleanup" — documenting the table-rename trade-off so a future reader understands why `${contacts}` is not used.
+    - `npx tsc --noEmit` exits 0.
+    - `npm run test:run -- src/app/api/contacts/import/categorize/route.test.ts` exits 0 (Task 2 below provides this file).
+  </acceptance_criteria>
+  <done>Single-round-trip bulk UPDATE replaces the N+1 loop; literal identifiers used (no pgTable interpolation); response shape preserved with explicit acceptance pin; parameter binding verified safe.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: Create / extend route.test.ts to pin bulk-update behavior, RETURNING count, empty input, idempotency, and response-shape envelope</name>
+  <files>src/app/api/contacts/import/categorize/route.test.ts</files>
+  <read_first>
+    - First check whether `src/app/api/contacts/import/categorize/route.test.ts` exists. If NOT, create it from scratch using the canonical PGlite harness pattern from `src/app/api/contacts/import/route.test.ts` (the closest analog — same `vi.hoisted + Proxy` for the db mock, same `createTestDb` seed pattern in beforeEach).
+    - If it DOES exist, append new tests to the existing describe block.
+    - src/app/api/contacts/import/route.test.ts (full file) — canonical PGlite test shape; copy the harness boilerplate.
+    - src/lib/domain/types.ts — confirm the exact `contactClosenessValues` strings to use in the test fixtures (so the Zod schema accepts them).
+    - drizzle/schema/contacts.ts — confirm `closeness` column type and NOT NULL default (`.default('acquaintance')`) so seed rows have valid initial closeness.
+    - .planning/phases/06-performance/06-CONTEXT.md D-19, D-21.
+  </read_first>
+  <behavior>
+    - Test 1 (happy path — bulk update of 3 contacts): seed 3 contacts with closeness='acquaintance'; PATCH with 3 updates flipping each to a different value. Response: `{success:true, data:{updated:3, total:3}}`. DB: each contact's `closeness` matches the requested value, each `updated_at` is recent (> beforeEach timestamp).
+    - Test 2 (bulk UPDATE is observably one statement): The strongest portable proof is the SAME-TIMESTAMP heuristic — after Test 1's PATCH, all 3 contacts have `updated_at` within a single millisecond window. Use `expect(Math.abs(t1 - t2)).toBeLessThan(50)` (50ms tolerance for clock granularity); for a truly one-statement update on PGlite the typical delta is <1ms.
+    - Test 3 (RETURNING count + response-shape pin per WARNING 6): seed 3 contacts; PATCH with 3 valid ids + 1 random uuid. Response: EXACTLY `{success:true, data:{updated:3, total:4}}` (use `toEqual` not `toMatchObject` to pin the envelope precisely). The unknown uuid is silently dropped by the WHERE-id-match (no error, no row inserted).
+    - Test 4 (empty input early-return — no SQL issued): seed 1 contact; capture its `updated_at`; PATCH with `{updates:[]}`. Response: `{updated:0, total:0}`. After: the seeded contact's `updated_at` is byte-identical to the captured value (proves no UPDATE ran).
+    - Test 5 (idempotency under retry): seed 1 contact with closeness='acquaintance'; PATCH twice with the SAME body (e.g., set closeness='close_friend'). Both responses: `{updated:1, total:1}`. After: contact's closeness is 'close_friend' (final state correct). The second call's `updated_at` is strictly greater than the first call's `updated_at` (proves the UPDATE actually executed both times, not short-circuited).
+    - Test 6 (Zod validation): PATCH with `{updates: [{contactId: 'not-a-uuid', closeness: 'close_friend'}]}`. Response: 400 with `body.error` containing the Zod issue. No rows mutated.
+  </behavior>
+  <action>
+    Create OR extend `src/app/api/contacts/import/categorize/route.test.ts`.<pre><code>File header (copy from `src/app/api/contacts/import/route.test.ts` lines 1-11):
+```typescript
+import { createTestDb } from &#39;@/test-utils/pglite&#39;;
+import { callRoute } from &#39;@/test-utils/call-route&#39;;
+import { contacts } from &#39;../../../../../../drizzle/schema&#39;;
+import { eq } from &#39;drizzle-orm&#39;;
+
+const { dbRef } = vi.hoisted(() =&gt; ({
+  dbRef: { current: null as Awaited&lt;ReturnType&lt;typeof createTestDb&gt;&gt; | null }
+}));
+
+vi.mock(&#39;@/lib/db&#39;, () =&gt; ({
+  db: new Proxy({}, {
+    get: (_: object, prop: string | symbol) =&gt;
+      (dbRef.current as unknown as Record&lt;string | symbol, unknown&gt;)[prop]
+  })
+}));
+```
+
+describe block: `describe(&#39;PATCH /api/contacts/import/categorize (bulk UPDATE)&#39;, () =&gt; { ... })` containing the 6 `it` blocks above.
+
+`beforeEach`:
+```typescript
+beforeEach(async () =&gt; {
+  dbRef.current = await createTestDb();
+});
+```
+Seed contacts inside each test (NOT in beforeEach) so each test owns its own fixture and can vary the count. Use `dbRef.current!.insert(contacts).values([...]).returning()` to capture ids for the PATCH body.
+
+Test 3 specifically asserts the response-shape pin (WARNING 6 fix):
+```typescript
+it(&#39;Test 3: RETURNING-based updated count + response-shape envelope pin&#39;, async () =&gt; {
+  const seeded = await dbRef.current!
+    .insert(contacts)
+    .values([
+      { firstName: &#39;A&#39;, lastName: &#39;A&#39; },
+      { firstName: &#39;B&#39;, lastName: &#39;B&#39; },
+      { firstName: &#39;C&#39;, lastName: &#39;C&#39; }
+    ])
+    .returning();
+
+  const { PATCH } = await import(&#39;@/app/api/contacts/import/categorize/route&#39;);
+  const { status, body } = await callRoute(PATCH, {
+    method: &#39;PATCH&#39;,
+    body: {
+      updates: [
+        { contactId: seeded[0].id, closeness: &#39;close_friend&#39; },
+        { contactId: seeded[1].id, closeness: &#39;colleague&#39; },
+        { contactId: seeded[2].id, closeness: &#39;acquaintance&#39; },
+        { contactId: &#39;00000000-0000-0000-0000-000000000000&#39;, closeness: &#39;close_friend&#39; }  // unknown uuid
+      ]
+    }
+  });
+
+  expect(status).toBe(200);
+  // Response-shape envelope pin: identical to the pre-rewrite handler.
+  // N=4 inputs, M=3 actually existed → updated:3, total:4.
+  expect(body).toEqual({
+    success: true,
+    data: { updated: 3, total: 4 }
+  });
+});
+```
+
+Test 4 (empty-input early-return) — capture pre-call `updated_at`:
+```typescript
+const [seeded] = await dbRef.current!
+  .insert(contacts)
+  .values({ firstName: &#39;X&#39;, lastName: &#39;Y&#39; })
+  .returning();
+const beforeUpdatedAt = seeded.updatedAt;
+
+const { PATCH } = await import(&#39;@/app/api/contacts/import/categorize/route&#39;);
+const { status, body } = await callRoute(PATCH, {
+  method: &#39;PATCH&#39;,
+  body: { updates: [] }
+});
+
+expect(status).toBe(200);
+expect(body).toEqual({ success: true, data: { updated: 0, total: 0 } });
+
+const [after] = await dbRef.current!.select().from(contacts).where(eq(contacts.id, seeded.id));
+// Byte-identical means NO update ran. If the route had executed UPDATE,
+// `updated_at = NOW()` would have shifted this even for zero matching rows.
+expect(after.updatedAt?.getTime()).toBe(beforeUpdatedAt?.getTime());
+```
+
+Test 5 (idempotency): the second PATCH&#39;s `updated_at` must be strictly greater than the first&#39;s. Use a small await between calls (e.g., `await new Promise((r) =&gt; setTimeout(r, 5))`) so the timestamps are distinguishable on PGlite.
+
+Test 6 (Zod): use the standard validationError assertion: `expect(status).toBe(400)` + `expect(body).toMatchObject({ success: false, error: expect.any(String) })`.
+
+Use the closeness values from `contactClosenessValues` (read from `src/lib/domain/types.ts` during implementation). Do NOT hardcode tier strings without verifying them — the Postgres enum will reject any unknown value at execute time even if Zod somehow let it through.
+</code></pre>
+  </action>
+  <verify>
+    <automated>npm run test:run -- src/app/api/contacts/import/categorize/route.test.ts</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/app/api/contacts/import/categorize/route.test.ts` exists and contains 6 `it(...)` blocks covering happy path, single-statement evidence, RETURNING count + response-shape envelope pin, empty input, idempotency, and Zod validation.
+    - All 6 tests pass (`npm run test:run -- src/app/api/contacts/import/categorize/route.test.ts` exits 0).
+    - Test 3 uses `expect(body).toEqual({success: true, data: {updated: 3, total: 4}})` (precise envelope pin, NOT `toMatchObject`) — WARNING 6 fix.
+    - Test 4's byte-identical `updated_at` assertion passes — proves the empty-input path issues NO SQL.
+    - Test 5's strict-greater assertion passes — proves the bulk UPDATE actually ran on the second call (not short-circuited).
+    - The `vi.hoisted + Proxy` db-mock pattern is used per the standing convention.
+    - The full suite (`npm run test:run`) still exits 0.
+  </acceptance_criteria>
+  <done>Route test file pins all D-19 invariants: bulk-statement evidence, RETURNING count, response-shape envelope, empty-input no-op, and idempotency.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Client (triage UI / CLI) → PATCH /api/contacts/import/categorize</td>
+<td>Bearer-token authenticated; request body Zod-validated against <code>bulkCategorizeSchema</code>. Inputs are user-controlled (contactId uuids + closeness enum values).</td>
+</tr>
+<tr>
+<td>Zod-validated inputs → UPDATE ... FROM unnest(...)</td>
+<td>User-supplied arrays flow into a SQL <code>unnest()</code> cast as <code>::uuid[]</code> and <code>::contact_closeness[]</code>. Parameter binding is the only safe construction.</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-06-10</td>
+<td>T (tampering) / I (SQL injection)</td>
+<td><code>unnest()</code> array parameters</td>
+<td>mitigate</td>
+<td>The <code>ids</code> and <code>closenesses</code> arrays are interpolated via Drizzle&#39;s <code>${array}</code> parameter binding, NOT <code>sql.raw</code>. The verification grep gate explicitly forbids <code>sql.raw</code> in this file. Zod validates each <code>contactId</code> as <code>z.string().uuid()</code> (line 12) and each <code>closeness</code> against the enum value list (line 13) BEFORE the SQL runs, so even before the parameter-binding layer, the input shape is constrained. The <code>::uuid[]</code> and <code>::contact_closeness[]</code> casts are static SQL fragments inside the template, not user-controlled.</td>
+</tr>
+<tr>
+<td>T-06-11</td>
+<td>I (information disclosure)</td>
+<td>RETURNING id leaking unauthenticated rows</td>
+<td>accept</td>
+<td>The route is bearer-token-locked at the middleware layer; the returned uuids are already accessible to the same authenticated user via <code>/api/contacts</code>. No information disclosure surface beyond what already exists.</td>
+</tr>
+<tr>
+<td>T-06-12</td>
+<td>D (denial of service)</td>
+<td>unbounded <code>updates</code> array</td>
+<td>accept</td>
+<td>No explicit <code>.max()</code> on the <code>updates</code> array in <code>bulkCategorizeSchema</code> today. Single-user app + 1500-row dataset bounds practical request size to ~1500 entries. If this becomes a vector, add <code>.max(1500)</code> to the schema in a follow-up — not required for Phase 6 scope.</td>
+</tr>
+<tr>
+<td>T-06-13</td>
+<td>E</td>
+<td>RETURNING-based count manipulation</td>
+<td>accept</td>
+<td>The <code>updated</code> count derives from RETURNING rows; an attacker cannot inflate the count by manipulating the response. There is no privilege bound to the count value.</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+1. Greppable regression gate: `grep -v '^#' src/app/api/contacts/import/categorize/route.ts | grep -c "for.*await db\.update"` returns `0` (D-21 forbidden pattern, with grep -v '^#' so header comments cannot self-invalidate the gate).
+2. Greppable security gate: `grep -c "sql.raw" src/app/api/contacts/import/categorize/route.ts` returns `0` (no string-concatenated SQL).
+3. Greppable literal-identifier gate: `grep -E '\$\{contacts(\.[a-zA-Z]+)?\}' src/app/api/contacts/import/categorize/route.ts` returns no matches (WARNING 2 fix — no pgTable interpolation).
+4. Single-statement gate: `grep -c "db.execute(sql" src/app/api/contacts/import/categorize/route.ts` returns exactly `1`.
+5. `npx tsc --noEmit` exits 0.
+6. `npm run test:run -- src/app/api/contacts/import/categorize/route.test.ts` exits 0 with all 6 tests passing.
+7. `npm run test:run` (full suite) exits 0.
+8. `npm run build` exits 0.
+</verification><success_criteria>
+- The categorize route makes exactly one SQL round-trip per PATCH call (regardless of `updates.length`), verified by Test 2's single-millisecond `updated_at` window.
+- The SQL uses LITERAL `contacts` / `contacts.id` identifiers (no `${pgTable}` interpolation) — WARNING 2 fix avoiding the unverified Drizzle v0.45.1 behavior.
+- The `{updated, total}` envelope is unchanged from before Phase 6 (skill / UI clients continue to work unmodified). For N input ids of which M exist, response is `{success:true, data:{updated:M, total:N}}` (WARNING 6 fix — Test 3's `toEqual` pin).
+- Empty input is a no-op — no SQL issued, no timestamps mutated (Test 4).
+- Idempotent under user retry — second call with the same body produces the same final state and emits a fresh UPDATE (Test 5).
+- Parameter binding is verified safe — no `sql.raw`, all `${var}` interpolations bound by the driver (Task 1 grep gates + threat model T-06-10 mitigation).
+</success_criteria><output>
+After completion, create `.planning/phases/06-performance/06-03-SUMMARY.md` capturing:
+- The exact SQL string emitted (capture from the implementation file) — confirm LITERAL `UPDATE contacts` / `WHERE contacts.id = data.id` identifiers.
+- The Postgres enum type name used in `::contact_closeness[]` (confirms it matches `drizzle/schema/enums.ts` — if it diverges, planner records the override).
+- The number of rows mutated in the existing 1500-contact production triage workflow on first invocation (estimated, not benchmarked — D-21 forbids micro-benchmarks).
+- Note: the table-rename trade-off documented inline in the SQL — surface for future-reader awareness.
+</output>
+</content>
+</invoke>
+
+
+<footer>
+Source of truth: <code>.planning/phases/06-performance/06-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

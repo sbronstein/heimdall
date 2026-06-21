@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MANIFEST</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/spikes/MANIFEST.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Spike Manifest</h1>
+<h2>Status: SUPERSEDED (2026-05-13)</h2>
+<p>The Stagehand-in-the-app path is no longer the chosen approach. Architectural pivot captured below; all three spikes below are kept on disk as historical record but are not the active path.</p>
+<h3>What changed</h3>
+<p>Original framing: replace the in-app Playwright scraper (<code>src/features/job-leads/lib/scrape-connections.ts</code>) with Stagehand to fix selector brittleness while keeping scraping in an API route.</p>
+<p>New framing: <strong>scraping leaves the app entirely.</strong> It becomes a <strong>Claude Code skill</strong> built on <code>vercel-labs/agent-browser</code>. Flow:</p>
+<ol>
+<li>URL enters Heimdall via web UI paste <strong>or</strong> Claude Code CLI submission → row in DB (no scrape yet)</li>
+<li>User runs a Claude Code skill (with a URL arg, or no arg to drain the unprocessed queue)</li>
+<li>Skill drives agent-browser to do the LinkedIn navigation + extraction; Claude (already authed in Claude Code) is the LLM driver</li>
+<li>Results written back to DB through the existing API</li>
+</ol>
+<h3>Why this is better than the Stagehand-in-app path</h3>
+<ul>
+<li><strong>agent-browser&#39;s CLI shape becomes a feature.</strong> Earlier rejection was about <code>execSync</code>-ing a Rust binary from a Next.js API route — Claude Code is already a CLI, so the DX mismatch evaporates</li>
+<li><strong>No separate <code>ANTHROPIC_API_KEY</code> needed.</strong> Claude Code is already authed against your Claude sub; the skill drives Claude through the navigation. The &quot;Stagehand reads <code>ANTHROPIC_API_KEY</code>&quot; auth gap (and the Claude-sub-auth question that surfaced during the rewrite) both disappear</li>
+<li><strong>App decouples from Chrome.</strong> The web UI and CLI both just capture URLs. The fire-and-forget Playwright IIFE in <code>src/app/api/job-leads/[id]/search/route.ts</code> goes away</li>
+<li><strong>Failure is visible.</strong> Scrape errors surface in the Claude Code session where the user can intervene, instead of being swallowed by the server&#39;s async path</li>
+</ul>
+<h3>What transfers from these spikes</h3>
+<ul>
+<li>LinkedIn nav decomposition (job → company → employees → 2nd-degree → extract) — same target steps for agent-browser</li>
+<li><code>~/.heimdall/linkedin-profile/</code> persistent profile pattern — agent-browser can attach to a Chrome running that profile</li>
+<li><code>ScrapedProspect</code> schema as the structured output target</li>
+<li>The agent-browser evaluation note (<code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code>) — now reads as the trail leading to this pivot</li>
+</ul>
+<h3>Next step</h3>
+<p><code>/gsd-plan-phase</code> for the LinkedIn-scraping-skill — a new phase that delivers:</p>
+<ul>
+<li>Claude Code skill at <code>.claude/skills/scrape-linkedin-connections/</code> (or similar)</li>
+<li><code>&lt;url-arg&gt;</code> mode + <code>no-arg → drain queue</code> mode</li>
+<li>DB read/write through the existing API</li>
+<li>Removal of the in-app fire-and-forget scrape path</li>
+</ul>
+<hr>
+<h2>Idea (original, kept for context)</h2>
+<p>Replace the fragile Playwright-based LinkedIn scraper with <strong>Stagehand</strong> — an LLM-driven browser automation library built on Playwright that reasons over rendered DOM via an accessibility-tree-with-stable-refs abstraction instead of brittle CSS selectors.</p>
+<p>The current scraper has cascaded into ~5 fallback selector strategies plus <code>page.evaluate</code> brute-force DOM scans because LinkedIn uses obfuscated/randomized class names. Stagehand&#39;s <code>act()</code> / <code>observe()</code> / <code>extract()</code> primitives target the exact failure surface.</p>
+<p><strong>Out of scope:</strong> production-hosted scraping. Captured as a future seed in <code>.planning/seeds/prod-hosted-scraping.md</code>.</p>
+<p>Full pre-pivot context in <code>.planning/notes/linkedin-scraper-agent-browser-evaluation.md</code>.</p>
+<h2>Requirements (frozen — superseded by skill-phase requirements)</h2>
+<ul>
+<li>Reuse <code>~/.heimdall/linkedin-profile/</code> user-data dir</li>
+<li>Interactive login on first run in a visible Chrome window</li>
+<li>Extract prospects in <code>ScrapedProspect</code> shape: <code>{ name, title, linkedinUrl, mutualConnectionNames[] }</code></li>
+<li><code>env: &quot;LOCAL&quot;</code> (no Browserbase)</li>
+<li>Measure LLM token cost per scrape</li>
+<li>Default to a Claude Anthropic model</li>
+</ul>
+<h2>Spikes</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Type</th>
+<th>Validates</th>
+<th>Verdict</th>
+<th>Tags</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>001</td>
+<td>stagehand-cdp-auth</td>
+<td>standard</td>
+<td>Stagehand launches headed Chromium, persists/reuses the LinkedIn profile, interactively pauses for login if needed, and reaches <code>/feed</code>.</td>
+<td><strong>SUPERSEDED</strong></td>
+<td>stagehand, auth, headed</td>
+</tr>
+<tr>
+<td>002</td>
+<td>stagehand-linkedin-navigate</td>
+<td>standard</td>
+<td><code>observe()</code>/<code>act()</code> walk job → company → employees → 2nd-degree filter.</td>
+<td><strong>SUPERSEDED</strong></td>
+<td>stagehand, navigation, linkedin</td>
+</tr>
+<tr>
+<td>003</td>
+<td>stagehand-extract-prospects</td>
+<td>standard</td>
+<td><code>extract()</code> returns the <code>ScrapedProspect</code> shape with measured per-run token cost across 5+ runs.</td>
+<td><strong>SUPERSEDED</strong></td>
+<td>stagehand, extract, cost</td>
+</tr>
+</tbody></table>
+<p>These spikes were never run end-to-end. The scaffolding (<code>_pkg/</code>, <code>001/</code>, <code>002/</code>, <code>003/</code>) is left in place but should be considered archived. If you want to remove it entirely: <code>rm -rf .planning/spikes/_pkg .planning/spikes/00[123]-*</code> (and update this manifest).</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/spikes/MANIFEST.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
