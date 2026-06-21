@@ -117,7 +117,10 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   3. The owner can approve an email; the approve button is disabled for contacts with `archived_at` set
   4. The owner can click regenerate on a single email to reset it to `pending`
   5. Contacts with no stored email address show a "needs LinkedIn message" badge; the campaign header shows progress counts (approved / total)
-**Plans**: TBD
+**Plans**: 3 plans (Wave 1: 15-01 + 15-02 parallel; Wave 2: 15-03)
+- [ ] 15-01-PLAN.md — Review helpers (+Vitest) + EmailReviewCard: display, inline edit, approve gate, regenerate, badges (REV-01..04, REV-06) (Wave 1)
+- [ ] 15-02-PLAN.md — Server-side archived approve gate + bounded editedBody Zod (REV-04, REV-06 defense in depth) (Wave 1)
+- [ ] 15-03-PLAN.md — Client review-page container: approved/total progress header + EmailReviewCard list + optimistic state (REV-01, REV-04, REV-06) (Wave 2)
 **UI hint**: yes
 
 ### Phase 16: Email Generation Skill
@@ -165,9 +168,9 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 12. API Routes | v1.2 | 4/4 | Complete    | 2026-06-21 |
 | 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete    | 2026-06-21 |
 | 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
-| 15. Review and Approval UI | v1.2 | 0/TBD | Not started | - |
+| 15. Review and Approval UI | v1.2 | 0/3 | Planned | - |
 | 16. Email Generation Skill | v1.2 | 0/TBD | Not started | - |
 | 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-06-21 — Phase 14 planned (3 plans: list+nav, builder leaves, builder shell+save+placeholder; Wave 1 = 14-01∥14-02, Wave 2 = 14-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–13 complete).*
+*Last updated: 2026-06-21 — Phase 15 planned (3 plans: helpers+card, server approve gate+input hardening, review-page container; Wave 1 = 15-01∥15-02, Wave 2 = 15-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–14 complete).*

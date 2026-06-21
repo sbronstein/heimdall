@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/15-review-and-approval-ui/15-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 15-review-and-approval-ui
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts
+autonomous: true
+requirements: [REV-04, REV-06]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;Approving an email whose contact has archived_at set is rejected at the API boundary (defense in depth behind the disabled UI button)&quot;
+    - &quot;The inline-edit route bounds editedBody length so an oversized payload cannot be persisted&quot;
+    - &quot;Approving a non-archived email with content still succeeds (no regression to the existing approve path)&quot;
+  artifacts:
+    - path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts&quot;
+      provides: &quot;Server-side archived approve gate added to the existing state-machine route&quot;
+      contains: &quot;archivedAt&quot;
+    - path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts&quot;
+      provides: &quot;Bounded editedBody Zod validation&quot;
+      contains: &quot;editedBody&quot;
+  key_links:
+    - from: &quot;status/route.ts&quot;
+      to: &quot;contacts.archivedAt&quot;
+      via: &quot;join/lookup of the email&#39;s contact during the approve branch&quot;
+  pattern: &quot;archivedAt|archived_at&quot;
+</p>
+<hr>
+<objective>
+Harden the two outreach-email mutation routes so the approve gate (REV-04) and the archived-contact block (REV-06) are enforced server-side, not just by the disabled UI button. Add an authoritative archived-contact check to the status route's approve branch and a length bound to the inline-edit body.<p>Purpose: The UI gate in 15-01 is a UX affordance; the threat model requires the approve boundary to reject archived approvals and bound untrusted edit input server-side. These are small, independent backend changes that can run in parallel with the component work.
+Output: two patched route files.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md<interfaces>
+contacts table (drizzle/schema/contacts.ts): has `archivedAt: timestamp('archived_at')` — null means active.
+outreach_emails.contactId references contacts.id (notNull).
+API helpers: success(data), notFound(entity), validationError(message), serverError(err) from src/lib/api/.
+Existing approve branch already guards content: `if (newStatus === 'approved') { ...require subject && body... }`.
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: Server-side archived approve gate</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</files>
+  <read_first>
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts (the route being modified — existing approve branch + CD-06 ownership check)
+    - drizzle/schema/contacts.ts lines 18-68 (archivedAt column)
+    - src/app/api/outreach-campaigns/[id]/emails/route.ts (existing leftJoin of outreachEmails → contacts; copy the join shape)
+    - src/lib/api/errors.ts (validationError envelope)
+  </read_first>
+  <action>
+    In the PATCH handler, when `newStatus === 'approved'`, additionally verify the email's contact is not archived. After the existing email-ownership lookup, fetch the contact for `email.contactId` (a single `db.select({ archivedAt: contacts.archivedAt }).from(contacts).where(eq(contacts.id, email.contactId)).limit(1)`, or extend the existing email lookup with a leftJoin on contacts as done in the emails list route). If the contact's `archivedAt` is non-null, return `validationError('Cannot approve: contact is archived')` BEFORE running the update. Keep the existing content guard ('Cannot approve: email has no content') and the canEmailTransition guard intact and ordered sensibly. Do not change any other transition branch. Preserve the import style (relative `../../../../../../../../drizzle/schema`) and the existing `logTimeline` call.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit -p tsconfig.json 2>&1 | grep -i "status/route" || echo "status route typechecks"</automated>
+  </verify>
+  <acceptance_criteria>
+    - The approve branch references the contact's archived state (grep: `archivedAt`) and returns a validationError mentioning "archived"
+    - The archived check runs before the db.update for the approved transition
+    - Existing content guard and canEmailTransition guard remain present (grep: `canEmailTransition` and `no content`)
+    - `npx tsc --noEmit` reports no errors in status/route.ts
+  </acceptance_criteria>
+  <done>Approving an email whose contact is archived returns a 400 validationError; non-archived approvals with content still pass.</done>
+</task><task type="auto">
+  <name>Task 2: Bound inline-edit body length</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</files>
+  <read_first>
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts (inlineEditSchema — editedSubject already max(500), editedBody unbounded)
+    - src/lib/domain/types.ts (Zod usage conventions across routes)
+  </read_first>
+  <action>
+    In `inlineEditSchema`, add a reasonable maximum length to `editedBody` (e.g. `.max(50000)`) so an oversized untrusted payload is rejected at validation with the standard validationError envelope. Leave `editedSubject` (max 500) and `recipientEmail` (email) as-is. Do not alter the auto-transition-to-edited logic or the DELETE handler.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit -p tsconfig.json 2>&1 | grep -iE "emails/\[emailId\]/route" || echo "inline-edit route typechecks"</automated>
+  </verify>
+  <acceptance_criteria>
+    - `inlineEditSchema.editedBody` carries a `.max(...)` bound (grep: `editedBody` near `.max(`)
+    - editedSubject max(500) and recipientEmail email() validators unchanged
+    - `npx tsc --noEmit` reports no errors in the route file
+  </acceptance_criteria>
+  <done>The inline-edit route rejects an over-length body with a 400 validation error; normal edits are unaffected.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>browser/CLI → status route</td>
+<td>Approve request crosses the authorization boundary; the route is the authoritative approve gate</td>
+</tr>
+<tr>
+<td>browser/CLI → inline-edit route</td>
+<td>Owner-authored subject/body crosses into persistence; Zod is the validation boundary</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-15-02</td>
+<td>Elevation of Privilege</td>
+<td>approve transition on archived contact</td>
+<td>mitigate</td>
+<td>Add server-side archived_at lookup in the approve branch; reject with validationError before update (Task 1) — authoritative gate behind the disabled UI button</td>
+</tr>
+<tr>
+<td>T-15-04</td>
+<td>Denial of Service</td>
+<td>unbounded editedBody payload</td>
+<td>mitigate</td>
+<td>Add <code>.max(50000)</code> to the editedBody Zod field (Task 2)</td>
+</tr>
+<tr>
+<td>T-15-05</td>
+<td>Tampering</td>
+<td>mutating an email outside the owner&#39;s campaign</td>
+<td>accept</td>
+<td>Existing CD-06 ownership filter (<code>and(eq(id), eq(campaignId))</code>) already scopes every query to the campaign id; single-user Clerk lock covers tenancy</td>
+</tr>
+<tr>
+<td>T-15-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>mitigate</td>
+<td>No new packages; only Zod/Drizzle already in the tree. No legitimacy checkpoint required</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` reports no new errors in either route file
+- Trace: the approve branch returns validationError when the joined contact.archivedAt is non-null
+- Trace: inlineEditSchema.editedBody has a max bound
+</verification><success_criteria>
+- Approving an archived contact's email is rejected server-side with a clear validationError
+- Inline-edit body length is bounded; existing edit/approve happy paths are unchanged
+</success_criteria><output>
+Create `.planning/phases/15-review-and-approval-ui/15-02-SUMMARY.md` when done
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/15-review-and-approval-ui/15-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
