@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>13-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 13-triage-connection-date-filter
+verified: 2026-06-21T15:00:00Z
+status: passed
+score: 8/8 must-haves verified
+overrides_applied: 0
+re_verification: false</h2>
+<h1>Phase 13: Triage Connection-Date Filter — Verification Report</h1>
+<p><strong>Phase Goal:</strong> The owner can filter the existing triage queue by connection year or date range to surface cohorts of people (e.g. ID.me colleagues from 2021–2022)
+<strong>Verified:</strong> 2026-06-21T15:00:00Z
+<strong>Status:</strong> passed
+<strong>Re-verification:</strong> No — initial verification</p>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths (PLAN must_haves D-01..D-08)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>D-03</td>
+<td>Triage shows year buttons derived from actual linkedinConnectionDate values of loaded untriaged contacts</td>
+<td>✓ VERIFIED</td>
+<td><code>triage-workflow.tsx:86-89</code> — <code>connectionYears = useMemo(() =&gt; deriveConnectionYears(contacts), [contacts])</code> passed as <code>years</code> prop; filter component renders <code>{years.map(...)}</code>, no hardcoded array</td>
+</tr>
+<tr>
+<td>D-01</td>
+<td>Clicking a single year narrows the queue; clicking a second sets an inclusive two-year range</td>
+<td>✓ VERIFIED</td>
+<td><code>connection-year-filter.tsx:43-66</code> — <code>onYearClick</code> state machine: (a) no start → set single; (b) start+no end → set <code>min/max</code> range; <code>triage-workflow.tsx:91-94</code> — <code>filteredContacts</code> useMemo drives <code>total</code> and <code>current</code></td>
+</tr>
+<tr>
+<td>D-02</td>
+<td>Year control is keyboard-navigable (arrow keys move, Enter selects), matching sibling button-bars</td>
+<td>✓ VERIFIED</td>
+<td><code>connection-year-filter.tsx:85-112</code> — <code>handleKeyDown</code>: ArrowRight/Down increments, ArrowLeft/Up decrements <code>focusedIndex</code>; Enter activates focused option via <code>onYearClick</code>; container <code>tabIndex={0}</code>, buttons <code>tabIndex={-1}</code> matching <code>last-contact-year.tsx</code> pattern; <code>forwardRef</code> + <code>useImperativeHandle</code> focus handle</td>
+</tr>
+<tr>
+<td>D-04</td>
+<td>Filtering is client-side over already-fetched untriaged set; triage page.tsx and DB query unchanged</td>
+<td>✓ VERIFIED</td>
+<td><code>triage/page.tsx</code> reads only <code>isNull(triagedAt) AND isNull(archivedAt)</code> — no <code>connectionYearStart</code>/<code>connectionYearEnd</code> params; <code>git diff 9c32567..HEAD -- src/app/dashboard/contacts/triage/page.tsx</code> produced no output; REVIEW.md explicitly confirms</td>
+</tr>
+<tr>
+<td>D-05</td>
+<td>Selected year/range written to URL via nuqs (connectionYearStart/connectionYearEnd); survives page reload</td>
+<td>✓ VERIFIED</td>
+<td><code>connection-year-filter.tsx:28-33</code> — <code>useQueryStates({ connectionYearStart: parseAsInteger, connectionYearEnd: parseAsInteger })</code>; nuqs writes to URL query params by design; human-verified criterion #3 approved by owner</td>
+</tr>
+<tr>
+<td>D-07</td>
+<td>Live &#39;N contacts&#39; count reflects active filter; empty-state message when nothing matches</td>
+<td>✓ VERIFIED</td>
+<td><code>triage-workflow.tsx:337-339</code> — <code>{filteredContacts.length} contacts</code> p-tag sibling to filter; <code>triage-workflow.tsx:260-283</code> — <code>if (total === 0 &amp;&amp; (clampedStart != null || clampedEnd != null))</code> renders &quot;No connections from {rangeLabel} — clear the filter to see all contacts.&quot; with <code>ConnectionYearFilter</code> and Back button accessible</td>
+</tr>
+<tr>
+<td>D-06</td>
+<td>Clicking already-selected single year deselects; explicit Clear / &#39;All years&#39; restores full queue</td>
+<td>✓ VERIFIED</td>
+<td><code>connection-year-filter.tsx:50-52</code> — state case (b): <code>if (year === connectionYearStart) setRange({ connectionYearStart: null, connectionYearEnd: null })</code>; <code>connection-year-filter.tsx:158-163</code> — &quot;All years&quot; button sets both to null; <code>filterByConnectionYearRange(contacts, null, null)</code> returns full contacts array</td>
+</tr>
+<tr>
+<td>D-08</td>
+<td>Year/range control is standalone reusable component owning nuqs URL state, ready for Phase 14</td>
+<td>✓ VERIFIED</td>
+<td><code>connection-year-filter.tsx</code> — standalone file exporting <code>ConnectionYearFilter</code> + <code>ConnectionYearFilterHandle</code> (no default export); owns URL state internally via <code>useQueryStates</code>; prop is only <code>{ years: number[] }</code>; param names <code>connectionYearStart</code>/<code>connectionYearEnd</code> match Phase 14 GET /api/contacts contract per plan interface spec</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 8/8 truths verified</p>
+<h3>ROADMAP Success Criteria</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Success Criterion</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SC-1</td>
+<td>Year buttons filter queue to contacts whose <code>linkedinConnectionDate</code> falls within that year</td>
+<td>✓ VERIFIED</td>
+<td><code>filterByConnectionYearRange</code> single-year branch (start set, end null → lo==hi==start); wired in triage-workflow <code>filteredContacts</code> useMemo; human-verified criterion #1</td>
+</tr>
+<tr>
+<td>SC-2</td>
+<td>A two-year range (e.g. 2021–2022) shows only matching contacts</td>
+<td>✓ VERIFIED</td>
+<td><code>filterByConnectionYearRange(contacts, 2021, 2022)</code> → 3 contacts (2×2021 + 1×2022); click-to-range state machine; human-verified criterion #2</td>
+</tr>
+<tr>
+<td>SC-3</td>
+<td>Year filter survives page reload (URL-driven via nuqs)</td>
+<td>✓ VERIFIED</td>
+<td><code>useQueryStates</code> in <code>connection-year-filter.tsx</code>; human-verified criterion #3</td>
+</tr>
+<tr>
+<td>SC-4</td>
+<td>Clearing the filter restores the full triage queue</td>
+<td>✓ VERIFIED</td>
+<td>&quot;All years&quot; button + deselect-on-same-click; <code>filterByConnectionYearRange(contacts, null, null)</code> returns input unchanged; human-verified criterion #4</td>
+</tr>
+</tbody></table>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/contacts/lib/connection-year.ts</code></td>
+<td>Pure year helpers with 4 named exports</td>
+<td>✓ VERIFIED</td>
+<td>44 lines; exports <code>MIN_CONNECTION_YEAR=1990</code>, <code>deriveConnectionYears</code>, <code>filterByConnectionYearRange</code>, <code>clampConnectionYear</code>; generic <code>&lt;T extends { linkedinConnectionDate: Date | null }&gt;</code> constraint; no React, no DB</td>
+</tr>
+<tr>
+<td><code>src/features/contacts/lib/connection-year.test.ts</code></td>
+<td>Vitest coverage — 20 cases</td>
+<td>✓ VERIFIED</td>
+<td>124 lines; 8 describe blocks covering derivation, range-filter, clamp; fixture with 2019/2021/2021/2022/null dates; 20/20 passing</td>
+</tr>
+<tr>
+<td><code>src/features/contacts/components/triage/connection-year-filter.tsx</code></td>
+<td>Button-bar control with nuqs URL state</td>
+<td>✓ VERIFIED</td>
+<td>171 lines (&gt;60 min); <code>&#39;use client&#39;</code>; named exports <code>ConnectionYearFilter</code> + <code>ConnectionYearFilterHandle</code>; no default export; <code>useQueryStates</code> with correct param names; years from prop, not hardcoded</td>
+</tr>
+<tr>
+<td><code>src/features/contacts/components/triage/triage-workflow.tsx</code></td>
+<td>In-memory queue narrowing, live count, empty state</td>
+<td>✓ VERIFIED</td>
+<td>390 lines; imports <code>ConnectionYearFilter</code>, all 3 helpers; <code>filteredContacts</code> useMemo; <code>total</code>/<code>current</code> from filteredContacts; empty-filter branch distinct from Triage-Complete; live count rendered</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>triage-workflow.tsx</code></td>
+<td><code>connection-year-filter.tsx</code></td>
+<td>import + render above TriageCard</td>
+<td>✓ WIRED</td>
+<td><code>import { ConnectionYearFilter, type ConnectionYearFilterHandle } from &#39;./connection-year-filter&#39;</code>; <code>&lt;ConnectionYearFilter ref={connectionYearFilterRef} years={connectionYears} /&gt;</code> at lines 333-336 (main render) and 277-280 (empty-state render)</td>
+</tr>
+<tr>
+<td><code>connection-year-filter.tsx</code></td>
+<td>nuqs URL params <code>connectionYearStart</code>/<code>connectionYearEnd</code></td>
+<td><code>useQueryStates</code> with <code>parseAsInteger</code></td>
+<td>✓ WIRED</td>
+<td><code>const [{ connectionYearStart, connectionYearEnd }, setRange] = useQueryStates({ connectionYearStart: parseAsInteger, connectionYearEnd: parseAsInteger })</code> at lines 28-33</td>
+</tr>
+<tr>
+<td><code>triage-workflow.tsx</code></td>
+<td><code>connection-year.ts</code></td>
+<td><code>deriveConnectionYears</code> + <code>filterByConnectionYearRange</code></td>
+<td>✓ WIRED</td>
+<td>Both functions imported and used in <code>useMemo</code> hooks at lines 86-94; <code>clampConnectionYear</code> applied to URL params before passing to filter (T-13-01 hardening)</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Data Variable</th>
+<th>Source</th>
+<th>Produces Real Data</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>triage-workflow.tsx</code></td>
+<td><code>filteredContacts</code></td>
+<td><code>filterByConnectionYearRange(contacts, ...)</code> where <code>contacts</code> is the RSC prop</td>
+<td>Yes — <code>contacts</code> prop is populated by <code>db.select()</code> from Neon Postgres in <code>page.tsx</code>; <code>filteredContacts</code> applies client-side filter over real data</td>
+<td>✓ FLOWING</td>
+</tr>
+<tr>
+<td><code>connection-year-filter.tsx</code></td>
+<td><code>connectionYears</code> (via prop)</td>
+<td><code>deriveConnectionYears(contacts)</code> in parent</td>
+<td>Yes — derived from same real RSC data</td>
+<td>✓ FLOWING</td>
+</tr>
+</tbody></table>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Verification Method</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>filterByConnectionYearRange(fixture, 2021, 2022)</code> returns 3 contacts</td>
+<td>Vitest <code>connection-year.test.ts:66-71</code></td>
+<td>20/20 tests pass</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td><code>filterByConnectionYearRange(fixture, null, null)</code> returns all 5</td>
+<td>Vitest <code>connection-year.test.ts:47-50</code></td>
+<td>20/20 tests pass</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td><code>clampConnectionYear(99999999)</code> returns null</td>
+<td>Vitest <code>connection-year.test.ts:104-106</code></td>
+<td>20/20 tests pass</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>Single-year filter and two-year range, reload persistence, clear</td>
+<td>Human verification (13-02-SUMMARY.md)</td>
+<td>APPROVED by owner</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td><code>npx tsc --noEmit</code></td>
+<td>Static type check (per verification context)</td>
+<td>exit 0, 0 errors</td>
+<td>✓ PASS</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<p>Step 7c: SKIPPED — no conventional <code>scripts/*/tests/probe-*.sh</code> files exist; no probe paths declared in PLAN files.</p>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TRGE-01</td>
+<td>13-01-PLAN.md, 13-02-PLAN.md</td>
+<td>User can filter existing triage workflow by connection year / date range</td>
+<td>✓ SATISFIED</td>
+<td>All 4 ROADMAP success criteria verified by code + human approval; filtering by single year and two-year range both implemented and tested</td>
+</tr>
+</tbody></table>
+<p><strong>Note:</strong> REQUIREMENTS.md still shows <code>[ ] TRGE-01</code> (unchecked). The implementation is complete and ROADMAP.md marks Phase 13 as <code>[x]</code> complete. The requirements checkbox is a planning artifact that can be updated to <code>[x]</code> at the owner&#39;s discretion — this is not a code gap.</p>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>triage-workflow.tsx</code></td>
+<td>122, 131</td>
+<td><code>// eslint-disable-line react-hooks/exhaustive-deps</code></td>
+<td>ℹ️ Info</td>
+<td>Pre-existing project-wide ESLint infrastructure failure (circular <code>.eslintrc.json</code> resolution error, reproducible on unmodified sibling files); not a phase-13 regression; <code>tsc</code> is the type gate</td>
+</tr>
+</tbody></table>
+<p>No <code>TBD</code>, <code>FIXME</code>, or <code>XXX</code> debt markers found in any of the 4 phase-13 modified files.</p>
+<h3>Code Review Findings — Resolution Confirmed</h3>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Severity</th>
+<th>Resolution</th>
+<th>Confirmed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>WR-01: Stale <code>currentIndex</code> causing &quot;Triage Complete!&quot; flash on filter change</td>
+<td>Warning</td>
+<td>Fixed via during-render <code>appliedFilter</code> state comparison at <code>triage-workflow.tsx:99-109</code> — <code>setCurrentIndex(0)</code> called synchronously during render when clamped bounds change, preventing one-cycle flash</td>
+<td>✓ Code present</td>
+</tr>
+<tr>
+<td>IN-01: Redundant <code>isNaN</code> after <code>!isFinite</code> in <code>clampConnectionYear</code></td>
+<td>Info</td>
+<td>Removed — <code>connection-year.ts:35</code> is now <code>if (!isFinite(value)) return null;</code> only</td>
+<td>✓ Code confirmed</td>
+</tr>
+<tr>
+<td>IN-02: Raw URL params in empty-filter <code>rangeLabel</code></td>
+<td>Info</td>
+<td>Fixed — <code>triage-workflow.tsx:261-264</code> interpolates <code>clampedStart</code>/<code>clampedEnd</code>, not raw params</td>
+<td>✓ Code confirmed</td>
+</tr>
+<tr>
+<td>IN-03: <code>focusedIndex</code> not clamped when <code>years</code> prop shrinks</td>
+<td>Info</td>
+<td>Fixed — <code>connection-year-filter.tsx:102</code> guards Enter handler with <code>Math.min(focusedIndex, allOptions.length - 1)</code></td>
+<td>✓ Code confirmed</td>
+</tr>
+</tbody></table>
+<h3>Human Verification Required</h3>
+<p>None. All four ROADMAP success criteria (#1–#4) were verified and APPROVED by the owner in the running app (13-02-SUMMARY.md, 2026-06-21T13:30:00Z). Interactive criteria are treated as confirmed per verification context.</p>
+<h3>Gaps Summary</h3>
+<p>No gaps. All 8 must-have truths are fully implemented, wired, and data-flowing. All 4 ROADMAP success criteria are satisfied — 3 are directly verifiable by code and all 4 have human-approval on record. No debt markers. No stubs. No orphaned artifacts. The phase goal is achieved.</p>
+<hr>
+<p><em>Verified: 2026-06-21T15:00:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

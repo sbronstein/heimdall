@@ -22,7 +22,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase (see Tra
 
 ### Triage (TRGE) — connection-date filter
 
-- [ ] **TRGE-01**: User can filter the existing triage workflow by connection year / date range (e.g. 2021–2022 to surface people met at a given company)
+- [x] **TRGE-01**: User can filter the existing triage workflow by connection year / date range (e.g. 2021–2022 to surface people met at a given company)
 
 ### Generation (GEN) — AI email drafting skill
 
@@ -102,7 +102,7 @@ Which phases cover which requirements. Updated during roadmap creation (2026-06-
 | CAMP-06 | Phase 12 | Complete |
 | CAMP-07 | Phase 12 | Complete |
 | CAMP-08 | Phase 12 | Complete |
-| TRGE-01 | Phase 13 | Pending |
+| TRGE-01 | Phase 13 | Complete |
 | GEN-01 | Phase 16 | Pending |
 | GEN-02 | Phase 16 | Pending |
 | GEN-03 | Phase 16 | Pending |
