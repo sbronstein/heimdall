@@ -36,9 +36,9 @@ export const ConnectionYearFilter = forwardRef<
     focus: () => containerRef.current?.focus()
   }));
 
-  // All options: year buttons + "All years" clear option
-  // allOptions length = years.length + 1 (for "All years")
-  const allOptions = [...years, null] as (number | null)[];
+  // All options: "All years" clear option (first) + year buttons
+  // allOptions length = years.length + 1 (leading "All years" at index 0)
+  const allOptions = [null, ...years] as (number | null)[];
 
   const onYearClick = useCallback(
     (year: number) => {
@@ -97,7 +97,7 @@ export const ConnectionYearFilter = forwardRef<
       if (e.key === 'Enter') {
         e.preventDefault();
         // Clamp: focusedIndex can outlive a shrunk `years` prop (Phase 14 reuse),
-        // and allOptions always has the trailing "All years" entry, so this is safe.
+        // and allOptions always has the leading "All years" entry, so this is safe.
         const focused =
           allOptions[Math.min(focusedIndex, allOptions.length - 1)];
         if (focused === null) {
@@ -118,52 +118,52 @@ export const ConnectionYearFilter = forwardRef<
         ref={containerRef}
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        className='focus-visible:ring-ring flex gap-2 rounded-md p-1 outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+        className='focus-visible:ring-ring flex gap-2 overflow-x-auto rounded-md p-1 outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
       >
+        {/* "All years" clear button — first option */}
+        <button
+          type='button'
+          tabIndex={-1}
+          className={cn(
+            'shrink-0 rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+            connectionYearStart == null && connectionYearEnd == null
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-background hover:bg-accent',
+            focusedIndex === 0 &&
+              containerRef.current === document.activeElement &&
+              'ring-ring ring-2 ring-offset-1'
+          )}
+          onClick={() => {
+            setRange({ connectionYearStart: null, connectionYearEnd: null });
+            setFocusedIndex(0);
+            containerRef.current?.focus();
+          }}
+        >
+          All years
+        </button>
         {years.map((year, i) => (
           <button
             key={year}
             type='button'
             tabIndex={-1}
             className={cn(
-              'flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+              'shrink-0 rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
               isSelected(year)
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-background hover:bg-accent',
-              focusedIndex === i &&
+              focusedIndex === i + 1 &&
                 containerRef.current === document.activeElement &&
                 'ring-ring ring-2 ring-offset-1'
             )}
             onClick={() => {
               onYearClick(year);
-              setFocusedIndex(i);
+              setFocusedIndex(i + 1);
               containerRef.current?.focus();
             }}
           >
             {year}
           </button>
         ))}
-        {/* "All years" clear button — last option */}
-        <button
-          type='button'
-          tabIndex={-1}
-          className={cn(
-            'flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors',
-            connectionYearStart == null && connectionYearEnd == null
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-background hover:bg-accent',
-            focusedIndex === years.length &&
-              containerRef.current === document.activeElement &&
-              'ring-ring ring-2 ring-offset-1'
-          )}
-          onClick={() => {
-            setRange({ connectionYearStart: null, connectionYearEnd: null });
-            setFocusedIndex(years.length);
-            containerRef.current?.focus();
-          }}
-        >
-          All years
-        </button>
       </div>
     </div>
   );
