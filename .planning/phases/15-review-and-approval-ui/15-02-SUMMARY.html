@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-af5a8136e0447ea15/.planning/phases/15-review-and-approval-ui/15-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 15-review-and-approval-ui
+plan: &quot;02&quot;
+subsystem: outreach-campaigns
+tags: [security, validation, api, drizzle]
+dependency_graph:
+  requires: []
+  provides: [archived-approve-gate, editedBody-length-bound]
+  affects:
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts
+tech_stack:
+  added: []
+  patterns: [drizzle-select-with-projection, zod-max-bound]
+key_files:
+  modified:
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts
+decisions:</p>
+<ul>
+<li>Archived contact check placed after content guard, before db.update — cheapest checks first; archived lookup only fires for approve branch</li>
+<li>Used a separate single-row SELECT on contacts rather than extending the email lookup with a leftJoin — avoids reshaping the existing email query and keeps the approve branch self-contained</li>
+<li>editedBody max set to 50000 chars, matching the plan&#39;s recommendation; provides a meaningful DoS bound without affecting normal email drafts
+metrics:
+  duration: &quot;~8 min&quot;
+  completed: &quot;2026-06-21&quot;
+  tasks_completed: 2
+  files_modified: 2</li>
+</ul>
+<hr>
+<h1>Phase 15 Plan 02: Backend API Hardening — Archived Approve Gate + Body Length Bound Summary</h1>
+<p>Server-side defense-in-depth for the outreach email approve boundary: rejected archived-contact approvals and bounded untrusted edit payloads at the Zod validation layer.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Task</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Server-side archived approve gate</td>
+<td>4a633a8</td>
+<td>status/route.ts</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Bound inline-edit body length</td>
+<td>0890f46</td>
+<td>[emailId]/route.ts</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<p><strong>Task 1 — Archived approve gate (REV-06, T-15-02):</strong>
+Added a server-side check in the PATCH handler&#39;s approve branch of <code>status/route.ts</code>. After the content guard passes, a single projected SELECT (<code>{ archivedAt: contacts.archivedAt }</code>) is issued against the contacts table using the email&#39;s <code>contactId</code>. If <code>archivedAt</code> is non-null, the handler returns <code>validationError(&#39;Cannot approve: contact is archived&#39;)</code> before the <code>db.update</code> runs. The contacts table is now imported alongside outreachEmails.</p>
+<p>Guard ordering in the approve branch:</p>
+<ol>
+<li><code>canEmailTransition</code> (state machine — unchanged)</li>
+<li>Content guard — subject + body present (unchanged)</li>
+<li><strong>New:</strong> archived contact check</li>
+</ol>
+<p><strong>Task 2 — editedBody max bound (REV-04, T-15-04):</strong>
+Added <code>.max(50000)</code> to <code>editedBody</code> in <code>inlineEditSchema</code> in the inline-edit route. <code>editedSubject</code> (max 500) and <code>recipientEmail</code> (email()) remain unchanged. Zod rejects oversized payloads with a 400 validationError before any DB query runs.</p>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Known Stubs</h2>
+<p>None.</p>
+<h2>Threat Flags</h2>
+<p>No new threat surface introduced. Both changes tighten existing boundaries: the approve route gains an additional guard, the edit route adds a validation constraint.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code> — exists and contains <code>archivedAt</code></li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/route.ts</code> — exists and contains <code>max(50000)</code></li>
+<li><input checked="" disabled="" type="checkbox"> Commit 4a633a8 — Task 1 (archived approve gate)</li>
+<li><input checked="" disabled="" type="checkbox"> Commit 0890f46 — Task 2 (body length bound)</li>
+<li><input checked="" disabled="" type="checkbox"> <code>npx tsc --noEmit</code> exit code 0 — no TypeScript errors</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-af5a8136e0447ea15/.planning/phases/15-review-and-approval-ui/15-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
