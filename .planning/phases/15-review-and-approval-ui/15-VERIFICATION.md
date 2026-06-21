@@ -147,5 +147,25 @@ None. All automated must-haves pass. No stubs, missing artifacts, or broken link
 
 ---
 
+## Browser UAT — SIGNED OFF (2026-06-21)
+
+All 6 human-verification items confirmed in the running dev server against a
+throwaway fixture campaign (4 crafted emails: generated/edited/archived-contact/
+linkedin-message; since removed, zero real data touched).
+
+| # | Check | Req | Result |
+|---|-------|-----|--------|
+| 1 | Card list + progress header render | REV-01 | ✅ pass |
+| 2 | Inline edit round-trip persists; `final = edited ?? generated` | REV-02 | ✅ pass |
+| 3 | Needs-LinkedIn badge on linkedin_message / no-email card | REV-06 | ✅ pass |
+| 4 | Archived badge + Approve disabled on archived contact | REV-04/REV-06 | ✅ pass |
+| 5 | Approve action increments header counter reactively | REV-04 | ✅ pass |
+| 6 | Regenerate confirm dialog → status returns to pending | REV-03 | ✅ pass |
+
+**Verdict: PASS — Phase 15 fully signed off.**
+
+---
+
 _Verified: 2026-06-21T15:45:00Z_
 _Verifier: Claude (gsd-verifier)_
+_UAT signed off: 2026-06-21 by Steve (6/6 checks)_

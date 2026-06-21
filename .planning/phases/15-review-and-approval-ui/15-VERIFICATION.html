@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/15-review-and-approval-ui/15-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>.planning/phases/15-review-and-approval-ui/15-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
 
 <hr>
 <p>phase: 15-review-and-approval-ui
@@ -389,13 +389,66 @@ why_human: &quot;Badge rendering for the no-email case requires visual inspectio
 <h3>Gaps Summary</h3>
 <p>None. All automated must-haves pass. No stubs, missing artifacts, or broken links detected. The phase is ready for browser UAT.</p>
 <hr>
+<h2>Browser UAT — SIGNED OFF (2026-06-21)</h2>
+<p>All 6 human-verification items confirmed in the running dev server against a
+throwaway fixture campaign (4 crafted emails: generated/edited/archived-contact/
+linkedin-message; since removed, zero real data touched).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Check</th>
+<th>Req</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Card list + progress header render</td>
+<td>REV-01</td>
+<td>✅ pass</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Inline edit round-trip persists; <code>final = edited ?? generated</code></td>
+<td>REV-02</td>
+<td>✅ pass</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Needs-LinkedIn badge on linkedin_message / no-email card</td>
+<td>REV-06</td>
+<td>✅ pass</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Archived badge + Approve disabled on archived contact</td>
+<td>REV-04/REV-06</td>
+<td>✅ pass</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Approve action increments header counter reactively</td>
+<td>REV-04</td>
+<td>✅ pass</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Regenerate confirm dialog → status returns to pending</td>
+<td>REV-03</td>
+<td>✅ pass</td>
+</tr>
+</tbody></table>
+<p><strong>Verdict: PASS — Phase 15 fully signed off.</strong></p>
+<hr>
 <p><em>Verified: 2026-06-21T15:45:00Z</em>
-<em>Verifier: Claude (gsd-verifier)</em></p>
+<em>Verifier: Claude (gsd-verifier)</em>
+<em>UAT signed off: 2026-06-21 by Steve (6/6 checks)</em></p>
 
 
 
 <footer>
-Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/15-review-and-approval-ui/15-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>.planning/phases/15-review-and-approval-ui/15-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>
