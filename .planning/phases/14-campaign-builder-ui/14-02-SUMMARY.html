@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 14-campaign-builder-ui
+plan: &quot;02&quot;
+subsystem: outreach/campaign-builder
+tags: [campaign-builder, filter, multi-select, ui-components, nuqs]
+dependency_graph:
+  requires: [13-triage-connection-date-filter]
+  provides: [applyBuilderFilters, BuilderFilterBar, ContactSelectionList, CampaignNamePanel]
+  affects: [14-03-campaign-builder-shell]
+tech_stack:
+  added: []
+  patterns: [nuqs-url-state, forwardRef-handle, in-memory-filter, closeness-ordering]
+key_files:
+  created:
+    - src/features/outreach/lib/builder-filters.ts
+    - src/features/outreach/components/builder-filter-bar.tsx
+    - src/features/outreach/components/contact-selection-list.tsx
+    - src/features/outreach/components/campaign-name-panel.tsx
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;howMet filter uses free-text Input (not a button-bar) because howMet values are unstructured strings — a substring search over ~1500 contacts is the right UX&quot;</li>
+<li>&quot;outreachStatus button bar defaults to not_reached_out via parseAsString.withDefault so the default is baked into the nuqs schema rather than a useEffect&quot;</li>
+<li>&quot;ContactSelectionList has an empty-state div rendered separately (below the empty ul) — the select-all header still renders to preserve the UI frame&quot;
+metrics:
+  duration: &quot;18 minutes&quot;
+  completed: &quot;2026-06-21&quot;
+  tasks_completed: 3
+  tasks_total: 3
+  files_created: 4
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 14 Plan 02: Campaign Builder Leaf Primitives Summary</h1>
+<p><strong>One-liner:</strong> Pure in-memory filter+sort helper and three &#39;use client&#39; leaf components — filter bar reusing Phase 13 triage controls, dense checkbox selection list (four D-02 field groups + select-all), and inline name/goal panel — wired to nuqs URL state.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Pure builder-filters helper</td>
+<td>1bd4930</td>
+<td>src/features/outreach/lib/builder-filters.ts</td>
+</tr>
+<tr>
+<td>2</td>
+<td>BuilderFilterBar</td>
+<td>45d5e73</td>
+<td>src/features/outreach/components/builder-filter-bar.tsx</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ContactSelectionList + CampaignNamePanel</td>
+<td>ab9fccd</td>
+<td>src/features/outreach/components/contact-selection-list.tsx, src/features/outreach/components/campaign-name-panel.tsx</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1 — <code>applyBuilderFilters</code> (builder-filters.ts)</h3>
+<p>Pure function, no React, no side effects. Accepts <code>Contact[]</code> + <code>BuilderFilters</code> and returns a <strong>new</strong> array (input untouched) narrowed by:</p>
+<ol>
+<li><code>connectionYearStart</code>/<code>connectionYearEnd</code> — delegates to the existing <code>filterByConnectionYearRange</code> from Phase 13 (reuse per plan key_links)</li>
+<li><code>closeness</code> — exact equality; null closeness excluded when filter active</li>
+<li><code>howMet</code> — case-insensitive substring; contacts with <code>null</code> howMet excluded when filter active (CAMP-01)</li>
+<li><code>outreachStatus</code> — exact equality; default applied by caller (CAMP-04)</li>
+</ol>
+<p>Sorted by <code>contactClosenessValues.indexOf(closeness ?? &#39;never_met&#39;)</code> ascending — close_friend first, null treated as never_met (D-04/CD-04).</p>
+<p>Exports: <code>BuilderFilters</code> interface + <code>applyBuilderFilters</code> named function.</p>
+<h3>Task 2 — <code>BuilderFilterBar</code> (builder-filter-bar.tsx)</h3>
+<p>Composed filter bar with all four filters on one panel:</p>
+<ul>
+<li><code>ConnectionYearFilter</code> (Phase 13 component reused directly — owns its own <code>connectionYearStart</code>/<code>connectionYearEnd</code> nuqs state, D-07)</li>
+<li><code>ClosenessButtonBar</code> (Phase 13 component reused — calls <code>onSelect</code>, does NOT own URL state; parent toggles <code>closeness</code> in nuqs, CAMP-03/D-07)</li>
+<li><code>howMet</code> free-text <code>Input</code> writing to nuqs (CAMP-01)</li>
+<li>Outreach-status button bar over <code>outreachStatusValues</code> with an &quot;All&quot; clear button; defaults to <code>not_reached_out</code> via <code>parseAsString.withDefault(&#39;not_reached_out&#39;)</code> (CAMP-04, D-07)</li>
+</ul>
+<p>Closeness shows an inline clear link when a tier is active. Uses <code>forwardRef + BuilderFilterBarHandle { focus() }</code> pattern.</p>
+<h3>Task 3a — <code>ContactSelectionList</code> (contact-selection-list.tsx)</h3>
+<p>Purely presentational — receives the already-filtered, already-sorted slice from the parent shell (Plan 03). Renders:</p>
+<ul>
+<li><strong>Select-all header</strong> row: Checkbox bound to <code>onSelectAll</code>; label shows contact count (D-08/CAMP-05)</li>
+<li><strong>Per-contact rows</strong> with all four D-02 field groups:<ol>
+<li>Name + howMet (via label) + closeness Badge (closenessColors)</li>
+<li>Current title/company and/or role/company at connection</li>
+<li>LinkedIn connection date (date-fns <code>MMM yyyy</code> format)</li>
+<li>Outreach status Badge (outreachStatusColors)</li>
+</ol>
+</li>
+<li>Row click and Checkbox both call <code>onToggle</code> (stopPropagation on the checkbox prevents double-fire)</li>
+<li>Selected rows highlighted with <code>bg-primary/5</code></li>
+<li>Empty-state copy when no contacts match</li>
+</ul>
+<h3>Task 3b — <code>CampaignNamePanel</code> (campaign-name-panel.tsx)</h3>
+<p>Controlled pair of inputs: required <code>Input</code> (Campaign Name, maxLength=200) and optional <code>Textarea</code> (Goal / Instruction with Phase-16 AI generation hint — CD-06/D-14). <code>forwardRef + CampaignNamePanelHandle { focus() }</code> focuses the name input. Props: <code>{ name, onNameChange, goalInstruction, onGoalChange }</code>.</p>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Requirements Coverage</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Delivered by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CAMP-01 howMet filter</td>
+<td>BuilderFilterBar howMet Input + applyBuilderFilters howMet substring</td>
+</tr>
+<tr>
+<td>CAMP-02 connection year filter</td>
+<td>ConnectionYearFilter reuse in BuilderFilterBar</td>
+</tr>
+<tr>
+<td>CAMP-03 closeness filter</td>
+<td>ClosenessButtonBar reuse in BuilderFilterBar (toggle = same tier clears)</td>
+</tr>
+<tr>
+<td>CAMP-04 outreach status filter</td>
+<td>outreachStatus button bar in BuilderFilterBar; applyBuilderFilters outreachStatus equality</td>
+</tr>
+<tr>
+<td>CAMP-05 checkbox multi-select + select-all</td>
+<td>ContactSelectionList Checkbox rows + select-all header</td>
+</tr>
+<tr>
+<td>D-07 reuse Phase 13 controls</td>
+<td>ConnectionYearFilter + ClosenessButtonBar imported directly</td>
+</tr>
+<tr>
+<td>D-07 outreach-status default not_reached_out</td>
+<td>parseAsString.withDefault(&#39;not_reached_out&#39;) in BuilderFilterBar</td>
+</tr>
+<tr>
+<td>D-08 select-all = add matching to set</td>
+<td>onSelectAll prop wired to header Checkbox</td>
+</tr>
+<tr>
+<td>D-02 four field groups per row</td>
+<td>ContactSelectionList groups 1–4</td>
+</tr>
+<tr>
+<td>D-04 closeness-closest-first ordering</td>
+<td>applyBuilderFilters sort by contactClosenessValues index</td>
+</tr>
+<tr>
+<td>D-11/D-14 inline name+goal panel</td>
+<td>CampaignNamePanel</td>
+</tr>
+<tr>
+<td>CD-06 Phase-16 goal hint</td>
+<td>Textarea label text in CampaignNamePanel</td>
+</tr>
+</tbody></table>
+<h2>Known Stubs</h2>
+<p>None — all components are fully wired to their props. Filtering and selection are prop-driven; data flows in from the builder shell (Plan 03).</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints, auth paths, file access patterns, or schema changes introduced. All components are purely client-side presentational over already-loaded, Clerk-locked data. No new threat surface.</p>
+<h2>Self-Check: PASSED</h2>
+<p>Files exist:</p>
+<ul>
+<li>src/features/outreach/lib/builder-filters.ts: FOUND</li>
+<li>src/features/outreach/components/builder-filter-bar.tsx: FOUND</li>
+<li>src/features/outreach/components/contact-selection-list.tsx: FOUND</li>
+<li>src/features/outreach/components/campaign-name-panel.tsx: FOUND</li>
+</ul>
+<p>Commits exist:</p>
+<ul>
+<li>1bd4930: feat(14-02): add applyBuilderFilters pure helper</li>
+<li>45d5e73: feat(14-02): add BuilderFilterBar</li>
+<li>ab9fccd: feat(14-02): add ContactSelectionList + CampaignNamePanel</li>
+</ul>
+<p>TypeScript: npx tsc --noEmit clean for all four files.</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
