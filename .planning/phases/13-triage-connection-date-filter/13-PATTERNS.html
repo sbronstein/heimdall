@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>13-PATTERNS</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-PATTERNS.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 13: Triage Connection-Date Filter - Pattern Map</h1>
+<p><strong>Mapped:</strong> 2026-06-20
+<strong>Files analyzed:</strong> 3 (1 new, 2 modified)
+<strong>Analogs found:</strong> 3 / 3</p>
+<h2>File Classification</h2>
+<table>
+<thead>
+<tr>
+<th>New/Modified File</th>
+<th>Role</th>
+<th>Data Flow</th>
+<th>Closest Analog</th>
+<th>Match Quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/features/contacts/components/triage/connection-year-filter.tsx</code> (NEW)</td>
+<td>component (button-bar control)</td>
+<td>transform / in-memory filter + URL state</td>
+<td><code>src/features/contacts/components/triage/last-contact-year.tsx</code></td>
+<td>role-match (button-bar UX); differs in click-to-range + nuqs</td>
+</tr>
+<tr>
+<td><code>src/features/contacts/components/triage/triage-workflow.tsx</code> (MODIFY)</td>
+<td>component (client queue host)</td>
+<td>transform (narrow in-memory list)</td>
+<td>self (existing patterns in same file)</td>
+<td>exact (extend existing)</td>
+</tr>
+<tr>
+<td><code>src/app/dashboard/contacts/triage/page.tsx</code> (NO CHANGE expected)</td>
+<td>route (RSC data fetch)</td>
+<td>request-response (read)</td>
+<td>self</td>
+<td>n/a — D-04 keeps DB query unchanged</td>
+</tr>
+</tbody></table>
+<p><strong>Note:</strong> Per D-04 the triage RSC (<code>page.tsx</code>) does NOT change — it keeps fetching the full untriaged set. It is listed only to confirm &quot;no change&quot;. If the planner decides a <code>&lt;Suspense&gt;</code> boundary or <code>NuqsAdapter</code> check is needed, none is required: <code>NuqsAdapter</code> is already mounted app-wide in <code>src/app/layout.tsx</code> (line 59), so <code>useQueryState</code> works in any client descendant.</p>
+<hr>
+<h2>Pattern Assignments</h2>
+<h3><code>connection-year-filter.tsx</code> (NEW — component, button-bar + URL state)</h3>
+<p><strong>Primary analog:</strong> <code>src/features/contacts/components/triage/last-contact-year.tsx</code> (button-bar UX, arrow-key/Enter nav, <code>forwardRef</code> focus).
+<strong>Secondary analog:</strong> <code>src/features/contacts/components/contact-table/index.tsx</code> (minimal <code>useQueryState</code> usage) and <code>src/hooks/use-data-table.ts</code> (multi-param <code>useQueryStates</code>, <code>parseAsInteger</code>, <code>.withDefault</code>, <code>.withOptions</code>).</p>
+<p><strong>Imports pattern</strong> — copy from <code>last-contact-year.tsx</code> lines 1-4, add nuqs:</p>
+<pre><code class="language-typescript">&#39;use client&#39;;
+
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from &#39;react&#39;;
+import { parseAsInteger, useQueryStates } from &#39;nuqs&#39;;
+import { cn } from &#39;@/lib/utils&#39;;
+</code></pre>
+<p>nuqs import shape (named, from <code>&#39;nuqs&#39;</code>) per <code>contact-table/index.tsx</code> line 8 and <code>use-data-table.ts</code> lines 21-29.</p>
+<p><strong>forwardRef + imperative focus handle</strong> (copy structure from <code>last-contact-year.tsx</code> lines 12-34):</p>
+<pre><code class="language-typescript">export interface ConnectionYearFilterHandle {
+  focus: () =&gt; void;
+}
+
+export const ConnectionYearFilter = forwardRef&lt;ConnectionYearFilterHandle, ConnectionYearFilterProps&gt;(
+  function ConnectionYearFilter({ years, onRangeChange, ... }, ref) {
+    const containerRef = useRef&lt;HTMLDivElement&gt;(null);
+    const [focusedIndex, setFocusedIndex] = useState(0);
+
+    useImperativeHandle(ref, () =&gt; ({
+      focus: () =&gt; containerRef.current?.focus()
+    }));
+</code></pre>
+<p>(If this control is NOT wired into the triage tab-chain, the <code>forwardRef</code>/handle is optional per D-02 &quot;exact ref-forwarding is implementation detail&quot; — but matching it keeps the file consistent with its three sibling controls: <code>last-contact-year.tsx</code>, <code>closeness-button-bar.tsx</code>, <code>how-met-input.tsx</code>, all of which expose a <code>*Handle</code> focus interface.)</p>
+<p><strong>Keyboard-nav pattern</strong> — copy verbatim shape from <code>last-contact-year.tsx</code> lines 47-73 (ArrowRight/Down → next, ArrowLeft/Up → prev, Enter → select). Adapt the <code>Enter</code>/<code>Tab</code> branch for click-to-range (D-01): first Enter sets start, second Enter on a different year sets the inclusive range.</p>
+<p><strong>Button row + selected styling</strong> — copy from <code>last-contact-year.tsx</code> lines 80-116. Key reusable classes:</p>
+<pre><code class="language-typescript">// container
+className=&#39;flex gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 p-1&#39;
+// per-button (selected vs not + focus ring)
+className={cn(
+  &#39;flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors&#39;,
+  isSelected(option)
+    ? &#39;bg-primary text-primary-foreground border-primary&#39;
+    : &#39;bg-background hover:bg-accent&#39;,
+  focusedIndex === i &amp;&amp; containerRef.current === document.activeElement &amp;&amp;
+    &#39;ring-2 ring-ring ring-offset-1&#39;
+)}
+</code></pre>
+<p>For click-to-range, <code>isSelected(year)</code> becomes a range membership test: <code>year &gt;= start &amp;&amp; year &lt;= end</code>. Render a &quot;Clear / All years&quot; affordance per D-06 (an extra button at the row&#39;s end, analogous to the <code>EARLIER_SENTINEL</code> extra option at <code>last-contact-year.tsx</code> lines 20-21, 89-90).</p>
+<p><strong>nuqs URL state (D-05)</strong> — model on <code>use-data-table.ts</code> lines 112-121 (<code>useQueryState</code> + <code>parseAsInteger.withOptions(...).withDefault(...)</code>) but use the two-param <code>useQueryStates</code> shape (lines 193) since this is a start/end pair:</p>
+<pre><code class="language-typescript">const [{ start, end }, setRange] = useQueryStates({
+  connectionYearStart: parseAsInteger,
+  connectionYearEnd: parseAsInteger
+});
+// clear: setRange({ connectionYearStart: null, connectionYearEnd: null })
+</code></pre>
+<p>Param names <code>connectionYearStart</code> / <code>connectionYearEnd</code> are pre-established by the API route (<code>src/app/api/contacts/route.ts</code> lines 67-68) — reuse them so Phase 14 (D-08) drives <code>GET /api/contacts</code> with the identical params. <code>parseAsInteger</code> (year as int) is the right parser; a custom <code>src/lib/parsers.ts</code> parser is NOT needed for a simple int pair (D-89 discretion — keep it minimal). Setting a param to <code>null</code> clears it from the URL → restores full queue (criterion #4).</p>
+<p><strong>Data-derived year set (D-03)</strong> — the control receives the distinct/min→max year list as a prop computed by the parent from already-fetched contacts (see <code>triage-workflow.tsx</code> change below). Do NOT fetch or hardcode years (contrast <code>last-contact-year.tsx</code> line 19 which hardcodes life-event years — that is the deliberate divergence).</p>
+<hr>
+<h3><code>triage-workflow.tsx</code> (MODIFY — component, in-memory narrowing)</h3>
+<p><strong>Analog:</strong> the same file&#39;s existing patterns (extend, don&#39;t rewrite).</p>
+<p><strong>Where to mount the control</strong> — alongside the existing button-bar controls in the render block, <code>triage-workflow.tsx</code> lines 239-258 (<code>HowMetInput</code>, <code>LastContactYear</code>, <code>ClosenessButtonBar</code> are rendered in sequence). The new <code>ConnectionYearFilter</code> belongs near the top of the card (it filters the queue, not a per-contact field) — likely above <code>TriageCard</code> (line 237) rather than inside the per-contact field stack.</p>
+<p><strong>Derive year list in-memory (D-03)</strong> — add a <code>useMemo</code> over the <code>contacts</code> prop (typed <code>Contact[]</code>, line 7 / line 24-28). <code>Contact.linkedinConnectionDate</code> is <code>Date | null</code> (<code>drizzle/schema/contacts.ts</code> line 36 → inferred via <code>src/lib/domain/types.ts</code> line 21). Extract distinct <code>getFullYear()</code> values, drop nulls, sort:</p>
+<pre><code class="language-typescript">const connectionYears = useMemo(
+  () =&gt;
+    Array.from(
+      new Set(
+        contacts
+          .map((c) =&gt; c.linkedinConnectionDate)
+          .filter((d): d is Date =&gt; d != null)
+          .map((d) =&gt; new Date(d).getFullYear())
+      )
+    ).sort((a, b) =&gt; b - a),
+  [contacts]
+);
+</code></pre>
+<p><strong>Narrow the queue in-memory (D-04)</strong> — derive a filtered list from <code>contacts</code> + the nuqs range, then drive <code>current</code>/<code>total</code> off the filtered list instead of the raw <code>contacts</code> prop. Currently <code>total = contacts.length</code> and <code>current = contacts[currentIndex]</code> (lines 45-46). Replace <code>contacts</code> there with the memoized <code>filteredContacts</code>. Reset <code>currentIndex</code> to 0 when the filter changes (mirror the existing <code>useEffect(... [currentIndex])</code> reset pattern at lines 49-56, but key it on the filter range).</p>
+<p><strong>Live match count + empty state (D-07)</strong> — <code>filteredContacts.length</code> is the &quot;N contacts&quot; count. The existing completion/empty render branch is <code>if (currentIndex &gt;= total) { ... }</code> (lines 191-223) — add a sibling branch for <code>filteredContacts.length === 0</code> showing &quot;No connections from {start}-{end} — clear the filter&quot;, reusing the centered <code>Card</code>/<code>CardContent</code> layout from lines 197-219.</p>
+<p><strong>Read the nuqs range here or pass setter down?</strong> — Either: (a) <code>ConnectionYearFilter</code> owns <code>useQueryStates</code> and calls <code>onRangeChange(start, end)</code> up to the workflow (lifts the value), or (b) the workflow also reads the same <code>useQueryStates</code> keys (nuqs is a shared URL store, so two <code>useQueryState</code> hooks on the same key stay in sync). Pattern (a) keeps the control reusable for Phase 14 (D-08) where the campaign builder reads the same params to hit the API instead. Prefer the control exposing its selection via callback/return while owning the URL write.</p>
+<hr>
+<h2>Shared Patterns</h2>
+<h3>nuqs URL state</h3>
+<p><strong>Source:</strong> <code>src/hooks/use-data-table.ts</code> lines 112-121, 193; <code>src/features/contacts/components/contact-table/index.tsx</code> line 8, 17
+<strong>Adapter:</strong> already globally mounted — <code>NuqsAdapter</code> in <code>src/app/layout.tsx</code> line 59 wraps the app; no per-page setup needed.
+<strong>Apply to:</strong> the new control&#39;s selection persistence (D-05).</p>
+<pre><code class="language-typescript">import { parseAsInteger, useQueryState, useQueryStates } from &#39;nuqs&#39;;
+const [page, setPage] = useQueryState(&#39;page&#39;, parseAsInteger.withDefault(1));
+</code></pre>
+<h3>Button-bar control contract</h3>
+<p><strong>Source:</strong> <code>last-contact-year.tsx</code>, <code>closeness-button-bar.tsx</code>, <code>how-met-input.tsx</code>
+<strong>Apply to:</strong> the new control, for triage-tab-chain consistency.</p>
+<ul>
+<li><code>&#39;use client&#39;</code> at top (line 1 of each).</li>
+<li><code>forwardRef&lt;XHandle, XProps&gt;(function X(props, ref) {...})</code> with <code>XHandle = { focus: () =&gt; void }</code> and <code>useImperativeHandle(ref, () =&gt; ({ focus: () =&gt; containerRef.current?.focus() }))</code> (<code>closeness-button-bar.tsx</code> lines 26-36).</li>
+<li>Container <code>tabIndex={0}</code> + <code>onKeyDown</code>; child buttons <code>tabIndex={-1}</code> (<code>last-contact-year.tsx</code> lines 84-95).</li>
+<li>Named PascalCase export, no default export (CLAUDE.md / CONVENTIONS.md).</li>
+</ul>
+<h3>Connection-year param naming (cross-phase contract)</h3>
+<p><strong>Source:</strong> <code>src/app/api/contacts/route.ts</code> lines 67-68, 107-122
+<strong>Apply to:</strong> nuqs param keys, so Phase 14 (D-08) reuses the control to drive <code>GET /api/contacts</code>.</p>
+<ul>
+<li><code>connectionYearStart</code> → <code>gte(linkedinConnectionDate, new Date(&#39;${start}-01-01&#39;))</code></li>
+<li><code>connectionYearEnd</code> → <code>lte(linkedinConnectionDate, new Date(&#39;${end}-12-31T23:59:59&#39;))</code>
+Triage filters client-side and ignores the API path, but uses the <strong>same param names</strong> so the control is consumer-agnostic.</li>
+</ul>
+<h3>File/style conventions</h3>
+<p><strong>Source:</strong> CLAUDE.md, <code>.planning/codebase/CONVENTIONS.md</code></p>
+<ul>
+<li>kebab-case filename: <code>connection-year-filter.tsx</code>.</li>
+<li>Single quotes, no semicolon omission, 2-space indent, no trailing commas.</li>
+<li><code>import type</code> for type-only imports (e.g. <code>import type { Contact } from &#39;@/lib/domain/types&#39;</code>).</li>
+<li><code>&#39;use client&#39;</code> only on the interactive control (and the already-client <code>triage-workflow.tsx</code>); leave <code>page.tsx</code> as an RSC.</li>
+</ul>
+<h2>No Analog Found</h2>
+<p>None. Every new behavior maps to an existing in-repo pattern (button-bar control, nuqs URL state, in-memory list narrowing). Click-to-range selection is the only genuinely new interaction — it is a small extension of the single-select keyboard model in <code>last-contact-year.tsx</code> lines 36-78, not a missing pattern.</p>
+<h2>Metadata</h2>
+<p><strong>Analog search scope:</strong> <code>src/features/contacts/components/triage/</code>, <code>src/features/contacts/components/contact-table/</code>, <code>src/hooks/</code>, <code>src/lib/parsers.ts</code>, <code>src/app/api/contacts/route.ts</code>, <code>src/app/dashboard/contacts/triage/page.tsx</code>, <code>drizzle/schema/contacts.ts</code>, <code>src/lib/domain/types.ts</code>, <code>src/app/layout.tsx</code>
+<strong>Files scanned:</strong> 9
+<strong>Pattern extraction date:</strong> 2026-06-20</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-PATTERNS.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

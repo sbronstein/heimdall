@@ -65,12 +65,14 @@ requirements: [TRGE-01]</li>
 </ul>
 <p>must_haves:
   truths:
-    - &quot;Triage shows a row of year buttons derived from the actual linkedinConnectionDate values of the loaded untriaged contacts&quot;
-    - &quot;Clicking a single year narrows the triage queue to contacts connected in that year&quot;
-    - &quot;Clicking a second year sets an inclusive two-year range and the queue shows only contacts in that range&quot;
-    - &quot;The selected year/range is written to the URL via nuqs (connectionYearStart/connectionYearEnd) and survives a page reload&quot;
-    - &quot;A live &#39;N contacts&#39; count reflects the active filter; an empty-state message shows when nothing matches&quot;
-    - &quot;Clearing the filter restores the full untriaged queue&quot;
+    - &quot;D-03: Triage shows a row of year buttons derived from the actual linkedinConnectionDate values of the loaded untriaged contacts&quot;
+    - &quot;D-01: Clicking a single year narrows the triage queue to that year; clicking a second year sets an inclusive two-year range and the queue shows only contacts in that range&quot;
+    - &quot;D-02: The year control is keyboard-navigable (arrow keys move, Enter selects), matching the sibling triage button-bars&quot;
+    - &quot;D-04: Filtering is client-side over the already-fetched untriaged set; the triage RSC page.tsx and its DB query are unchanged&quot;
+    - &quot;D-05: The selected year/range is written to the URL via nuqs (connectionYearStart/connectionYearEnd) and survives a page reload&quot;
+    - &quot;D-07: A live &#39;N contacts&#39; count reflects the active filter; an empty-state message shows when nothing matches&quot;
+    - &quot;D-06: Clicking an already-selected single year deselects it; an explicit Clear / &#39;All years&#39; control restores the full untriaged queue&quot;
+    - &quot;D-08: The year/range control is a standalone reusable component owning the nuqs URL state, ready for Phase 14 reuse&quot;
   artifacts:
     - path: &quot;src/features/contacts/lib/connection-year.ts&quot;
       provides: &quot;Pure year-derivation + range-filter + param-clamp helpers (reusable, testable)&quot;
