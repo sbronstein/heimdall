@@ -1,5 +1,8 @@
 import { db } from '@/lib/db';
-import { outreachEmails } from '../../../../../../../../drizzle/schema';
+import {
+  outreachEmails,
+  contacts
+} from '../../../../../../../../drizzle/schema';
 import { and, eq } from 'drizzle-orm';
 import { success } from '@/lib/api/types';
 import { notFound, serverError, validationError } from '@/lib/api/errors';
@@ -47,6 +50,17 @@ export async function PATCH(
       const emailBody = email.editedBody ?? email.generatedBody;
       if (!subject || !emailBody) {
         return validationError('Cannot approve: email has no content');
+      }
+
+      // REV-06: defense-in-depth — reject approve if contact is archived
+      const [contact] = await db
+        .select({ archivedAt: contacts.archivedAt })
+        .from(contacts)
+        .where(eq(contacts.id, email.contactId))
+        .limit(1);
+
+      if (contact?.archivedAt != null) {
+        return validationError('Cannot approve: contact is archived');
       }
     }
 
