@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 const inlineEditSchema = z.object({
   editedSubject: z.string().max(500).optional().nullable(),
-  editedBody: z.string().optional().nullable(),
+  editedBody: z.string().max(50000).optional().nullable(),
   recipientEmail: z.string().email().optional().nullable()
 });
 
