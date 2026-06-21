@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/15-review-and-approval-ui/15-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 15-review-and-approval-ui
+plan: &quot;03&quot;
+subsystem: outreach
+tags: [review-ui, email, client-component, optimistic-state]
+dependency_graph:
+  requires:
+    - src/features/outreach/components/email-review-card.tsx (15-01)
+    - src/features/outreach/lib/review-helpers.ts (15-01)
+  provides:
+    - src/features/outreach/components/campaign-review-page.tsx
+  affects:
+    - src/app/dashboard/outreach/[id]/page.tsx (RSC consumer — props shape unchanged)
+tech_stack:
+  added: []
+  patterns:
+    - useState local state seeded from RSC props (optimistic per-card updates)
+    - useCallback for stable onEmailUpdated identity
+    - Row-keyed state update pattern (match on updated.id)
+key_files:
+  created: []
+  modified:
+    - src/features/outreach/components/campaign-review-page.tsx
+decisions:</p>
+<ul>
+<li>Held rows in local state as array of { email, contact } — same shape as the RSC props — so contact display is preserved on update without extra fetches</li>
+<li>onEmailUpdated replaces only the email field in the matching row (contact is immutable from the RSC load); matches T-15-07 mitigation: state mirrors server-returned value only</li>
+<li>Per-status Badge summary retained alongside the approved/total progress line so at-a-glance status breakdown is preserved
+metrics:
+  duration: &quot;~5 minutes&quot;
+  completed: &quot;2026-06-21&quot;
+  tasks_completed: 1
+  files_created: 0
+  files_modified: 1</li>
+</ul>
+<hr>
+<h1>Phase 15 Plan 03: CampaignReviewPage Container Summary</h1>
+<p><strong>One-liner:</strong> Replaced the Phase 14 placeholder with a <code>&#39;use client&#39;</code> container that holds email rows in local state, renders one <code>EmailReviewCard</code> per row, and updates an approved/total progress header optimistically after each card action.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Client CampaignReviewPage with progress header + EmailReviewCard list</td>
+<td>2aba3fd</td>
+<td>src/features/outreach/components/campaign-review-page.tsx</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<p><code>src/features/outreach/components/campaign-review-page.tsx</code> is now a <code>&#39;use client&#39;</code> component that:</p>
+<ul>
+<li><strong>Local state:</strong> <code>useState&lt;{ email: OutreachEmail; contact: Contact | null }[]&gt;</code> seeded from <code>initialEmails</code> prop. The RSC page (<code>page.tsx</code>) is unchanged — it still passes <code>campaign</code> and <code>emails</code> in the same shape.</li>
+<li><strong><code>onEmailUpdated</code> callback:</strong> <code>useCallback</code> that maps over rows and replaces the matching row&#39;s <code>email</code> field when <code>row.email.id === updated.id</code>. The contact field is kept as-is (immutable from RSC load). This ensures the header recomputes from the server-returned authoritative row (T-15-07 mitigation).</li>
+<li><strong>Header (REV-06):</strong> Campaign name + <code>goalInstruction</code>, a progress line <code>{approved} / {total} approved</code> using <code>approvedCount</code> over the live rows, and per-status Badge summary carried forward from the placeholder.</li>
+<li><strong>Email list (REV-01):</strong> <code>rows.map(row =&gt; &lt;EmailReviewCard campaignId={campaign.id} email={row.email} contact={row.contact} onEmailUpdated={onEmailUpdated} /&gt;)</code> — one card per email, stable <code>key={row.email.id}</code>.</li>
+<li><strong>Empty state:</strong> Preserved exactly as in the placeholder — a centered Card with &quot;No contacts have been added to this campaign yet.&quot;</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Known Stubs</h2>
+<p>None — component wires to live <code>EmailReviewCard</code> which calls Phase 12 REST routes. No hardcoded empty values flow to rendering.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints, auth paths, file access patterns, or schema changes introduced. The container performs no fetch of its own — all mutations are delegated to <code>EmailReviewCard</code>. T-15-07 (optimistic state diverging from server) is addressed: <code>onEmailUpdated</code> stores only the server-returned <code>OutreachEmail</code> value, never a client-fabricated object.</p>
+<h2>Self-Check: PASSED</h2>
+<ul>
+<li><code>src/features/outreach/components/campaign-review-page.tsx</code> found on disk ✓</li>
+<li>Commit <code>2aba3fd</code> verified in git log ✓</li>
+<li><code>npx tsc --noEmit</code> reports no errors in campaign-review-page.tsx or the RSC page ✓</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/15-review-and-approval-ui/15-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
