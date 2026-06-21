@@ -41,7 +41,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 - [x] **Phase 11: Schema, Enums, and State Machine** — Two new Drizzle tables, three pgEnums, and the `canEmailTransition()` state machine locking the full email status lifecycle before any consumer is built (completed 2026-06-20)
 - [x] **Phase 12: API Routes** — Full `/api/outreach-campaigns/` route tree (campaign CRUD, bulk email add, status transitions, skill write-back endpoints, generation-context bulk fetch) so skills and UI have a stable REST surface to build against (completed 2026-06-21)
 - [x] **Phase 13: Triage Connection-Date Filter** — Additive year-range filter on the existing triage workflow; independent of the campaign route tree (completed 2026-06-21)
-- [ ] **Phase 14: Campaign Builder UI** — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner's ability to name and save a campaign from the browser
+- [x] **Phase 14: Campaign Builder UI** — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner's ability to name and save a campaign from the browser (completed 2026-06-21)
 - [ ] **Phase 15: Review and Approval UI** — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header
 - [ ] **Phase 16: Email Generation Skill** — `generate-outreach-emails` Claude Code skill: drains the pending queue, personalizes emails from CRM context with closeness-tier tone and LLM-tell guardrails, writes back via REST
 - [ ] **Phase 17: Gmail Drafting and Email Discovery Skill** — `draft-outreach-emails` Claude Code skill: discovers emails via Gmail thread search, creates Gmail drafts (never sends), idempotent on retry, logs timeline events, flags LinkedIn-only contacts
@@ -104,7 +104,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 **Plans**: 3 plans (Wave 1: 14-01 + 14-02 parallel; Wave 2: 14-03)
 - [x] 14-01-PLAN.md — Campaign list route + sidebar nav + CampaignList progress cards (D-10, CAMP-08-consume) (Wave 1)
 - [x] 14-02-PLAN.md — Builder leaf primitives: pure filter helper + reused-triage filter bar + dense multi-select list + name/goal panel (CAMP-01..05, D-01/02/04/07/11) (Wave 1)
-- [ ] 14-03-PLAN.md — Builder shell (load-all, persistent selection, tray, two-POST save) + builder route + placeholder review page (D-03/05/06/08/09/12/13/14, CD-01/02/05) (Wave 2)
+- [x] 14-03-PLAN.md — Builder shell (load-all, persistent selection, tray, two-POST save) + builder route + placeholder review page (D-03/05/06/08/09/12/13/14, CD-01/02/05) (Wave 2)
 **UI hint**: yes
 
 ### Phase 15: Review and Approval UI
@@ -164,7 +164,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 11. Schema, Enums, and State Machine | v1.2 | 3/3 | Complete    | 2026-06-20 |
 | 12. API Routes | v1.2 | 4/4 | Complete    | 2026-06-21 |
 | 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete    | 2026-06-21 |
-| 14. Campaign Builder UI | v1.2 | 2/3 | In Progress|  |
+| 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 15. Review and Approval UI | v1.2 | 0/TBD | Not started | - |
 | 16. Email Generation Skill | v1.2 | 0/TBD | Not started | - |
 | 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
