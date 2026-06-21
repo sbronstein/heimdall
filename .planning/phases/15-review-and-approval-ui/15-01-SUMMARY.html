@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a240871122bc5817a/.planning/phases/15-review-and-approval-ui/15-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 15-review-and-approval-ui
+plan: &quot;01&quot;
+subsystem: outreach
+tags: [review-ui, email, tdd, pure-helpers, components]
+dependency_graph:
+  requires: []
+  provides:
+    - src/features/outreach/lib/review-helpers.ts
+    - src/features/outreach/components/email-review-card.tsx
+  affects:
+    - src/features/outreach/components/campaign-review-page.tsx (Wave 2 consumer)
+tech_stack:
+  added: []
+  patterns:
+    - TDD (RED/GREEN) for pure helper module
+    - isSaving in-flight guard pattern
+    - canEmailTransition reuse from email-status module
+key_files:
+  created:
+    - src/features/outreach/lib/review-helpers.ts
+    - src/features/outreach/lib/review-helpers.test.ts
+    - src/features/outreach/components/email-review-card.tsx
+  modified: []
+decisions:</p>
+<ul>
+<li>Used window.confirm for regenerate confirmation (simpler than AlertDialog; no extra state management needed)</li>
+<li>hasContent requires both finalSubject AND finalBody non-empty (matching server-side guard at status/route.ts)</li>
+<li>approvedCount tallies &#39;drafted&#39; as well as &#39;approved&#39; (drafted implies previously approved + Gmail draft created)</li>
+<li>Edit button disabled when email is pending (no content to edit yet)
+metrics:
+  duration: &quot;~15 minutes&quot;
+  completed: &quot;2026-06-21&quot;
+  tasks_completed: 2
+  files_created: 3
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 15 Plan 01: Pure Review Helpers + EmailReviewCard Summary</h1>
+<p><strong>One-liner:</strong> Vitest-covered pure helper module (finalSubject/finalBody/canApproveEmail/needsLinkedinMessage/approvedCount) and an interactive <code>EmailReviewCard</code> component driving edit/approve/regenerate via existing Phase 12 REST routes.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Commit</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1 (RED)</td>
+<td>Failing Vitest for review helpers</td>
+<td>d48b3c9</td>
+<td>src/features/outreach/lib/review-helpers.test.ts</td>
+</tr>
+<tr>
+<td>1 (GREEN)</td>
+<td>Pure review helpers implementation</td>
+<td>78c0cb0</td>
+<td>src/features/outreach/lib/review-helpers.ts</td>
+</tr>
+<tr>
+<td>2</td>
+<td>EmailReviewCard component</td>
+<td>1695a3f</td>
+<td>src/features/outreach/components/email-review-card.tsx</td>
+</tr>
+</tbody></table>
+<h2>What Was Built</h2>
+<h3>Task 1: Pure Review Helpers (TDD)</h3>
+<p><code>src/features/outreach/lib/review-helpers.ts</code> exports:</p>
+<ul>
+<li><code>finalSubject(email)</code> — <code>editedSubject ?? generatedSubject ?? null</code></li>
+<li><code>finalBody(email)</code> — <code>editedBody ?? generatedBody ?? null</code></li>
+<li><code>hasContent(email)</code> — true only when both finalSubject and finalBody are non-empty</li>
+<li><code>needsLinkedinMessage(email, contact)</code> — true for <code>linkedin_message</code> channel OR no recipient/contact email</li>
+<li><code>isArchived(contact)</code> — true when <code>contact.archivedAt != null</code></li>
+<li><code>canApproveEmail(email, contact)</code> — NOT archived AND hasContent AND <code>canEmailTransition(status, &#39;approved&#39;)</code></li>
+<li><code>canRegenerate(email)</code> — <code>canEmailTransition(email.status, &#39;pending&#39;)</code></li>
+<li><code>approvedCount(emails)</code> — count of approved + drafted emails</li>
+</ul>
+<p>All functions import <code>canEmailTransition</code> from <code>@/features/outreach/lib/email-status</code> — the transition table is not duplicated.</p>
+<p>27 Vitest tests cover all key behaviors including edge cases (archived gate, no-content gate, status gates, all needsLinkedinMessage trigger combinations).</p>
+<h3>Task 2: EmailReviewCard</h3>
+<p><code>src/features/outreach/components/email-review-card.tsx</code> (<code>&#39;use client&#39;</code>) renders per-email cards with:</p>
+<ul>
+<li>Contact name + company (or italic &quot;Contact removed&quot; when contact is null)</li>
+<li>Status badge + &quot;needs LinkedIn message&quot; (secondary) and &quot;archived&quot; (destructive) contextual badges</li>
+<li>Pending emails with no content show &quot;Awaiting generation&quot; placeholder (REV-01 downstream awareness)</li>
+<li><strong>Edit mode:</strong> inline subject/body fields seeded from finalSubject/finalBody; Save issues <code>PATCH /api/outreach-campaigns/${id}/emails/${emailId}</code> with <code>editedSubject</code>/<code>editedBody</code>; <code>isSaving</code> in-flight guard; toast on error</li>
+<li><strong>Approve:</strong> disabled via <code>canApproveEmail(email, contact)</code> (archives the UX gate); PATCH to <code>/status</code> with <code>{ status: &#39;approved&#39; }</code></li>
+<li><strong>Regenerate:</strong> disabled via <code>canRegenerate(email)</code>; guarded by <code>window.confirm</code> warning of edit-clearing D-05 reset; PATCH to <code>/status</code> with <code>{ status: &#39;pending&#39; }</code></li>
+<li>All mutations call <code>onEmailUpdated(data)</code> callback on success</li>
+</ul>
+<h2>TDD Gate Compliance</h2>
+<ul>
+<li>RED commit: <code>d48b3c9</code> — <code>test(15-01):</code></li>
+<li>GREEN commit: <code>78c0cb0</code> — <code>feat(15-01):</code></li>
+<li>REFACTOR: not required (implementation was clean)</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written.</p>
+<h2>Known Stubs</h2>
+<p>None — all card actions wire to live Phase 12 REST routes. No placeholder data or hardcoded empty values that flow to UI rendering.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new network endpoints, auth paths, or schema changes introduced. The card issues fetch() calls to existing Phase 12 routes already protected by Clerk middleware. The disabled Approve button is a UX-layer gate only; the authoritative server guard lives in the status route (Phase 12).</p>
+<p>T-15-02 (Approve on archived contact) is addressed at the UX layer by this plan; the server-side archived gate is deferred to Phase 15-02 as documented in the threat register.</p>
+<h2>Self-Check: PASSED</h2>
+<p>All 3 files found on disk. All 3 task commits verified in git log.</p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-a240871122bc5817a/.planning/phases/15-review-and-approval-ui/15-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
