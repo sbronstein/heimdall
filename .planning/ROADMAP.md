@@ -40,7 +40,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 
 - [x] **Phase 11: Schema, Enums, and State Machine** — Two new Drizzle tables, three pgEnums, and the `canEmailTransition()` state machine locking the full email status lifecycle before any consumer is built (completed 2026-06-20)
 - [x] **Phase 12: API Routes** — Full `/api/outreach-campaigns/` route tree (campaign CRUD, bulk email add, status transitions, skill write-back endpoints, generation-context bulk fetch) so skills and UI have a stable REST surface to build against (completed 2026-06-21)
-- [ ] **Phase 13: Triage Connection-Date Filter** — Additive year-range filter on the existing triage workflow; independent of the campaign route tree
+- [x] **Phase 13: Triage Connection-Date Filter** — Additive year-range filter on the existing triage workflow; independent of the campaign route tree (completed 2026-06-21)
 - [ ] **Phase 14: Campaign Builder UI** — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner's ability to name and save a campaign from the browser
 - [ ] **Phase 15: Review and Approval UI** — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header
 - [ ] **Phase 16: Email Generation Skill** — `generate-outreach-emails` Claude Code skill: drains the pending queue, personalizes emails from CRM context with closeness-tier tone and LLM-tell guardrails, writes back via REST
@@ -88,7 +88,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   4. Clearing the filter restores the full triage queue
 **Plans**: 2 plans
 - [x] 13-01-PLAN.md — Pure year helpers (+Vitest) + reusable `ConnectionYearFilter` control (nuqs click-to-range) + in-memory triage queue narrowing (Wave 1)
-- [ ] 13-02-PLAN.md — Human-verify the four interactive success criteria in the running triage UI (Wave 2)
+- [x] 13-02-PLAN.md — Human-verify the four interactive success criteria in the running triage UI (Wave 2)
 **UI hint**: yes
 
 ### Phase 14: Campaign Builder UI
@@ -160,7 +160,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 10. Connection Company + Role Enrichment for Triage | v1.1 | 4/4 | Complete | 2026-05-20 |
 | 11. Schema, Enums, and State Machine | v1.2 | 3/3 | Complete    | 2026-06-20 |
 | 12. API Routes | v1.2 | 4/4 | Complete    | 2026-06-21 |
-| 13. Triage Connection-Date Filter | v1.2 | 1/2 | In Progress|  |
+| 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete   | 2026-06-21 |
 | 14. Campaign Builder UI | v1.2 | 0/TBD | Not started | - |
 | 15. Review and Approval UI | v1.2 | 0/TBD | Not started | - |
 | 16. Email Generation Skill | v1.2 | 0/TBD | Not started | - |

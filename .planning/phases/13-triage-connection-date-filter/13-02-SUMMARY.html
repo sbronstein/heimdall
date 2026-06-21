@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>13-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 13-triage-connection-date-filter
+plan: 02
+subsystem: contacts/triage
+tags: [human-verify, checkpoint, triage, connection-year]
+dependency_graph:
+  requires:
+    - 13-01 ConnectionYearFilter + triage-workflow wiring
+  provides:
+    - signed-off human verification of TRGE-01 interactive criteria #1-#4
+  affects: []
+tech_stack:
+  added: []
+  patterns: []
+key_files:
+  created: []
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;Verified in running app at <a href="http://localhost:4000/dashboard/contacts/triage">http://localhost:4000/dashboard/contacts/triage</a> by owner (<a href="mailto:steve@bronstein.org">steve@bronstein.org</a>)&quot;
+metrics:
+  completed: 2026-06-21T13:30:00Z
+  tasks_completed: 1
+  files_changed: 0</li>
+</ul>
+<hr>
+<h1>Phase 13 Plan 02: Human Verification — Summary</h1>
+<p><strong>One-liner:</strong> Owner confirmed (<code>approved</code>) the four interactive TRGE-01 success criteria in the running triage UI; no regression in existing controls.</p>
+<h2>Tasks Completed</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Name</th>
+<th>Type</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Verify the connection-year filter in the running triage UI</td>
+<td>checkpoint:human-verify (blocking)</td>
+<td>APPROVED</td>
+</tr>
+</tbody></table>
+<h2>Verification Outcome</h2>
+<p>The owner ran the app (dev server already live on port 4000) and verified the triage connection-year filter against all four ROADMAP success criteria:</p>
+<ul>
+<li><strong>Criterion #1 — Single year:</strong> Clicking a single year narrows the queue and drops the live &quot;N contacts&quot; count to that cohort. ✓</li>
+<li><strong>Criterion #2 — Two-year range:</strong> Clicking a second year forms the inclusive range (e.g. 2021–2022) and the count reflects both years. ✓</li>
+<li><strong>Criterion #3 — Reload persistence:</strong> Reloading preserves the active filter via the <code>connectionYearStart</code>/<code>connectionYearEnd</code> nuqs URL params. ✓</li>
+<li><strong>Criterion #4 — Clear:</strong> &quot;All years&quot; / Clear drops the params from the URL and restores the full untriaged queue. ✓</li>
+<li><strong>Empty state:</strong> A filter-specific empty-state message is shown (distinct from the &quot;Triage Complete&quot; drained-queue screen) with Clear reachable. ✓</li>
+<li><strong>Regression:</strong> HowMet, Last Contact year, Closeness, Undo, Skip, and the Tab→Year→Enter→Closeness keyboard chain all unchanged. ✓</li>
+</ul>
+<h2>Static Checks (from 13-01, re-confirmed post-merge)</h2>
+<ul>
+<li><code>npx tsc --noEmit</code> — clean (exit 0, 0 errors)</li>
+<li><code>npx vitest run src/features/contacts/lib/connection-year.test.ts</code> — 20/20 pass</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None. This is a verification-only plan; no code was introduced. Project-wide ESLint remains broken (pre-existing <code>.eslintrc.json</code> circular-resolution error, documented in 13-01) — <code>tsc</code> served as the type gate.</p>
+<h2>Self-Check: PASSED</h2>
+<p>Owner sign-off recorded. All four interactive criteria observed working in the running app.</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/13-triage-connection-date-filter/13-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
