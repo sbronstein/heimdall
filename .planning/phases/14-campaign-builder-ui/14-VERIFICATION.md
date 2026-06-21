@@ -1,7 +1,7 @@
 ---
 phase: 14-campaign-builder-ui
 verified: 2026-06-21T11:50:00Z
-status: human_needed
+status: passed
 score: 16/16
 overrides_applied: 0
 human_verification:
@@ -35,7 +35,7 @@ human_verification:
 
 **Phase Goal:** The owner can create a named campaign with a goal by filtering contacts and multi-selecting recipients from the browser
 **Verified:** 2026-06-21T11:50:00Z
-**Status:** HUMAN_NEEDED
+**Status:** PASSED (16/16 code must-haves + 8/8 human UAT confirmed 2026-06-21)
 **Re-verification:** No — initial verification
 
 ## Goal Achievement

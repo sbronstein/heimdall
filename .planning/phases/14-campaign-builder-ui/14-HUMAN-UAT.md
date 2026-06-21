@@ -1,44 +1,34 @@
 ---
-status: partial
+status: passed
 phase: 14-campaign-builder-ui
 source: [14-VERIFICATION.md]
 started: 2026-06-21T11:55:00Z
-updated: 2026-06-21T11:55:00Z
+updated: 2026-06-21T12:30:00Z
+signed_off: 2026-06-21T12:30:00Z
 ---
 
 # Phase 14: Campaign Builder UI — Human UAT
 
-All 16 code-level must-haves passed automated verification (`14-VERIFICATION.md`, score 16/16).
-The 8 items below are interactive browser/DB checks that static analysis cannot confirm — they
-are the expected UAT pass for a UI-heavy phase, **not** implementation gaps. Run `npm run dev`
-(port 4000) and walk through each. Mark `[x]` as you confirm. Phase stays `pending` until all pass.
+All 16 code-level must-haves passed automated verification (`14-VERIFICATION.md`, score 16/16),
+and all 8 interactive browser/DB scenarios below were confirmed by the owner on 2026-06-21.
 
-## UAT Scenarios
+## UAT Scenarios — all passed
 
-- [ ] **U1 — Sidebar nav + list landing.** Navigate to `/dashboard/outreach`.
-  *Expected:* Sidebar shows **Outreach** between Job Leads and Contacts with the mail icon; clicking lands on the campaign list (or empty state).
-
-- [ ] **U2 — Four filters compose live.** On `/dashboard/outreach/new`, apply each filter (howMet text, connection-year range, closeness tier, outreach status) individually and combined.
-  *Expected:* Each narrows independently; all four active = intersection; changing filters does NOT clear already-checked contacts (D-03).
-
-- [ ] **U3 — Selection persists across filters.** Check several contacts, change the filter so they leave the visible list.
-  *Expected:* Tray still shows "N selected" and the now-hidden contacts remain in the tray (D-03/D-09).
-
-- [ ] **U4 — Select-all unions.** Check 3 contacts, switch filter, click "Select all X matching".
-  *Expected:* The filtered set is ADDED to the existing 3, not replacing them (D-08).
-
-- [ ] **U5 — End-to-end save.** Fill campaign name, select ≥1 contact, click Save Campaign.
-  *Expected:* Two sequential POSTs (create campaign, then bulk-add emails); redirect to `/dashboard/outreach/[id]` showing the name and added contacts with `pending` badges.
-
-- [ ] **U6 — Save gated.** Try to save with blank name or zero contacts.
-  *Expected:* Save Campaign button disabled until both conditions met (D-14/CD-01).
-
-- [ ] **U7 — Double-submit protection.** Click Save Campaign twice rapidly while POSTs are in-flight.
-  *Expected:* Only one campaign created; button disables during the request (CD-01).
-
-- [ ] **U8 — 404 on missing campaign.** Visit `/dashboard/outreach/<nonexistent-uuid>`.
-  *Expected:* Next.js `notFound()` renders the standard 404 page.
+- [x] **U1 — Sidebar nav + list landing.** `/dashboard/outreach` shows the **Outreach** sidebar entry (mail icon, between Job Leads and Contacts) and lands on the campaign list / empty state.
+- [x] **U2 — Four filters compose live.** howMet, connection-year, closeness, and outreach-status filters each narrow independently; combined they intersect (D-03).
+- [x] **U3 — Selection persists across filters.** Tray keeps "N selected" and the now-hidden contacts after a filter change (D-03/D-09).
+- [x] **U4 — Select-all unions.** "Select all X matching" adds the filtered set to the existing selection rather than replacing it (D-08).
+- [x] **U5 — End-to-end save.** Name + ≥1 contact → Save fires two sequential POSTs (create campaign, then bulk-add emails) and redirects to `/dashboard/outreach/[id]` with pending badges.
+- [x] **U6 — Save gated.** Save Campaign disabled until name is set AND ≥1 contact selected (D-14/CD-01).
+- [x] **U7 — Double-submit protection.** Rapid double-click creates only one campaign; button disables mid-request (CD-01).
+- [x] **U8 — 404 on missing campaign.** `/dashboard/outreach/<nonexistent-uuid>` renders the Next.js 404 page.
 
 ## Sign-off
 
-When all 8 pass, re-run `/gsd:execute-phase 14` (or `/gsd:verify-work 14`) so verification flips to `passed` and the phase closes.
+Owner-confirmed 2026-06-21. Phase 14 verification flips to `passed`.
+
+## UAT-driven change
+
+- `fix(14)` `d67e890` — connection-year filter: moved **"All years" to the first position** and made the
+  year row **scroll horizontally** (`shrink-0` buttons + `overflow-x-auto`). Shared with the Phase 13
+  triage workflow, so the change applies there too.

@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-20)
 
 ## Current Position
 
-Phase: 14 (campaign-builder-ui) — EXECUTION COMPLETE, UAT pending
+Phase: 14 (campaign-builder-ui) — COMPLETE & VERIFIED
 Plan: 3 of 3 complete (14-01, 14-02, 14-03)
-Status: Verification human_needed — 16/16 code must-haves verified; 8 browser/DB UAT items pending (see 14-HUMAN-UAT.md)
-Last activity: 2026-06-21 -- Phase 14 executed: campaign builder UI shipped
+Status: Verification passed — 16/16 code must-haves + 8/8 human UAT confirmed 2026-06-21. Ready for Phase 15 (Review and Approval UI).
+Last activity: 2026-06-21 -- Phase 14 verified passed (UAT signed off); +1 UAT fix (year filter)
 
 ## Phase Rail
 

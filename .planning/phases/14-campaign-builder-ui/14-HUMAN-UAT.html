@@ -49,45 +49,34 @@ img { max-width: 100%; height: auto; }
 <div class="meta">Source of truth: <code>.planning/phases/14-campaign-builder-ui/14-HUMAN-UAT.md</code> · Rendered from markdown · May lag behind</div>
 
 <hr>
-<h2>status: partial
+<h2>status: passed
 phase: 14-campaign-builder-ui
 source: [14-VERIFICATION.md]
 started: 2026-06-21T11:55:00Z
-updated: 2026-06-21T11:55:00Z</h2>
+updated: 2026-06-21T12:30:00Z
+signed_off: 2026-06-21T12:30:00Z</h2>
 <h1>Phase 14: Campaign Builder UI — Human UAT</h1>
-<p>All 16 code-level must-haves passed automated verification (<code>14-VERIFICATION.md</code>, score 16/16).
-The 8 items below are interactive browser/DB checks that static analysis cannot confirm — they
-are the expected UAT pass for a UI-heavy phase, <strong>not</strong> implementation gaps. Run <code>npm run dev</code>
-(port 4000) and walk through each. Mark <code>[x]</code> as you confirm. Phase stays <code>pending</code> until all pass.</p>
-<h2>UAT Scenarios</h2>
+<p>All 16 code-level must-haves passed automated verification (<code>14-VERIFICATION.md</code>, score 16/16),
+and all 8 interactive browser/DB scenarios below were confirmed by the owner on 2026-06-21.</p>
+<h2>UAT Scenarios — all passed</h2>
 <ul>
-<li><p><input disabled="" type="checkbox"> <strong>U1 — Sidebar nav + list landing.</strong> Navigate to <code>/dashboard/outreach</code>.
-<em>Expected:</em> Sidebar shows <strong>Outreach</strong> between Job Leads and Contacts with the mail icon; clicking lands on the campaign list (or empty state).</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U2 — Four filters compose live.</strong> On <code>/dashboard/outreach/new</code>, apply each filter (howMet text, connection-year range, closeness tier, outreach status) individually and combined.
-<em>Expected:</em> Each narrows independently; all four active = intersection; changing filters does NOT clear already-checked contacts (D-03).</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U3 — Selection persists across filters.</strong> Check several contacts, change the filter so they leave the visible list.
-<em>Expected:</em> Tray still shows &quot;N selected&quot; and the now-hidden contacts remain in the tray (D-03/D-09).</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U4 — Select-all unions.</strong> Check 3 contacts, switch filter, click &quot;Select all X matching&quot;.
-<em>Expected:</em> The filtered set is ADDED to the existing 3, not replacing them (D-08).</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U5 — End-to-end save.</strong> Fill campaign name, select ≥1 contact, click Save Campaign.
-<em>Expected:</em> Two sequential POSTs (create campaign, then bulk-add emails); redirect to <code>/dashboard/outreach/[id]</code> showing the name and added contacts with <code>pending</code> badges.</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U6 — Save gated.</strong> Try to save with blank name or zero contacts.
-<em>Expected:</em> Save Campaign button disabled until both conditions met (D-14/CD-01).</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U7 — Double-submit protection.</strong> Click Save Campaign twice rapidly while POSTs are in-flight.
-<em>Expected:</em> Only one campaign created; button disables during the request (CD-01).</p>
-</li>
-<li><p><input disabled="" type="checkbox"> <strong>U8 — 404 on missing campaign.</strong> Visit <code>/dashboard/outreach/&lt;nonexistent-uuid&gt;</code>.
-<em>Expected:</em> Next.js <code>notFound()</code> renders the standard 404 page.</p>
-</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U1 — Sidebar nav + list landing.</strong> <code>/dashboard/outreach</code> shows the <strong>Outreach</strong> sidebar entry (mail icon, between Job Leads and Contacts) and lands on the campaign list / empty state.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U2 — Four filters compose live.</strong> howMet, connection-year, closeness, and outreach-status filters each narrow independently; combined they intersect (D-03).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U3 — Selection persists across filters.</strong> Tray keeps &quot;N selected&quot; and the now-hidden contacts after a filter change (D-03/D-09).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U4 — Select-all unions.</strong> &quot;Select all X matching&quot; adds the filtered set to the existing selection rather than replacing it (D-08).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U5 — End-to-end save.</strong> Name + ≥1 contact → Save fires two sequential POSTs (create campaign, then bulk-add emails) and redirects to <code>/dashboard/outreach/[id]</code> with pending badges.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U6 — Save gated.</strong> Save Campaign disabled until name is set AND ≥1 contact selected (D-14/CD-01).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U7 — Double-submit protection.</strong> Rapid double-click creates only one campaign; button disables mid-request (CD-01).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>U8 — 404 on missing campaign.</strong> <code>/dashboard/outreach/&lt;nonexistent-uuid&gt;</code> renders the Next.js 404 page.</li>
 </ul>
 <h2>Sign-off</h2>
-<p>When all 8 pass, re-run <code>/gsd:execute-phase 14</code> (or <code>/gsd:verify-work 14</code>) so verification flips to <code>passed</code> and the phase closes.</p>
+<p>Owner-confirmed 2026-06-21. Phase 14 verification flips to <code>passed</code>.</p>
+<h2>UAT-driven change</h2>
+<ul>
+<li><code>fix(14)</code> <code>d67e890</code> — connection-year filter: moved <strong>&quot;All years&quot; to the first position</strong> and made the
+year row <strong>scroll horizontally</strong> (<code>shrink-0</code> buttons + <code>overflow-x-auto</code>). Shared with the Phase 13
+triage workflow, so the change applies there too.</li>
+</ul>
 
 
 
