@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-REVIEW</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-REVIEW.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 16-email-generation-skill
+reviewed: 2026-06-22T00:00:00Z
+depth: standard
+files_reviewed: 5
+files_reviewed_list:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts</li>
+<li>.claude/skills/generate-outreach-emails/SKILL.md</li>
+<li>.claude/skills/generate-outreach-emails/references/voice-guide.md</li>
+<li>.claude/skills/generate-outreach-emails/references/heimdall-api.md
+findings:
+  critical: 3
+  warning: 4
+  info: 0
+  total: 7
+status: resolved
+resolved: 2026-06-22
+resolution_commits:</li>
+<li>7645586  # CR-01/02/03 skill fixes</li>
+<li>1ee8c36  # WR-01/02/03 route hardening + ownership test</li>
+<li>a99128a  # WR-04 heimdall-api Run Protocol</li>
+</ul>
+<hr>
+<blockquote>
+<p><strong>Resolution (2026-06-22):</strong> All 7 findings (3 critical + 4 warning) were fixed inline during
+execute-phase before verification. CR-01 (jq-escaped write-backs), CR-02 (Step 3 sample
+persistence), CR-03 (skill-local steve-fact-bank.md). WR-01 (400 on bad JSON), WR-02 (empty
+.returning() guard), WR-03 (CD-06 ownership test — suite now 4/4), WR-04 (sample gate in the
+heimdall-api Run Protocol). See resolution_commits above.</p>
+</blockquote>
+<h1>Phase 16: Code Review Report</h1>
+<p><strong>Reviewed:</strong> 2026-06-22T00:00:00Z
+<strong>Depth:</strong> standard
+<strong>Files Reviewed:</strong> 5
+<strong>Status:</strong> issues_found</p>
+<h2>Summary</h2>
+<p>Reviewed the generation route (<code>route.ts</code>), its test file, and the three skill markdown files
+(<code>SKILL.md</code>, <code>voice-guide.md</code>, <code>heimdall-api.md</code>).</p>
+<p>The <code>route.ts</code> is structurally sound: it correctly gates <code>status=&#39;generated&#39;</code> through
+<code>canEmailTransition</code>, combines content + status + timestamps in a single UPDATE, and logs
+exactly one timeline event. Two application-code warnings exist (a <code>SyntaxError</code> path that
+returns 500 instead of 400, and an unchecked <code>updated</code> result after the UPDATE). The test
+suite covers the three required cases but is missing a cross-campaign ownership test for CD-06.</p>
+<p>The skill markdown files contain three blockers: (1) the write-back curl command in SKILL.md
+Step 4d/4e uses unquoted shell variable interpolation that produces malformed JSON for any
+multi-line email body; (2) Step 3 never writes the 5 sample emails back to the API but Step 4
+skips them as &quot;already written back,&quot; creating an irreconcilable loop gap; (3) both SKILL.md
+and voice-guide.md reference <code>steve-fact-bank.md</code> as a required anti-hallucination source but
+the file does not exist anywhere in the skill directory.</p>
+<hr>
+<h2>Critical Issues</h2>
+<h3>CR-01: Shell variable interpolation in curl body produces malformed JSON for any multi-line email body</h3>
+<p><strong>File:</strong> <code>.claude/skills/generate-outreach-emails/SKILL.md:246</code> (Step 4d) and <code>:269</code> (Step 4e)
+<strong>Issue:</strong> The success write-back curl command uses double-quoted string interpolation:</p>
+<pre><code class="language-bash">-d &quot;{\&quot;generatedSubject\&quot;:\&quot;$SUBJECT\&quot;,\&quot;generatedBody\&quot;:\&quot;$BODY\&quot;}&quot;
+</code></pre>
+<p>A networking email body is always multi-line (greeting / hook / ask / sign-off). When <code>$BODY</code>
+contains a literal newline the shell expands it verbatim into the argument string, producing
+JSON with an unescaped line break inside a string value. The JSON spec forbids literal newlines
+in string values; <code>request.json()</code> will throw <code>SyntaxError</code> and the route returns 500 for every
+non-trivial email. Any <code>&quot;</code> in subject or body similarly breaks the string boundary.</p>
+<p>The same defect is present in the failure-path curl (Step 4e, line 269):</p>
+<pre><code class="language-bash">-d &quot;{\&quot;status\&quot;:\&quot;failed\&quot;,\&quot;lastError\&quot;:\&quot;$LAST_ERROR\&quot;}&quot;
+</code></pre>
+<p><strong>Fix:</strong> Use <code>jq</code> to construct the JSON so values are properly escaped:</p>
+<pre><code class="language-bash"># Step 4d success write-back
+payload=$(jq -n \
+  --arg subject &quot;$SUBJECT&quot; \
+  --arg body &quot;$BODY&quot; \
+  &#39;{generatedSubject: $subject, generatedBody: $body}&#39;)
+curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$payload&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/generation&quot;
+
+# Step 4e failure write-back
+payload=$(jq -n --arg err &quot;$LAST_ERROR&quot; &#39;{status: &quot;failed&quot;, lastError: $err}&#39;)
+curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$payload&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/status&quot;
+</code></pre>
+<hr>
+<h3>CR-02: Step 3 shows 5 sample emails but never writes them back; Step 4 skips them as &quot;already written back&quot;</h3>
+<p><strong>File:</strong> <code>.claude/skills/generate-outreach-emails/SKILL.md:155-159</code> (Step 3) and <code>:177</code> (Step 4a)
+<strong>Issue:</strong> Step 3 generates 5 sample emails, displays them, and waits for owner approval. No
+PATCH call to <code>/generation</code> appears anywhere in Step 3. Step 4 then says:</p>
+<blockquote>
+<p>&quot;For each email entry from <code>data.emails</code> (skipping the 5 already written back in the sample)&quot;</p>
+</blockquote>
+<p>These two instructions are mutually exclusive:</p>
+<ul>
+<li>If an agent follows Step 3 literally (no write-back), the 5 samples are never persisted. Step 4
+skips them, so all 5 remain <code>pending</code> at run end and no content is ever written for them.</li>
+<li>If an agent infers it should write them back before showing them, the owner sees already-committed
+emails and cannot request tone tweaks before persistence -- the approval gate is defeated.</li>
+<li>If tone tweaks are requested, the samples must be regenerated but there is no instruction
+for when to write those back.</li>
+</ul>
+<p><strong>Fix:</strong> Add an explicit write-back block at the end of Step 3, after owner approval:</p>
+<pre><code>After the owner confirms thumbs-up (with or without tone-tweak requests):
+1. If tone tweaks were requested, regenerate the 5 samples using the adjusted approach.
+2. Run the blocking LLM-tell scan on each (re)generated sample.
+3. Write each of the 5 samples back via PATCH /generation (see Step 4d curl).
+4. Proceed to Step 4 to drain the remaining N-5 emails.
+</code></pre>
+<p>Update Step 4a to replace &quot;skipping the 5 already written back in the sample&quot; with &quot;skipping
+the 5 sample emails already written back after Step 3 approval.&quot;</p>
+<hr>
+<h3>CR-03: <code>steve-fact-bank.md</code> referenced as an anti-hallucination source but the file does not exist</h3>
+<p><strong>File:</strong> <code>.claude/skills/generate-outreach-emails/SKILL.md:199</code> and
+<code>.claude/skills/generate-outreach-emails/references/voice-guide.md:9,126</code>
+<strong>Issue:</strong> Both SKILL.md and voice-guide.md cite <code>steve-fact-bank.md</code> as the authoritative
+durable-fact source:</p>
+<ul>
+<li>SKILL.md Step 4a: &quot;reference ONLY facts present in the contact brief or <code>steve-fact-bank.md</code>&quot;</li>
+<li>voice-guide.md §1: &quot;Also read <code>steve-fact-bank.md</code> for durable career facts you may draw from&quot;</li>
+<li>voice-guide.md §4: &quot;reference only facts present in the provided contact context or in <code>steve-fact-bank.md</code>&quot;</li>
+</ul>
+<p>The file does not exist anywhere in <code>.claude/skills/generate-outreach-emails/</code> (only
+<code>SKILL.md</code>, <code>references/voice-guide.md</code>, and <code>references/heimdall-api.md</code> are present). No
+path is provided in either document. When an agent attempts to read <code>steve-fact-bank.md</code>, it
+will either fail silently or invent a path. The anti-hallucination contract (D-11/GEN-04) is
+broken without this file: without durable career facts (e.g., correct company names, revenue
+figures, team sizes), the agent is more likely to fabricate details in emails to contacts who
+know Steve&#39;s work.</p>
+<p><strong>Fix:</strong> Create <code>.claude/skills/generate-outreach-emails/references/steve-fact-bank.md</code> and
+add a read directive at the top of SKILL.md Setup (Step 0) that points to the file explicitly:</p>
+<pre><code class="language-bash"># Read the durable fact bank before authoring any email
+cat .claude/skills/generate-outreach-emails/references/steve-fact-bank.md
+</code></pre>
+<hr>
+<h2>Warnings</h2>
+<h3>WR-01: Malformed request body (SyntaxError from <code>request.json()</code>) returns 500 instead of 400</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts:22</code>
+<strong>Issue:</strong> <code>request.json()</code> throws <code>SyntaxError</code> when the request body is absent or is not
+valid JSON. The catch block at line 65 checks <code>instanceof z.ZodError</code> first; a <code>SyntaxError</code>
+falls through to <code>serverError(err)</code> which returns 500 and logs an internal error. Per the API
+contract, an invalid request body is a client error (400), not a server error (500). The same
+pattern exists in several other routes (e.g., <code>[emailId]/route.ts:22</code>) so fixing here keeps
+the convention consistent.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-typescript">} catch (err) {
+  if (err instanceof z.ZodError) {
+    return validationError(err.issues[0].message);
+  }
+  if (err instanceof SyntaxError) {
+    return validationError(&#39;Invalid JSON body&#39;);
+  }
+  return serverError(err);
+}
+</code></pre>
+<hr>
+<h3>WR-02: <code>updated</code> can be <code>undefined</code> after the UPDATE, causing <code>success(undefined)</code> to be returned</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts:43-63</code>
+<strong>Issue:</strong> There is a check-then-update pattern: SELECT at lines 25-32 confirms the row exists,
+then UPDATE at lines 43-55 re-applies the same WHERE condition. If the row is deleted or its
+<code>campaignId</code> changes between those two operations, <code>.returning()</code> yields an empty array and
+<code>const [updated]</code> destructures to <code>undefined</code>. <code>success(undefined)</code> at line 63 returns
+<code>{ &quot;success&quot;: true, &quot;data&quot;: null }</code> (JSON serializes <code>undefined</code> to <code>null</code>). The caller
+(skill) treats this as a successful write-back and counts the email in the &quot;Generated&quot; tally,
+but no content was actually persisted.</p>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-typescript">const [updated] = await db
+  .update(outreachEmails)
+  .set({ ... })
+  .where(and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id)))
+  .returning();
+
+if (!updated) return serverError(new Error(&#39;Row disappeared between check and update&#39;));
+return success(updated);
+</code></pre>
+<hr>
+<h3>WR-03: No test for cross-campaign email ID access (CD-06 coverage gap)</h3>
+<p><strong>File:</strong> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts:143-167</code>
+<strong>Issue:</strong> The test suite covers: pending→generated (success), approved→generated (blocked), and
+non-existent <code>emailId</code> (404). It does not test the scenario where <code>emailId</code> is a valid UUID
+that belongs to a different campaign. The CD-06 comment in route.ts states this ownership
+check is intentional security behavior -- a caller passing a foreign email ID with their own
+campaign ID must get 404, not a successful write. Without a test for this case, a future
+refactor that changes the WHERE clause could silently regress the ownership invariant.</p>
+<p><strong>Fix:</strong> Add a fourth test case:</p>
+<pre><code class="language-typescript">it(&#39;Test 4: valid emailId from a different campaign returns 404&#39;, async () =&gt; {
+  // Seed a second campaign and an email belonging to it
+  const [otherCampaign] = await dbRef.current!.insert(outreachCampaigns)
+    .values({ name: &#39;Other&#39;, goalInstruction: &#39;Other goal&#39; }).returning();
+  const [otherEmail] = await dbRef.current!.insert(outreachEmails)
+    .values({ campaignId: otherCampaign.id, contactId, status: &#39;pending&#39; }).returning();
+
+  const { PATCH } = await import(
+    &#39;@/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route&#39;
+  );
+  const { status, body } = await callRoute(PATCH as unknown as Parameters&lt;typeof callRoute&gt;[0], {
+    method: &#39;PATCH&#39;,
+    body: { generatedSubject: &#39;Attempt&#39;, generatedBody: &#39;Body&#39; },
+    params: { id: campaignId, emailId: otherEmail.id } // wrong campaign
+  });
+  expect(status).toBe(404);
+  expect(body).toMatchObject({ success: false, error: &#39;Email not found&#39; });
+});
+</code></pre>
+<hr>
+<h3>WR-04: heimdall-api.md Run Protocol summary omits the D-04 sample gate</h3>
+<p><strong>File:</strong> <code>.claude/skills/generate-outreach-emails/references/heimdall-api.md:239-248</code>
+<strong>Issue:</strong> The &quot;Run Protocol (summary)&quot; section describes a simple for-each loop over all
+emails. It omits Step 3 (5-email sample gate, D-04) entirely. An agent following only the
+heimdall-api.md summary would send PATCH calls for all N emails without pausing for owner
+review, bypassing the sample approval gate. While SKILL.md is the definitive workflow
+document, the contradiction means an agent that treats heimdall-api.md&#39;s Run Protocol as
+authoritative (rather than supplementary) will skip D-04.</p>
+<p><strong>Fix:</strong> Update the Run Protocol summary to reference the sample gate:</p>
+<pre><code>1. Call `GET .../generation-context` once -- store `goalInstruction` and `emails` array.
+2. Report count and wait for owner confirmation.
+3. **Sample gate (D-04):** author 5 representative emails, show inline, wait for approval.
+   Write back the 5 approved samples via `PATCH .../generation`.
+4. For each remaining email in the array:
+   a. Author subject + body using `voice-guide.md`.
+   b. Run LLM-tell scrub (blocking set). Rewrite if needed.
+   c. On success: `PATCH .../generation`.
+   d. On failure: `PATCH .../status` with `{ status:&#39;failed&#39;, lastError }`.
+5. Report end-of-run summary: generated / failed / low-context counts.
+</code></pre>
+<hr>
+<p><em>Reviewed: 2026-06-22T00:00:00Z</em>
+<em>Reviewer: Claude (gsd-code-reviewer)</em>
+<em>Depth: standard</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-REVIEW.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

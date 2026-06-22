@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 16-email-generation-skill
+verified: 2026-06-22T13:41:00Z
+status: passed
+score: 5/5 must-haves verified
+overrides_applied: 0</h2>
+<h1>Phase 16: Email Generation Skill Verification Report</h1>
+<p><strong>Phase Goal:</strong> Running the <code>generate-outreach-emails</code> skill fills all pending emails in a campaign with personalized subject lines and bodies, in the owner&#39;s voice, without hallucinating history.
+<strong>Verified:</strong> 2026-06-22T13:41:00Z
+<strong>Status:</strong> PASSED
+<strong>Re-verification:</strong> No -- initial verification</p>
+<hr>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Running the skill against a campaign advances all <code>pending</code> emails to <code>generated</code> with a subject line and body written back via REST</td>
+<td>VERIFIED</td>
+<td><code>route.ts</code> sets <code>status: &#39;generated&#39;</code> in the same UPDATE as content, gated by <code>canEmailTransition</code>. Test 1 asserts HTTP 200 with <code>status: &#39;generated&#39;</code>. <code>SKILL.md</code> Step 4d uses a single PATCH per email.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Generated emails reference only facts present in the provided contact context; low-context contacts are flagged</td>
+<td>VERIFIED</td>
+<td><code>SKILL.md</code> Step 4a anti-hallucination rule: &quot;reference ONLY facts present in the contact brief or <code>steve-fact-bank.md</code>&quot;. <code>lowContext: true</code> contacts tracked in Step 4f; flagged in Step 5 run summary. <code>voice-guide.md</code> §4 enforces the same contract.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Generated tone calibrated to closeness tier -- conversational for 1-2, professional-warm for 3-5, brief/direct for 7-8</td>
+<td>VERIFIED</td>
+<td><code>voice-guide.md</code> §1 defines three tier bands with explicit calibration rules. <code>SKILL.md</code> Step 3 sample selection spreads across friend/colleague/distant. Step 4b length-by-closeness table.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Every generated email passes a built-in LLM-tell scan: no em-dashes, &quot;leverage&quot;, &quot;robust&quot;, or generic openers</td>
+<td>VERIFIED</td>
+<td><code>voice-guide.md</code> §5 blocking set: em/en-dashes (grep check), <code>leverage</code>, <code>robust</code>, generic opener `&quot;I hope this (message</td>
+</tr>
+<tr>
+<td>5</td>
+<td>When generation fails for a contact, email is marked <code>failed</code> and skill continues without crashing</td>
+<td>VERIFIED</td>
+<td><code>SKILL.md</code> Step 4e: <code>PATCH .../status</code> with <code>{ status:&#39;failed&#39;, lastError }</code> then continues. <code>route.ts</code> state machine allows <code>pending -&gt; failed</code>. <code>SKILL.md</code> error-handling table confirms per-email recovery.</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 5/5 truths verified</p>
+<hr>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code></td>
+<td>Guarded status=&#39;generated&#39; write-back</td>
+<td>VERIFIED</td>
+<td>80 lines. Imports <code>canEmailTransition</code>. Sets <code>status: &#39;generated&#39;</code> in one UPDATE. Exactly 1 <code>logTimeline</code> call. SELECT→guard→UPDATE pattern. WR-01 (SyntaxError→400) and WR-02 (.returning() guard) fixes confirmed.</td>
+</tr>
+<tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts</code></td>
+<td>PGlite route test: 4 cases</td>
+<td>VERIFIED</td>
+<td>220 lines. 4 tests: pending→200/generated; approved→400/Invalid transition; nonexistent→404; cross-campaign→404 (WR-03/CD-06 fix). All 4 pass (<code>npx vitest run</code> exit 0).</td>
+</tr>
+<tr>
+<td><code>.claude/skills/generate-outreach-emails/SKILL.md</code></td>
+<td>Complete generation workflow</td>
+<td>VERIFIED</td>
+<td>367 lines. Frontmatter correct. References both reference docs. Batch-only (D-13). Read-queue-once (D-01). D-03 count gate. D-04 5-email sample gate with write-back. Chunked drain. jq-escaped write-backs (CR-01 fix). Step 3 sample persistence (CR-02 fix). LLM-tell gate. Failure handling. Run summary.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/generate-outreach-emails/references/voice-guide.md</code></td>
+<td>Email voice + tone + blocking scrub + anti-hallucination</td>
+<td>VERIFIED</td>
+<td>212 lines. Greeting <code>Hey &lt;FirstName&gt;,</code> present. No em/en dashes. <code>howMet</code> referenced. No cover-letter opener. Blocking set: em/en-dashes, <code>leverage</code>, <code>robust</code>, generic opener. Three closeness tiers: friend/colleague/distant. Anti-hallucination contract §4.</td>
+</tr>
+<tr>
+<td><code>.claude/skills/generate-outreach-emails/references/heimdall-api.md</code></td>
+<td>3-endpoint API contract</td>
+<td>VERIFIED</td>
+<td>255 lines. Exactly 3 endpoints: <code>generation-context</code>, <code>/generation</code>, <code>/status</code>. Bearer auth + localhost:4000. One-read-per-run anti-N+1 rule. <code>/generation</code> sets status=&#39;generated&#39; in one call. <code>status:&#39;failed&#39;</code> failure path. D-04 sample gate present in Run Protocol (WR-04 fix).</td>
+</tr>
+<tr>
+<td><code>.claude/skills/generate-outreach-emails/references/steve-fact-bank.md</code></td>
+<td>Durable fact bank (CR-03 fix)</td>
+<td>VERIFIED</td>
+<td>74 lines. Exists at correct path. Career facts: roles (Anaconda, Cirkul, ID.me, Business.com, Fuze, IODA), reusable anchors with real figures. Referenced in SKILL.md Step 4a and Constraints, and in voice-guide.md §1 and §4.</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>route.ts</code></td>
+<td><code>src/features/outreach/lib/email-status.ts</code></td>
+<td><code>import canEmailTransition</code></td>
+<td>WIRED</td>
+<td><code>import { canEmailTransition } from &#39;@/features/outreach/lib/email-status&#39;</code> on line 7; called on line 36.</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code></td>
+<td><code>references/voice-guide.md</code></td>
+<td>read-first reference</td>
+<td>WIRED</td>
+<td>Referenced in Overview (line 22) and Step 3, Step 4a.</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code></td>
+<td><code>references/heimdall-api.md</code></td>
+<td>read-first reference</td>
+<td>WIRED</td>
+<td>Referenced in Overview (line 25) and Step 1.</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code></td>
+<td><code>/api/outreach-campaigns/[id]/emails/[emailId]/generation</code></td>
+<td>PATCH write-back call</td>
+<td>WIRED</td>
+<td>Step 4d PAYLOAD+curl block uses <code>$CAMPAIGN_ID/emails/$EMAIL_ID/generation</code>.</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code></td>
+<td><code>references/steve-fact-bank.md</code></td>
+<td>anti-hallucination grounding</td>
+<td>WIRED</td>
+<td>Referenced in Step 4a constraint and Constraints section (lines 212, 364). voice-guide.md §1 also directs <code>Also read steve-fact-bank.md</code>.</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>Not applicable. Phase 16 deliverables are skill markdown documents (workflow instructions for Claude Code) and a REST route. There is no dynamic data rendering component. The route&#39;s data flow is verified by the 4-test PGlite suite.</p>
+<hr>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pending</code> email advances to <code>status=&#39;generated&#39;</code> via PATCH</td>
+<td><code>npx vitest run &quot;generation/route.test.ts&quot;</code></td>
+<td>4 passed, exit 0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Invalid source state rejected 400</td>
+<td>Test 2 in route.test.ts</td>
+<td><code>status=400, error=&#39;Invalid transition: approved -&gt; generated&#39;</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Cross-campaign email isolation</td>
+<td>Test 4 in route.test.ts</td>
+<td><code>status=404, foreignEmail.status=&#39;pending&#39;</code> unchanged</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>TypeScript clean for route</td>
+<td><code>npx tsc --noEmit 2&gt;&amp;1 | grep -c &#39;generation/route&#39;</code></td>
+<td>0 errors</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Probe Execution</h3>
+<p>No probes declared in PLAN files. Step 7c: SKIPPED (no probe scripts defined for this phase).</p>
+<hr>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GEN-01</td>
+<td>16-01, 16-03</td>
+<td>User can run a skill that generates subject + body for every pending email</td>
+<td>SATISFIED</td>
+<td><code>SKILL.md</code> is the runnable skill; <code>/generation</code> route persists results and advances status.</td>
+</tr>
+<tr>
+<td>GEN-02</td>
+<td>16-02, 16-03</td>
+<td>Generated emails personalized from CRM context (howMet, company/role, closeness, interactions)</td>
+<td>SATISFIED</td>
+<td><code>voice-guide.md</code> §2 hook section; <code>SKILL.md</code> Step 4a contacts all 6 context fields. <code>heimdall-api.md</code> endpoint 1 documents the full payload shape.</td>
+</tr>
+<tr>
+<td>GEN-03</td>
+<td>16-02, 16-03</td>
+<td>Generation calibrates tone to closeness tier and follows voice conventions, including LLM-tell scan</td>
+<td>SATISFIED</td>
+<td><code>voice-guide.md</code> §1 tone-by-closeness, §5 blocking scrub. <code>SKILL.md</code> Step 4c enforces blocking scan before every write-back.</td>
+</tr>
+<tr>
+<td>GEN-04</td>
+<td>16-01, 16-02, 16-03</td>
+<td>Generation references only history present in contact context; low-context contacts flagged</td>
+<td>SATISFIED</td>
+<td><code>voice-guide.md</code> §4 anti-hallucination contract. <code>SKILL.md</code> Step 4a D-11/GEN-04 note. <code>lowContext: true</code> flag from <code>generation-context</code> endpoint drives Step 4a low-context path and Step 4f summary collection.</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>None</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>No debt markers (TBD/FIXME/XXX), stub return patterns, or hardcoded empty data found in any modified file.</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Human Verification Required</h3>
+<p>None. All five observable truths are verifiable via code inspection and automated test execution. The skill workflow is a markdown document for Claude Code, not a UI -- visual or real-time behavior checks do not apply. Tone quality of generated emails depends on the runtime execution of the skill, which is not in scope for code verification.</p>
+<hr>
+<h2>Gaps Summary</h2>
+<p>No gaps. All 5 success criteria are met, all 4 required requirement IDs (GEN-01..04) are covered, all 7 code review findings (3 critical + 4 warning) are resolved and verified:</p>
+<ul>
+<li><strong>CR-01</strong> (jq-escaped write-backs): <code>SKILL.md</code> Step 4d and 4e both use <code>jq -n --arg</code> construction. Confirmed at lines 261 and 288.</li>
+<li><strong>CR-02</strong> (Step 3 sample persistence): <code>SKILL.md</code> Step 3 &quot;Write the approved samples back&quot; section present at line 165; Step 4a explicitly references &quot;skipping the 5 already written back in the sample&quot; at line 192.</li>
+<li><strong>CR-03</strong> (steve-fact-bank.md missing): File exists at <code>.claude/skills/generate-outreach-emails/references/steve-fact-bank.md</code> (74 lines). voice-guide.md §1 directs the reader to it. SKILL.md Step 4a and Constraints reference it. Note: the REVIEW prescribed an explicit <code>cat</code> shell command in Setup -- the resolution instead uses prose directives (&quot;Also read <code>steve-fact-bank.md</code>&quot; in voice-guide.md) which achieve the same intent for a Claude Code skill context. This is an acceptable implementation of the CR-03 fix.</li>
+<li><strong>WR-01</strong> (SyntaxError→400): <code>route.ts</code> line 74 <code>instanceof SyntaxError</code> catch arm returns <code>validationError(&#39;Invalid JSON body&#39;)</code>.</li>
+<li><strong>WR-02</strong> (.returning() guard): <code>route.ts</code> line 59 <code>if (!updated) return notFound(&#39;Email&#39;)</code>.</li>
+<li><strong>WR-03</strong> (CD-06 ownership test): Test 4 in <code>route.test.ts</code> covers cross-campaign email ID access. All 4 tests pass.</li>
+<li><strong>WR-04</strong> (D-04 sample gate in heimdall-api.md): <code>heimdall-api.md</code> Run Protocol section at line 241 includes the sample gate step.</li>
+</ul>
+<hr>
+<p><em>Verified: 2026-06-22T13:41:00Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

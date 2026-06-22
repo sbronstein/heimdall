@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-02-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-02-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 16-email-generation-skill
+plan: &quot;02&quot;
+subsystem: skill-references
+tags: [skill, outreach, voice-guide, api-contract, documentation]
+dependency_graph:
+  requires: []
+  provides:
+    - .claude/skills/generate-outreach-emails/references/voice-guide.md
+    - .claude/skills/generate-outreach-emails/references/heimdall-api.md
+  affects:
+    - .claude/skills/generate-outreach-emails/SKILL.md (plan 16-03 reads these)
+tech_stack:
+  added: []
+  patterns:
+    - Email-anatomy spec (Hey <FirstName> greeting, shared-history hook, soft ask, first-name sign-off)
+    - LLM-tell scrub: blocking set (em/en-dashes, leverage, robust, generic openers) + advisory list
+    - Anti-hallucination contract: generation-context payload is sole per-contact data source
+    - Bearer-auth skill contract mirroring scrape-linkedin-connections pattern
+key_files:
+  created:
+    - .claude/skills/generate-outreach-emails/references/voice-guide.md
+    - .claude/skills/generate-outreach-emails/references/heimdall-api.md
+  modified: []
+decisions:</p>
+<ul>
+<li>&quot;voice-guide.md adapts cover-letter-style.md LLM-tell scrub but defines a completely different email anatomy (no company-addressed opener, no 3-paragraph arc, first-name-only sign-off)&quot;</li>
+<li>&quot;blocking LLM-tell set: em/en-dashes + leverage + robust + generic openers; fuller cover-letter list is advisory-only&quot;</li>
+<li>&quot;heimdall-api.md documents exactly 3 endpoints -- no more, no less -- mirroring scrape-linkedin-connections structure&quot;</li>
+<li>&quot;generation-context call is ONE per run (stated explicitly as anti-N+1 rule); /generation sets status=&#39;generated&#39; in a single call (D-02)&quot;
+metrics:
+  duration: &quot;~15 min&quot;
+  completed: &quot;2026-06-22&quot;
+  tasks_completed: 2
+  tasks_total: 2
+  files_created: 2
+  files_modified: 0</li>
+</ul>
+<hr>
+<h1>Phase 16 Plan 02: Reference Documents for generate-outreach-emails Skill Summary</h1>
+<p><strong>One-liner:</strong> Voice-guide and API-contract reference docs for the email-generation skill: 1:1 networking email anatomy, tone-by-closeness, blocking LLM-tell scrub, anti-hallucination contract, and the 3-endpoint REST surface with bearer auth.</p>
+<h2>What Was Built</h2>
+<p>Two leaf documents the <code>generate-outreach-emails</code> skill (Plan 16-03) reads at the start of every run:</p>
+<h3><code>voice-guide.md</code></h3>
+<p>Defines the networking-email format Steve&#39;s voice follows:</p>
+<ul>
+<li><strong>Voice baseline (D-06):</strong> always conversational; light closeness modulation (warmer for a friend, professional-warm for former colleagues, shorter for distant contacts). Lean on <code>howMet</code> and logged interactions more than the numeric <code>closeness</code> tier.</li>
+<li><strong>Email anatomy (D-07):</strong> subject line (casual, specific, first-name or concrete hook); greeting <code>Hey &lt;FirstName&gt;,</code>; shared-history hook drawn only from contact brief; soft ask adapted from <code>goalInstruction</code>; sign-off <code>Steve</code> / <code>Thanks, Steve</code> (first name only).</li>
+<li><strong>Length by closeness:</strong> 2-4 sentences for distant contacts, up to 2 short paragraphs for close ones.</li>
+<li><strong>Anti-hallucination contract (D-11/GEN-04):</strong> reference only facts in the contact context + <code>steve-fact-bank.md</code>; <code>lowContext: true</code> contacts get short emails drawing only on <code>howMet</code>/company/role.</li>
+<li><strong>LLM-tell scrub (D-10):</strong> blocking set (em/en-dashes, <code>leverage</code>, <code>robust</code>, generic openers) must pass before write-back; broader cover-letter banned-term list is advisory.</li>
+</ul>
+<p>Explicitly excludes all cover-letter conventions: company-addressed opener, 3-paragraph arc, full-name sign-off, <code>.docx</code> conversion step.</p>
+<h3><code>heimdall-api.md</code></h3>
+<p>Documents the REST surface the skill uses:</p>
+<ul>
+<li><strong>Auth:</strong> <code>Authorization: Bearer $(cat ~/.heimdall/api-token)</code>, base <code>http://localhost:4000</code>, SHA-256+SINGLE_USER_EMAIL gate in <code>src/proxy.ts</code>, never log the token.</li>
+<li><strong>Envelope:</strong> <code>{ success, data, error, meta }</code> with status-code table (200/400/401/404/500).</li>
+<li><strong>3 endpoints exactly:</strong><ol>
+<li><code>GET /api/outreach-campaigns/[id]/generation-context</code> -- called ONCE per run (explicit anti-N+1 rule), returns <code>goalInstruction</code> + <code>emails[]</code> with embedded contact brief + recent interactions + <code>lowContext</code> flag.</li>
+<li><code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation</code> -- content write-back; sets <code>status=&#39;generated&#39;</code> server-side in the same call (D-02); one call per email, not a content-then-status pair.</li>
+<li><code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status</code> -- failure write-back: <code>{ status:&#39;failed&#39;, lastError }</code> with 500-char max; continue after failure (D-12).</li>
+</ol>
+</li>
+<li>Curl example per endpoint, error-envelope handling table.</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None - plan executed exactly as written.</p>
+<h2>Threat Surface Scan</h2>
+<p>No new runtime surface introduced. Both files are pure documentation; they describe how the skill crosses the existing REST boundary but add no executable code. The bearer-token &quot;never log&quot; directive is documented in <code>heimdall-api.md</code> per threat T-16-04.</p>
+<h2>Known Stubs</h2>
+<p>None. These are reference documents with no data sources to wire.</p>
+<h2>Self-Check</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>.claude/skills/generate-outreach-emails/references/voice-guide.md</code> -- 212 lines, CREATED</li>
+<li><input checked="" disabled="" type="checkbox"> <code>.claude/skills/generate-outreach-emails/references/heimdall-api.md</code> -- 248 lines, CREATED</li>
+<li><input checked="" disabled="" type="checkbox"> Task 1 commit: 02a68ef</li>
+<li><input checked="" disabled="" type="checkbox"> Task 2 commit: 2d9337e</li>
+<li><input checked="" disabled="" type="checkbox"> voice-guide.md: greeting token present, no em/en dashes, howMet referenced, no cover-letter opener</li>
+<li><input checked="" disabled="" type="checkbox"> heimdall-api.md: generation-context documented, bearer auth, localhost:4000, status:&#39;failed&#39; write-back</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-02-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
