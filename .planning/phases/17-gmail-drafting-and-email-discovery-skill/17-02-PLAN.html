@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 17-gmail-drafting-and-email-discovery-skill
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>.claude/skills/draft-outreach-emails/references/heimdall-api.md
+autonomous: true
+requirements: [DISC-01, DISC-02, DISC-03, DRFT-01, DRFT-04, DRFT-05]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;The reference documents exactly the four endpoints the skill consumes — work-queue read, recipient write-back, draft write-back, status (failure) — with auth, envelope, and error semantics&quot;
+    - &quot;The reference makes explicit that approved→drafted is legal and approved→failed is NOT, so the skill never calls /status on an approved email&quot;
+  artifacts:
+    - path: &quot;.claude/skills/draft-outreach-emails/references/heimdall-api.md&quot;
+      provides: &quot;REST API contract for the draft-outreach-emails skill&quot;
+      min_lines: 120
+      contains: &quot;status=approved&quot;
+  key_links:
+    - from: &quot;.claude/skills/draft-outreach-emails/references/heimdall-api.md&quot;
+      to: &quot;src/proxy.ts (bearer auth)&quot;
+      via: &quot;Authorization: Bearer $(cat ~/.heimdall/api-token)&quot;
+  pattern: &quot;cat ~/.heimdall/api-token&quot;
+</p>
+<hr>
+<objective>
+Author `references/heimdall-api.md` for the new `draft-outreach-emails` skill — the REST contract it builds against. Mirror the sibling skill's reference exactly for auth, envelope, and error-table structure; document the four endpoints this skill consumes (work-queue read with cursor pagination, recipient write-back, draft write-back, status failure path).<p>Purpose: Interface-first. The SKILL.md workflow (Plan 17-03) consumes this contract verbatim; writing it first means the workflow author receives a stable, complete API surface instead of re-deriving endpoints from route source.
+Output: A single reference doc + its sibling HTML companion + refreshed <code>_index.html</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-CONTEXT.md
+@.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-RESEARCH.md
+@.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-PATTERNS.md<interfaces>
+<!-- The four endpoints to document, confirmed in 17-RESEARCH.md. Do not invent new endpoints. --><ol>
+<li><p>GET /api/outreach-campaigns/[id]/emails?status=approved&amp;limit=100
+→ { success, data: [{ email: OutreachEmail, contact: Contact|null }], meta: { cursor, hasMore } }
+email fields: id, campaignId, contactId, channel, recipientEmail, generatedSubject, generatedBody,
+          editedSubject, editedBody, status, gmailDraftId, lastError, lastErrorAt, draftedAt, ...
+
+contact fields: id, firstName, lastName, email, outreachStatus, archivedAt, linkedinUrl, title, currentCompany
+Default limit 20, MAX 100. Paginate via &amp;cursor=&lt;meta.cursor&gt; until meta.hasMore=false.</p>
+</li>
+<li><p>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/recipient
+body { channel: &#39;email&#39;, recipientEmail: &#39;<addr>&#39; }  → accept a discovered address (DISC-01/02)
+body { channel: &#39;linkedin_message&#39; }                  → route forces recipientEmail=null (DISC-03 / D-04b)</p>
+</li>
+<li><p>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/draft
+body { gmailDraftId: &#39;<id>&#39; } → (post-Plan-17-01) sets status=&#39;drafted&#39; (canEmailTransition-gated),
+draftedAt, contact.outreachStatus=&#39;reached_out&#39;, logs timeline. Legal pre-state: approved ONLY.</p>
+</li>
+<li><p>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status
+body { status: &#39;failed&#39;, lastError: &#39;&lt;...&gt;&#39; } → FAILURE PATH ONLY, and ONLY for non-approved emails.
+approved→failed is ILLEGAL (returns 400). Do not call this for an approved email that fails to draft.</p>
+</li>
+</ol>
+<p>Sibling analog to mirror section-for-section: .claude/skills/generate-outreach-emails/references/heimdall-api.md
+17-PATTERNS.md lines 189-296 give the section map and copy-verbatim blocks (Auth, Response Envelope, Error table).
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Write references/heimdall-api.md mirroring the sibling reference</name>
+  <files>.claude/skills/draft-outreach-emails/references/heimdall-api.md</files>
+  <read_first>
+    - .claude/skills/generate-outreach-emails/references/heimdall-api.md (the exact structural template — copy Auth, Response Envelope, Error-table sections verbatim)
+    - src/app/api/outreach-campaigns/[id]/emails/route.ts (work-queue read: JOIN shape, status filter, cursor pagination, limit cap)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts (channel + recipientEmail; linkedin_message forces recipientEmail=null)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts (failure path; canEmailTransition; 400 envelope shape)
+    - src/features/outreach/lib/email-status.ts (transition map — approved→drafted legal, approved→failed illegal)
+    - 17-PATTERNS.md §"references/heimdall-api.md" (section map + verbatim blocks)
+    - 17-RESEARCH.md §"Code Examples" → "Work-Queue Response Shape" and §"State Machine"
+  </read_first>
+  <action>
+    Create `.claude/skills/draft-outreach-emails/references/heimdall-api.md` with these sections (mirror the sibling reference order): (1) `## Auth` — copy verbatim from the sibling (Bearer token, `$(cat ~/.heimdall/api-token)` inline, SHA-256 + SINGLE_USER_EMAIL gate, never log the token). (2) `## Response Envelope` — copy verbatim (success/error shapes + the 200/400/401/404/500 status-code table). (3) `## Endpoints` documenting the four from the interfaces block, each with: purpose, when called, curl example (token inline), and the response/body shape. Endpoint 1 = work-queue read — INCLUDE the cursor-pagination loop note (`?limit=100`, loop until `meta.hasMore=false`; default 20 silently truncates — Pitfall 6) and the `{ email, contact }` field list. Endpoint 2 = recipient write-back — document BOTH bodies (`{channel:'email',recipientEmail}` for a discovered address; `{channel:'linkedin_message'}` which the route nulls recipientEmail). Endpoint 3 = draft write-back — document the post-17-01 behavior: `{gmailDraftId}` triggers status=drafted + contact reached_out + timeline; legal pre-state `approved` only; one call per email. Endpoint 4 = status — explicitly the FAILURE PATH ONLY and ONLY for non-approved emails; state `approved → failed` is illegal (400). (4) `## Error Envelopes the Skill Must Handle` — copy the sibling's table and adjust the transition row to note `approved→drafted` legal / `approved→failed` illegal. (5) `## Run Protocol (summary)` — one-paragraph read-queue → discover → draft → summarize recap. Use kebab-case filename; single quotes / project markdown conventions. Then create the sibling HTML companion (`node ~/.claude/scripts/md-to-html.mjs <file>`) and regenerate `_index.html` (`node ~/.claude/scripts/build-index.mjs`) per the global CLAUDE.md markdown→HTML rule.
+  </action>
+  <verify>
+    <automated>test -f .claude/skills/draft-outreach-emails/references/heimdall-api.md && grep -q "status=approved" .claude/skills/draft-outreach-emails/references/heimdall-api.md && grep -q "approved -> failed\|approved → failed\|approved.*failed.*illegal\|NOT" .claude/skills/draft-outreach-emails/references/heimdall-api.md</automated>
+  </verify>
+  <acceptance_criteria>
+    - File exists at `.claude/skills/draft-outreach-emails/references/heimdall-api.md` (≥ 120 lines)
+    - `grep -c "PATCH" heimdall-api.md` ≥ 3 (recipient, draft, status endpoints documented)
+    - `grep -q "status=approved" heimdall-api.md` and `grep -q "limit=100" heimdall-api.md` and `grep -q "hasMore" heimdall-api.md` (work-queue + pagination documented)
+    - `grep -q "cat ~/.heimdall/api-token" heimdall-api.md` (inline-token auth convention)
+    - `grep -qE "approved.*(failed)" heimdall-api.md` AND the doc states approved→failed is illegal / NOT to be called for approved emails
+    - `grep -q "linkedin_message" heimdall-api.md` (DISC-03 recipient body documented)
+    - No literal bearer token string present: `! grep -qE "Bearer [A-Za-z0-9._-]{16,}" heimdall-api.md`
+    - Sibling `heimdall-api.html` exists in the same `references/` directory; repo-root `_index.html` regenerated
+  </acceptance_criteria>
+  <done>The skill's REST contract is fully documented from the sibling template, covers all four consumed endpoints with correct auth/envelope/error semantics, makes the approved→failed prohibition explicit, and has a refreshed HTML companion + index.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill author/reader → reference doc</td>
+<td>Documentation only; the risk is leaking a credential into a committed example</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-17-05</td>
+<td>Information Disclosure</td>
+<td>bearer token in curl examples</td>
+<td>mitigate</td>
+<td>every example uses <code>$(cat ~/.heimdall/api-token)</code> inline; acceptance criterion greps for and forbids any literal <code>Bearer &lt;token&gt;</code> string</td>
+</tr>
+<tr>
+<td>T-17-06</td>
+<td>Repudiation/Tampering</td>
+<td>mis-documented endpoint causing the skill to call an illegal transition</td>
+<td>mitigate</td>
+<td>endpoint 4 explicitly flags <code>approved→failed</code> as illegal; mirrors the route source read in <code>read_first</code></td>
+</tr>
+<tr>
+<td>T-17-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>accept</td>
+<td>no package installs in this phase</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- All Task 1 grep acceptance criteria pass.
+- The four documented endpoints match the route sources read in `read_first` (no invented endpoints, no new backend surface).
+- HTML companion + `_index.html` refreshed and committed alongside the markdown (global CLAUDE.md rule).
+</verification><success_criteria>
+- `references/heimdall-api.md` documents the work-queue read (with cursor pagination), recipient write-back (both channels — DISC-01/02/03), draft write-back (DRFT-01/04/05, post-17-01 behavior), and the status failure path (with the approved→failed prohibition).
+- Auth/envelope/error sections mirror the sibling reference; no credential literals.
+</success_criteria><output>
+Create `.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-02-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

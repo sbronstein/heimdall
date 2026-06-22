@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 17-gmail-drafting-and-email-discovery-skill
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</li>
+<li>scripts/verify-draft-route.sh
+autonomous: true
+requirements: [DRFT-04, DRFT-05]</li>
+</ul>
+<p>must_haves:
+  truths:
+    - &quot;PATCH .../draft on an approved email stores gmailDraftId, transitions status to drafted, sets the linked contact&#39;s outreachStatus to reached_out, and logs an outreach_email_drafted timeline event — all in one request&quot;
+    - &quot;PATCH .../draft on an email whose status is not approved returns 400 with an &#39;Invalid transition&#39; message and mutates nothing&quot;
+  artifacts:
+    - path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts&quot;
+      provides: &quot;Atomic draft write-back: gmailDraftId + status=drafted (canEmailTransition-gated) + contact outreachStatus=reached_out + timeline event&quot;
+      contains: &quot;canEmailTransition&quot;
+    - path: &quot;scripts/verify-draft-route.sh&quot;
+      provides: &quot;Re-runnable curl regression that asserts the state-machine guard returns 400 on an illegal pre-state&quot;
+  key_links:
+    - from: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts&quot;
+      to: &quot;src/features/outreach/lib/email-status.ts&quot;
+      via: &quot;import { canEmailTransition }&quot;
+      pattern: &quot;canEmailTransition\(email.status, &#39;drafted&#39;\)&quot;
+    - from: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts&quot;
+      to: &quot;drizzle/schema (contacts)&quot;
+      via: &quot;db.update(contacts).set({ outreachStatus: &#39;reached_out&#39; })&quot;
+  pattern: &quot;outreachStatus: &#39;reached_out&#39;&quot;
+</p>
+<hr>
+<objective>
+Fix the `/draft` write-back route so a single `PATCH .../draft { gmailDraftId }` call produces ALL four success-criterion-#1 effects atomically (D-01): store `gmailDraftId`, transition `status → 'drafted'` gated by `canEmailTransition`, set the linked contact's `outreachStatus → 'reached_out'`, and log the existing `outreach_email_drafted` timeline event.<p>Purpose: This is the ONLY backend code change in Phase 17 and it gates every draft write-back the skill makes. The shipped route does a blind UPDATE that sets only <code>gmailDraftId</code> + <code>draftedAt</code> — it never transitions status or touches the contact (the D-01 gap, the direct parallel of Phase 16&#39;s D-02 fix).
+Output: An updated <code>/draft/route.ts</code> matching the <code>/status</code> route&#39;s pre-read → guard → update shape, plus a re-runnable curl regression script.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/ROADMAP.md
+@.planning/STATE.md
+@.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-CONTEXT.md
+@.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-RESEARCH.md
+@.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-PATTERNS.md<interfaces>
+<!-- Contracts the executor needs. Do not re-derive from the codebase. --><p>From src/lib/db/timeline.ts (CONFIRMED — contactId is a supported optional field):
+type TimelineInput = {
+  eventType: string;
+  title: string;
+  description?: string;
+  companyId?: string;
+  contactId?: string;
+  applicationId?: string;
+  interactionId?: string;
+  taskId?: string;
+  noteId?: string;
+  metadata?: Record&lt;string, unknown&gt;;
+};
+export async function logTimeline(input: TimelineInput): Promise&lt;...&gt;;</p>
+<p>From src/features/outreach/lib/email-status.ts:
+export function canEmailTransition(from: string, to: string): boolean;
+// validEmailTransitions.approved = [&#39;drafted&#39;, &#39;edited&#39;] → approved→drafted LEGAL; approved→failed ILLEGAL.</p>
+<p>The complete target file (post-edit) is given verbatim in 17-RESEARCH.md &quot;Full D-01 Route Edit — Complete File After Edit&quot; (lines 475-551). 17-PATTERNS.md (lines 299-467) shows the current file and each pattern to copy from the /status analog. Prescribe the RESEARCH target file as the end state.
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Apply the D-01 edit to the /draft route</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</files>
+  <read_first>
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts (the file being modified — current blind-UPDATE state)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts (the D-01 structural template: pre-read → canEmailTransition guard → update → logTimeline)
+    - src/features/outreach/lib/email-status.ts (canEmailTransition + validEmailTransitions — confirm approved→drafted legal)
+    - src/lib/db/timeline.ts (confirm contactId optional field on TimelineInput)
+    - drizzle/schema/outreach-emails.ts and drizzle/schema/contacts.ts (columns: status, gmailDraftId, draftedAt, updatedAt; contacts.outreachStatus, contacts.id)
+    - 17-RESEARCH.md §"Full D-01 Route Edit — Complete File After Edit" (the verbatim target)
+    - 17-PATTERNS.md §"src/app/api/.../draft/route.ts" (import + two-table-update + logTimeline patterns)
+  </read_first>
+  <action>
+    Restructure the `PATCH` handler in `draft/route.ts` to the end state in 17-RESEARCH.md's "Full D-01 Route Edit". Concretely: (1) add `contacts` to the existing schema barrel import alongside `outreachEmails`, and add `import { canEmailTransition } from '@/features/outreach/lib/email-status'`. (2) Replace the blind `db.update(outreachEmails)` with a pre-read: `db.select().from(outreachEmails).where(and(eq(id), eq(campaignId))).limit(1)`; return `notFound('Email')` if absent. (3) Guard: `if (!canEmailTransition(email.status, 'drafted')) return validationError(\`Invalid transition: ${email.status} -> drafted\`)`. (4) UPDATE `outreachEmails` set `gmailDraftId: validated.gmailDraftId, status: 'drafted', draftedAt: new Date(), updatedAt: new Date()` (same `and(eq(id), eq(campaignId))` scope), `.returning()`. (5) Sequential await (NO transaction — Neon HTTP driver, consistent with existing routes): UPDATE `contacts` set `outreachStatus: 'reached_out', updatedAt: new Date()` where `eq(contacts.id, email.contactId)` — use `email.contactId` from the pre-read, never the request body. (6) Preserve the existing `logTimeline({ eventType: 'outreach_email_drafted', title: 'Gmail draft created', metadata: {...} })` and add `contactId: email.contactId`. (7) Keep the existing `draftWriteBackSchema` (`gmailDraftId: z.string().min(1)`) and the existing ZodError/serverError catch block unchanged. Return `success(updated)`.
+  </action>
+  <verify>
+    <automated>npx tsc --noEmit</automated>
+  </verify>
+  <acceptance_criteria>
+    - `grep -c "canEmailTransition" src/app/api/outreach-campaigns/\[id\]/emails/\[emailId\]/draft/route.ts` returns ≥ 2 (import + call)
+    - `grep -q "contacts" src/app/api/outreach-campaigns/\[id\]/emails/\[emailId\]/draft/route.ts` — contacts is imported from the schema barrel
+    - `grep -q "status: 'drafted'" .../draft/route.ts` — status transition present in the email UPDATE
+    - `grep -q "outreachStatus: 'reached_out'" .../draft/route.ts` — contact mutation present
+    - `grep -c "updatedAt: new Date()" .../draft/route.ts` returns ≥ 2 (one per UPDATE — Drizzle does not auto-update)
+    - `grep -q "contactId: email.contactId" .../draft/route.ts` — timeline event carries contactId AND contactId is read from the pre-read row (not request body)
+    - `grep -q ".select()" .../draft/route.ts` — a pre-read SELECT precedes the UPDATE (no blind update)
+    - `npx tsc --noEmit` exits 0 (Pitfall 5: missing contacts import would fail compilation)
+  </acceptance_criteria>
+  <done>One `PATCH .../draft { gmailDraftId }` request, when the email is `approved`, stores the draft id, marks the email `drafted`, sets the contact `reached_out`, and logs the timeline event; an illegal pre-state is rejected with 400 before any write. Type-checks clean.</done>
+</task><task type="auto">
+  <name>Task 2: Wave-0 regression script for the state-machine guard</name>
+  <files>scripts/verify-draft-route.sh</files>
+  <read_first>
+    - .claude/skills/generate-outreach-emails/references/heimdall-api.md (bearer-token curl convention: $(cat ~/.heimdall/api-token) inline)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts (the 400 envelope shape: { success:false, error:"Invalid transition: ..." })
+    - 17-RESEARCH.md §"Validation Architecture" → "Wave 0 Gaps" (the curl-test gap this script closes)
+  </read_first>
+  <action>
+    Create `scripts/verify-draft-route.sh` (bash, `set -euo pipefail`). It takes `CAMPAIGN_ID` and `EMAIL_ID` env vars (or positional args) for an email known to be in a NON-`approved` state (e.g. `pending` or `generated`). It reads the token inline via `$(cat ~/.heimdall/api-token)`, issues `PATCH http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/draft` with body `{"gmailDraftId":"verify-test"}` capturing the HTTP status (`-o /tmp/draft-verify.json -w '%{http_code}'`), and asserts: HTTP code is `400` AND the response `.error` (via `jq`) contains `Invalid transition`. Print PASS/FAIL and exit non-zero on FAIL. Add a header comment documenting that this is the D-01 state-machine regression and that it requires the dev server running on port 4000 + a non-approved seed email. Do NOT hardcode any token value in the file.
+  </action>
+  <verify>
+    <automated>bash -n scripts/verify-draft-route.sh && grep -q 'Invalid transition' scripts/verify-draft-route.sh</automated>
+    <human-check>With the dev server running, run `CAMPAIGN_ID=&lt;real&gt; EMAIL_ID=&lt;a non-approved email&gt; bash scripts/verify-draft-route.sh` and confirm it prints PASS (HTTP 400 + "Invalid transition").</human-check>
+  </verify>
+  <acceptance_criteria>
+    - `bash -n scripts/verify-draft-route.sh` exits 0 (syntactically valid)
+    - `grep -q "cat ~/.heimdall/api-token" scripts/verify-draft-route.sh` — token read inline, never a literal
+    - `grep -qv "Bearer [A-Za-z0-9]\{8,\}" scripts/verify-draft-route.sh` — no hardcoded token string
+    - `grep -q "400" scripts/verify-draft-route.sh` and `grep -q "Invalid transition" scripts/verify-draft-route.sh` — asserts the guard behavior
+  </acceptance_criteria>
+  <done>A re-runnable script exists that proves the `/draft` route rejects an illegal pre-state with HTTP 400 + "Invalid transition", without leaking the bearer token.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CLI/HTTP client → /draft API route</td>
+<td>Untrusted JSON body (<code>gmailDraftId</code>) and path params (<code>id</code>, <code>emailId</code>) cross here</td>
+</tr>
+<tr>
+<td>API route → Postgres</td>
+<td>Two sequential writes (email row, contact row)</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-17-01</td>
+<td>Tampering</td>
+<td><code>/draft</code> route status transition</td>
+<td>mitigate</td>
+<td><code>canEmailTransition(email.status,&#39;drafted&#39;)</code> guard; only <code>approved</code> may advance; 400 + no write on any other pre-state</td>
+</tr>
+<tr>
+<td>T-17-02</td>
+<td>Tampering</td>
+<td>contact mutation target</td>
+<td>mitigate</td>
+<td><code>email.contactId</code> is read from the pre-read row scoped by <code>(emailId, campaignId)</code>; never taken from the request body — caller cannot redirect the <code>reached_out</code> write to an arbitrary contact</td>
+</tr>
+<tr>
+<td>T-17-03</td>
+<td>Tampering (Input Validation)</td>
+<td><code>gmailDraftId</code> body field</td>
+<td>mitigate</td>
+<td>preserved Zod <code>z.string().min(1)</code>; ZodError → <code>validationError</code> (400)</td>
+</tr>
+<tr>
+<td>T-17-04</td>
+<td>Information Disclosure</td>
+<td>bearer token in <code>scripts/verify-draft-route.sh</code></td>
+<td>mitigate</td>
+<td>token read inline via <code>$(cat ~/.heimdall/api-token)</code>; no literal token; grep gate in acceptance criteria</td>
+</tr>
+<tr>
+<td>T-17-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>accept</td>
+<td>No package installs in this phase (RESEARCH Package Legitimacy Audit: none); nothing to verify</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npx tsc --noEmit` passes (catches the new `contacts` + `canEmailTransition` imports — Pitfall 5).
+- `next lint` clean on the edited route (no-console / unused-vars warnings only).
+- All Task 1 + Task 2 grep acceptance criteria pass.
+- Manual smoke (human-check): live curl against a non-approved email → 400 "Invalid transition"; against an approved email → 200 with `status:'drafted'` in the response, and a follow-up `GET .../contacts/<id>` shows `outreachStatus:'reached_out'`.
+</verification><success_criteria>
+- One `PATCH .../draft { gmailDraftId }` call on an `approved` email atomically: stores `gmailDraftId`, sets email `status='drafted'` + `draftedAt`, sets contact `outreachStatus='reached_out'`, logs `outreach_email_drafted` with `contactId` (DRFT-04, DRFT-05).
+- Illegal pre-states are rejected with 400 before any mutation, proven by `scripts/verify-draft-route.sh`.
+- `updatedAt: new Date()` is set manually on BOTH UPDATEs.
+</success_criteria><output>
+Create `.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
