@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { success } from '@/lib/api/types';
 import { notFound, serverError, validationError } from '@/lib/api/errors';
 import { logTimeline } from '@/lib/db/timeline';
+import { canEmailTransition } from '@/features/outreach/lib/email-status';
 import { z } from 'zod';
 
 const generationWriteBackSchema = z.object({
@@ -20,10 +21,29 @@ export async function PATCH(
     const body = await request.json();
     const validated = generationWriteBackSchema.parse(body);
 
-    // CD-06: campaign-scoped update — 404 if email does not belong to this campaign
+    // CD-06: verify email belongs to campaign
     const [email] = await db
+      .select()
+      .from(outreachEmails)
+      .where(
+        and(eq(outreachEmails.id, emailId), eq(outreachEmails.campaignId, id))
+      )
+      .limit(1);
+
+    if (!email) return notFound('Email');
+
+    // State machine guard — only pending → generated is allowed (T-16-01)
+    if (!canEmailTransition(email.status, 'generated')) {
+      return validationError(
+        `Invalid transition: ${email.status} -> generated`
+      );
+    }
+
+    // One UPDATE: content + status + timestamps (T-16-03: scoped to campaignId)
+    const [updated] = await db
       .update(outreachEmails)
       .set({
+        status: 'generated',
         generatedSubject: validated.generatedSubject,
         generatedBody: validated.generatedBody,
         generatedAt: new Date(),
@@ -34,15 +54,13 @@ export async function PATCH(
       )
       .returning();
 
-    if (!email) return notFound('Email');
-
     await logTimeline({
       eventType: 'outreach_email_generated',
       title: 'Email content generated',
       metadata: { campaignId: id, emailId }
     });
 
-    return success(email);
+    return success(updated);
   } catch (err) {
     if (err instanceof z.ZodError) {
       return validationError(err.issues[0].message);
