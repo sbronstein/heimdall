@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-02-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-02-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 16-email-generation-skill
+plan: 02
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>.claude/skills/generate-outreach-emails/references/voice-guide.md</li>
+<li>.claude/skills/generate-outreach-emails/references/heimdall-api.md
+autonomous: true
+requirements: [GEN-02, GEN-03, GEN-04]
+must_haves:
+  truths:<ul>
+<li>&quot;voice-guide.md defines the 1:1 networking-email format (first-name greeting, shared-history hook, soft ask, casual sign-off) — NOT the cover-letter arc&quot;</li>
+<li>&quot;voice-guide.md states the D-10 blocking LLM-tell set (em/en-dashes, leverage, robust, generic openers) and the anti-hallucination contract (provided context only)&quot;</li>
+<li>&quot;heimdall-api.md documents the 3 endpoints the skill touches with bearer auth, the localhost:4000 base, and the { success, data, error, meta } envelope&quot;
+artifacts:</li>
+<li>path: &quot;.claude/skills/generate-outreach-emails/references/voice-guide.md&quot;
+provides: &quot;Email-specific voice + tone-by-closeness + blocking scrub + anti-hallucination contract&quot;
+min_lines: 50
+contains: &quot;Hey&quot;</li>
+<li>path: &quot;.claude/skills/generate-outreach-emails/references/heimdall-api.md&quot;
+provides: &quot;Skill API contract for generation-context (read once) + generation + status write-backs&quot;
+min_lines: 50
+contains: &quot;generation-context&quot;
+key_links:</li>
+<li>from: &quot;.claude/skills/generate-outreach-emails/references/heimdall-api.md&quot;
+to: &quot;src/app/api/outreach-campaigns/[id]/generation-context/route.ts&quot;
+via: &quot;documented endpoint contract&quot;
+pattern: &quot;generation-context&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Author the two `references/` documents the skill leans on: a new `voice-guide.md` (1:1-networking-email voice, borrowing honesty rules + the LLM-tell scrub from `cover-letter-style.md` and durable facts from `steve-fact-bank.md`, but defining the EMAIL anatomy — D-05/06/07/09/10/11) and `heimdall-api.md` (the skill's API contract — bearer auth + the 3 endpoints it calls, mirroring `scrape-linkedin-connections/references/heimdall-api.md`).<p>Purpose: these are leaf docs SKILL.md (Plan 16-03) reads before authoring each email and before each REST call. Getting voice + the blocking scrub + the anti-hallucination contract right here is what makes the generated emails sound like Steve and stay honest (GEN-02/03/04).
+Output: two authored markdown files under <code>.claude/skills/generate-outreach-emails/references/</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/16-email-generation-skill/16-CONTEXT.md
+@.claude/skills/tailor-application-materials/references/cover-letter-style.md
+@.claude/skills/tailor-application-materials/references/steve-fact-bank.md
+@.claude/skills/scrape-linkedin-connections/references/heimdall-api.md
+@src/app/api/outreach-campaigns/[id]/generation-context/route.ts<interfaces>
+generation-context payload — the SOLE per-contact data source, read ONCE per run:
+  { goalInstruction, emails: [ {
+      emailId, contactId,
+      contact: { firstName, lastName, howMet, companyAtConnection, roleAtConnection,
+                 currentCompany, title, closeness, recipientEmail },
+      interactions: [ { type, summary, occurredAt } ],   // ~3 most recent
+      lowContext: boolean   // recentInteractions.length < 2  (GEN-04)
+  } ] }<p>Write-back endpoints:</p>
+<ul>
+<li>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation  body { generatedSubject, generatedBody }  -&gt; sets status=&#39;generated&#39; (after Plan 16-01)</li>
+<li>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status      body { status:&#39;failed&#39;, lastError }       -&gt; mark a per-email failure (max 500 chars)</li>
+</ul>
+<p>Cover-letter scrub block to adapt (cover-letter-style.md): em/en-dash grep plus the banned-term grep
+(&quot;delve|tapestry|navigate the|in today&#39;s|boast|underscore|testament|realm|not just|isn&#39;t just|it&#39;s not|not only|seamless|robust|cutting-edge|game-chang|elevate|unlock|pivotal|moreover|furthermore&quot;).
+</interfaces>
+</context></p>
+<tasks><task type="auto">
+  <name>Task 1: Author references/voice-guide.md (networking-email voice)</name>
+  <files>.claude/skills/generate-outreach-emails/references/voice-guide.md</files>
+  <read_first>
+    - .claude/skills/tailor-application-materials/references/cover-letter-style.md (honesty rules + LLM-tell scrub block to borrow — NOT the cover-letter arc/greeting/sign-off)
+    - .claude/skills/tailor-application-materials/references/steve-fact-bank.md (durable facts the author may draw from)
+    - .planning/phases/16-email-generation-skill/16-CONTEXT.md (D-05/06/07/09/10/11 — the email spec)
+    - src/app/api/outreach-campaigns/[id]/generation-context/route.ts (the exact contact fields available per email)
+  </read_first>
+  <action>
+    Write voice-guide.md defining the 1:1 networking-email voice. Include these sections. (1) Voice baseline (D-06): conversational by default; modulation is LIGHT — warmer/more personal for a real friend, professional-but-still-casual for a former colleague, shorter/lower-pressure for distant contacts; lean on `howMet` plus the recent interactions more than the numeric `closeness` tier; state explicitly that the ROADMAP tier bands (1-2 conversational / 3-5 professional-warm / 7-8 brief-direct) are a calibration STARTING POINT, not a literal spec. (2) Email anatomy (D-07): a casual short varied subject line (first-name/specific, not templated); greeting literally `Hey <FirstName>,` with the first name from the contact brief; a shared-history hook drawn only from `howMet` / companyAtConnection / roleAtConnection / recent interactions; a soft ask (D-09) adapted per-contact from the campaign `goalInstruction`, always present and low-pressure; sign-off `Steve` or `Thanks, Steve` (first-name only — NOT the full "Steve Bronstein", NOT the `Hey <Company> folks!` cover-letter opener). (3) Length by closeness (D-07): roughly 1-2 sentences for distant/brief contacts up to about 2 short paragraphs for warmer ones. (4) Anti-hallucination contract (D-11 / GEN-04): reference ONLY facts present in the provided contact context plus steve-fact-bank.md; never invent shared history; for `lowContext: true` contacts draw only on `howMet`/company/role and keep it short. (5) LLM-tell scrub — adapt the cover-letter grep block: mark the BLOCKING set (em/en-dashes, plus "leverage", "robust", and generic openers like "I hope this message finds you well") as must-rewrite-before-write-back, and carry the fuller cover-letter banned-term list as ADVISORY. Borrow the honesty rules (match tools/figures to reality; never inflate) in spirit. Do NOT include the `.docx` conversion step or the three-paragraph cover-letter arc. Write the guide itself with plain hyphens only (it documents banning em/en-dashes; it must not contain any).
+  </action>
+  <acceptance_criteria>
+    - grep finds the literal greeting token `Hey <FirstName>,` at least once
+    - the blocking-set section names both `leverage` and `robust`, and references a generic opener such as "I hope this message finds you"
+    - the file contains zero em/en-dash characters (it bans them, written in plain hyphens) — `grep -cP '\x{2014}|\x{2013}'` returns 0
+    - the file references `howMet` (anti-hallucination grounding) and the soft ask derived from `goalInstruction`
+    - the file describes closeness modulation using the words friend / former colleague / distant
+    - `grep -c 'Hey <Company> folks'` returns 0 (cover-letter opener NOT reused — D-05) and the sign-off guidance signs first-name only (no "Steve Bronstein" in the sign-off section)
+  </acceptance_criteria>
+  <verify>
+    <automated>F=.claude/skills/generate-outreach-emails/references/voice-guide.md; test -f "$F" && grep -q 'Hey <FirstName>,' "$F" && ! grep -qP '\x{2014}|\x{2013}' "$F" && grep -qi 'howMet' "$F" && ! grep -q 'Hey <Company> folks' "$F" && echo OK</automated>
+  </verify>
+  <done>voice-guide.md defines the email anatomy (Hey FirstName, hook, soft ask, first-name sign-off), the blocking LLM-tell set, tone-by-closeness, and the anti-hallucination contract; it reuses none of the cover-letter arc and contains no em/en-dashes.</done>
+</task><task type="auto">
+  <name>Task 2: Author references/heimdall-api.md (skill API contract)</name>
+  <files>.claude/skills/generate-outreach-emails/references/heimdall-api.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/references/heimdall-api.md (the structure/auth/envelope template to mirror)
+    - src/app/api/outreach-campaigns/[id]/generation-context/route.ts (the read-once payload shape)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts (write-back body + the new status='generated' behavior from Plan 16-01)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts (the failure write-back contract)
+  </read_first>
+  <action>
+    Write heimdall-api.md mirroring the scrape-linkedin-connections contract doc. Include: an Auth section (`Authorization: Bearer $(cat ~/.heimdall/api-token)`, dev base `http://localhost:4000`, never log the token, the `SHA-256 hash + SINGLE_USER_EMAIL` gate in `src/proxy.ts`); the standard `{ success, data, error, meta }` envelope and status-code table (200/400/401/404/500). Then document exactly THREE endpoints. (1) `GET /api/outreach-campaigns/[id]/generation-context` — the SOLE per-contact data source, read ONCE per run (state this — it OVERRIDES any per-email N+1 GET loop); document the response shape `{ goalInstruction, emails: [ { emailId, contactId, contact:{ firstName, lastName, howMet, companyAtConnection, roleAtConnection, currentCompany, title, closeness, recipientEmail }, interactions:[{ type, summary, occurredAt }], lowContext } ] }`. (2) `PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation` — body `{ generatedSubject, generatedBody }`; note it sets `status='generated'` server-side in the same call (Plan 16-01) so the skill makes ONE call per email, not a content-then-status pair; 400 if the email is not in a state that allows -> generated. (3) `PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status` — body `{ status:'failed', lastError:'<first ~200 chars>' }` for per-email failure (D-12); `lastError` max 500 chars. Include a curl example per endpoint and an error-envelope table (401 -> surface and exit; 400 -> surface the Zod/transition message). Do NOT document campaign CRUD or any endpoint the skill does not call.
+  </action>
+  <acceptance_criteria>
+    - the file documents all three endpoint paths: `generation-context`, `.../generation`, and `.../status`
+    - it contains `Authorization: Bearer` and the `~/.heimdall/api-token` reference and the `http://localhost:4000` base
+    - it states the generation-context call is made ONCE per run (no N+1) and that `/generation` sets status='generated' in one call
+    - it documents the failure write-back as `status:'failed'` with `lastError`
+    - `grep -c 'success'` and a documented `{ success, data, error, meta }` envelope are present
+  </acceptance_criteria>
+  <verify>
+    <automated>F=.claude/skills/generate-outreach-emails/references/heimdall-api.md; test -f "$F" && grep -q 'generation-context' "$F" && grep -q 'Authorization: Bearer' "$F" && grep -q 'localhost:4000' "$F" && grep -q "status:'failed'" "$F" && echo OK</automated>
+  </verify>
+  <done>heimdall-api.md documents bearer auth, the envelope, and exactly the three endpoints the skill calls — generation-context (read once), generation (content+status in one call), and status (failed) — with curl examples.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>skill/CLI → API</td>
+<td>These docs describe how the skill crosses the REST boundary; no executable code is added here</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-16-04</td>
+<td>Information Disclosure</td>
+<td>bearer token in shell history</td>
+<td>mitigate</td>
+<td>heimdall-api.md mandates <code>$(cat ~/.heimdall/api-token)</code> inline and &quot;never log the token&quot; (mirrors the existing skill contract)</td>
+</tr>
+<tr>
+<td>T-16-05</td>
+<td>Tampering</td>
+<td>authored markdown only</td>
+<td>accept</td>
+<td>These two files are documentation; they add no runtime surface and call only existing authenticated endpoints</td>
+</tr>
+<tr>
+<td>T-16-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>accept</td>
+<td>No package installs — the skill uses curl + the existing app, no new dependencies</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- Both files exist under `.claude/skills/generate-outreach-emails/references/`.
+- voice-guide.md contains the email greeting token, the blocking scrub terms, and no em/en-dashes.
+- heimdall-api.md documents exactly the three endpoints with bearer auth and the envelope.
+</verification><success_criteria>
+The two reference docs are authored: voice-guide.md gives the email-specific voice, tone-by-closeness, blocking LLM-tell set, and anti-hallucination contract; heimdall-api.md gives the bearer-auth + 3-endpoint contract the skill follows.
+</success_criteria><output>
+Create `.planning/phases/16-email-generation-skill/16-02-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-02-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

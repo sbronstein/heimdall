@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-03-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-03-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 16-email-generation-skill
+plan: 03
+type: execute
+wave: 2
+depends_on: [&quot;16-01&quot;, &quot;16-02&quot;]
+files_modified:</p>
+<ul>
+<li>.claude/skills/generate-outreach-emails/SKILL.md
+autonomous: true
+requirements: [GEN-01, GEN-02, GEN-04]
+must_haves:
+  truths:<ul>
+<li>&quot;SKILL.md reads all per-contact context in ONE generation-context call and writes each email back with ONE PATCH .../generation call (content+status together)&quot;</li>
+<li>&quot;SKILL.md confirms the pending count (D-03) and shows a 5-email sample spanning relationship types before draining (D-04)&quot;</li>
+<li>&quot;SKILL.md self-checks the blocking LLM-tell set before write-back (D-10), marks per-email failures &#39;failed&#39; and continues (D-12), and ends with a generated/failed/low-context summary&quot;</li>
+<li>&quot;SKILL.md is batch-only on status=&#39;pending&#39; (D-13) — no --email single-regenerate mode and no per-email GET N+1 loop&quot;
+artifacts:</li>
+<li>path: &quot;.claude/skills/generate-outreach-emails/SKILL.md&quot;
+provides: &quot;The generate-outreach-emails skill workflow (confirm -&gt; sample -&gt; chunked drain -&gt; scan -&gt; write-back -&gt; summary)&quot;
+min_lines: 90
+contains: &quot;generation-context&quot;
+key_links:</li>
+<li>from: &quot;.claude/skills/generate-outreach-emails/SKILL.md&quot;
+to: &quot;.claude/skills/generate-outreach-emails/references/voice-guide.md&quot;
+via: &quot;read-first reference&quot;
+pattern: &quot;voice-guide.md&quot;</li>
+<li>from: &quot;.claude/skills/generate-outreach-emails/SKILL.md&quot;
+to: &quot;.claude/skills/generate-outreach-emails/references/heimdall-api.md&quot;
+via: &quot;read-first reference&quot;
+pattern: &quot;heimdall-api.md&quot;</li>
+<li>from: &quot;.claude/skills/generate-outreach-emails/SKILL.md&quot;
+to: &quot;/api/outreach-campaigns/[id]/emails/[emailId]/generation&quot;
+via: &quot;write-back call&quot;
+pattern: &quot;/generation&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Author `SKILL.md` — the `generate-outreach-emails <campaign-id>` workflow that drains a campaign's `pending` emails: confirm the count (D-03), generate a 5-email sample and wait for a thumbs-up (D-04), then drain the rest in bounded chunks (D-01: read context once, author N at a time, write each back before the next), self-correct LLM tells (D-10), write back via `PATCH .../generation` (one call, content+status), mark per-email failures via `PATCH .../status` and continue (D-12), and finish with a generated/failed/low-context summary.<p>Purpose: this file IS the skill — it ties together the route behavior (Plan 16-01) and the two reference docs (Plan 16-02) into the owner-invoked generation flow that satisfies success criteria #1, #2, #4, #5.
+Output: <code>.claude/skills/generate-outreach-emails/SKILL.md</code>.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/phases/16-email-generation-skill/16-CONTEXT.md
+@.claude/skills/scrape-linkedin-connections/SKILL.md
+@.claude/skills/generate-outreach-emails/references/voice-guide.md
+@.claude/skills/generate-outreach-emails/references/heimdall-api.md
+@src/app/api/outreach-campaigns/[id]/generation-context/route.ts<interfaces>
+The skill is owner-invoked: `generate-outreach-emails <campaign-id>` (batch-only, D-13).
+Read once:  GET /api/outreach-campaigns/<id>/generation-context  -> { goalInstruction, emails:[ {emailId, contact{...}, interactions[], lowContext} ] }
+Write back: PATCH /api/outreach-campaigns/<id>/emails/<emailId>/generation  body { generatedSubject, generatedBody }   (sets status='generated' — Plan 16-01)
+On failure: PATCH /api/outreach-campaigns/<id>/emails/<emailId>/status      body { status:'failed', lastError }
+Auth: Authorization: Bearer $(cat ~/.heimdall/api-token); dev base http://localhost:4000.
+Voice + blocking scrub: references/voice-guide.md. Endpoint contract: references/heimdall-api.md.
+Drain key: emails come ONLY from generation-context (status='pending' server-side); a pending row may carry stale generated* — overwrite it (Phase 12 D-05/D-06).
+</interfaces>
+</context><tasks><task type="auto">
+  <name>Task 1: SKILL.md frontmatter, setup, and the upfront gate (count + sample)</name>
+  <files>.claude/skills/generate-outreach-emails/SKILL.md</files>
+  <read_first>
+    - .claude/skills/scrape-linkedin-connections/SKILL.md (frontmatter shape, Setup prerequisites, queue->confirm pattern, mark-failed-and-continue idiom)
+    - .claude/skills/generate-outreach-emails/references/heimdall-api.md (the generation-context read + auth, from Plan 16-02)
+    - .claude/skills/generate-outreach-emails/references/voice-guide.md (the voice the sample must demonstrate, from Plan 16-02)
+    - .planning/phases/16-email-generation-skill/16-CONTEXT.md (D-01/D-03/D-04/D-13)
+  </read_first>
+  <action>
+    Write the top of SKILL.md. (1) YAML frontmatter: `name: generate-outreach-emails`, a `description` covering "drain a campaign's pending outreach emails, author a personalized subject+body per contact in Steve's voice, write back via REST", `argument-hint: '<campaign-id>'`, `allowed-tools: [Read, Bash]`. (2) An Overview that names the two reference docs to read first (`references/heimdall-api.md`, `references/voice-guide.md`) and states the batch-only contract (D-13): the only argument is a campaign id; there is NO `--email <id>` single-regenerate mode (regenerate = the review UI resets a row to `pending` and the owner re-runs). (3) A Setup section listing prerequisites (mirroring scrape-linkedin-connections): `~/.heimdall/api-token` exists, `.env.local` has `API_TOKEN_HASH` + `SINGLE_USER_EMAIL`, dev server on `http://localhost:4000`. (4) Step "Read the queue once": `GET /api/outreach-campaigns/<id>/generation-context` with the bearer header — state this is the SOLE per-contact data source and the skill makes exactly ONE such read per run (explicitly NOT a per-email `GET /api/contacts` + `GET /api/interactions` loop). (5) D-03 confirm gate: report `N pending emails found` and wait for the owner to proceed. (6) D-04 sample gate: select a sample of 5 spanning relationship types (a friend, a former colleague, and distant contacts — use `closeness` + `howMet` to spread; fall back gracefully if a category is absent), author those 5 per voice-guide.md, show them inline (flagging any `lowContext: true` contacts), and wait for a thumbs-up or tone tweaks before draining the rest.
+  </action>
+  <acceptance_criteria>
+    - frontmatter has `name: generate-outreach-emails` and `argument-hint` referencing a campaign id
+    - the file references both `references/voice-guide.md` and `references/heimdall-api.md`
+    - it states the queue is read via `generation-context` exactly ONCE per run (no N+1) — and does NOT instruct a per-email `GET /api/contacts` loop
+    - it describes the D-03 count-confirm gate ("N pending emails found" + wait)
+    - it describes the D-04 sample of 5 spanning relationship types with a wait-for-thumbs-up
+    - it states batch-only / no `--email` single-regenerate mode (D-13)
+  </acceptance_criteria>
+  <verify>
+    <automated>F=.claude/skills/generate-outreach-emails/SKILL.md; test -f "$F" && grep -q 'name: generate-outreach-emails' "$F" && grep -q 'generation-context' "$F" && grep -q 'voice-guide.md' "$F" && grep -q 'heimdall-api.md' "$F" && ! grep -qE 'GET /api/contacts' "$F" && echo OK</automated>
+  </verify>
+  <done>SKILL.md frontmatter + Overview + Setup + read-once queue + the D-03 count gate + D-04 sample gate are authored; batch-only is explicit and no N+1 GET loop appears.</done>
+</task><task type="auto">
+  <name>Task 2: SKILL.md chunked drain, LLM-tell gate, failure handling, and summary</name>
+  <files>.claude/skills/generate-outreach-emails/SKILL.md</files>
+  <read_first>
+    - .claude/skills/generate-outreach-emails/SKILL.md (the file as written in Task 1)
+    - .claude/skills/generate-outreach-emails/references/voice-guide.md (the blocking LLM-tell set the gate enforces, from Plan 16-02)
+    - .claude/skills/generate-outreach-emails/references/heimdall-api.md (the generation + status write-back contracts, from Plan 16-02)
+    - .claude/skills/scrape-linkedin-connections/SKILL.md (the mark-failed-and-continue + end-of-run summary idioms)
+  </read_first>
+  <action>
+    Append the drain workflow to SKILL.md. (1) Chunked drain (D-01): after the sample is approved, process the remaining pending emails in bounded passes (pick a reasonable chunk size, e.g. ~10-15 per pass; the only hard rule is each email is written back BEFORE the next is authored so progress is durable — an interruption leaves the rest `pending` for a re-run). All per-contact facts come from the already-fetched generation-context payload — no re-fetch. (2) Per-email authoring (GEN-02): build subject + body per `references/voice-guide.md`, grounded ONLY in that contact's brief (`howMet`, company/role at-connection and current, `closeness`, the ~3 interactions) plus `steve-fact-bank.md`; never invent shared history (D-11/GEN-04); adapt the campaign `goalInstruction` into the soft ask. (3) Blocking LLM-tell gate (D-10): before write-back, scan each email for the blocking set (em/en-dashes, "leverage", "robust", generic openers like "I hope this message finds you well") — grep-style plus judgment — and rewrite in place until it passes; no email is written back until it clears the blocking scan; the broader voice-guide list is advisory. (4) Write-back: ONE `PATCH /api/outreach-campaigns/<id>/emails/<emailId>/generation` call with `{ generatedSubject, generatedBody }` — the route sets `status='generated'` (Plan 16-01), so do NOT make a separate status call on success. (5) Failure handling (D-12): on a per-email failure, `PATCH .../emails/<emailId>/status` with `{ status:'failed', lastError:'<first ~200 chars>' }` and continue to the next without crashing. (6) Low-context (D-08): for `lowContext: true` contacts, still generate (drawing only on howMet/company/role) and collect them for the summary — NO schema change, NO needsReview column. (7) End-of-run summary: print counts of generated / failed / low-context (and list the low-context + failed contacts). (8) A Constraints section: never touch the DB directly (REST only); never log the bearer token; do not write back an email that fails the blocking scan.
+  </action>
+  <acceptance_criteria>
+    - it describes chunked draining with each email written back before the next is authored (D-01 durability)
+    - it names the blocking LLM-tell gate before write-back including em/en-dashes, "leverage", "robust", and a generic opener — and says no email is written back until it passes
+    - the success write-back is a single `PATCH .../generation` call (content+status together) — it does NOT instruct a separate status='generated' PATCH on success
+    - failure handling is `PATCH .../status` with `status:'failed'` + `lastError` then continue (D-12)
+    - it flags `lowContext` contacts in the run summary and states NO schema/needsReview column is added (D-08)
+    - the end-of-run summary reports generated / failed / low-context counts
+    - a Constraints section forbids direct DB writes and logging the token
+  </acceptance_criteria>
+  <verify>
+    <automated>F=.claude/skills/generate-outreach-emails/SKILL.md; grep -qiE 'leverage' "$F" && grep -qiE 'robust' "$F" && grep -q "status:'failed'" "$F" && grep -qi 'lowContext' "$F" && grep -qiE 'summary' "$F" && grep -q '/generation' "$F" && echo OK</automated>
+  </verify>
+  <done>SKILL.md describes the chunked durable drain, the blocking LLM-tell self-correct gate, the single /generation write-back, mark-failed-and-continue, ephemeral low-context flagging, the run summary, and the REST-only/no-token-logging constraints.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>skill/CLI → API</td>
+<td>The owner-invoked skill sends generated content + status transitions across the REST boundary using a bearer token</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-16-06</td>
+<td>Information Disclosure</td>
+<td>bearer token in shell history / logs</td>
+<td>mitigate</td>
+<td>SKILL.md Constraints mandate <code>$(cat ~/.heimdall/api-token)</code> inline and forbid logging the token</td>
+</tr>
+<tr>
+<td>T-16-07</td>
+<td>Tampering</td>
+<td>unguarded status write</td>
+<td>mitigate</td>
+<td>The skill writes status only via the guarded routes (generation -&gt; canEmailTransition from Plan 16-01; status -&gt; canEmailTransition); it never touches the DB directly</td>
+</tr>
+<tr>
+<td>T-16-08</td>
+<td>Spoofing / Repudiation</td>
+<td>hallucinated content</td>
+<td>mitigate</td>
+<td>Anti-hallucination contract (D-11): emails reference only the generation-context payload + steve-fact-bank.md; no invented history</td>
+</tr>
+<tr>
+<td>T-16-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>accept</td>
+<td>No package installs — the skill uses curl + the existing app, no new dependencies</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `.claude/skills/generate-outreach-emails/SKILL.md` exists with valid frontmatter (`name`, `argument-hint`, `allowed-tools`).
+- It references both reference docs and reads generation-context exactly once (no N+1).
+- It describes the D-03 confirm, D-04 sample, D-01 chunked drain, D-10 blocking scan, single /generation write-back, D-12 failure handling, and the run summary.
+</verification><success_criteria>
+SKILL.md is the complete owner-invoked workflow: confirm count -> 5-email sample gate -> chunked durable drain reading context once and writing each email back with one /generation call -> blocking LLM-tell gate -> mark-failed-and-continue -> generated/failed/low-context summary, batch-only with no N+1 and no schema change.
+</success_criteria><output>
+Create `.planning/phases/16-email-generation-skill/16-03-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-03-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

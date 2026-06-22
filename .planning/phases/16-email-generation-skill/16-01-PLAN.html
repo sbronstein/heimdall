@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-01-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-01-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 16-email-generation-skill
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+files_modified:</p>
+<ul>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</li>
+<li>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts
+autonomous: true
+requirements: [GEN-01]
+must_haves:
+  truths:<ul>
+<li>&quot;PATCH .../generation advances a pending email to status=&#39;generated&#39; in the same UPDATE that writes content&quot;</li>
+<li>&quot;A source status that the state machine does not allow → generated is rejected 400 and the email is NOT advanced&quot;</li>
+<li>&quot;Exactly one timeline event is emitted per write-back&quot;
+artifacts:</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts&quot;
+provides: &quot;Guarded status=&#39;generated&#39; write-back (content + status + timestamps in one UPDATE)&quot;
+contains: &quot;canEmailTransition&quot;</li>
+<li>path: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts&quot;
+provides: &quot;PGlite route test: pending→generated 200; invalid-source→400&quot;
+key_links:</li>
+<li>from: &quot;src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts&quot;
+to: &quot;src/features/outreach/lib/email-status.ts&quot;
+via: &quot;import canEmailTransition&quot;
+pattern: &quot;canEmailTransition\(&quot;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<objective>
+Close the D-02 gap: the `/generation` write-back route currently writes `generatedSubject/generatedBody/generatedAt/updatedAt` but leaves `status='pending'`, so generated emails never advance — contradicting ROADMAP success criterion #1. Edit the route to also set `status='generated'`, gated through `canEmailTransition(email.status, 'generated')`, in the same UPDATE (one call, one timeline event). This is the only application-code change in Phase 16.<p>Purpose: success criterion #1 (&quot;running the skill advances all pending emails to generated&quot;) only holds once the route flips status. The skill (Plan 16-03) makes a single <code>PATCH .../generation</code> call per email and relies on this behavior.
+Output: edited route + a PGlite transition test pinning the guard.
+</objective></p>
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context><context>
+@.planning/PROJECT.md
+@.planning/STATE.md
+@.planning/phases/16-email-generation-skill/16-CONTEXT.md<interfaces>
+From src/features/outreach/lib/email-status.ts:
+```typescript
+export function canEmailTransition(from: string, to: string): boolean;
+// validEmailTransitions.pending = ['generated', 'failed']  -> pending→generated is allowed
+// 'approved' / 'drafted' / 'generated' do NOT allow → 'generated' (these are the 400 cases)
+```<p>Current route (src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts):</p>
+<ul>
+<li>Zod: { generatedSubject: string().min(1).max(500), generatedBody: string().min(1) }</li>
+<li>Does an UPDATE...returning directly (no prior SELECT), sets generated* + generatedAt + updatedAt, NOT status</li>
+<li>Emits one timeline event: eventType &#39;outreach_email_generated&#39;</li>
+</ul>
+<p>Closest analog for the guard pattern — src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts:</p>
+<ul>
+<li>SELECT email campaign-scoped → notFound(&#39;Email&#39;) if missing</li>
+<li>if (!canEmailTransition(email.status, newStatus)) return validationError(<code>Invalid transition: ${email.status} -&gt; ${newStatus}</code>)</li>
+<li>then UPDATE...set({ status, updatedAt: new Date() })...where(and(eq(id), eq(campaignId)))</li>
+</ul>
+<p>Route test harness — src/app/api/job-leads/[id]/status/route.test.ts:</p>
+<ul>
+<li>createTestDb() from @/test-utils/pglite, callRoute from @/test-utils/call-route</li>
+<li>vi.hoisted + Proxy db-mock pattern; params: { id, emailId }</interfaces>
+</context></li>
+</ul>
+<tasks><task type="auto">
+  <name>Task 1: Gate the /generation write-back to also set status='generated'</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</files>
+  <read_first>
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts (the file being edited)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts (the SELECT→guard→UPDATE analog)
+    - src/features/outreach/lib/email-status.ts (canEmailTransition + validEmailTransitions)
+  </read_first>
+  <action>
+    Restructure the PATCH handler to mirror the SELECT→guard→UPDATE shape of the sibling `status/route.ts`, keeping the existing Zod schema (`generatedSubject`, `generatedBody`) unchanged. (1) Add a campaign-scoped SELECT of the email row by `(emailId, campaignId)` before the UPDATE; return `notFound('Email')` if absent. (2) Import `canEmailTransition` from `@/features/outreach/lib/email-status` and guard: if `!canEmailTransition(email.status, 'generated')` return `validationError(\`Invalid transition: ${email.status} -> generated\`)`. (3) In the single UPDATE `.set({...})`, ADD `status: 'generated'` alongside the existing `generatedSubject`, `generatedBody`, `generatedAt: new Date()`, and `updatedAt: new Date()` — one UPDATE, no second status call. (4) Keep the existing single `logTimeline({ eventType: 'outreach_email_generated', ... })` call exactly as one event. Preserve the existing ZodError → validationError and serverError catch arms. Do NOT reimplement the transition table; import it. The guard intentionally only permits the write-back when the email is in a `pending` state (the only state the machine allows → generated), which matches the skill's pending-only drain (Phase 12 D-05/D-06).
+  </action>
+  <acceptance_criteria>
+    - `grep -c "canEmailTransition(" src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts` returns >= 1
+    - `grep -c "status: 'generated'" src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts` returns >= 1
+    - `grep -c "logTimeline(" src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts` returns exactly 1 (single timeline event)
+    - `grep -c "from '@/features/outreach/lib/email-status'" src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts` returns 1
+    - The Zod schema still validates `generatedSubject` and `generatedBody` only (no new request fields added)
+  </acceptance_criteria>
+  <verify>
+    <automated>npx tsc --noEmit 2>&1 | grep -c "generation/route" | grep -q '^0$' && echo "typecheck clean for route"</automated>
+  </verify>
+  <done>The route sets status='generated' via a canEmailTransition guard in the same UPDATE that writes content, returns 400 on a disallowed source state, 404 on missing email, and emits exactly one timeline event.</done>
+</task><task type="auto" tdd="true">
+  <name>Task 2: PGlite transition test for the /generation write-back</name>
+  <files>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts</files>
+  <read_first>
+    - src/app/api/job-leads/[id]/status/route.test.ts (PGlite + callRoute + vi.hoisted Proxy harness to copy)
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts (the route under test, as edited in Task 1)
+    - drizzle/schema/outreach-emails.ts and drizzle/schema/outreach-campaigns.ts (columns + FK shape for fixtures)
+  </read_first>
+  <behavior>
+    - Test 1: a `pending` email PATCHed with `{ generatedSubject, generatedBody }` returns 200 and the returned row has `status: 'generated'`, non-null `generatedAt`, and the written subject/body.
+    - Test 2: an email seeded in `approved` status PATCHed with valid content returns 400 with an "Invalid transition" error and its status is unchanged (still `approved`).
+    - Test 3 (optional, if cheap): a non-existent emailId returns 404.
+  </behavior>
+  <action>
+    Create the test mirroring `job-leads/[id]/status/route.test.ts`: `createTestDb()` from `@/test-utils/pglite`, `callRoute` from `@/test-utils/call-route`, and the `vi.hoisted` + Proxy `@/lib/db` mock. In `beforeEach`, seed one `outreach_campaigns` row (with a `goalInstruction`) and a linked `contacts` row, then insert `outreach_emails` fixtures. Import the route via `await import('@/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route')` and invoke `PATCH` with `params: { id: campaignId, emailId }`. Assert the three behaviors above against the `{ success, data }` envelope. Use the exact column names from `drizzle/schema/outreach-emails.ts`.
+  </action>
+  <acceptance_criteria>
+    - `npm test -- src/app/api/outreach-campaigns` exits 0 with the new test file passing
+    - The test asserts `status === 'generated'` on the pending→generated path
+    - The test asserts a 400 / "Invalid transition" on the approved-source path and that status stays 'approved'
+  </acceptance_criteria>
+  <verify>
+    <automated>npm test -- src/app/api/outreach-campaigns/\[id\]/emails/\[emailId\]/generation/route.test.ts</automated>
+  </verify>
+  <done>The route test passes: pending→generated returns 200 with status='generated'; a disallowed source state returns 400 and does not advance.</done>
+</task></tasks><threat_model>
+## Trust Boundaries<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>skill/CLI → API</td>
+<td>The skill sends untrusted generated content + a status transition across the REST boundary</td>
+</tr>
+</tbody></table>
+<h2>STRIDE Threat Register</h2>
+<table>
+<thead>
+<tr>
+<th>Threat ID</th>
+<th>Category</th>
+<th>Component</th>
+<th>Disposition</th>
+<th>Mitigation Plan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-16-01</td>
+<td>Tampering</td>
+<td>PATCH .../generation status write</td>
+<td>mitigate</td>
+<td>Status only moves via <code>canEmailTransition(email.status,&#39;generated&#39;)</code>; disallowed source states return 400 — no unguarded status writes</td>
+</tr>
+<tr>
+<td>T-16-02</td>
+<td>Elevation</td>
+<td>/api/* auth</td>
+<td>accept</td>
+<td>Bearer-token + single-user gate in <code>src/proxy.ts</code> already covers every <code>/api/*</code> route; this edit adds no new auth surface</td>
+</tr>
+<tr>
+<td>T-16-03</td>
+<td>Spoofing</td>
+<td>campaign/email scoping</td>
+<td>mitigate</td>
+<td>UPDATE and SELECT both scoped to <code>(emailId, campaignId)</code> — an email cannot be advanced under the wrong campaign</td>
+</tr>
+<tr>
+<td>T-16-SC</td>
+<td>Tampering</td>
+<td>npm/pip/cargo installs</td>
+<td>accept</td>
+<td>No package installs in Phase 16 — no new dependencies added</td>
+</tr>
+<tr>
+<td></threat_model></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<verification>
+- `npm test -- src/app/api/outreach-campaigns` passes (transition test green).
+- `npx tsc --noEmit` reports no new errors in the edited route.
+- The route imports (not reimplements) `canEmailTransition`.
+</verification><success_criteria>
+PATCH .../generation advances a pending email to `generated` with content written, rejects disallowed source states with 400, emits exactly one timeline event, and is pinned by a passing PGlite test.
+</success_criteria><output>
+Create `.planning/phases/16-email-generation-skill/16-01-SUMMARY.md` when done.
+</output>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-01-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

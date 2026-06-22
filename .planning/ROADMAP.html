@@ -186,9 +186,14 @@ img { max-width: 100%; height: auto; }
 <li>Generated emails reference only facts present in the provided contact context (howMet, company/role, logged interactions, closeness); low-context contacts (fewer than 2 logged interactions) are flagged in the write-back</li>
 <li>Generated tone is calibrated to closeness tier — conversational for tiers 1–2, professional-warm for tiers 3–5, brief and direct for tiers 7–8</li>
 <li>Every generated email passes a built-in LLM-tell scan: no em-dashes, &quot;leverage&quot;, &quot;robust&quot;, or generic openers like &quot;I hope this message finds you well&quot;</li>
-<li>When generation fails for a contact, that email is marked <code>failed</code> and the skill continues to the next without crashing
-<strong>Plans</strong>: TBD</li>
+<li>When generation fails for a contact, that email is marked <code>failed</code> and the skill continues to the next without crashing</li>
 </ol>
+<p><strong>Plans</strong>: 3 plans (Wave 1: 16-01 + 16-02 parallel; Wave 2: 16-03)</p>
+<ul>
+<li>[ ] 16-01-PLAN.md — D-02 route edit: PATCH .../generation also sets <code>status='generated'</code> via <code>canEmailTransition</code> + PGlite transition test (GEN-01) (Wave 1)</li>
+<li>[ ] 16-02-PLAN.md — Skill reference docs: new <code>voice-guide.md</code> (email voice + blocking LLM-tell scrub + anti-hallucination) + <code>heimdall-api.md</code> (3-endpoint contract) (GEN-02, GEN-03, GEN-04) (Wave 1)</li>
+<li>[ ] 16-03-PLAN.md — <code>SKILL.md</code> workflow: confirm count → 5-email sample gate → chunked durable drain → blocking scan → single /generation write-back → mark-failed-continue → summary (GEN-01, GEN-02, GEN-04) (Wave 2)</li>
+</ul>
 <h3>Phase 17: Gmail Drafting and Email Discovery Skill</h3>
 <p><strong>Goal</strong>: Approved emails are pushed to Gmail as drafts (never sent), contacts without stored emails have addresses discovered from Gmail thread history, and LinkedIn-only contacts are clearly flagged
 <strong>Depends on</strong>: Phase 15 (approve gate), Phase 16 (generated content); Gmail MCP already connected — no OAuth setup required
@@ -323,8 +328,8 @@ img { max-width: 100%; height: auto; }
 <tr>
 <td>16. Email Generation Skill</td>
 <td>v1.2</td>
-<td>0/TBD</td>
-<td>Not started</td>
+<td>0/3</td>
+<td>Planned</td>
 <td>-</td>
 </tr>
 <tr>
@@ -336,7 +341,7 @@ img { max-width: 100%; height: auto; }
 </tr>
 </tbody></table>
 <hr>
-<p><em>Last updated: 2026-06-21 — Phase 15 planned (3 plans: helpers+card, server approve gate+input hardening, review-page container; Wave 1 = 15-01∥15-02, Wave 2 = 15-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–14 complete).</em></p>
+<p><em>Last updated: 2026-06-22 — Phase 16 planned (3 plans: D-02 route edit + transition test; the two skill reference docs voice-guide.md + heimdall-api.md; SKILL.md workflow. Wave 1 = 16-01 ∥ 16-02, Wave 2 = 16-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–15 complete).</em></p>
 
 
 
