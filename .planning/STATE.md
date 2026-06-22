@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Networking Outreach Campaigns
 status: executing
 stopped_at: Phase 17 context gathered
-last_updated: "2026-06-22T22:09:34.881Z"
-last_activity: 2026-06-22 -- Phase 17 execution started
+last_updated: "2026-06-22T22:23:43.698Z"
+last_activity: 2026-06-22
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 21
-  completed_plans: 18
-  percent: 86
+  completed_plans: 21
+  percent: 100
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-20)
 ## Current Position
 
 Phase: 17 (gmail-drafting-and-email-discovery-skill) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 17
-Last activity: 2026-06-22 -- Phase 17 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-06-22
 
 ## Phase Rail
 
@@ -66,6 +66,7 @@ Last activity: 2026-06-22 -- Phase 17 execution started
 *Updated after each plan completion*
 | Phase 09 P01 | 11m | 2 tasks | 4 files |
 | Phase 11 P03 | 12 | 2 tasks | 2 files |
+| Phase 17 P03 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - v1.2 generation boundary: all AI generation runs in the `generate-outreach-emails` skill, never in an API route (Vercel 60-second timeout would be exceeded for a full campaign).
 - v1.2 N+1 prevention: bulk INSERT with `onConflictDoNothing()` for campaign creation; dedicated generation-context endpoint for the skill to fetch all contact data in one call.
 - [Phase ?]: Phase 11 TDD: state machine + schema regression tests pin REV-05 and T-11-06/T-11-07 against regression
+- [Phase ?]: Gmail tool allowlist (search_threads, get_thread, create_draft, list_drafts) + pre-run grep gate; zero send-family calls in skill dir
+- [Phase ?]: Exactly one distinct direct-thread address matched by contact name; 2+ ambiguous (unset, no guess, D-04); 0 = linkedin_message (D-04b)
+- [Phase ?]: approved→failed is illegal state-machine transition; leave email approved on draft failure, report in summary only
 
 ### Pending Todos
 
@@ -135,7 +139,7 @@ Items acknowledged and deferred at v1.1 milestone close (2026-06-20):
 
 ## Session Continuity
 
-Last session: 2026-06-22T21:24:24.541Z
+Last session: 2026-06-22T22:23:37.174Z
 Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-gmail-drafting-and-email-discovery-skill/17-CONTEXT.md
+Resume file: None
 Next action: `/gsd:execute-phase 11` (resume with Plan 02 — inferred types + state machine)

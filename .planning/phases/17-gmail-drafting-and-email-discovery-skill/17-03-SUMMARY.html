@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-03-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-03-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 17-gmail-drafting-and-email-discovery-skill
+plan: &quot;03&quot;
+subsystem: skill
+tags: [gmail-mcp, outreach, drafting, email-discovery, claude-skill]</p>
+<p>requires:</p>
+<ul>
+<li>phase: 17-gmail-drafting-and-email-discovery-skill-01
+provides: &quot;D-01 /draft route edit — atomic status+contact write-back&quot;</li>
+<li>phase: 17-gmail-drafting-and-email-discovery-skill-02
+provides: &quot;heimdall-api.md REST contract for the four endpoints&quot;</li>
+</ul>
+<p>provides:</p>
+<ul>
+<li>&quot;draft-outreach-emails SKILL.md — discover-then-draft batch workflow&quot;</li>
+<li>&quot;D-06 Gmail tool allowlist (4 tools) + pre-run grep gate in SKILL.md&quot;</li>
+<li>&quot;D-03 strict accept rule: direct thread participant, name-matched, exactly-one-address&quot;</li>
+<li>&quot;D-02 idempotent create-and-repoint for re-draft (no update_draft needed)&quot;</li>
+<li>&quot;Ambiguous candidate handling (D-04): leave unset, list in summary, no schema change&quot;</li>
+<li>&quot;LinkedIn fallback (D-04b): channel=linkedin_message when 0 addresses found&quot;</li>
+<li>&quot;End-of-run summary with 6 counters + ambiguous list + failed list&quot;</li>
+</ul>
+<p>affects:</p>
+<ul>
+<li>outreach-campaigns</li>
+<li>email-discovery</li>
+<li>gmail-mcp-skills</li>
+</ul>
+<p>tech-stack:
+  added: []
+  patterns:
+    - &quot;discover-then-draft batch workflow: queue read → confirm gate → discovery → drafting → summary&quot;
+    - &quot;Gmail MCP allowlist in SKILL.md frontmatter + grep gate for send-safety&quot;
+    - &quot;D-03 strict accept rule: name-matched direct thread participant only&quot;
+    - &quot;Idempotent skill: approved queue never contains drafted; stale gmailDraftId signals re-draft&quot;</p>
+<p>key-files:
+  created:
+    - .claude/skills/draft-outreach-emails/SKILL.md
+    - .claude/skills/draft-outreach-emails/SKILL.html
+  modified: []</p>
+<p>key-decisions:</p>
+<ul>
+<li>&quot;D-06: allowed-tools lists exactly 4 Gmail tools (search_threads, get_thread, create_draft, list_drafts); no send/trash/update tools&quot;</li>
+<li>&quot;D-03: accept exactly one distinct direct-thread address matched by contact name; 2+ = ambiguous (unset, no guess); 0 = linkedin_message&quot;</li>
+<li>&quot;D-02: re-draft = create-fresh + repoint; no update_draft needed (not available on connected MCP)&quot;</li>
+<li>&quot;Pitfall 1: approved→failed is illegal; leave approved, report in summary only (never call /status)&quot;</li>
+<li>&quot;D-04: ambiguous candidates are ephemeral (run summary only, no candidates column)&quot;</li>
+</ul>
+<p>patterns-established:</p>
+<ul>
+<li>&quot;Pattern: skill discover-then-draft batch workflow mirrors generate-outreach-emails structure&quot;</li>
+<li>&quot;Pattern: pre-run grep gate documents send-safety invariant and is verifiable by operator&quot;</li>
+</ul>
+<p>requirements-completed: [DISC-01, DISC-02, DISC-03, DRFT-01, DRFT-02, DRFT-03, DRFT-04]</p>
+<h2>duration: 3min
+completed: 2026-06-22</h2>
+<h1>Phase 17 Plan 03: draft-outreach-emails SKILL.md Summary</h1>
+<p><strong><code>draft-outreach-emails</code> skill delivering discover-then-draft batch workflow with strict D-03 name-matched accept rule, idempotent create-and-repoint drafting, D-06 Gmail allowlist + grep gate, and locked approved→failed-avoidance</strong></p>
+<h2>Performance</h2>
+<ul>
+<li><strong>Duration:</strong> 3 min</li>
+<li><strong>Started:</strong> 2026-06-22T22:18:25Z</li>
+<li><strong>Completed:</strong> 2026-06-22T22:21:30Z</li>
+<li><strong>Tasks:</strong> 2</li>
+<li><strong>Files modified:</strong> 2 (SKILL.md created, SKILL.html generated)</li>
+</ul>
+<h2>Accomplishments</h2>
+<ul>
+<li>Wrote <code>.claude/skills/draft-outreach-emails/SKILL.md</code> (491 lines) encoding the full discover-then-draft batch workflow</li>
+<li>Encoded the strict D-03 accept rule: direct thread participant, name-matched (Pitfall 3), deduplicated (Pitfall 4), exactly-one-address → accept, 2+ → ambiguous (unset, no guess, D-04), 0 → linkedin_message (D-04b)</li>
+<li>Enforced D-06 send-safety: <code>allowed-tools</code> lists exactly 4 Gmail tools; Constraints section documents the pre-run grep gate; zero send-family tool names anywhere in the skill directory</li>
+<li>Encoded idempotent D-02 create-and-repoint: null gmailDraftId → new draft; non-null (stale) → create fresh + repoint via <code>/draft</code>; already-drafted emails skip automatically (never in approved queue)</li>
+<li>Encoded Pitfall 1: approved→failed is an illegal state-machine transition; on failure leave email <code>approved</code>, add to in-memory failed list, report in summary only</li>
+<li>End-of-run summary with 6 counters (drafted / skipped-archived / discovered / ambiguous / linkedin-fallback / failed) plus ambiguous-candidate list and failed list</li>
+</ul>
+<h2>Task Commits</h2>
+<ol>
+<li><strong>Task 1: Frontmatter, setup, queue read, confirm gate</strong> - <code>589ddd5</code> (feat)</li>
+<li><strong>Task 2: Discovery loop, drafting loop, summary, send-safety constraints + HTML</strong> - <code>dc9b84a</code> (feat)</li>
+</ol>
+<h2>Files Created/Modified</h2>
+<ul>
+<li><code>.claude/skills/draft-outreach-emails/SKILL.md</code> - Full discover-then-draft skill (491 lines)</li>
+<li><code>.claude/skills/draft-outreach-emails/SKILL.html</code> - HTML companion generated by md-to-html.mjs</li>
+</ul>
+<h2>Decisions Made</h2>
+<p>All decisions followed the locked constraints from 17-CONTEXT.md and 17-RESEARCH.md:</p>
+<ul>
+<li>D-06 allowlist enforced: <code>mcp__gmail__search_threads</code>, <code>mcp__gmail__get_thread</code>, <code>mcp__gmail__create_draft</code>, <code>mcp__gmail__list_drafts</code> only</li>
+<li>D-03 accept rule encoded verbatim with Pitfall 3 (name-match filter) and Pitfall 4 (dedup)</li>
+<li>D-02 recreate-and-repoint (confirmed: no update_draft tool on connected MCP)</li>
+<li>Pitfall 1: approved→failed avoidance explicitly documented in Constraints and Step 4c</li>
+</ul>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written. Task 2 acceptance criteria were satisfied by the Task 1 implementation (full SKILL.md was written in one pass, not appended), which is strictly within scope.</p>
+<h2>Issues Encountered</h2>
+<p>None. All acceptance criteria passed on first verification run.</p>
+<h2>Known Stubs</h2>
+<p>None. The skill is a workflow document; it contains no hardcoded data values or placeholders that flow to UI rendering. Gmail MCP tool parameter shapes are noted as <code>[ASSUMED]</code> per the research brief — this is correct behavior (executor must validate at run time per Assumptions A1-A4), not a stub.</p>
+<h2>Threat Flags</h2>
+<p>No new threat surface introduced beyond what is documented in the plan&#39;s threat model (T-17-07 through T-17-11). The skill directory contains zero send-family Gmail tool names (verified by grep gate). Discovered addresses are written only via <code>PATCH .../recipient</code>; ambiguous addresses are ephemeral (run summary only).</p>
+<h2>Self-Check</h2>
+<p><strong>Files exist:</strong></p>
+<ul>
+<li><code>.claude/skills/draft-outreach-emails/SKILL.md</code> ✓</li>
+<li><code>.claude/skills/draft-outreach-emails/SKILL.html</code> ✓</li>
+</ul>
+<p><strong>Commits exist:</strong></p>
+<ul>
+<li><code>589ddd5</code> ✓</li>
+<li><code>dc9b84a</code> ✓</li>
+</ul>
+<p><strong>D-06 safety gate:</strong></p>
+<p><code>grep -riE &quot;mcp__gmail__(send|drafts_send|trash|delete|update_draft|import|modify)&quot; .claude/skills/draft-outreach-emails/</code> → zero matches ✓</p>
+<h2>Self-Check: PASSED</h2>
+<h2>Next Phase Readiness</h2>
+<p>Phase 17 is now complete (plans 01 + 02 + 03 all done):</p>
+<ul>
+<li>Plan 01: <code>/draft</code> route D-01 edit (atomic status + contact write-back)</li>
+<li>Plan 02: <code>references/heimdall-api.md</code> REST contract</li>
+<li>Plan 03: <code>SKILL.md</code> full workflow</li>
+</ul>
+<p>The <code>draft-outreach-emails</code> skill is ready for a manual smoke test against a real campaign per the phase-gate criteria in the plan verification section.</p>
+<hr>
+<p><em>Phase: 17-gmail-drafting-and-email-discovery-skill</em>
+<em>Completed: 2026-06-22</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-03-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

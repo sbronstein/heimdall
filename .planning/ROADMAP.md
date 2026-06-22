@@ -44,7 +44,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 - [x] **Phase 14: Campaign Builder UI** — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner's ability to name and save a campaign from the browser (completed 2026-06-21)
 - [x] **Phase 15: Review and Approval UI** — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header (completed 2026-06-21)
 - [x] **Phase 16: Email Generation Skill** — `generate-outreach-emails` Claude Code skill: drains the pending queue, personalizes emails from CRM context with closeness-tier tone and LLM-tell guardrails, writes back via REST (completed 2026-06-22)
-- [ ] **Phase 17: Gmail Drafting and Email Discovery Skill** — `draft-outreach-emails` Claude Code skill: discovers emails via Gmail thread search, creates Gmail drafts (never sends), idempotent on retry, logs timeline events, flags LinkedIn-only contacts
+- [x] **Phase 17: Gmail Drafting and Email Discovery Skill** — `draft-outreach-emails` Claude Code skill: discovers emails via Gmail thread search, creates Gmail drafts (never sends), idempotent on retry, logs timeline events, flags LinkedIn-only contacts (completed 2026-06-22)
 
 ## Phase Details
 
@@ -151,7 +151,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 **Plans**: 3 plans (Wave 1: 17-01 + 17-02 parallel; Wave 2: 17-03)
 - [x] 17-01-PLAN.md — D-01 `/draft` route edit: atomic gmailDraftId + status='drafted' (canEmailTransition-gated) + contact outreachStatus='reached_out' + timeline; Wave-0 curl regression (DRFT-04, DRFT-05) (Wave 1)
 - [x] 17-02-PLAN.md — `references/heimdall-api.md` REST contract: work-queue read + recipient/draft/status endpoints (DISC-01..03, DRFT-01/04/05) (Wave 1)
-- [ ] 17-03-PLAN.md — `SKILL.md` discover-then-draft workflow: D-03 discovery, idempotent create-and-repoint, D-06 allowlist + grep gate, run summary (DISC-01..03, DRFT-01/02/03/04) (Wave 2)
+- [x] 17-03-PLAN.md — `SKILL.md` discover-then-draft workflow: D-03 discovery, idempotent create-and-repoint, D-06 allowlist + grep gate, run summary (DISC-01..03, DRFT-01/02/03/04) (Wave 2)
 **Research note**: Gmail MCP `search_threads`/`get_thread`/`create_draft` param + response shapes are [ASSUMED] (Gmail API v1 conventions); the executor validates exact shapes at run time. D-03 accept rule (single confirmed direct thread participant) is locked — research informs extraction mechanics only.
 
 ## Progress
@@ -176,7 +176,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 15. Review and Approval UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 16. Email Generation Skill | v1.2 | 3/3 | Complete    | 2026-06-22 |
-| 17. Gmail Drafting and Email Discovery Skill | v1.2 | 2/3 | In Progress|  |
+| 17. Gmail Drafting and Email Discovery Skill | v1.2 | 3/3 | Complete   | 2026-06-22 |
 
 ---
 *Last updated: 2026-06-22 — Phase 17 planned (3 plans: D-01 /draft route edit + curl regression; heimdall-api.md reference; SKILL.md discover-then-draft workflow. Wave 1 = 17-01 ∥ 17-02, Wave 2 = 17-03). Phase 16 planned (3 plans: D-02 route edit + transition test; the two skill reference docs voice-guide.md + heimdall-api.md; SKILL.md workflow. Wave 1 = 16-01 ∥ 16-02, Wave 2 = 16-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–15 complete).*

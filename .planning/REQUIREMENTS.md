@@ -43,16 +43,16 @@ Requirements for this milestone. Each maps to exactly one roadmap phase (see Tra
 
 ### Email Discovery (DISC)
 
-- [ ] **DISC-01**: For approved emails on contacts without a stored address, the drafting skill discovers an email via Gmail thread search (`mcp__gmail__search_threads` / `get_thread`)
-- [ ] **DISC-02**: Discovery requires at least two matching signals; ambiguous multi-match candidates surface in the review UI for manual selection; a discovered address is written back to the email row
-- [ ] **DISC-03**: When no email is found by any method, the contact is flagged for a LinkedIn message (`channel = linkedin_message`) — never silently dropped
+- [x] **DISC-01**: For approved emails on contacts without a stored address, the drafting skill discovers an email via Gmail thread search (`mcp__gmail__search_threads` / `get_thread`)
+- [x] **DISC-02**: Discovery requires at least two matching signals; ambiguous multi-match candidates surface in the review UI for manual selection; a discovered address is written back to the email row
+- [x] **DISC-03**: When no email is found by any method, the contact is flagged for a LinkedIn message (`channel = linkedin_message`) — never silently dropped
 
 ### Gmail Drafting (DRFT)
 
-- [ ] **DRFT-01**: User can run a skill that creates a Gmail draft for each approved email that has a recipient
-- [ ] **DRFT-02**: The drafting skill NEVER sends — it only ever calls `create_draft` (hard safety invariant; verified by a code-review/grep checklist before any real run)
-- [ ] **DRFT-03**: Drafting is idempotent — re-running does not create duplicate drafts (checks `gmailDraftId`; updates the existing draft in place when re-drafting an edited email)
-- [ ] **DRFT-04**: Each created draft stores the Gmail draft id back on the email, marks it `drafted`, and logs a `timeline_events` row
+- [x] **DRFT-01**: User can run a skill that creates a Gmail draft for each approved email that has a recipient
+- [x] **DRFT-02**: The drafting skill NEVER sends — it only ever calls `create_draft` (hard safety invariant; verified by a code-review/grep checklist before any real run)
+- [x] **DRFT-03**: Drafting is idempotent — re-running does not create duplicate drafts (checks `gmailDraftId`; updates the existing draft in place when re-drafting an edited email)
+- [x] **DRFT-04**: Each created draft stores the Gmail draft id back on the email, marks it `drafted`, and logs a `timeline_events` row
 - [ ] **DRFT-05**: Drafting an email updates the contact's `outreachStatus` to `reached_out`
 
 ## Future Requirements (v1.x / v2)
@@ -114,13 +114,13 @@ Which phases cover which requirements. Updated during roadmap creation (2026-06-
 | REV-04 | Phase 15 | Pending |
 | REV-05 | Phase 11 | Complete |
 | REV-06 | Phase 15 | Pending |
-| DISC-01 | Phase 17 | Pending |
-| DISC-02 | Phase 17 | Pending |
-| DISC-03 | Phase 17 | Pending |
-| DRFT-01 | Phase 17 | Pending |
-| DRFT-02 | Phase 17 | Pending |
-| DRFT-03 | Phase 17 | Pending |
-| DRFT-04 | Phase 17 | Pending |
+| DISC-01 | Phase 17 | Complete |
+| DISC-02 | Phase 17 | Complete |
+| DISC-03 | Phase 17 | Complete |
+| DRFT-01 | Phase 17 | Complete |
+| DRFT-02 | Phase 17 | Complete |
+| DRFT-03 | Phase 17 | Complete |
+| DRFT-04 | Phase 17 | Complete |
 | DRFT-05 | Phase 17 | Pending |
 
 **Coverage:**
