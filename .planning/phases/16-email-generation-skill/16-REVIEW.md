@@ -14,8 +14,19 @@ findings:
   warning: 4
   info: 0
   total: 7
-status: issues_found
+status: resolved
+resolved: 2026-06-22
+resolution_commits:
+  - 7645586  # CR-01/02/03 skill fixes
+  - 1ee8c36  # WR-01/02/03 route hardening + ownership test
+  - a99128a  # WR-04 heimdall-api Run Protocol
 ---
+
+> **Resolution (2026-06-22):** All 7 findings (3 critical + 4 warning) were fixed inline during
+> execute-phase before verification. CR-01 (jq-escaped write-backs), CR-02 (Step 3 sample
+> persistence), CR-03 (skill-local steve-fact-bank.md). WR-01 (400 on bad JSON), WR-02 (empty
+> .returning() guard), WR-03 (CD-06 ownership test — suite now 4/4), WR-04 (sample gate in the
+> heimdall-api Run Protocol). See resolution_commits above.
 
 # Phase 16: Code Review Report
 
