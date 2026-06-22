@@ -63,6 +63,7 @@ requirements: [DRFT-04, DRFT-05]</li>
 </ul>
 <p>must_haves:
   truths:
+    - &quot;D-01: the /draft write-back route does all four success-#1 effects atomically in one request — store gmailDraftId, transition status to drafted (gated by canEmailTransition), set the linked contact&#39;s outreachStatus to reached_out, and log the outreach_email_drafted timeline event&quot;
     - &quot;PATCH .../draft on an approved email stores gmailDraftId, transitions status to drafted, sets the linked contact&#39;s outreachStatus to reached_out, and logs an outreach_email_drafted timeline event — all in one request&quot;
     - &quot;PATCH .../draft on an email whose status is not approved returns 400 with an &#39;Invalid transition&#39; message and mutates nothing&quot;
   artifacts:

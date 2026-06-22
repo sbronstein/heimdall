@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-RESEARCH.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-RESEARCH.md</code> · Rendered from markdown · May lag behind</div>
 
 <h1>Phase 17: Gmail Drafting and Email Discovery Skill - Research</h1>
 <p><strong>Researched:</strong> 2026-06-22
@@ -800,27 +800,24 @@ const validEmailTransitions: Record&lt;string, string[]&gt; = {
 </tbody></table>
 <p><strong>If A5 is wrong:</strong> Omit <code>contactId</code> from the <code>logTimeline</code> call in D-01 — the existing behavior (no contactId on the event) is acceptable. The timeline event still logs correctly.</p>
 <hr>
-<h2>Open Questions</h2>
+<h2>Open Questions (RESOLVED)</h2>
 <ol>
-<li><p><strong><code>logTimeline</code> contactId field support</strong></p>
+<li><p><strong><code>logTimeline</code> contactId field support</strong> — <strong>RESOLVED: supported.</strong></p>
 <ul>
-<li>What we know: the existing <code>/draft</code> route calls <code>logTimeline</code> without <code>contactId</code>. The function signature in <code>src/lib/db/timeline.ts</code> was not read in this session.</li>
-<li>What&#39;s unclear: whether <code>contactId</code> is already an accepted optional field on the function.</li>
-<li>Recommendation: Read <code>src/lib/db/timeline.ts</code> in the first plan task. If <code>contactId</code> is supported, include it. If not, omit it (not blocking for D-01).</li>
+<li>What we know: the existing <code>/draft</code> route calls <code>logTimeline</code> without <code>contactId</code>. The function signature in <code>src/lib/db/timeline.ts</code> was not read in the research session.</li>
+<li>Resolution: confirmed <code>TRUE</code> during pattern mapping — <code>contactId</code> is an accepted optional field on <code>logTimeline</code> (PATTERNS.md §&quot;Key Confirmed Facts&quot;; carried into <code>17-01-PLAN.md</code> interfaces block). The D-01 route edit includes <code>contactId: email.contactId</code> in the <code>logTimeline</code> call.</li>
 </ul>
 </li>
-<li><p><strong><code>mcp__gmail__search_threads</code> pagination</strong></p>
+<li><p><strong><code>mcp__gmail__search_threads</code> pagination</strong> — <strong>RESOLVED: run-time validation, cap at 20 threads.</strong></p>
 <ul>
 <li>What we know: the Gmail Threads.list API supports <code>maxResults</code> and <code>nextPageToken</code>. The MCP wrapper may or may not expose pagination.</li>
-<li>What&#39;s unclear: whether <code>search_threads</code> returns all matches or a capped set; whether the skill needs to paginate thread results.</li>
-<li>Recommendation: The executor should test with a known contact at run time. Cap at the first 20 threads (Gmail search returns the most recent by default). For VP-level outreach, 20 threads per contact is more than sufficient to find a direct email address.</li>
+<li>Resolution: ASSUMED-at-runtime — the skill caps at the first 20 threads (Gmail search returns most-recent first); for VP-level outreach 20 threads per contact is more than sufficient to find a direct address. The executor validates the wrapper&#39;s pagination behavior against a known contact at run time. Non-blocking: the accept rule (single direct participant) is unaffected by whether older threads are truncated.</li>
 </ul>
 </li>
-<li><p><strong>Draft ID format from <code>create_draft</code></strong></p>
+<li><p><strong>Draft ID format from <code>create_draft</code></strong> — <strong>RESOLVED: run-time validation.</strong></p>
 <ul>
 <li>What we know: Gmail draft IDs typically start with <code>r</code> followed by a numeric string (e.g., <code>r12345678</code>). The existing <code>gmailDraftId</code> column is <code>text</code>, unbounded.</li>
-<li>What&#39;s unclear: whether the MCP wrapper returns the draft ID at the top-level <code>id</code> field or nested.</li>
-<li>Recommendation: Executor tests at run time; adapts extraction from the actual response shape.</li>
+<li>Resolution: ASSUMED-at-runtime — the executor reads the actual <code>create_draft</code> response shape and extracts the draft id (top-level <code>id</code> or nested) at run time; the unbounded <code>text</code> column accepts any format. Non-blocking.</li>
 </ul>
 </li>
 </ol>
@@ -1107,7 +1104,7 @@ const validEmailTransitions: Record&lt;string, string[]&gt; = {
 
 
 <footer>
-Source of truth: <code>/Users/sbronstein/Github/heimdall/.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-RESEARCH.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-RESEARCH.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>

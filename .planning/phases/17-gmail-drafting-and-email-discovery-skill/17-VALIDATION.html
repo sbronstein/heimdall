@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-VALIDATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-VALIDATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 17
+slug: gmail-drafting-and-email-discovery-skill
+status: draft
+nyquist_compliant: true
+wave_0_complete: false
+created: 2026-06-22</h2>
+<h1>Phase 17 — Validation Strategy</h1>
+<blockquote>
+<p>Per-phase validation contract for feedback sampling during execution.
+Source: extracted from <code>17-RESEARCH.md</code> §&quot;Validation Architecture&quot;. This project has <strong>no test framework installed</strong> (confirmed in CLAUDE.md: &quot;Not configured; no jest.config.<em>, vitest.config.</em>, or test files detected&quot;). Validation is a Wave-0 curl regression + a directory-wide grep gate + manual smoke runs — appropriate for a skill document plus a single backend route edit.</p>
+</blockquote>
+<hr>
+<h2>Test Infrastructure</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Framework</strong></td>
+<td>None installed</td>
+</tr>
+<tr>
+<td><strong>Config file</strong></td>
+<td>none — no framework added (out of scope; manual smoke is appropriate)</td>
+</tr>
+<tr>
+<td><strong>Quick run command</strong></td>
+<td><code>bash scripts/verify-draft-route.sh</code> (Wave-0 curl regression for the D-01 guard)</td>
+</tr>
+<tr>
+<td><strong>Full suite command</strong></td>
+<td>Manual smoke run against a dev campaign + `grep -riE &quot;mcp__gmail__(send</td>
+</tr>
+<tr>
+<td><strong>Estimated runtime</strong></td>
+<td>~5 seconds (curl) / ~2 min (manual smoke)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Sampling Rate</h2>
+<ul>
+<li><strong>After every task commit:</strong> Wave-0 curl test for the D-01 route edit (<code>PATCH .../draft</code> against a non-<code>approved</code> email → expect 400).</li>
+<li><strong>After every plan wave:</strong> Full manual smoke run against a real campaign in dev (<code>npm run dev</code> on port 4000).</li>
+<li><strong>Before <code>/gsd:verify-work</code>:</strong> all 8 requirements verified manually + the send-safety grep gate returns zero.</li>
+<li><strong>Max feedback latency:</strong> ~5 seconds for the curl regression.</li>
+</ul>
+<hr>
+<h2>Per-Task Verification Map</h2>
+<table>
+<thead>
+<tr>
+<th>Task ID</th>
+<th>Plan</th>
+<th>Wave</th>
+<th>Requirement</th>
+<th>Threat Ref</th>
+<th>Secure Behavior</th>
+<th>Test Type</th>
+<th>Automated Command</th>
+<th>File Exists</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>17-01-01</td>
+<td>01</td>
+<td>1</td>
+<td>DRFT-04, DRFT-05</td>
+<td>T-17-02</td>
+<td><code>/draft</code> only mutates the email/contact bound to <code>(emailId, campaignId)</code>; <code>contactId</code> read from the row, not the request body</td>
+<td>unit-style curl</td>
+<td><code>curl -X PATCH .../draft -d &#39;{&quot;gmailDraftId&quot;:&quot;test&quot;}&#39;</code> on a <code>pending</code> email → expect 400</td>
+<td>❌ W0</td>
+<td>⬜ pending</td>
+</tr>
+<tr>
+<td>17-01-02</td>
+<td>01</td>
+<td>1</td>
+<td>DRFT-04</td>
+<td>—</td>
+<td>guard rejects illegal pre-states</td>
+<td>unit-style curl</td>
+<td><code>bash scripts/verify-draft-route.sh</code> exits 0</td>
+<td>❌ W0</td>
+<td>⬜ pending</td>
+</tr>
+<tr>
+<td>17-02-01</td>
+<td>02</td>
+<td>1</td>
+<td>DISC-01..03, DRFT-01/04/05</td>
+<td>—</td>
+<td>API contract doc reflects post-17-01 <code>/draft</code> behavior</td>
+<td>manual review</td>
+<td><code>test -f .claude/skills/draft-outreach-emails/references/heimdall-api.md</code></td>
+<td>✅</td>
+<td>⬜ pending</td>
+</tr>
+<tr>
+<td>17-03-01</td>
+<td>03</td>
+<td>2</td>
+<td>DRFT-02</td>
+<td>T-17-07</td>
+<td>allowed-tools lists only <code>create_draft</code>, <code>list_drafts</code>, <code>search_threads</code>, <code>get_thread</code>; zero send-family</td>
+<td>grep gate</td>
+<td>`! grep -riE &quot;mcp__gmail__(send</td>
+<td>trash</td>
+<td>delete</td>
+</tr>
+<tr>
+<td>17-03-02</td>
+<td>03</td>
+<td>2</td>
+<td>DISC-01/02/03, DRFT-01/03/04</td>
+<td>T-17-07</td>
+<td>strict single-direct-participant accept; ambiguous → summary (no guess); none → linkedin fallback; idempotent create-and-repoint</td>
+<td>manual smoke</td>
+<td>Run skill twice against a dev campaign → no duplicate drafts; ambiguous contact appears in summary; no-thread contact gets <code>linkedin_message</code></td>
+<td>❌ manual</td>
+<td>⬜ pending</td>
+</tr>
+</tbody></table>
+<p><em>Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky</em></p>
+<hr>
+<h2>Phase Requirements → Test Map</h2>
+<table>
+<thead>
+<tr>
+<th>Req ID</th>
+<th>Behavior</th>
+<th>Test Type</th>
+<th>Automated / Manual Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DRFT-01</td>
+<td>Skill creates a Gmail draft per approved email with a recipient</td>
+<td>Manual smoke</td>
+<td>Run skill against a test campaign with 1 approved email; verify draft appears in Gmail</td>
+</tr>
+<tr>
+<td>DRFT-02</td>
+<td>Skill never sends — zero send-family Gmail calls</td>
+<td>Grep gate</td>
+<td>`grep -riE &quot;mcp__gmail__(send</td>
+</tr>
+<tr>
+<td>DRFT-03</td>
+<td>Idempotent re-run (no duplicate drafts; edited-after-draft re-drafts via create-and-repoint)</td>
+<td>Manual smoke</td>
+<td>Run skill twice; verify no duplicate draft in Gmail; edit an email then re-run → new draft id repointed</td>
+</tr>
+<tr>
+<td>DRFT-04</td>
+<td>gmailDraftId stored, email marked <code>drafted</code>, timeline event logged</td>
+<td>Manual API check</td>
+<td><code>GET /api/outreach-campaigns/[id]/emails?status=drafted</code> after run</td>
+</tr>
+<tr>
+<td>DRFT-05</td>
+<td>Contact <code>outreachStatus = reached_out</code></td>
+<td>Manual API check</td>
+<td><code>GET /api/contacts/[id]</code> after run; check <code>outreachStatus</code></td>
+</tr>
+<tr>
+<td>DISC-01</td>
+<td>Discovery finds a direct-thread email and writes it back</td>
+<td>Manual smoke</td>
+<td>Run against a contact with no stored email but a known direct Gmail thread</td>
+</tr>
+<tr>
+<td>DISC-02</td>
+<td>Ambiguous candidates surfaced in run summary, never auto-selected</td>
+<td>Manual smoke</td>
+<td>Run against a contact with 2+ known addresses in Gmail → recipient left unset, candidates listed</td>
+</tr>
+<tr>
+<td>DISC-03</td>
+<td>LinkedIn fallback set, &quot;needs LinkedIn message&quot; badge appears</td>
+<td>Manual UI check</td>
+<td>Run against a contact with no Gmail threads → channel <code>linkedin_message</code>, badge renders</td>
+</tr>
+<tr>
+<td>D-01 guard</td>
+<td><code>canEmailTransition</code> returns 400 on an illegal pre-state</td>
+<td>Wave-0 curl</td>
+<td><code>curl -X PATCH .../draft</code> on a <code>pending</code> email → expect 400</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Wave 0 Requirements</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <code>scripts/verify-draft-route.sh</code> — curl regression for the D-01 route edit (PATCH against a <code>pending</code> email → confirm 400; PATCH against an <code>approved</code> email → confirm 200 + <code>drafted</code> + contact <code>reached_out</code>).</li>
+<li><input disabled="" type="checkbox"> Send-safety grep gate — <code>grep -riE &quot;mcp__gmail__(send|trash|delete|import|update_draft)&quot; .claude/skills/draft-outreach-emails/</code> returns zero (covers DRFT-02 / D-06).</li>
+</ul>
+<p><em>No test-framework installation needed — manual smoke tests plus the Wave-0 curl + grep gate are appropriate for a skill document and a single route edit.</em></p>
+<hr>
+<h2>Manual-Only Verifications</h2>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Requirement</th>
+<th>Why Manual</th>
+<th>Test Instructions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Gmail draft actually appears / is correct</td>
+<td>DRFT-01, DRFT-03</td>
+<td>Requires the live, interactively-connected Gmail MCP (absent in headless/cron); the skill is owner-run interactively</td>
+<td>Run <code>draft-outreach-emails &lt;campaign-id&gt;</code> in dev; inspect the Gmail drafts folder</td>
+</tr>
+<tr>
+<td>Discovery accept/ambiguous/fallback branching</td>
+<td>DISC-01/02/03</td>
+<td>Depends on real Gmail thread history for the target contacts</td>
+<td>Run against contacts with: (a) one direct thread, (b) 2+ addresses, (c) no thread; verify each branch</td>
+</tr>
+<tr>
+<td>Review-UI badge renders the LinkedIn fallback</td>
+<td>DISC-03</td>
+<td>Visual confirmation in the already-shipped Phase 15 review card</td>
+<td>After a fallback run, open the review UI and confirm the &quot;needs LinkedIn message&quot; badge</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Validation Sign-Off</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> All tasks have an <code>&lt;automated&gt;</code> verify (curl / grep) or a documented manual-only verification with justification</li>
+<li><input checked="" disabled="" type="checkbox"> Sampling continuity: no 3 consecutive tasks without automated verify (Wave-0 curl + grep gate bracket the route edit and the skill)</li>
+<li><input checked="" disabled="" type="checkbox"> Wave 0 covers all MISSING references (curl regression script + grep gate)</li>
+<li><input checked="" disabled="" type="checkbox"> No watch-mode flags</li>
+<li><input checked="" disabled="" type="checkbox"> Feedback latency &lt; 10s for the curl regression</li>
+<li><input checked="" disabled="" type="checkbox"> <code>nyquist_compliant: true</code> set in frontmatter</li>
+</ul>
+<p><strong>Approval:</strong> pending</p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-VALIDATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

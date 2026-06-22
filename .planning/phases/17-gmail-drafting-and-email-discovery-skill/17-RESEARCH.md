@@ -646,22 +646,19 @@ const validEmailTransitions: Record<string, string[]> = {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **`logTimeline` contactId field support**
-   - What we know: the existing `/draft` route calls `logTimeline` without `contactId`. The function signature in `src/lib/db/timeline.ts` was not read in this session.
-   - What's unclear: whether `contactId` is already an accepted optional field on the function.
-   - Recommendation: Read `src/lib/db/timeline.ts` in the first plan task. If `contactId` is supported, include it. If not, omit it (not blocking for D-01).
+1. **`logTimeline` contactId field support** — **RESOLVED: supported.**
+   - What we know: the existing `/draft` route calls `logTimeline` without `contactId`. The function signature in `src/lib/db/timeline.ts` was not read in the research session.
+   - Resolution: confirmed `TRUE` during pattern mapping — `contactId` is an accepted optional field on `logTimeline` (PATTERNS.md §"Key Confirmed Facts"; carried into `17-01-PLAN.md` interfaces block). The D-01 route edit includes `contactId: email.contactId` in the `logTimeline` call.
 
-2. **`mcp__gmail__search_threads` pagination**
+2. **`mcp__gmail__search_threads` pagination** — **RESOLVED: run-time validation, cap at 20 threads.**
    - What we know: the Gmail Threads.list API supports `maxResults` and `nextPageToken`. The MCP wrapper may or may not expose pagination.
-   - What's unclear: whether `search_threads` returns all matches or a capped set; whether the skill needs to paginate thread results.
-   - Recommendation: The executor should test with a known contact at run time. Cap at the first 20 threads (Gmail search returns the most recent by default). For VP-level outreach, 20 threads per contact is more than sufficient to find a direct email address.
+   - Resolution: ASSUMED-at-runtime — the skill caps at the first 20 threads (Gmail search returns most-recent first); for VP-level outreach 20 threads per contact is more than sufficient to find a direct address. The executor validates the wrapper's pagination behavior against a known contact at run time. Non-blocking: the accept rule (single direct participant) is unaffected by whether older threads are truncated.
 
-3. **Draft ID format from `create_draft`**
+3. **Draft ID format from `create_draft`** — **RESOLVED: run-time validation.**
    - What we know: Gmail draft IDs typically start with `r` followed by a numeric string (e.g., `r12345678`). The existing `gmailDraftId` column is `text`, unbounded.
-   - What's unclear: whether the MCP wrapper returns the draft ID at the top-level `id` field or nested.
-   - Recommendation: Executor tests at run time; adapts extraction from the actual response shape.
+   - Resolution: ASSUMED-at-runtime — the executor reads the actual `create_draft` response shape and extracts the draft id (top-level `id` or nested) at run time; the unbounded `text` column accepts any format. Non-blocking.
 
 ---
 

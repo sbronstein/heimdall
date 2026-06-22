@@ -64,6 +64,7 @@ requirements: [DISC-01, DISC-02, DISC-03, DRFT-01, DRFT-02, DRFT-03, DRFT-04]</l
   truths:
     - &quot;Running <code>draft-outreach-emails &lt;campaign-id&gt;</code> reads the campaign&#39;s approved emails (paginated), confirms count up front, discovers missing recipients via Gmail thread search, creates a Gmail draft per recipient&#39;d email, and writes back via the /draft route&quot;
     - &quot;Discovery accepts an address ONLY when the contact was a confirmed direct thread participant matched by name; exactly one distinct address → accept; ≥2 → ambiguous (recipientEmail left unset, listed in summary); none → channel=linkedin_message&quot;
+    - &quot;D-02: re-running is idempotent — already-drafted emails are skipped (never reappear in the approved queue); an edited-after-draft email returns as approved with a stale gmailDraftId and is re-drafted via create-and-repoint (no draft-update tool exists, so a fresh draft is created and gmailDraftId is repointed)&quot;
     - &quot;Re-running is idempotent: drafted emails never reappear in the approved queue (skip); an edited-after-draft email returns as approved+stale gmailDraftId and is re-drafted by create+repoint&quot;
     - &quot;The skill contains zero send-family Gmail calls; the allowlist and grep gate are present and verifiable&quot;
   artifacts:
