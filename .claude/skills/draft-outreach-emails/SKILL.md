@@ -468,10 +468,14 @@ review UI automatically.
   `mcp__gmail__list_drafts`. It NEVER calls any send, trash, import, delete, or modify tool.
 - **Pre-run grep gate (D-06).** Before any real campaign run, run:
   ```bash
-  grep -ri "send" .claude/skills/draft-outreach-emails/
+  grep -rinE "mcp__gmail__(send|send_message|trash|delete|import|update_draft|modify|insert)" \
+    .claude/skills/draft-outreach-emails/
   ```
-  Confirm zero send-family results. Any match is a safety violation -- investigate before
-  proceeding. The connected MCP exposes no send tool at all; this gate is defense-in-depth.
+  Confirm zero results (no output). Any match means a send-family Gmail MCP tool token is
+  present in the skill files -- that is a safety violation; investigate before proceeding.
+  The grep targets only MCP tool call tokens, not prose references to sending, so a clean
+  skill produces no output at all. The connected MCP exposes no send tool; this gate is
+  defense-in-depth.
 - **Never sends. Only creates drafts.** Hard invariant. A human must open Gmail and manually
   click Send on each draft. The skill has no path to trigger sending.
 - **Batch-only (D-05).** The only argument is `<campaign-id>`. No `--discover-only` or
