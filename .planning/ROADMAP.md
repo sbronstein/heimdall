@@ -43,7 +43,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 - [x] **Phase 13: Triage Connection-Date Filter** — Additive year-range filter on the existing triage workflow; independent of the campaign route tree (completed 2026-06-21)
 - [x] **Phase 14: Campaign Builder UI** — Contact filter UI (howMet, year, closeness, outreach status), checkbox multi-select, and campaign creation form delivering the owner's ability to name and save a campaign from the browser (completed 2026-06-21)
 - [x] **Phase 15: Review and Approval UI** — Per-email review cards with inline edit, approve gate, regenerate button, status badges, and campaign progress header (completed 2026-06-21)
-- [ ] **Phase 16: Email Generation Skill** — `generate-outreach-emails` Claude Code skill: drains the pending queue, personalizes emails from CRM context with closeness-tier tone and LLM-tell guardrails, writes back via REST
+- [x] **Phase 16: Email Generation Skill** — `generate-outreach-emails` Claude Code skill: drains the pending queue, personalizes emails from CRM context with closeness-tier tone and LLM-tell guardrails, writes back via REST (completed 2026-06-22)
 - [ ] **Phase 17: Gmail Drafting and Email Discovery Skill** — `draft-outreach-emails` Claude Code skill: discovers emails via Gmail thread search, creates Gmail drafts (never sends), idempotent on retry, logs timeline events, flags LinkedIn-only contacts
 
 ## Phase Details
@@ -136,7 +136,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 **Plans**: 3 plans (Wave 1: 16-01 + 16-02 parallel; Wave 2: 16-03)
 - [x] 16-01-PLAN.md — D-02 route edit: PATCH .../generation also sets status='generated' via canEmailTransition + PGlite transition test (GEN-01) (Wave 1)
 - [x] 16-02-PLAN.md — Skill reference docs: new voice-guide.md (email voice + blocking LLM-tell scrub + anti-hallucination) + heimdall-api.md (3-endpoint contract) (GEN-02, GEN-03, GEN-04) (Wave 1)
-- [ ] 16-03-PLAN.md — SKILL.md workflow: confirm count -> 5-email sample gate -> chunked durable drain -> blocking scan -> single /generation write-back -> mark-failed-continue -> summary (GEN-01, GEN-02, GEN-04) (Wave 2)
+- [x] 16-03-PLAN.md — SKILL.md workflow: confirm count -> 5-email sample gate -> chunked durable drain -> blocking scan -> single /generation write-back -> mark-failed-continue -> summary (GEN-01, GEN-02, GEN-04) (Wave 2)
 
 ### Phase 17: Gmail Drafting and Email Discovery Skill
 **Goal**: Approved emails are pushed to Gmail as drafts (never sent), contacts without stored emails have addresses discovered from Gmail thread history, and LinkedIn-only contacts are clearly flagged
@@ -172,7 +172,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete    | 2026-06-21 |
 | 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 15. Review and Approval UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
-| 16. Email Generation Skill | v1.2 | 2/3 | In Progress|  |
+| 16. Email Generation Skill | v1.2 | 3/3 | Complete   | 2026-06-22 |
 | 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
 
 ---
