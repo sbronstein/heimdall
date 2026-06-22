@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 17: Gmail Drafting and Email Discovery Skill - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-06-22
+<strong>Phase:</strong> 17-Gmail Drafting and Email Discovery Skill
+<strong>Areas discussed:</strong> Draft route gap, Idempotent re-draft, Discovery + candidates, Run modes + safety</p>
+<hr>
+<h2>Draft route gap</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fix /draft to do all 4</td>
+<td>One PATCH (gmailDraftId) also transitions status→drafted via canEmailTransition + sets contact outreachStatus→reached_out, atomic + one timeline event. Mirrors Phase 16 D-02.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Skill makes 2 calls</td>
+<td>Leave /draft as-is; skill calls /draft then /status{drafted}. No endpoint for contact outreachStatus; 2 timeline events; non-atomic window.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Fix /draft to do all 4
+<strong>Notes:</strong> Keeps all DB invariants server-side; matches the established route-gap fix pattern from Phase 16. Becomes the single code change outside <code>.claude/skills/</code>. (D-01)</p>
+<hr>
+<h2>Idempotent re-draft</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Update-or-recreate, research-gated</td>
+<td>Researcher confirms whether Gmail MCP has a draft-update tool. Yes → update in place. No → create fresh + repoint gmailDraftId (old draft left harmless). Re-draft signal = status=approved AND gmailDraftId set.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Defer in-place re-draft</td>
+<td>v1.2 only drafts emails with no gmailDraftId; editing-after-draft out of scope. Fails success #4 as written.</td>
+<td></td>
+</tr>
+<tr>
+<td>Delete + recreate</td>
+<td>Always delete old then create new. No delete_draft tool visible in MCP.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Update-or-recreate, research-gated
+<strong>Notes:</strong> Satisfies success #4&#39;s intent under either MCP capability with zero send risk. (D-02)</p>
+<hr>
+<h2>Discovery + candidates</h2>
+<h3>Where ambiguous candidates surface</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Run-summary + LinkedIn fallback</td>
+<td>Ambiguous → don&#39;t guess; list contact + candidate addresses in end-of-run summary for manual resolution; no new schema/UI. Mirrors Phase 16 D-08.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Build minimal candidate UI</td>
+<td>Add candidates JSONB column + dropdown in email-review-card. Truer to DISC-02 wording but pulls schema + UI work into this phase.</td>
+<td></td>
+</tr>
+<tr>
+<td>Auto-pick highest confidence</td>
+<td>Skill writes top-ranked candidate even when ambiguous. Risks wrong draft recipient.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Run-summary + LinkedIn fallback
+<strong>Notes:</strong> Keeps Phase 17 schema-frozen; ambiguous emails left with recipient unset (not forced to linkedin_message since an email likely exists). Durable candidate-picker UI deferred. (D-04)</p>
+<h3>Confidence / accept rule</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Roadmap&#39;s two pairs</td>
+<td>Accept on (name + company domain) OR (confirmed thread participant).</td>
+<td></td>
+</tr>
+<tr>
+<td>Stricter — require direct thread</td>
+<td>Accept only addresses that were a direct to/from participant with Steve; ignore domain-name inference. Fewer false positives.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Let research propose</td>
+<td>Treat 2-signal rule as a starting point; researcher proposes exact scoring after inspecting real MCP output.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Stricter — require direct thread
+<strong>Notes:</strong> One clean direct-thread address → accept; multiple → ambiguous (run-summary); none → LinkedIn fallback. Research informs extraction mechanics, not the threshold. (D-03)</p>
+<hr>
+<h2>Run modes + safety</h2>
+<h3>Invocation shape</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Single batch, discover-then-draft</td>
+<td><code>draft-outreach-emails &lt;campaign-id&gt;</code> runs full flow with one upfront count-confirm gate. Mirrors Phase 16.</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Split modes too</td>
+<td>Also support --discover-only / --draft-only. More control, more surface area.</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Single batch, discover-then-draft
+<strong>Notes:</strong> Consistency with the sibling Phase 16 skill; simpler. (D-05)</p>
+<h3>Send-safety enforcement</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Documented allowlist + grep gate</td>
+<td>SKILL.md declares a Gmail-tool allowlist + a pre-run &quot;grep for send&quot; checklist. MCP has no send tool (defense-in-depth).</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Add a preview/dry-run gate too</td>
+<td>All of the above PLUS a mandatory content-preview step before creating real drafts (like Phase 16&#39;s sample gate).</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Documented allowlist + grep gate
+<strong>Notes:</strong> No content preview gate beyond the upfront count confirm; drafts are reviewable in Gmail and content was already human-approved in Phase 15. (D-06)</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<ul>
+<li>Per-email failure handling (mark-failed-and-continue, consistent with Phase 16 D-12; confirm the <code>approved → failed</code> transition legality with the state machine).</li>
+<li>End-of-run summary format/content (counts + ambiguous-candidate list).</li>
+<li>Archived-contact edge case (skip drafting + report, per REV-06 guard).</li>
+<li>Discovery batching/pacing and exact <code>search_threads</code> query construction.</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Durable candidate-picker UI (candidates JSONB column + dropdown) — the literal DISC-02 reading; deferred for v1.2.</li>
+<li><code>--discover-only</code> / <code>--draft-only</code> split modes — dropped for batch-only consistency.</li>
+<li>Content preview / sample gate before creating real drafts — dropped; drafts reviewable in Gmail.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

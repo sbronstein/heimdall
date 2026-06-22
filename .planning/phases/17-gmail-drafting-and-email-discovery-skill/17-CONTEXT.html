@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 17: Gmail Drafting and Email Discovery Skill - Context</h1>
+<p><strong>Gathered:</strong> 2026-06-22
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>A new <code>draft-outreach-emails</code> Claude Code skill at <code>.claude/skills/draft-outreach-emails/</code> — the sibling to Phase 16&#39;s <code>generate-outreach-emails</code>. Running it against a campaign:</p>
+<ol>
+<li><strong>Discovers</strong> missing recipient addresses for the campaign&#39;s <em>approved</em> emails whose contact has no stored email, using the <strong>already-connected Gmail MCP</strong> (<code>mcp__gmail__search_threads</code> / <code>get_thread</code>).</li>
+<li><strong>Drafts</strong> every approved email that has (or now has) a recipient into Gmail as a <strong>draft — never sends</strong> (<code>create_draft</code> only).</li>
+<li><strong>Writes back</strong> the Gmail draft id, status, recipient/channel, and contact <code>outreachStatus</code> through the <strong>existing Phase 12 REST surface</strong>; logs a timeline event per write.</li>
+<li><strong>Flags</strong> contacts with no discoverable email as <code>channel=&#39;linkedin_message&#39;</code> so the existing review-UI badge appears — never silently dropped.</li>
+</ol>
+<p>Delivers <strong>DISC-01, DISC-02, DISC-03, DRFT-01, DRFT-02, DRFT-03, DRFT-04, DRFT-05</strong>.</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>The skill package: <code>SKILL.md</code> + <code>references/heimdall-api.md</code> (skill&#39;s API contract, mirroring the Phase 16 skill&#39;s reference).</li>
+<li>The discover-then-draft batch workflow, idempotency logic, run-summary, send-safety allowlist + grep checklist.</li>
+<li><strong>One small API edit</strong> (the only code change outside <code>.claude/skills/</code>): make <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/draft</code> also transition <code>status=&#39;drafted&#39;</code> (gated by <code>canEmailTransition</code>) and set the contact&#39;s <code>outreachStatus=&#39;reached_out&#39;</code> in the same write — see D-01.</li>
+</ul>
+<p><strong>Out of scope (do NOT build here):</strong></p>
+<ul>
+<li>Any new schema/migration — the data model is locked (Phase 11). Explicitly <strong>no</strong> <code>candidates</code> column, no <code>lowContext</code> column (D-04 keeps ambiguous candidates ephemeral).</li>
+<li>Any review/approval UI work — Phase 15 already shipped the card + the <code>needsLinkedinMessage</code> badge. This skill produces drafts; it renders nothing. <strong>No candidate-picker UI</strong> (D-04).</li>
+<li>Email <em>generation</em> (subject/body authoring) — Phase 16. This skill drafts already-approved content as-is; it does not author or re-author copy.</li>
+<li><code>--discover-only</code> / <code>--draft-only</code> split modes from the stale research sketch (D-05 — batch-only).</li>
+<li>OAuth / Google People API setup — superseded; the Gmail MCP is already connected (see canonical refs correction).</li>
+<li>Actually <em>sending</em> any email — hard invariant (D-06). The skill only ever creates/updates drafts.</domain></li>
+</ul>
+<decisions>
+## Implementation Decisions<h3>Draft Write-Back &amp; Status Mechanic</h3>
+<ul>
+<li><strong>D-01:</strong> <strong>Fix the <code>/draft</code> write-back route to do all four success-#1 effects atomically.</strong> The shipped route (<code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code>) currently sets only <code>gmailDraftId</code> + <code>draftedAt</code> + a timeline event. It must additionally, in the <strong>same</strong> request: (a) transition <code>status → &#39;drafted&#39;</code> gated through <code>canEmailTransition(email.status, &#39;drafted&#39;)</code> (return 400 on an illegal transition), and (b) set the linked contact&#39;s <code>outreachStatus = &#39;reached_out&#39;</code> (DRFT-04, DRFT-05). The skill makes <strong>one</strong> call per email (<code>PATCH .../draft</code> with <code>{ gmailDraftId }</code>). This is the <strong>single code change outside the skill directory</strong> — the direct parallel to Phase 16&#39;s D-02 fix. Preserve <code>updatedAt: new Date()</code> and the existing <code>outreach_email_drafted</code> timeline event; the contact update is part of the same handler (one logical write).<ul>
+<li><strong>Note:</strong> the only legal pre-state for drafting is <code>approved</code> (state machine: <code>approved → drafted</code>). Re-drafting an <em>edited</em> email is handled by D-02, not by allowing <code>drafted → drafted</code>.</li>
+</ul>
+</li>
+</ul>
+<h3>Idempotency &amp; Re-Draft (DRFT-03, success #4)</h3>
+<ul>
+<li><strong>D-02:</strong> <strong>Update-or-recreate, research-gated.</strong> The skill is idempotent across re-runs:<ul>
+<li><strong>Never-drafted approved email</strong> (<code>status=&#39;approved&#39;</code>, <code>gmailDraftId IS NULL</code>) → create a Gmail draft, write back via D-01&#39;s route.</li>
+<li><strong>Already-drafted, unchanged</strong> (<code>status=&#39;drafted&#39;</code>, <code>gmailDraftId</code> set) → <strong>skip</strong> (no duplicate draft).</li>
+<li><strong>Edited after drafting</strong> → the state machine routes <code>drafted → edited → approved</code>, so the email returns as <code>status=&#39;approved&#39;</code> <strong>with a stale <code>gmailDraftId</code> still set</strong>. This is the re-draft signal (<code>status=&#39;approved&#39; AND gmailDraftId IS NOT NULL</code>). Behavior depends on a Gmail MCP capability the <strong>researcher must confirm</strong>: if the MCP exposes a draft-update tool → <strong>update the existing draft in place</strong>, keeping <code>gmailDraftId</code>; if it does <strong>not</strong> → <strong>create a fresh draft and repoint <code>gmailDraftId</code></strong> to the new one (the old draft is left harmless in Gmail&#39;s drafts folder, never sent). Either path satisfies success #4&#39;s intent with zero send risk.</li>
+</ul>
+</li>
+</ul>
+<h3>Email Discovery (DISC-01, DISC-02)</h3>
+<ul>
+<li><p><strong>D-03 (accept rule — stricter than the roadmap&#39;s two-pair OR):</strong> <strong>Accept a discovered address ONLY when the contact was a confirmed <em>direct</em> to/from thread participant with Steve</strong> (matched by name against thread participants). <strong>Domain/name-only inference is NOT used</strong> (no &quot;name + company-domain&quot; weak pair). This minimizes false positives on a draft recipient.</p>
+<ul>
+<li>Exactly <strong>one</strong> distinct address found for the contact → accept: write it back via <code>PATCH .../recipient</code> <code>{ channel:&#39;email&#39;, recipientEmail }</code>, then it becomes eligible for drafting in the same run.</li>
+<li><strong>Multiple</strong> distinct addresses for the same contact → <strong>ambiguous</strong> (see D-04).</li>
+<li><strong>No</strong> direct-thread participation found → <strong>not found</strong> (see DISC-03 / D-04 LinkedIn fallback).</li>
+<li>The researcher validates participant-email extraction against the real <code>search_threads</code> / <code>get_thread</code> response shape (per the ROADMAP research flag) but the <strong>accept rule above is locked</strong> — research informs extraction mechanics, not the threshold.</li>
+</ul>
+</li>
+<li><p><strong>D-04 (ambiguous candidates — ephemeral, no schema/UI):</strong> When discovery is ambiguous (≥2 plausible distinct addresses, no single direct-thread winner), the skill <strong>does not guess</strong>. It leaves the email <strong>unsent and undrafted</strong> with <code>recipientEmail</code> unset (do <strong>not</strong> force <code>linkedin_message</code> — an email likely exists), and <strong>lists the contact + the candidate addresses in the end-of-run summary</strong> for the owner to resolve manually (e.g. by a manual <code>PATCH .../recipient</code> then a re-run). <strong>No <code>candidates</code> column, no candidate-picker UI</strong> — mirrors Phase 16&#39;s D-08 ephemeral-flag approach. (This is a conscious, lighter reading of DISC-02&#39;s &quot;surface in the review UI&quot; — see Deferred Ideas for the durable-UI option.)</p>
+</li>
+</ul>
+<h3>LinkedIn Fallback (DISC-03)</h3>
+<ul>
+<li><strong>D-04b:</strong> <strong>No email by any method → flag for LinkedIn, never drop.</strong> When discovery finds no direct-thread address and the contact has no stored email, the skill writes <code>PATCH .../recipient</code> <code>{ channel:&#39;linkedin_message&#39; }</code> (the route forces <code>recipientEmail=null</code>). The existing <code>needsLinkedinMessage()</code> helper + &quot;needs LinkedIn message&quot; badge in <code>email-review-card.tsx</code> already render this state — <strong>no UI work needed</strong>. The contact is reported in the run summary, never silently skipped.</li>
+</ul>
+<h3>Invocation, Run Gates &amp; Send Safety</h3>
+<ul>
+<li><strong>D-05 (invocation — batch-only):</strong> <strong><code>draft-outreach-emails &lt;campaign-id&gt;</code></strong>, single batch, <strong>discover-then-draft</strong> in one run: (1) discover recipients for approved emails missing one, (2) create/refresh drafts for all approved emails that have a recipient. <strong>No</strong> <code>--discover-only</code> / <code>--draft-only</code> flags (rejected: the research sketch&#39;s split modes add surface area; the sibling Phase 16 skill established batch-only). One <strong>upfront confirm gate</strong>: report <code>N approved / M missing recipient</code> and wait for the owner before acting (guards against accidentally drafting a whole campaign).</li>
+<li><strong>D-06 (send-safety invariant — DRFT-02, success #5):</strong> <strong>Documented Gmail-tool allowlist + pre-run grep gate.</strong> <code>SKILL.md</code> declares an explicit allowlist of the only Gmail MCP tools it may call — <code>create_draft</code>, <code>list_drafts</code>, <code>search_threads</code>, <code>get_thread</code> (plus a confirmed draft-update tool if D-02 research finds one). It <strong>never</strong> invokes any send/trash/import tool. A mandatory checklist step states: <em>before any real campaign run, grep the skill file for &quot;send&quot; and confirm zero send-family calls.</em> The MCP itself exposes no send tool, so this is defense-in-depth. <strong>No</strong> content preview/dry-run gate beyond D-05&#39;s count confirm (rejected: the upfront count confirm is sufficient; drafts are reviewable in Gmail before any human sends them).</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li><strong>Per-email failure handling:</strong> mark-failed-and-continue, consistent with Phase 16&#39;s D-12 — on a per-email failure call <code>PATCH .../emails/[emailId]/status</code> <code>{ status:&#39;failed&#39;, lastError:&#39;&lt;first ~200 chars&gt;&#39; }</code> and proceed; report failures in the run summary. (Note the state machine allows <code>→ failed</code> from <code>pending</code>/<code>generated</code>/<code>edited</code> but <strong>not</strong> from <code>approved</code> — planner/researcher should confirm the failure-marking path for an approved email that fails to draft; if <code>approved → failed</code> is not legal, leave the email <code>approved</code> and report the failure in the summary without a status change.)</li>
+<li><strong>End-of-run summary format/content:</strong> counts (drafted / skipped-already-drafted / discovered / ambiguous / linkedin-fallback / failed) + the ambiguous-candidate list (D-04). Exact strings are the skill&#39;s choice.</li>
+<li><strong>Archived-contact edge case:</strong> an approved email whose contact was archived after approval — skip drafting it and report in the summary (consistent with the Phase 15 <code>REV-06</code> archived guard); do not draft to an archived contact.</li>
+<li><strong>Discovery batching / pacing:</strong> chunk size and any Gmail MCP rate pacing — skill&#39;s choice; each write-back must be durable before the next email is processed so an interruption just leaves the rest for a re-run.</li>
+<li><strong>Exact <code>search_threads</code> query construction</strong> (name terms, date scoping) — researcher proposes, skill implements.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.2 milestone trail</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;DISC-01&quot;..&quot;DISC-03&quot; and §&quot;DRFT-01&quot;..&quot;DRFT-05&quot; — the 8 requirements this phase delivers.</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 17: Gmail Drafting and Email Discovery Skill&quot; — goal + the 5 success criteria + the <strong>research flag</strong> (inspect <code>mcp__gmail__search_threads</code> response shape for participant-email extraction; validate confidence heuristics against real contacts). <strong>Note the dependency line:</strong> &quot;Gmail MCP already connected — no OAuth setup required.&quot;</li>
+</ul>
+<h3>Sibling skill to mirror (read before writing the skill)</h3>
+<ul>
+<li><code>.claude/skills/generate-outreach-emails/SKILL.md</code> + <code>references/heimdall-api.md</code> — the <strong>structural template</strong> for this skill: read queue via authenticated REST → act → write back via REST; <code>Authorization: Bearer $(cat ~/.heimdall/api-token)</code>; <code>http://localhost:4000</code> dev base; <code>{ success, data, error, meta }</code> envelope; batch confirm gate; mark-failed-and-continue. The new skill&#39;s <code>references/heimdall-api.md</code> reuses these conventions.</li>
+<li><code>.planning/phases/16-email-generation-skill/16-CONTEXT.md</code> — the directly-analogous prior phase. Key carry-forwards: the <strong>D-02 route-gap pattern</strong> (a write-back route that sets content but not <code>status</code>) is mirrored here by <strong>D-01</strong> (the <code>/draft</code> route sets the draft id but not <code>status</code>/<code>outreachStatus</code>); the ephemeral-flag approach (D-08 there ≈ D-04 here, no schema change for transient run state).</li>
+</ul>
+<h3>Phase 12 API surface this skill consumes (read before planning)</h3>
+<ul>
+<li><code>.planning/phases/12-api-routes/12-CONTEXT.md</code> — the full outreach REST surface and its decisions.</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code> — the draft write-back route. <strong>MUST be edited per D-01</strong> to also transition <code>status=&#39;drafted&#39;</code> (via <code>canEmailTransition</code>) and set the contact&#39;s <code>outreachStatus=&#39;reached_out&#39;</code>.</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/recipient/route.ts</code> — discovery write-back. Already sets <code>channel</code> + <code>recipientEmail</code>, and forces <code>recipientEmail=null</code> when <code>channel=&#39;linkedin_message&#39;</code>. The skill calls this for discovered addresses (D-03) and the LinkedIn fallback (D-04b). No edit needed.</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code> — the <code>/status</code> route; the skill calls it to mark <code>failed</code> (discretion) and it is the <strong>closest analog</strong> for D-01&#39;s transition logic (validate via <code>canEmailTransition</code>, 400 on invalid, manual <code>updatedAt</code>, timeline event).</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/route.ts</code> — list emails (the skill reads the campaign&#39;s <code>approved</code> emails + their contacts to build its work queue). Planner: confirm whether this (or another existing endpoint) returns recipient/contact-email/contact-id fields the skill needs; <strong>do not add a new endpoint</strong> without flagging it as scope.</li>
+<li><code>src/features/outreach/lib/email-status.ts</code> — <code>canEmailTransition()</code> / <code>validEmailTransitions</code>. Note <code>approved → drafted</code>, <code>drafted → edited</code>. The D-01 edit calls this; do NOT reimplement.</li>
+</ul>
+<h3>Schema &amp; review-UI anchors</h3>
+<ul>
+<li><code>drizzle/schema/outreach-emails.ts</code> — exact columns the skill reads/writes: <code>gmailDraftId</code>, <code>recipientEmail</code>, <code>channel</code>, <code>status</code>, <code>draftedAt</code>, <code>lastError</code>/<code>lastErrorAt</code>. Confirms <strong>no</strong> <code>candidates</code> column (D-04).</li>
+<li><code>drizzle/schema/contacts.ts</code> — <code>email</code>, <code>outreachStatus</code> (default <code>not_reached_out</code>). D-01 sets <code>outreachStatus=&#39;reached_out&#39;</code>.</li>
+<li><code>drizzle/schema/enums.ts</code> — <code>outreachChannelEnum</code> (<code>email</code> | <code>linkedin_message</code>), <code>outreachEmailStatusEnum</code> (<code>pending</code>|<code>generated</code>|<code>edited</code>|<code>approved</code>|<code>drafted</code>|<code>failed</code>).</li>
+<li><code>src/features/outreach/lib/review-helpers.ts</code> — <code>needsLinkedinMessage()</code> already drives the badge for the D-04b fallback. No change needed; the skill just sets the channel.</li>
+<li><code>src/features/outreach/components/email-review-card.tsx</code> §&quot;needs LinkedIn message&quot; badge — confirms the LinkedIn-flag UI already exists.</li>
+</ul>
+<h3>Stale doc — read WITH the corrections below</h3>
+<ul>
+<li><code>.planning/research/ARCHITECTURE.md</code> §&quot;Skill 2: draft-outreach-emails&quot; / §&quot;Step 8&quot; — the original skill sketch. <strong>CORRECTIONS (the roadmap has since evolved):</strong><ol>
+<li>Discovery uses the <strong>already-connected Gmail MCP</strong> (<code>search_threads</code>/<code>get_thread</code>), <strong>NOT</strong> the Google People API + raw Gmail REST + OAuth <code>gmail.readonly</code> setup the doc describes. No OAuth setup is in scope.</li>
+<li>Invocation is <strong>batch-only</strong> (D-05) — ignore the doc&#39;s <code>--discover-only</code>/<code>--draft-only</code> modes.</li>
+<li>The doc&#39;s <code>/draft</code> flow does not mention the status/contact write-back — that is the <strong>D-01 gap</strong> to fix.</li>
+</ol>
+</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> / <code>.planning/PROJECT.md</code> — REST-only (no server actions), Zod on every route, <code>{ success, data, error, meta }</code> envelope, Drizzle query builder, <code>updatedAt: new Date()</code> set manually on UPDATE, every write logs a timeline event, soft-delete via <code>archivedAt</code>.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, async route handlers named after HTTP verb, enum value arrays shared between Zod and UI.</li>
+<li><code>.planning/codebase/INTEGRATIONS.md</code> — note re: interactively-authenticated MCP servers (e.g. <code>claude_ai_Gmail</code>) may be absent in headless/cron runs; this skill is owner-run interactively, so the Gmail MCP is available.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>generate-outreach-emails</code> skill</strong> — the structural template (SKILL.md shape, <code>references/heimdall-api.md</code>, bearer-token auth, queue→act→write-back loop, confirm gate, mark-failed-and-continue).</li>
+<li><strong><code>/draft</code> + <code>/recipient</code> + <code>/status</code> routes</strong> — already exist (Phase 12 12-03). Only <code>/draft</code> needs the D-01 edit; <code>/recipient</code> and <code>/status</code> are used as-is.</li>
+<li><strong><code>needsLinkedinMessage()</code> + the badge</strong> — the DISC-03 / D-04b LinkedIn-flag UI is already shipped; the skill only sets <code>channel=&#39;linkedin_message&#39;</code>.</li>
+<li><strong><code>canEmailTransition()</code></strong> — reused by the D-01 route edit; do not reimplement.</li>
+<li><strong>Gmail MCP</strong> (<code>claude_ai_Gmail</code>) — exposes <code>create_draft</code>, <code>search_threads</code>, <code>get_thread</code>, <code>list_drafts</code> (+ label tools). <strong>No send tool exists</strong> (supports D-06). <strong>No draft-update/delete tool is visible</strong> in the connected set — the D-02 in-place-update path is research-gated.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>A write-back route that sets one field but not the dependent status</strong> is a known gap shape here — Phase 16 D-02 (<code>/generation</code> set content not status); Phase 17 D-01 (<code>/draft</code> sets draft id not status/outreachStatus). Fix in the route, one atomic write, one timeline event.</li>
+<li><strong><code>updatedAt: new Date()</code> set manually on every UPDATE</strong> — the D-01 edit must preserve this (already does for the email; add it for the contact update).</li>
+<li><strong>Bearer-token auth covers all <code>/api/*</code></strong> (<code>src/proxy.ts</code>) — no middleware change; the skill authenticates with <code>~/.heimdall/api-token</code>.</li>
+<li><strong>Ephemeral run-state over schema changes</strong> — transient flags (low-context in P16, ambiguous-candidates here) live in the skill&#39;s run summary, not new columns.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Reads:</strong> the campaign&#39;s <code>approved</code> emails + their contacts (recipient/email/contact-id) — planner confirms the exact existing endpoint; the Gmail MCP for discovery.</li>
+<li><strong>Writes:</strong> <code>PATCH .../emails/[emailId]/draft</code> (gmailDraftId → + D-01 status/outreachStatus); <code>PATCH .../emails/[emailId]/recipient</code> (discovered address or <code>linkedin_message</code>); <code>PATCH .../emails/[emailId]/status</code> (<code>failed</code> on per-email failure).</li>
+<li><strong>Gmail MCP:</strong> <code>search_threads</code> + <code>get_thread</code> (discovery, read-only); <code>create_draft</code> (+ confirmed update tool) for drafting.</li>
+<li><strong>Upstream gate (Phase 15):</strong> the skill only acts on <code>approved</code> emails — the human approve gate is the prerequisite; drafted/linkedin states render in the same review UI.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><strong>The D-01 route gap:</strong> <code>PATCH .../draft</code> currently sets <code>gmailDraftId</code>+<code>draftedAt</code> only — make it also transition <code>status=&#39;drafted&#39;</code> (gated) and set the contact&#39;s <code>outreachStatus=&#39;reached_out&#39;</code>, so success criterion #1 (&quot;draft id stored, email drafted, contact reached_out, timeline logged&quot;) fully holds from one skill call.</li>
+<li><strong>Stricter discovery (D-03):</strong> accept an address only if the contact was a <em>direct</em> to/from participant in a real thread with Steve — no domain-name guessing. Owner explicitly chose this over the roadmap&#39;s looser &quot;name + company domain&quot; pair.</li>
+<li><strong>Ambiguity = transparency, not a guess (D-04):</strong> when two+ addresses are plausible, leave the recipient unset and list the candidates in the run summary for manual resolution — never auto-pick a draft recipient.</li>
+<li><strong>Send-safety (D-06):</strong> allowlist the Gmail tools in SKILL.md + a &quot;grep for send before any real run&quot; checklist; the MCP has no send tool, so this is belt-and-suspenders. No content preview gate beyond the upfront count confirm.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Durable candidate-picker UI</strong> — a <code>candidates</code> JSONB column on <code>outreach_emails</code> + a dropdown in <code>email-review-card.tsx</code> so the owner picks among ambiguous discovered addresses in the browser (the literal reading of DISC-02). Deferred (D-04): pulls a Phase 11 schema change + Phase 15 UI work into this phase; the ephemeral run-summary list is sufficient for v1.2. Revisit if manual resolution via the summary proves annoying.</li>
+<li><strong><code>--discover-only</code> / <code>--draft-only</code> split modes</strong> — the research sketch&#39;s separate-run flags. Dropped (D-05) for batch-only consistency with Phase 16. Revisit only if the owner wants to review discovery results before any drafting in a separate pass.</li>
+<li><strong>Content preview / sample gate before creating real drafts</strong> — like Phase 16&#39;s D-04 sample-review. Considered and dropped (D-06): drafts are reviewable in Gmail before any human sends them, and the content was already human-approved in Phase 15. Revisit if drafting volume makes a pre-flight preview valuable.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos matched this phase.</p>
+</deferred><hr>
+<p><em>Phase: 17-Gmail Drafting and Email Discovery Skill</em>
+<em>Context gathered: 2026-06-22</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
