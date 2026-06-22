@@ -41,8 +41,12 @@ NOT attempt to fix automatically.
 - `.env.local` has `API_TOKEN_HASH=<sha256 of the token>` and
   `SINGLE_USER_EMAIL=steve@bronstein.org`.
 - Heimdall dev server running on `http://localhost:4000` (`npm run dev`).
+- `jq` available on `PATH` (used to safely build JSON write-back payloads).
 
 ```bash
+# Verify jq is installed (required for correct JSON escaping of multi-line bodies)
+command -v jq >/dev/null && echo "jq found" || echo "MISSING: jq (brew install jq)"
+
 # Verify token file exists
 [ -f ~/.heimdall/api-token ] && echo "token found" || echo "MISSING: ~/.heimdall/api-token"
 
@@ -158,6 +162,17 @@ Sample ready. Thumbs up to drain the remaining N-5, or share tone tweaks first.
 Wait for the owner's response before proceeding. Apply any requested tone adjustments to the
 authoring approach (not just to the 5 samples) before the full drain.
 
+### Write the approved samples back
+
+Once the owner thumbs-up the sample, write all 5 sample emails back immediately using the
+**same single-PATCH call as Step 4d**. These 5 are now persisted with `status='generated'`,
+so Step 4 will skip them (it drains only the remaining `pending` rows).
+
+If the owner requested tone tweaks, regenerate the 5 samples with the new guidance and re-run
+the blocking LLM-tell scan (Step 4c) on each **before** writing back -- never persist the
+pre-tweak versions. If any sample fails after the tweak, route it through the failure path
+(Step 4e) and continue.
+
 ---
 
 ## Step 4: Chunked drain -- remaining emails (D-01)
@@ -239,10 +254,16 @@ Once the email passes the blocking scan, write it back with a **single** PATCH c
 
 ```bash
 TOKEN=$(cat ~/.heimdall/api-token)
+# Build the JSON body with jq so multi-line bodies, quotes, and other special
+# characters are escaped correctly. A raw -d "{...$BODY...}" produces INVALID
+# JSON the moment the body contains a newline (every real email body does),
+# which makes the server's request.json() throw and return 500.
+PAYLOAD=$(jq -n --arg subject "$SUBJECT" --arg body "$BODY" \
+  '{generatedSubject: $subject, generatedBody: $body}')
 curl -s -X PATCH \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d "{\"generatedSubject\":\"$SUBJECT\",\"generatedBody\":\"$BODY\"}" \
+  -d "$PAYLOAD" \
   "http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/generation"
 ```
 
@@ -262,10 +283,14 @@ continue to the next email without crashing:
 
 ```bash
 TOKEN=$(cat ~/.heimdall/api-token)
+# Escape lastError via jq for the same reason -- error strings routinely
+# contain quotes, newlines, and shell metacharacters that break raw -d JSON.
+PAYLOAD=$(jq -n --arg err "$LAST_ERROR" \
+  '{status: "failed", lastError: $err}')
 curl -s -X PATCH \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d "{\"status\":\"failed\",\"lastError\":\"$LAST_ERROR\"}" \
+  -d "$PAYLOAD" \
   "http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/status"
 ```
 
