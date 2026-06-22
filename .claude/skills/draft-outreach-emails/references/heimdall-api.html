@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>heimdall-api</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-afbbc75510b6e0da2/.claude/skills/draft-outreach-emails/references/heimdall-api.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Heimdall API Contract (draft-outreach-emails skill)</h1>
+<p>The four REST endpoints this skill calls, the bearer-token auth pattern, and
+the standard response envelope. All routes are served by the Next.js app
+running at <code>http://localhost:4000</code> in dev (the dev server is on port 4000 per
+<code>package.json</code> <code>dev</code> script).</p>
+<hr>
+<h2>Auth</h2>
+<p>Every request needs the <code>Authorization: Bearer &lt;token&gt;</code> header. The token is
+the plaintext content of <code>~/.heimdall/api-token</code> (chmod 600, written by
+<code>npm run token:generate</code>).</p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+curl -H &quot;Authorization: Bearer $TOKEN&quot; ...
+</code></pre>
+<p>The Heimdall middleware (<code>src/proxy.ts</code>) accepts the bearer header <strong>only when
+both</strong> of these hold:</p>
+<ul>
+<li><code>SHA-256(&lt;bearer token&gt;) === process.env.API_TOKEN_HASH</code>, AND</li>
+<li><code>process.env.SINGLE_USER_EMAIL === &#39;steve@bronstein.org&#39;</code> (multi-tenant
+safety gate -- keeps the single-user assumption explicit at the auth layer).</li>
+</ul>
+<p>If the bearer header is present but the hash does not match (or
+<code>SINGLE_USER_EMAIL</code> is unset), middleware falls through to Clerk&#39;s session
+check, which will return <code>401 { &quot;success&quot;: false, &quot;error&quot;: &quot;Unauthorized&quot; }</code>.</p>
+<p>Never log the resolved token. Use <code>$(cat ~/.heimdall/api-token)</code> inline so the
+plaintext value stays out of shell history.</p>
+<hr>
+<h2>Response Envelope</h2>
+<p>Every Heimdall route returns:</p>
+<pre><code class="language-json">{ &quot;success&quot;: true, &quot;data&quot;: { ... }, &quot;meta&quot;: { ... } }
+</code></pre>
+<p>or</p>
+<pre><code class="language-json">{ &quot;success&quot;: false, &quot;error&quot;: &quot;human-readable message&quot; }
+</code></pre>
+<p>On <code>success: false</code>, surface the <code>error</code> string. Never silently swallow a
+failure envelope.</p>
+<p>Status codes:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>200</td>
+<td>OK (GET, PATCH, successful write)</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Validation failure / state-machine rejection (Zod error or invalid transition)</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Auth missing or invalid (handled by middleware)</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Entity not found</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server error</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Endpoints</h2>
+<p>This skill calls <strong>exactly four endpoints</strong> in each run. Do not add calls to
+other routes -- CLI parity requires all writes go through REST and nothing else.</p>
+<hr>
+<h3>1. <code>GET /api/outreach-campaigns/[id]/emails?status=approved&amp;limit=100</code></h3>
+<p><strong>Used by:</strong> every run -- called at the start to read the full work queue.</p>
+<p><strong>IMPORTANT:</strong> Always pass <code>?limit=100</code> and paginate until <code>meta.hasMore = false</code>. The default limit is 20; campaigns with more than 20 approved emails
+will be <strong>silently truncated</strong> if you omit <code>&amp;limit=100</code> or skip the pagination
+loop (Pitfall 6 from 17-RESEARCH.md).</p>
+<p><strong>Pagination loop:</strong></p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+CAMPAIGN_ID=&quot;your-campaign-uuid&quot;
+ALL_EMAILS=&quot;[]&quot;
+CURSOR=&quot;&quot;
+
+while true; do
+  URL=&quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails?status=approved&amp;limit=100&quot;
+  if [ -n &quot;$CURSOR&quot; ]; then URL=&quot;${URL}&amp;cursor=${CURSOR}&quot;; fi
+  PAGE=$(curl -s -H &quot;Authorization: Bearer $TOKEN&quot; &quot;$URL&quot;)
+  SUCCESS=$(echo &quot;$PAGE&quot; | jq -r &#39;.success&#39;)
+  if [ &quot;$SUCCESS&quot; != &quot;true&quot; ]; then
+    echo &quot;Error: $(echo &quot;$PAGE&quot; | jq -r &#39;.error&#39;)&quot;; exit 1
+  fi
+  ALL_EMAILS=$(echo &quot;$ALL_EMAILS $PAGE&quot; | jq -s &#39;.[0] + .[1].data&#39;)
+  HAS_MORE=$(echo &quot;$PAGE&quot; | jq -r &#39;.meta.hasMore&#39;)
+  if [ &quot;$HAS_MORE&quot; != &quot;true&quot; ]; then break; fi
+  CURSOR=$(echo &quot;$PAGE&quot; | jq -r &#39;.meta.cursor&#39;)
+done
+</code></pre>
+<p><strong>Response shape:</strong></p>
+<pre><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;email&quot;: {
+        &quot;id&quot;: &quot;uuid&quot;,
+        &quot;campaignId&quot;: &quot;uuid&quot;,
+        &quot;contactId&quot;: &quot;uuid&quot;,
+        &quot;channel&quot;: &quot;email&quot;,
+        &quot;recipientEmail&quot;: null,
+        &quot;generatedSubject&quot;: &quot;Quick question, Alex&quot;,
+        &quot;generatedBody&quot;: &quot;Hey Alex,\n\n...&quot;,
+        &quot;editedSubject&quot;: null,
+        &quot;editedBody&quot;: null,
+        &quot;status&quot;: &quot;approved&quot;,
+        &quot;gmailDraftId&quot;: null,
+        &quot;lastError&quot;: null,
+        &quot;lastErrorAt&quot;: null,
+        &quot;generatedAt&quot;: &quot;2026-06-22T12:00:00.000Z&quot;,
+        &quot;approvedAt&quot;: &quot;2026-06-22T13:00:00.000Z&quot;,
+        &quot;draftedAt&quot;: null,
+        &quot;createdAt&quot;: &quot;2026-06-22T10:00:00.000Z&quot;,
+        &quot;updatedAt&quot;: &quot;2026-06-22T13:00:00.000Z&quot;
+      },
+      &quot;contact&quot;: {
+        &quot;id&quot;: &quot;uuid&quot;,
+        &quot;firstName&quot;: &quot;Alex&quot;,
+        &quot;lastName&quot;: &quot;Chen&quot;,
+        &quot;email&quot;: null,
+        &quot;outreachStatus&quot;: &quot;not_reached_out&quot;,
+        &quot;archivedAt&quot;: null,
+        &quot;linkedinUrl&quot;: &quot;https://linkedin.com/in/alexchen&quot;,
+        &quot;title&quot;: &quot;Director of Data&quot;,
+        &quot;currentCompany&quot;: &quot;Anthropic&quot;
+      }
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;cursor&quot;: &quot;2026-06-22T13:00:00.000Z&quot;,
+    &quot;hasMore&quot;: false
+  }
+}
+</code></pre>
+<p><strong>Key fields:</strong></p>
+<ul>
+<li><code>email.recipientEmail</code> -- <code>null</code> means address not yet discovered; this email goes to the <strong>discovery queue</strong></li>
+<li><code>email.gmailDraftId</code> -- <code>null</code> for a never-drafted email; non-null means a prior draft exists (re-draft path -- D-02)</li>
+<li><code>email.editedSubject</code> / <code>email.editedBody</code> -- take precedence over <code>generatedSubject</code> / <code>generatedBody</code> (use <code>editedX ?? generatedX</code> for final content)</li>
+<li><code>contact.archivedAt</code> -- skip drafting if non-null; do not send to archived contacts</li>
+<li><code>contact</code> may be <code>null</code> if the contact was hard-deleted (edge case; skip this email)</li>
+</ul>
+<p>After reading the full queue, split into two sub-queues:</p>
+<ul>
+<li><strong>Discovery queue:</strong> <code>email.recipientEmail === null</code> (no stored address -- must discover or fall back to LinkedIn)</li>
+<li><strong>Drafting queue:</strong> <code>email.recipientEmail !== null</code> (address known -- proceed to draft)</li>
+</ul>
+<hr>
+<h3>2. <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/recipient</code></h3>
+<p><strong>Used by:</strong> the discovery loop (Step 3). Called once per email after address discovery resolves.</p>
+<p><strong>Purpose:</strong> Store the discovered recipient address (DISC-01/DISC-02) or route the contact to
+LinkedIn message (DISC-03 / D-04b).</p>
+<p><strong>Two bodies -- use the right one:</strong></p>
+<pre><code class="language-json">{ &quot;channel&quot;: &quot;email&quot;, &quot;recipientEmail&quot;: &quot;alex@example.com&quot; }
+</code></pre>
+<p>Use when discovery found exactly one distinct direct-thread address. Stores the address and
+sets <code>channel = &#39;email&#39;</code>. After this call, add the email to the drafting queue for this run.</p>
+<pre><code class="language-json">{ &quot;channel&quot;: &quot;linkedin_message&quot; }
+</code></pre>
+<p>Use when discovery found zero addresses (D-04b -- LinkedIn fallback). The route <strong>forces
+<code>recipientEmail = null</code></strong> server-side regardless of what is sent; do not pass a <code>recipientEmail</code>
+field. The existing <code>needsLinkedinMessage()</code> badge in the review UI already renders this state.
+Do <strong>NOT</strong> call this endpoint for ambiguous contacts (2+ candidate addresses) -- leave
+<code>recipientEmail</code> unset and report in the run summary instead (D-04).</p>
+<p><strong>Curl -- discovered address:</strong></p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+CAMPAIGN_ID=&quot;your-campaign-uuid&quot;
+EMAIL_ID=&quot;your-email-uuid&quot;
+PAYLOAD=$(jq -n --arg addr &quot;alex@example.com&quot; \
+  &#39;{channel: &quot;email&quot;, recipientEmail: $addr}&#39;)
+curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$PAYLOAD&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/recipient&quot;
+</code></pre>
+<p><strong>Curl -- LinkedIn fallback:</strong></p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+CAMPAIGN_ID=&quot;your-campaign-uuid&quot;
+EMAIL_ID=&quot;your-email-uuid&quot;
+curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;channel&quot;:&quot;linkedin_message&quot;}&#39; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/recipient&quot;
+</code></pre>
+<p><strong>Response:</strong> <code>{ &quot;success&quot;: true, &quot;data&quot;: &lt;updated email row&gt; }</code> on success, or <code>400</code> on
+Zod validation failure (e.g., invalid channel value or malformed email).</p>
+<hr>
+<h3>3. <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/draft</code></h3>
+<p><strong>Used by:</strong> the drafting loop (Step 4). Called once per email after <code>mcp__gmail__create_draft</code>
+returns a <code>gmailDraftId</code>.</p>
+<p><strong>Purpose:</strong> Atomically record the Gmail draft -- sets <code>gmailDraftId</code>, transitions <code>status → &#39;drafted&#39;</code>, sets <code>draftedAt</code>, updates the linked contact&#39;s <code>outreachStatus → &#39;reached_out&#39;</code>,
+and logs an <code>outreach_email_drafted</code> timeline event. One call per email; all four effects
+happen in the same server-side request.</p>
+<p><strong>Legal pre-state:</strong> <code>approved</code> <strong>ONLY</strong>. The route enforces <code>canEmailTransition(email.status, &#39;drafted&#39;)</code> and returns <code>400</code> for any other pre-state.</p>
+<p><strong>Idempotency (D-02):</strong> An email already in <code>status=&#39;drafted&#39;</code> never appears in the
+<code>?status=approved</code> work queue, so the skill naturally skips already-drafted emails. If an email
+was drafted then un-approved (edited back to <code>approved</code> with a stale <code>gmailDraftId</code>), call this
+endpoint again with the new draft ID -- the route accepts <code>approved → drafted</code> and overwrites
+<code>gmailDraftId</code>. The old Gmail draft is left harmless in Gmail&#39;s drafts folder (no
+<code>update_draft</code> tool exists on the connected MCP).</p>
+<p><strong>Body:</strong></p>
+<pre><code class="language-json">{ &quot;gmailDraftId&quot;: &quot;r1234567890&quot; }
+</code></pre>
+<p>Field constraints (Zod schema):</p>
+<ul>
+<li><code>gmailDraftId</code> -- string, min 1 char, required</li>
+</ul>
+<p><strong>Curl:</strong></p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+CAMPAIGN_ID=&quot;your-campaign-uuid&quot;
+EMAIL_ID=&quot;your-email-uuid&quot;
+GMAIL_DRAFT_ID=&quot;r1234567890&quot;
+PAYLOAD=$(jq -n --arg gmailDraftId &quot;$GMAIL_DRAFT_ID&quot; \
+  &#39;{gmailDraftId: $gmailDraftId}&#39;)
+curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$PAYLOAD&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/draft&quot;
+</code></pre>
+<p><strong>Response:</strong> <code>{ &quot;success&quot;: true, &quot;data&quot;: &lt;updated email row&gt; }</code> on success, or <code>400 { &quot;error&quot;: &quot;Invalid transition: &lt;from&gt; -&gt; drafted&quot; }</code> if the email is not in <code>approved</code> state.</p>
+<hr>
+<h3>4. <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/status</code></h3>
+<p><strong>Used by:</strong> the failure path ONLY (Step 4, per-email error handling). Called when drafting
+fails for a non-approved email. <strong>See the critical restriction below before calling this.</strong></p>
+<p><strong>CRITICAL: <code>approved → failed</code> is an ILLEGAL TRANSITION.</strong></p>
+<p>The state machine in <code>src/features/outreach/lib/email-status.ts</code> defines:</p>
+<pre><code>approved: [&#39;drafted&#39;, &#39;edited&#39;]   // &#39;failed&#39; is NOT in this list
+</code></pre>
+<p>Calling this endpoint with <code>{ status: &#39;failed&#39; }</code> on an <strong><code>approved</code> email returns
+<code>400 { &quot;error&quot;: &quot;Invalid transition: approved -&gt; failed&quot; }</code>.</strong> Do NOT call this endpoint
+for an approved email that fails to draft.</p>
+<p><strong>Correct behavior on draft failure for an approved email:</strong></p>
+<ol>
+<li>Do NOT call <code>/status</code></li>
+<li>Add the email to an in-memory failed list</li>
+<li>Leave the email in <code>approved</code> state</li>
+<li>Report in the end-of-run summary</li>
+</ol>
+<p><strong>When to call this endpoint:</strong> Only for emails in a non-approved state (e.g., <code>pending</code>,
+<code>generated</code>, <code>edited</code>) that fail during processing. This is an edge case in the draft skill;
+the primary use case is the <code>generate-outreach-emails</code> sibling skill&#39;s generation failures.</p>
+<p><strong>Body:</strong></p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;failed&quot;,
+  &quot;lastError&quot;: &quot;&lt;first ~200 chars of the error message&gt;&quot;
+}
+</code></pre>
+<p>Field constraints:</p>
+<ul>
+<li><code>status</code> -- must be <code>&#39;failed&#39;</code></li>
+<li><code>lastError</code> -- string, max 500 chars (Zod enforced). Truncate to ~200 chars.</li>
+</ul>
+<p><strong>Curl:</strong></p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+CAMPAIGN_ID=&quot;your-campaign-uuid&quot;
+EMAIL_ID=&quot;your-email-uuid&quot;
+LAST_ERROR=&quot;Draft creation failed: MCP tool returned unexpected response shape&quot;
+PAYLOAD=$(jq -n --arg err &quot;$LAST_ERROR&quot; \
+  &#39;{status: &quot;failed&quot;, lastError: $err}&#39;)
+curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$PAYLOAD&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/status&quot;
+</code></pre>
+<p><strong>Response:</strong> <code>{ &quot;success&quot;: true, &quot;data&quot;: &lt;updated email row&gt; }</code> on success, or <code>400</code> if
+the transition from the current status to <code>&#39;failed&#39;</code> is not valid (e.g., current status is
+<code>approved</code> -- see restriction above).</p>
+<hr>
+<h2>Error Envelopes the Skill Must Handle</h2>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Envelope</th>
+<th>Skill action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;Invalid transition: &lt;from&gt; -&gt; &lt;to&gt;&quot; }</code></td>
+<td>State-machine guard fired. For <code>approved -&gt; drafted</code>: bug in skill (only approved emails should reach the draft endpoint). For <code>approved -&gt; failed</code>: <strong>do NOT retry</strong> -- leave email as approved, report in summary. For other transitions: log and continue to next email.</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;&lt;Zod field&gt;: &lt;reason&gt;&quot; }</code></td>
+<td>Bug in skill payload; surface and exit</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;Unauthorized&quot; }</code></td>
+<td>Token / env misconfig; surface and exit</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;Campaign not found&quot; }</code></td>
+<td>Campaign ID invalid; surface and exit</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;Email not found&quot; }</code></td>
+<td>Email ID mismatch; log and continue</td>
+</tr>
+<tr>
+<td>500</td>
+<td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;&lt;message&gt;&quot; }</code></td>
+<td>Server-side bug; surface and exit</td>
+</tr>
+</tbody></table>
+<p><strong>State-machine summary for this skill:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Transition</th>
+<th>Legal?</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>approved → drafted</code></td>
+<td>YES</td>
+<td>The primary write-back path via endpoint 3</td>
+</tr>
+<tr>
+<td><code>approved → edited</code></td>
+<td>YES</td>
+<td>Un-approve path (happens in UI, not in this skill)</td>
+</tr>
+<tr>
+<td><code>approved → failed</code></td>
+<td><strong>NO</strong></td>
+<td>Illegal -- returns 400. Leave email as <code>approved</code> on draft failure.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Run Protocol (summary)</h2>
+<ol>
+<li><strong>Read queue:</strong> Paginate <code>GET .../emails?status=approved&amp;limit=100</code> (loop until
+<code>meta.hasMore=false</code>) -- store <code>{ email, contact }</code> pairs.</li>
+<li><strong>Split:</strong> emails with <code>recipientEmail=null</code> → discovery queue; others → drafting queue.</li>
+<li><strong>Confirm gate (D-05):</strong> Report &quot;N approved emails found. M are missing a recipient address.
+Proceed with discover-then-draft? (yes / no)&quot; -- wait for confirmation.</li>
+<li><strong>Discovery loop:</strong> For each email in the discovery queue, search Gmail threads by contact
+name. Exactly one distinct direct-participant address → <code>PATCH .../recipient {channel:&#39;email&#39;, recipientEmail}</code> then add to drafting queue. Two or more → ambiguous (add
+to run-summary list, do not draft). Zero → <code>PATCH .../recipient {channel:&#39;linkedin_message&#39;}</code>.</li>
+<li><strong>Drafting loop:</strong> For each email in the drafting queue (skip if <code>contact.archivedAt != null</code>), resolve final content (<code>editedSubject ?? generatedSubject</code>, <code>editedBody ?? generatedBody</code>), call <code>mcp__gmail__create_draft</code>, then <code>PATCH .../draft {gmailDraftId}</code>. On
+<code>create_draft</code> failure for an approved email: do NOT call <code>/status</code> -- add to failed list
+and continue.</li>
+<li><strong>End-of-run summary:</strong> Print drafted / skipped / discovered / ambiguous / LinkedIn-fallback
+/ failed counts; list ambiguous candidates (name, emailId, candidate addresses); list failed
+emails (name, emailId, error).</li>
+</ol>
+<p>Build every JSON write-back body with <code>jq -n --arg</code> -- never interpolate email subjects, bodies,
+or error strings directly into a <code>-d &quot;{...}&quot;</code> string (multi-line content breaks raw JSON).</p>
+<p>The skill never reads the database directly. All reads and writes go through REST.</p>
+
+
+
+<footer>
+Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-afbbc75510b6e0da2/.claude/skills/draft-outreach-emails/references/heimdall-api.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
