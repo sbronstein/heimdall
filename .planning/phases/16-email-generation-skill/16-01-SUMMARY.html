@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-01-SUMMARY</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-01-SUMMARY.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 16-email-generation-skill
+plan: &quot;01&quot;
+subsystem: outreach-api
+tags: [api, state-machine, outreach, email-generation, testing]
+dependency_graph:
+  requires: [12-api-routes]
+  provides: [generation-write-back-guard]
+  affects: [outreach-emails, generation-skill-plan-03]
+tech_stack:
+  added: []
+  patterns: [select-guard-update, pglite-route-test, vi-hoisted-proxy]
+key_files:
+  modified:
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts
+  created:
+    - src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts
+decisions:</p>
+<ul>
+<li>&quot;SELECT-before-UPDATE pattern mirrors the sibling status/route.ts analog; avoids a blind UPDATE that would silently advance emails already in non-pending states&quot;</li>
+<li>&quot;status=&#39;generated&#39; written in the same UPDATE as content fields — one DB round-trip, no TOCTOU window between content write and status flip&quot;</li>
+<li>&quot;canEmailTransition imported from @/features/outreach/lib/email-status — transition table is not reimplemented&quot;
+metrics:
+  duration: 2m
+  completed: &quot;2026-06-22T15:18:13Z&quot;
+  tasks_completed: 2
+  files_changed: 2</li>
+</ul>
+<hr>
+<h1>Phase 16 Plan 01: Generation Write-Back Guard Summary</h1>
+<p><strong>One-liner:</strong> Guarded <code>/generation</code> write-back that advances pending emails to <code>status=&#39;generated&#39;</code> via <code>canEmailTransition</code> in a single UPDATE, pinned by a PGlite transition test.</p>
+<h2>What Was Built</h2>
+<p>Closed the D-02 gap in the email generation write-back route. The previous route performed a blind UPDATE that wrote content but left <code>status=&#39;pending&#39;</code>, meaning generated emails never advanced through the state machine. The ROADMAP success criterion #1 (&quot;running the skill advances all pending emails to generated&quot;) required the route to flip status.</p>
+<p><strong>Changes:</strong></p>
+<ol>
+<li><p><strong><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code></strong> — Restructured PATCH handler to follow the SELECT→guard→UPDATE shape of the sibling <code>status/route.ts</code>:</p>
+<ul>
+<li>Added a campaign-scoped SELECT before the UPDATE</li>
+<li>Returns 404 if email does not belong to the campaign</li>
+<li>Imports and calls <code>canEmailTransition(email.status, &#39;generated&#39;)</code> — returns 400 &quot;Invalid transition&quot; if not allowed (only <code>pending</code> is allowed → <code>generated</code> per the state machine)</li>
+<li>Adds <code>status: &#39;generated&#39;</code> to the existing UPDATE set (content + generatedAt + updatedAt) — one UPDATE, one DB call</li>
+<li>Keeps exactly one <code>logTimeline</code> call (<code>outreach_email_generated</code>)</li>
+</ul>
+</li>
+<li><p><strong><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts</code></strong> — PGlite route test:</p>
+<ul>
+<li>Test 1: pending email → 200 with <code>status=&#39;generated&#39;</code>, non-null <code>generatedAt</code>, written subject/body, one timeline event</li>
+<li>Test 2: approved email → 400 &quot;Invalid transition: approved -&gt; generated&quot;, status unchanged, no timeline event</li>
+<li>Test 3: non-existent emailId → 404</li>
+</ul>
+</li>
+</ol>
+<h2>Verification</h2>
+<ul>
+<li>All 3 tests pass: <code>npx vitest run &quot;generation/route.test.ts&quot;</code> exits 0</li>
+<li>TypeScript clean: <code>npx tsc --noEmit</code> reports zero errors in the edited route</li>
+<li>Route imports (not reimplements) <code>canEmailTransition</code> from <code>@/features/outreach/lib/email-status</code></li>
+</ul>
+<h2>Threat Model Coverage</h2>
+<table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T-16-01: Tampering — unguarded status write</td>
+<td><code>canEmailTransition(email.status, &#39;generated&#39;)</code> gate; disallowed source states return 400</td>
+</tr>
+<tr>
+<td>T-16-03: Spoofing — wrong campaign scope</td>
+<td>SELECT and UPDATE both scoped to <code>(emailId, campaignId)</code></td>
+</tr>
+</tbody></table>
+<h2>Deviations from Plan</h2>
+<p>None — plan executed exactly as written. The SELECT→guard→UPDATE restructure was the prescribed approach; no deviation was needed.</p>
+<h2>Known Stubs</h2>
+<p>None — all three behaviors are fully implemented and tested.</p>
+<h2>Self-Check</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code> — exists and modified</li>
+<li><input checked="" disabled="" type="checkbox"> <code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.test.ts</code> — exists and created</li>
+<li><input checked="" disabled="" type="checkbox"> Task 1 commit <code>1de7bd2</code> — exists</li>
+<li><input checked="" disabled="" type="checkbox"> Task 2 commit <code>aeb9e2b</code> — exists</li>
+</ul>
+<h2>Self-Check: PASSED</h2>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-01-SUMMARY.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
