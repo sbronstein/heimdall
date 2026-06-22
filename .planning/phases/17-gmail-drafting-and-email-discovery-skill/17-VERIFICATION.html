@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-VERIFICATION</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-VERIFICATION.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>phase: 17-gmail-drafting-and-email-discovery-skill
+verified: 2026-06-22T22:43:32Z
+status: human_needed
+score: 5/5 must-haves verified
+overrides_applied: 0
+human_verification:</p>
+<ul>
+<li>test: &quot;Run draft-outreach-emails against a campaign with an approved email that has a stored recipientEmail — confirm a draft appears in Gmail, the email row shows status=&#39;drafted&#39; and gmailDraftId set, the contact shows outreachStatus=&#39;reached_out&#39;, and a timeline event of type outreach_email_drafted appears&quot;
+expected: &quot;Gmail draft visible; email row: status=drafted, gmailDraftId=non-null; contact: outreachStatus=reached_out; timeline event logged&quot;
+why_human: &quot;Requires live Gmail MCP connection and a real approved email row — cannot verify Gmail draft creation or the four-effect atomicity end-to-end without a live session&quot;</li>
+<li>test: &quot;Run draft-outreach-emails against a campaign where at least one approved email has no stored recipientEmail but the contact has a shared Gmail thread — confirm exactly one distinct address is discovered and written back, the email is drafted in the same run&quot;
+expected: &quot;recipientEmail written back via PATCH .../recipient; Gmail draft created in same run; email status=drafted&quot;
+why_human: &quot;Gmail thread search (mcp__gmail__search_threads + get_thread) cannot be invoked without a live Gmail MCP session&quot;</li>
+<li>test: &quot;Run draft-outreach-emails against a campaign where an approved email&#39;s contact has no discoverable Gmail thread — confirm the email&#39;s channel is set to linkedin_message and the contact appears in the LinkedIn fallback section of the run summary (not silently dropped)&quot;
+expected: &quot;channel=linkedin_message on the email row; contact listed in LinkedIn fallback summary; no draft created&quot;
+why_human: &quot;Requires live Gmail MCP to confirm zero threads are returned for the contact&quot;</li>
+<li>test: &quot;Re-run draft-outreach-emails against the same campaign used in the first human test — confirm zero duplicate drafts are created (already-drafted emails do not appear in the approved queue and are not re-processed)&quot;
+expected: &quot;Skill reports 0 drafted on re-run (or drafts only emails still in approved state); no new Gmail drafts for already-drafted emails&quot;
+why_human: &quot;Requires two sequential live runs to confirm idempotency end-to-end&quot;</li>
+<li>test: &quot;Supply CAMPAIGN_ID and EMAIL_ID (non-approved email) to scripts/verify-draft-route.sh with the dev server running — confirm it prints PASS (HTTP 400 + Invalid transition)&quot;
+expected: &quot;Script exits 0; output shows PASS: HTTP 400 + &#39;Invalid transition&#39; confirmed&quot;
+why_human: &quot;Script requires a live dev server on port 4000 and a real non-approved email row; cannot be run without those preconditions&quot;</li>
+</ul>
+<hr>
+<h1>Phase 17: Gmail Drafting and Email Discovery Skill — Verification Report</h1>
+<p><strong>Phase Goal:</strong> Approved emails are pushed to Gmail as drafts (never sent), contacts without stored emails have addresses discovered from Gmail thread history, and LinkedIn-only contacts are clearly flagged.
+<strong>Verified:</strong> 2026-06-22T22:43:32Z
+<strong>Status:</strong> human_needed
+<strong>Re-verification:</strong> No — initial verification</p>
+<hr>
+<h2>Goal Achievement</h2>
+<h3>Observable Truths</h3>
+<p>All five must-have truths are VERIFIED at the code level. Live Gmail-MCP behavior cannot be verified without an interactive session (see Human Verification Required).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Truth</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>D-01: the /draft route does all four effects atomically — gmailDraftId stored, status=drafted (canEmailTransition-gated), contact outreachStatus=reached_out, timeline event with contactId</td>
+<td>✓ VERIFIED</td>
+<td>Route at lines 27–72: pre-read SELECT scoped by (emailId, campaignId); canEmailTransition guard returns 400 on non-approved; email UPDATE sets gmailDraftId+status+draftedAt+updatedAt; contact UPDATE sets outreachStatus=reached_out+updatedAt; logTimeline with contactId: email.contactId</td>
+</tr>
+<tr>
+<td>2</td>
+<td>D-03: SKILL.md discovery accepts ONLY a single direct-thread participant matched by name; ≥2 distinct → ambiguous (no guess, no forced linkedin); 0 → linkedin fallback; CANDIDATE_ADDRESSES reset per contact</td>
+<td>✓ VERIFIED</td>
+<td>SKILL.md lines 248–315: CANDIDATE_ADDRESSES=() reset at start of each contact&#39;s iteration (WR-01 fix); grep -qiF for fixed-string name matching (WR-03 fix); exactly-1-distinct → PATCH recipient + add to DRAFTING_QUEUE (IN-01 fix); ≥2 → AMBIGUOUS_LIST (recipientEmail left unset, DO NOT force linkedin); 0 → PATCH {channel:&#39;linkedin_message&#39;} + LINKEDIN_FALLBACK_LIST</td>
+</tr>
+<tr>
+<td>3</td>
+<td>DISC-03 / D-04b: no email by any method → PATCH .../recipient {channel:&#39;linkedin_message&#39;}; contact never silently dropped; all branches (skip/ambiguous/archived) reported in run summary</td>
+<td>✓ VERIFIED</td>
+<td>SKILL.md Step 3c zero-address path (lines 326–339): curl PATCH {channel:&#39;linkedin_message&#39;}; Step 5 summary (lines 463–484): all counters present — DRAFTED_COUNT, SKIPPED_LIST, DISCOVERED_COUNT, AMBIGUOUS_LIST, LINKEDIN_FALLBACK_LIST, FAILED_LIST; initialization block at lines 130–136 (IN-02 fix)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>D-02 / DRFT-03: idempotent — already-drafted never reappear in approved queue; edited-after-draft (approved + stale gmailDraftId) → create-and-repoint via fresh draft; discovered emails added to drafting queue in same run</td>
+<td>✓ VERIFIED</td>
+<td>SKILL.md Step 4b (lines 385–395): gmailDraftId IS NULL → new draft; non-null → DRAFT_ACTION=redraft (fresh create + repoint via /draft); DRAFTING_QUEUE append after successful discovery write-back (lines 300–304, IN-01 fix); approved queue filters to status=approved so drafted emails never appear</td>
+</tr>
+<tr>
+<td>5</td>
+<td>DRFT-02 / D-06: allowed-tools lists ONLY the four safe Gmail tools; pre-run grep gate targets mcp__gmail__ send-family TOOL TOKENS; zero send-family tokens exist in skill dir</td>
+<td>✓ VERIFIED</td>
+<td>SKILL.md frontmatter: exactly {Read, Bash, mcp__gmail__search_threads, mcp__gmail__get_thread, mcp__gmail__create_draft, mcp__gmail__list_drafts}; grep gate (lines 506–513) uses grep -rinE &quot;mcp__gmail__(send</td>
+</tr>
+</tbody></table>
+<p><strong>Score:</strong> 5/5 truths verified</p>
+<hr>
+<h3>Deferred Items</h3>
+<p>None. All five success criteria are addressed in this phase.</p>
+<hr>
+<h3>Required Artifacts</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Expected</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/draft/route.ts</code></td>
+<td>Atomic draft write-back: canEmailTransition guard + status=drafted + contact outreachStatus=reached_out + timeline event</td>
+<td>✓ VERIFIED</td>
+<td>82 lines; all four D-01 effects present; pre-read SELECT scoped by (emailId, campaignId); contactId from pre-read row, not body (T-17-02 mitigation); 2x updatedAt: new Date() (email + contact); TypeScript compiles clean (tsc --noEmit exits 0)</td>
+</tr>
+<tr>
+<td><code>.claude/skills/draft-outreach-emails/SKILL.md</code></td>
+<td>Discover-then-draft batch workflow, idempotency, send-safety allowlist + grep gate, run summary</td>
+<td>✓ VERIFIED</td>
+<td>532 lines (well above min_lines: 200); all code-level acceptance criteria confirmed by grep; all 8 REVIEW.md findings fixed (WR-01, WR-02, WR-03, IN-01, IN-02 confirmed in file content)</td>
+</tr>
+<tr>
+<td><code>.claude/skills/draft-outreach-emails/references/heimdall-api.md</code></td>
+<td>REST API contract for the draft-outreach-emails skill</td>
+<td>✓ VERIFIED</td>
+<td>378 lines (above min_lines: 120); documents all 4 endpoints; approved→failed ILLEGAL documented explicitly; pagination loop with limit=100 + hasMore; no literal bearer token; all acceptance criteria pass</td>
+</tr>
+<tr>
+<td><code>scripts/verify-draft-route.sh</code></td>
+<td>Re-runnable curl regression for state-machine guard (rejection path + happy path)</td>
+<td>✓ VERIFIED</td>
+<td>Exists; bash -n exits 0; token read inline via cat; 400 assertion + &quot;Invalid transition&quot; check present; Test 2 (happy path, IN-04 fix) added with skip-if-env-absent behavior</td>
+</tr>
+</tbody></table>
+<h3>Key Link Verification</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Via</th>
+<th>Status</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>draft/route.ts</code></td>
+<td><code>email-status.ts</code></td>
+<td><code>import { canEmailTransition }</code></td>
+<td>✓ WIRED</td>
+<td>Line 10: <code>import { canEmailTransition } from &#39;@/features/outreach/lib/email-status&#39;</code>; called at line 38: <code>canEmailTransition(email.status, &#39;drafted&#39;)</code> — count 2 confirmed</td>
+</tr>
+<tr>
+<td><code>draft/route.ts</code></td>
+<td><code>drizzle/schema (contacts)</code></td>
+<td><code>db.update(contacts).set({ outreachStatus: &#39;reached_out&#39; })</code></td>
+<td>✓ WIRED</td>
+<td>Lines 4-5: contacts imported from schema barrel; lines 57-60: db.update(contacts).set({outreachStatus:&#39;reached_out&#39;, updatedAt:new Date()}).where(eq(contacts.id, email.contactId))</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code></td>
+<td><code>references/heimdall-api.md</code></td>
+<td>references the API contract</td>
+<td>✓ WIRED</td>
+<td>Line 41: <code>[references/heimdall-api.md](references/heimdall-api.md)</code> — explicit reference in Overview section</td>
+</tr>
+<tr>
+<td><code>SKILL.md</code></td>
+<td><code>PATCH .../draft</code></td>
+<td>one call per email after create_draft</td>
+<td>✓ WIRED</td>
+<td>Step 4d (lines 425–448): curl PATCH .../draft {gmailDraftId} immediately after create_draft returns</td>
+</tr>
+</tbody></table>
+<h3>Data-Flow Trace (Level 4)</h3>
+<p>Not applicable. The route is a write handler (PATCH), not a rendering component. The skill is a workflow document, not a rendering component. No dynamic data display to trace.</p>
+<h3>Behavioral Spot-Checks</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Command</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>D-06 send-safety gate</td>
+<td>`grep -rinE &quot;mcp__gmail__(send</td>
+<td>send_message</td>
+<td>trash</td>
+</tr>
+<tr>
+<td>Script syntax valid</td>
+<td><code>bash -n scripts/verify-draft-route.sh</code></td>
+<td>exit 0</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>canEmailTransition imported + called (count ≥ 2)</td>
+<td><code>grep -c &quot;canEmailTransition&quot; draft/route.ts</code></td>
+<td>2</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>No literal bearer token in skill docs</td>
+<td><code>! grep -qE &quot;Bearer [A-Za-z0-9._-]{16,}&quot; heimdall-api.md</code></td>
+<td>clean</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>TypeScript compilation</td>
+<td><code>npx tsc --noEmit</code></td>
+<td>exit 0 (no errors)</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>CANDIDATE_ADDRESSES reset per contact</td>
+<td><code>grep -n &quot;CANDIDATE_ADDRESSES=()&quot; SKILL.md</code></td>
+<td>line 251 found</td>
+<td>✓ PASS</td>
+</tr>
+<tr>
+<td>grep -qiF fixed-string name matching</td>
+<td><code>grep -n &quot;grep -qiF&quot; SKILL.md</code></td>
+<td>line 258 found</td>
+<td>✓ PASS</td>
+</tr>
+</tbody></table>
+<h3>Probe Execution</h3>
+<p>Step 7c: SKIPPED — no probe-*.sh scripts declared or present in the phase directory. The phase&#39;s validation surface is manual smoke + a bash curl regression (verify-draft-route.sh) that requires a live dev server, classified as human verification.</p>
+<h3>Requirements Coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Source Plan</th>
+<th>Description</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DISC-01</td>
+<td>17-02, 17-03</td>
+<td>Discovery via Gmail thread search (search_threads / get_thread)</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md Step 3 encodes full discovery loop; search_threads + get_thread calls documented</td>
+</tr>
+<tr>
+<td>DISC-02</td>
+<td>17-02, 17-03</td>
+<td>Requires confirmed thread participant; ambiguous multi-match surfaced in summary</td>
+<td>✓ SATISFIED</td>
+<td>D-03 accept rule: exactly-1 → accept; ≥2 → AMBIGUOUS_LIST (recipientEmail left unset, listed in summary); DRFT-05 plan&#39;s intent met in route</td>
+</tr>
+<tr>
+<td>DISC-03</td>
+<td>17-02, 17-03</td>
+<td>No email found → channel=linkedin_message, never silently dropped</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md Step 3c zero-address path; LINKEDIN_FALLBACK_LIST in summary</td>
+</tr>
+<tr>
+<td>DRFT-01</td>
+<td>17-03</td>
+<td>Skill creates Gmail draft for each approved email with a recipient</td>
+<td>✓ SATISFIED</td>
+<td>SKILL.md Step 4: mcp__gmail__create_draft per drafting-queue item</td>
+</tr>
+<tr>
+<td>DRFT-02</td>
+<td>17-03</td>
+<td>Skill NEVER sends; only create_draft</td>
+<td>✓ SATISFIED</td>
+<td>allowed-tools frontmatter (4 tools only); grep gate returns zero send-family tokens; CR-01 fix applied</td>
+</tr>
+<tr>
+<td>DRFT-03</td>
+<td>17-03</td>
+<td>Idempotent — no duplicate drafts; re-draft via create-and-repoint</td>
+<td>✓ SATISFIED</td>
+<td>Step 4b: gmailDraftId null→new / non-null→redraft; approved queue naturally excludes drafted emails</td>
+</tr>
+<tr>
+<td>DRFT-04</td>
+<td>17-01</td>
+<td>Draft id stored, email marked drafted, timeline event logged</td>
+<td>✓ SATISFIED</td>
+<td>Route lines 44–72: gmailDraftId set, status=&#39;drafted&#39;, draftedAt, logTimeline outreach_email_drafted</td>
+</tr>
+<tr>
+<td>DRFT-05</td>
+<td>17-01</td>
+<td>Drafting updates contact outreachStatus to reached_out</td>
+<td>✓ SATISFIED (code) / STALE DOCS</td>
+<td>Route lines 56–60 implement it; REQUIREMENTS.md checkbox and traceability table still show &quot;Pending&quot; — a documentation stale state only, not a code gap</td>
+</tr>
+</tbody></table>
+<p><strong>DRFT-05 stale-docs note:</strong> REQUIREMENTS.md has <code>- [ ] **DRFT-05**</code> (unchecked) and the traceability table says <code>| DRFT-05 | Phase 17 | Pending |</code>. The route comment at line 56 explicitly tags it <code>// D-01 / DRFT-05: Update contact outreachStatus → reached_out</code> and the db.update(contacts).set({outreachStatus:&#39;reached_out&#39;}) call is present and wired. This is a planning-doc housekeeping gap, not a code gap. REQUIREMENTS.md should be updated to <code>[x]</code> with status Complete.</p>
+<h3>Anti-Patterns Found</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Line</th>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.planning/REQUIREMENTS.md</code></td>
+<td>56, 124</td>
+<td>DRFT-05 checkbox <code>[ ]</code> and traceability &quot;Pending&quot; — stale after route implementation</td>
+<td>ℹ Info</td>
+<td>No code impact; planning doc needs checkbox flip to <code>[x]</code> and status → Complete</td>
+</tr>
+</tbody></table>
+<p>No debt-marker (TBD/FIXME/XXX) comments found in files modified by this phase. No stub patterns in the route (all four effects present and wired). No send-family Gmail tokens in skill directory.</p>
+<p><strong>ROADMAP SC #2 vs D-03 deviation (documented, intentional):</strong> ROADMAP success criterion 2 says &quot;at least two signals match (name + company domain, or confirmed thread participant).&quot; The implementation uses ONLY the direct thread participant path — no domain-name inference. This stricter approach was explicitly locked in 17-CONTEXT.md D-03: &quot;Domain/name-only inference is NOT used — this minimizes false positives on a draft recipient.&quot; The skill is MORE conservative than the ROADMAP wording but meets the ROADMAP&#39;s intent. Not a gap.</p>
+<p><strong>ROADMAP SC #4 vs D-02 deviation (documented, intentional):</strong> ROADMAP SC #4 says &quot;updates the existing Gmail draft in-place.&quot; The implementation uses create-and-repoint (a fresh draft is created and gmailDraftId overwritten) because no update_draft tool is available on the connected MCP. This was explicitly decided in 17-CONTEXT.md D-02. The re-draft scenario is idempotent and leaves the old draft harmless. Not a gap.</p>
+<hr>
+<h3>Human Verification Required</h3>
+<p>The following items require a live Gmail-MCP interactive session to verify. All code-level checks have passed; these are runtime behavior validations only.</p>
+<h4>1. End-to-End Draft Creation</h4>
+<p><strong>Test:</strong> Run <code>draft-outreach-emails &lt;campaign-id&gt;</code> against a campaign with at least one approved email that has a stored <code>recipientEmail</code>. Confirm with &quot;yes&quot; at the gate.
+<strong>Expected:</strong> Gmail draft appears in Gmail Drafts folder; email row shows <code>status=&#39;drafted&#39;</code>, <code>gmailDraftId</code> non-null, <code>draftedAt</code> set; contact record shows <code>outreachStatus=&#39;reached_out&#39;</code>; timeline event of type <code>outreach_email_drafted</code> is logged.
+<strong>Why human:</strong> Requires live Gmail MCP connection + a real approved email row with a known recipient; the four-effect atomicity in the route is verified by code but the end-to-end flow (create_draft → write-back → Gmail visible) requires a real session.</p>
+<h4>2. Email Discovery — Single Match</h4>
+<p><strong>Test:</strong> Run <code>draft-outreach-emails &lt;campaign-id&gt;</code> against a campaign where at least one approved email&#39;s contact has no stored <code>recipientEmail</code> but has a shared Gmail thread with <a href="mailto:steve@bronstein.org">steve@bronstein.org</a>. The contact&#39;s full name must appear as a thread participant.
+<strong>Expected:</strong> Skill discovers exactly one distinct address, writes it back via <code>PATCH .../recipient {channel:&#39;email&#39;, recipientEmail}</code>, and proceeds to draft the email in the same run. Run summary shows <code>Discovered: 1</code>.
+<strong>Why human:</strong> Gmail thread search (mcp__gmail__search_threads + get_thread) cannot be invoked without a live Gmail MCP session.</p>
+<h4>3. LinkedIn Fallback — No Discoverable Address</h4>
+<p><strong>Test:</strong> Run against a contact where no Gmail thread with <a href="mailto:steve@bronstein.org">steve@bronstein.org</a> includes that contact by name. Confirm the skill identifies zero candidate addresses.
+<strong>Expected:</strong> Skill calls <code>PATCH .../recipient {channel:&#39;linkedin_message&#39;}</code>. Email row shows <code>channel=&#39;linkedin_message&#39;</code>. Run summary lists the contact under &quot;LinkedIn fallback contacts.&quot; No Gmail draft created. The &quot;needs LinkedIn message&quot; badge appears in the review UI.
+<strong>Why human:</strong> Requires live Gmail MCP to confirm <code>search_threads</code> returns zero matching threads; badge rendering requires a browser session.</p>
+<h4>4. Idempotency — No Duplicate Drafts on Re-Run</h4>
+<p><strong>Test:</strong> After completing human test #1, re-run <code>draft-outreach-emails</code> against the same campaign.
+<strong>Expected:</strong> Skill reports <code>Drafted: 0</code> for already-drafted emails (they are not in the approved queue). No new Gmail drafts are created for emails already in <code>status=&#39;drafted&#39;</code>.
+<strong>Why human:</strong> Requires two sequential live Gmail-MCP runs to confirm the idempotency guarantee end-to-end.</p>
+<h4>5. State-Machine Regression Script</h4>
+<p><strong>Test:</strong> With the dev server running on port 4000, run <code>CAMPAIGN_ID=&lt;uuid&gt; EMAIL_ID=&lt;non-approved-email-uuid&gt; bash scripts/verify-draft-route.sh</code>.
+<strong>Expected:</strong> Script prints <code>PASS: All executed D-01 assertions passed.</code> and exits 0. HTTP 400 + &quot;Invalid transition&quot; confirmed for the rejection path.
+<strong>Why human:</strong> Script requires a live dev server + a real non-approved seed email row that exists in the database.</p>
+<hr>
+<h3>Gaps Summary</h3>
+<p>No code gaps found. All five must-have truths are VERIFIED against the actual codebase. The phase goal is achievable from the shipped artifacts.</p>
+<p>The single housekeeping item is a <strong>stale planning doc</strong> (REQUIREMENTS.md DRFT-05 checkbox and traceability still show &quot;Pending&quot;) — the implementation is in the route and correct. This is a documentation cleanup, not a code gap, and does not block phase completion.</p>
+<p>The five human verification items above are runtime behaviors that cannot be confirmed without a live Gmail MCP session. They are standard post-merge smoke tests for a skill-based workflow, not evidence of incomplete implementation.</p>
+<hr>
+<p><em>Verified: 2026-06-22T22:43:32Z</em>
+<em>Verifier: Claude (gsd-verifier)</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-VERIFICATION.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
