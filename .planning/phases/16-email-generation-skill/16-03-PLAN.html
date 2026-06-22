@@ -61,9 +61,9 @@ autonomous: true
 requirements: [GEN-01, GEN-02, GEN-04]
 must_haves:
   truths:<ul>
-<li>&quot;SKILL.md reads all per-contact context in ONE generation-context call and writes each email back with ONE PATCH .../generation call (content+status together)&quot;</li>
+<li>&quot;SKILL.md reads all per-contact context in ONE generation-context call and authors emails inline in bounded chunks, writing each back with ONE PATCH .../generation call (content+status together) so progress is durable (D-01)&quot;</li>
 <li>&quot;SKILL.md confirms the pending count (D-03) and shows a 5-email sample spanning relationship types before draining (D-04)&quot;</li>
-<li>&quot;SKILL.md self-checks the blocking LLM-tell set before write-back (D-10), marks per-email failures &#39;failed&#39; and continues (D-12), and ends with a generated/failed/low-context summary&quot;</li>
+<li>&quot;SKILL.md self-checks the blocking LLM-tell set before write-back (D-10), marks per-email failures &#39;failed&#39; and continues (D-12), generates low-context contacts anyway and flags them ephemerally in the run summary with no schema change (D-08), and ends with a generated/failed/low-context summary&quot;</li>
 <li>&quot;SKILL.md is batch-only on status=&#39;pending&#39; (D-13) — no --email single-regenerate mode and no per-email GET N+1 loop&quot;
 artifacts:</li>
 <li>path: &quot;.claude/skills/generate-outreach-emails/SKILL.md&quot;
