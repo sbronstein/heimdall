@@ -338,8 +338,8 @@ the transition from the current status to `'failed'` is not valid (e.g., current
 | 400 | `{ "success": false, "error": "Invalid transition: <from> -> <to>" }` | State-machine guard fired. For `approved -> drafted`: bug in skill (only approved emails should reach the draft endpoint). For `approved -> failed`: **do NOT retry** -- leave email as approved, report in summary. For other transitions: log and continue to next email. |
 | 400 | `{ "success": false, "error": "<Zod field>: <reason>" }` | Bug in skill payload; surface and exit |
 | 401 | `{ "success": false, "error": "Unauthorized" }` | Token / env misconfig; surface and exit |
-| 404 | `{ "success": false, "error": "Campaign not found" }` | Campaign ID invalid; surface and exit |
-| 404 | `{ "success": false, "error": "Email not found" }` | Email ID mismatch; log and continue |
+| 404 | `{ "success": false, "error": "Campaign not found" }` | Campaign ID invalid (returned by `GET .../emails` list route only); surface and exit |
+| 404 | `{ "success": false, "error": "Email not found" }` | Email ID not found or does not belong to this campaign (returned by `PATCH .../recipient`, `PATCH .../draft`, `PATCH .../status`); log and continue |
 | 500 | `{ "success": false, "error": "<message>" }` | Server-side bug; surface and exit |
 
 **State-machine summary for this skill:**
