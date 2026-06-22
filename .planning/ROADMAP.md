@@ -149,8 +149,8 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   4. Re-running the skill is idempotent: no duplicate drafts are created; re-drafting an email that was edited after initial drafting updates the existing Gmail draft in-place
   5. The skill contains zero send-family Gmail calls — every Gmail action is `create_draft` or `drafts.update`; this invariant is verifiable by grepping the skill file for "send" before any real campaign run
 **Plans**: 3 plans (Wave 1: 17-01 + 17-02 parallel; Wave 2: 17-03)
-- [ ] 17-01-PLAN.md — D-01 `/draft` route edit: atomic gmailDraftId + status='drafted' (canEmailTransition-gated) + contact outreachStatus='reached_out' + timeline; Wave-0 curl regression (DRFT-04, DRFT-05) (Wave 1)
-- [ ] 17-02-PLAN.md — `references/heimdall-api.md` REST contract: work-queue read + recipient/draft/status endpoints (DISC-01..03, DRFT-01/04/05) (Wave 1)
+- [x] 17-01-PLAN.md — D-01 `/draft` route edit: atomic gmailDraftId + status='drafted' (canEmailTransition-gated) + contact outreachStatus='reached_out' + timeline; Wave-0 curl regression (DRFT-04, DRFT-05) (Wave 1)
+- [x] 17-02-PLAN.md — `references/heimdall-api.md` REST contract: work-queue read + recipient/draft/status endpoints (DISC-01..03, DRFT-01/04/05) (Wave 1)
 - [ ] 17-03-PLAN.md — `SKILL.md` discover-then-draft workflow: D-03 discovery, idempotent create-and-repoint, D-06 allowlist + grep gate, run summary (DISC-01..03, DRFT-01/02/03/04) (Wave 2)
 **Research note**: Gmail MCP `search_threads`/`get_thread`/`create_draft` param + response shapes are [ASSUMED] (Gmail API v1 conventions); the executor validates exact shapes at run time. D-03 accept rule (single confirmed direct thread participant) is locked — research informs extraction mechanics only.
 
@@ -176,7 +176,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 15. Review and Approval UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 16. Email Generation Skill | v1.2 | 3/3 | Complete    | 2026-06-22 |
-| 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
+| 17. Gmail Drafting and Email Discovery Skill | v1.2 | 2/3 | In Progress|  |
 
 ---
 *Last updated: 2026-06-22 — Phase 17 planned (3 plans: D-01 /draft route edit + curl regression; heimdall-api.md reference; SKILL.md discover-then-draft workflow. Wave 1 = 17-01 ∥ 17-02, Wave 2 = 17-03). Phase 16 planned (3 plans: D-02 route edit + transition test; the two skill reference docs voice-guide.md + heimdall-api.md; SKILL.md workflow. Wave 1 = 16-01 ∥ 16-02, Wave 2 = 16-03). v1.2 Networking Outreach Campaigns in progress (Phases 11–15 complete).*
