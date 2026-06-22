@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>.claude/skills/draft-outreach-emails/SKILL.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>/tmp/sv-17-reviewfix-PtqwF9/.claude/skills/draft-outreach-emails/SKILL.md</code> · Rendered from markdown · May lag behind</div>
 
 <hr>
 <p>name: draft-outreach-emails
@@ -158,6 +158,16 @@ DRAFTING_QUEUE=$(echo &quot;$ALL_EMAILS&quot; | jq &#39;[.[] | select(.email.rec
 
 TOTAL=$(echo &quot;$ALL_EMAILS&quot; | jq &#39;length&#39;)
 MISSING_RECIPIENT=$(echo &quot;$DISCOVERY_QUEUE&quot; | jq &#39;length&#39;)
+
+# Initialize all run counters and accumulator arrays (IN-02).
+# Integers default to 0 in bash arithmetic but arrays must be explicitly declared;
+# without this block the first += append fails under set -u (unbound variable).
+DRAFTED_COUNT=0
+DISCOVERED_COUNT=0
+SKIPPED_LIST=()
+AMBIGUOUS_LIST=()
+LINKEDIN_FALLBACK_LIST=()
+FAILED_LIST=()
 </code></pre>
 <p>Each item in <code>ALL_EMAILS</code> has shape:
 <code>{ email: { id, status, channel, recipientEmail, gmailDraftId, generatedSubject, generatedBody, editedSubject, editedBody, contactId, ... }, contact: { id, firstName, lastName, email, outreachStatus, archivedAt, ... } | null }</code></p>
@@ -243,10 +253,17 @@ parse_display_name() {
 matches <code>contact.firstName + &#39; &#39; + contact.lastName</code>. <strong>Only keep addresses where the display
 name matches the contact&#39;s full name.</strong> This guards against threads where the contact&#39;s name
 appears in the body text (forwarded emails, newsletters) but they are not an actual participant.</p>
-<pre><code class="language-bash">CONTACT_FULL_NAME_LOWER=$(echo &quot;$FIRST_NAME $LAST_NAME&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39;)
+<pre><code class="language-bash"># Reset candidate addresses at the start of EACH contact&#39;s iteration (WR-01).
+# Without this reset, addresses discovered for contact N bleed into contact N+1&#39;s
+# candidate pool and can produce wrong-recipient write-backs.
+CANDIDATE_ADDRESSES=()
+
+CONTACT_FULL_NAME_LOWER=$(echo &quot;$FIRST_NAME $LAST_NAME&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39;)
 # For each header value, extract display name and compare:
 DISPLAY_NAME_LOWER=$(parse_display_name &quot;$HEADER_VALUE&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39;)
-if echo &quot;$DISPLAY_NAME_LOWER&quot; | grep -qi &quot;$CONTACT_FULL_NAME_LOWER&quot;; then
+# Use -F (fixed-string) so names containing &quot;.&quot; (Dr., Jr., S.A.) are matched literally,
+# not as BRE wildcards that could produce false-positive address acceptance (WR-03).
+if echo &quot;$DISPLAY_NAME_LOWER&quot; | grep -qiF &quot;$CONTACT_FULL_NAME_LOWER&quot;; then
   ADDR=$(parse_email_from_header &quot;$HEADER_VALUE&quot;)
   # Skip Steve&#39;s own address
   if [ &quot;$ADDR&quot; != &quot;steve@bronstein.org&quot; ]; then
@@ -275,9 +292,15 @@ RESULT=$(curl -s -X PATCH \
 SUCCESS=$(echo &quot;$RESULT&quot; | jq -r &#39;.success&#39;)
 if [ &quot;$SUCCESS&quot; != &quot;true&quot; ]; then
   echo &quot;Recipient write-back failed for $EMAIL_ID: $(echo &quot;$RESULT&quot; | jq -r &#39;.error&#39;)&quot;
-  # Add to failed list and continue
+  FAILED_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID): recipient write-back failed&quot;)
+  # continue to next discovery item; do NOT add to DRAFTING_QUEUE
 else
-  # Update the item&#39;s recipientEmail in memory and add to DRAFTING_QUEUE
+  # IN-01: append the updated item (with recipientEmail set) to DRAFTING_QUEUE so
+  # it is drafted in THIS run. Without this, newly-discovered emails only reach the
+  # drafting loop on the NEXT run (when they appear with recipientEmail already set).
+  UPDATED_ITEM=$(echo &quot;$EMAIL_ITEM&quot; | jq --arg addr &quot;$DISCOVERED_ADDR&quot; \
+    &#39;.email.recipientEmail = $addr&#39;)
+  DRAFTING_QUEUE=$(echo &quot;$DRAFTING_QUEUE&quot; | jq --argjson item &quot;$UPDATED_ITEM&quot; &#39;. += [$item]&#39;)
   DISCOVERED_COUNT=$((DISCOVERED_COUNT + 1))
 fi
 </code></pre>
@@ -320,6 +343,19 @@ LINKEDIN_FALLBACK_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID)&quot;)
 <li><code>contact</code> is <code>null</code> (contact hard-deleted): add to failed list, continue</li>
 <li><code>contact.archivedAt != null</code> (contact archived): add to skipped list, continue</li>
 </ul>
+<pre><code class="language-bash"># contact hard-deleted guard:
+if [ &quot;$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.contact&#39;)&quot; = &quot;null&quot; ]; then
+  FAILED_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID): contact hard-deleted&quot;)
+  continue
+fi
+
+# archived contact guard (WR-02): track in SKIPPED_LIST so the run summary
+# &quot;Skipped (archived contact): S&quot; reflects a real count, not a phantom value.
+if [ &quot;$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.contact.archivedAt&#39;)&quot; != &quot;null&quot; ]; then
+  SKIPPED_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID)&quot;)
+  continue
+fi
+</code></pre>
 <p>Resolve final content using the canonical precedence (Pitfall 2):</p>
 <pre><code class="language-bash">FINAL_SUBJECT=$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.email.editedSubject // .email.generatedSubject&#39;)
 FINAL_BODY=$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.email.editedBody // .email.generatedBody&#39;)
@@ -394,28 +430,27 @@ fi
 <hr>
 <h2>Step 5: End-of-run summary</h2>
 <p>After all discovery and drafting is complete, print the full run summary:</p>
-<pre><code>--- Run complete ---
-Campaign: &lt;campaign-id&gt;
-
-Drafted:                    N
-Skipped (archived contact): S
-Discovered:                 K
-Ambiguous:                  J  (listed below -- resolve manually then re-run)
-LinkedIn fallback:          L
-Failed:                     F  (left as &#39;approved&#39; -- listed below)
-
-Ambiguous contacts (2+ candidate addresses -- recipientEmail left unset):
-  - &lt;firstName&gt; &lt;lastName&gt; (&lt;emailId&gt;): &lt;addr1&gt;, &lt;addr2&gt;, ...
-
-LinkedIn fallback contacts (no email found -- channel set to linkedin_message):
-  - &lt;firstName&gt; &lt;lastName&gt; (&lt;emailId&gt;)
-  ...
-
-Failed emails (left as &#39;approved&#39; -- draft or write-back error):
-  - &lt;firstName&gt; &lt;lastName&gt; (&lt;emailId&gt;): &lt;error first 100 chars&gt;
-  ...
+<pre><code class="language-bash">echo &quot;--- Run complete ---&quot;
+echo &quot;Campaign: $CAMPAIGN_ID&quot;
+echo &quot;&quot;
+echo &quot;Drafted:                    $DRAFTED_COUNT&quot;
+echo &quot;Skipped (archived contact): ${#SKIPPED_LIST[@]}&quot;
+echo &quot;Discovered:                 $DISCOVERED_COUNT&quot;
+echo &quot;Ambiguous:                  ${#AMBIGUOUS_LIST[@]}  (listed below -- resolve manually then re-run)&quot;
+echo &quot;LinkedIn fallback:          ${#LINKEDIN_FALLBACK_LIST[@]}&quot;
+echo &quot;Failed:                     ${#FAILED_LIST[@]}  (left as &#39;approved&#39; -- listed below)&quot;
+echo &quot;&quot;
+echo &quot;Ambiguous contacts (2+ candidate addresses -- recipientEmail left unset):&quot;
+for item in &quot;${AMBIGUOUS_LIST[@]}&quot;; do echo &quot;  - $item&quot;; done
+echo &quot;&quot;
+echo &quot;LinkedIn fallback contacts (no email found -- channel set to linkedin_message):&quot;
+for item in &quot;${LINKEDIN_FALLBACK_LIST[@]}&quot;; do echo &quot;  - $item&quot;; done
+echo &quot;&quot;
+echo &quot;Failed emails (left as &#39;approved&#39; -- draft or write-back error):&quot;
+for item in &quot;${FAILED_LIST[@]}&quot;; do echo &quot;  - $item&quot;; done
 </code></pre>
-<p>If all succeeded with no failures, ambiguous, or LinkedIn fallbacks: &quot;Drafted: N / Discovered: K / Failed: 0&quot;</p>
+<p>If all succeeded with no failures, ambiguous, or LinkedIn fallbacks, the lists above will be
+empty. The script echoes an empty block for each -- that is expected and correct.</p>
 <p>The owner reviews drafted emails directly in Gmail. Ambiguous contacts must be resolved
 manually via a direct <code>PATCH .../recipient</code> API call with the correct address, then re-run
 this skill. LinkedIn-flagged contacts show the &quot;needs LinkedIn message&quot; badge in the Heimdall
@@ -431,10 +466,14 @@ call so the resolved token value never appears in shell history or run output.</
 <li><strong>Gmail tool allowlist (D-06).</strong> This skill may ONLY call these Gmail MCP tools:
 <code>mcp__gmail__search_threads</code>, <code>mcp__gmail__get_thread</code>, <code>mcp__gmail__create_draft</code>,
 <code>mcp__gmail__list_drafts</code>. It NEVER calls any send, trash, import, delete, or modify tool.</li>
-<li><strong>Pre-run grep gate (D-06).</strong> Before any real campaign run, run:<pre><code class="language-bash">grep -ri &quot;send&quot; .claude/skills/draft-outreach-emails/
+<li><strong>Pre-run grep gate (D-06).</strong> Before any real campaign run, run:<pre><code class="language-bash">grep -rinE &quot;mcp__gmail__(send|send_message|trash|delete|import|update_draft|modify|insert)&quot; \
+  .claude/skills/draft-outreach-emails/
 </code></pre>
-Confirm zero send-family results. Any match is a safety violation -- investigate before
-proceeding. The connected MCP exposes no send tool at all; this gate is defense-in-depth.</li>
+Confirm zero results (no output). Any match means a send-family Gmail MCP tool token is
+present in the skill files -- that is a safety violation; investigate before proceeding.
+The grep targets only MCP tool call tokens, not prose references to sending, so a clean
+skill produces no output at all. The connected MCP exposes no send tool; this gate is
+defense-in-depth.</li>
 <li><strong>Never sends. Only creates drafts.</strong> Hard invariant. A human must open Gmail and manually
 click Send on each draft. The skill has no path to trigger sending.</li>
 <li><strong>Batch-only (D-05).</strong> The only argument is <code>&lt;campaign-id&gt;</code>. No <code>--discover-only</code> or
@@ -456,7 +495,7 @@ content breaks raw JSON and produces 500 errors server-side.</li>
 
 
 <footer>
-Source of truth: <code>.claude/skills/draft-outreach-emails/SKILL.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>/tmp/sv-17-reviewfix-PtqwF9/.claude/skills/draft-outreach-emails/SKILL.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>

@@ -46,7 +46,7 @@ img { max-width: 100%; height: auto; }
 </head>
 <body>
 <div class="wrap">
-<div class="meta">Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-afbbc75510b6e0da2/.claude/skills/draft-outreach-emails/references/heimdall-api.md</code> · Rendered from markdown · May lag behind</div>
+<div class="meta">Source of truth: <code>/tmp/sv-17-reviewfix-PtqwF9/.claude/skills/draft-outreach-emails/references/heimdall-api.md</code> · Rendered from markdown · May lag behind</div>
 
 <h1>Heimdall API Contract (draft-outreach-emails skill)</h1>
 <p>The four REST endpoints this skill calls, the bearer-token auth pattern, and
@@ -351,12 +351,12 @@ the transition from the current status to <code>&#39;failed&#39;</code> is not v
 <tr>
 <td>404</td>
 <td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;Campaign not found&quot; }</code></td>
-<td>Campaign ID invalid; surface and exit</td>
+<td>Campaign ID invalid (returned by <code>GET .../emails</code> list route only); surface and exit</td>
 </tr>
 <tr>
 <td>404</td>
 <td><code>{ &quot;success&quot;: false, &quot;error&quot;: &quot;Email not found&quot; }</code></td>
-<td>Email ID mismatch; log and continue</td>
+<td>Email ID not found or does not belong to this campaign (returned by <code>PATCH .../recipient</code>, <code>PATCH .../draft</code>, <code>PATCH .../status</code>); log and continue</td>
 </tr>
 <tr>
 <td>500</td>
@@ -414,7 +414,7 @@ or error strings directly into a <code>-d &quot;{...}&quot;</code> string (multi
 
 
 <footer>
-Source of truth: <code>/Users/sbronstein/Github/heimdall/.claude/worktrees/agent-afbbc75510b6e0da2/.claude/skills/draft-outreach-emails/references/heimdall-api.md</code> · This HTML companion may lag behind the markdown.
+Source of truth: <code>/tmp/sv-17-reviewfix-PtqwF9/.claude/skills/draft-outreach-emails/references/heimdall-api.md</code> · This HTML companion may lag behind the markdown.
 </footer>
 </div>
 </body>
