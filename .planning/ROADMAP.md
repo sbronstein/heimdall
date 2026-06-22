@@ -134,8 +134,8 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
   4. Every generated email passes a built-in LLM-tell scan: no em-dashes, "leverage", "robust", or generic openers like "I hope this message finds you well"
   5. When generation fails for a contact, that email is marked `failed` and the skill continues to the next without crashing
 **Plans**: 3 plans (Wave 1: 16-01 + 16-02 parallel; Wave 2: 16-03)
-- [ ] 16-01-PLAN.md — D-02 route edit: PATCH .../generation also sets status='generated' via canEmailTransition + PGlite transition test (GEN-01) (Wave 1)
-- [ ] 16-02-PLAN.md — Skill reference docs: new voice-guide.md (email voice + blocking LLM-tell scrub + anti-hallucination) + heimdall-api.md (3-endpoint contract) (GEN-02, GEN-03, GEN-04) (Wave 1)
+- [x] 16-01-PLAN.md — D-02 route edit: PATCH .../generation also sets status='generated' via canEmailTransition + PGlite transition test (GEN-01) (Wave 1)
+- [x] 16-02-PLAN.md — Skill reference docs: new voice-guide.md (email voice + blocking LLM-tell scrub + anti-hallucination) + heimdall-api.md (3-endpoint contract) (GEN-02, GEN-03, GEN-04) (Wave 1)
 - [ ] 16-03-PLAN.md — SKILL.md workflow: confirm count -> 5-email sample gate -> chunked durable drain -> blocking scan -> single /generation write-back -> mark-failed-continue -> summary (GEN-01, GEN-02, GEN-04) (Wave 2)
 
 ### Phase 17: Gmail Drafting and Email Discovery Skill
@@ -172,7 +172,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete    | 2026-06-21 |
 | 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 15. Review and Approval UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
-| 16. Email Generation Skill | v1.2 | 0/3 | Planned | - |
+| 16. Email Generation Skill | v1.2 | 2/3 | In Progress|  |
 | 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
 
 ---
