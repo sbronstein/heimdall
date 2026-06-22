@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17-REVIEW-FIX</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>/tmp/sv-17-reviewfix-PtqwF9/.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-REVIEW-FIX.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>phase: 17-gmail-drafting-and-email-discovery-skill
+fixed_at: 2026-06-22T00:00:00Z
+review_path: .planning/phases/17-gmail-drafting-and-email-discovery-skill/17-REVIEW.md
+iteration: 1
+findings_in_scope: 8
+fixed: 8
+skipped: 0
+status: all_fixed</h2>
+<h1>Phase 17: Code Review Fix Report</h1>
+<p><strong>Fixed at:</strong> 2026-06-22
+<strong>Source review:</strong> <code>.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-REVIEW.md</code>
+<strong>Iteration:</strong> 1</p>
+<p><strong>Summary:</strong></p>
+<ul>
+<li>Findings in scope: 8 (CR-01, WR-01, WR-02, WR-03, IN-01, IN-02, IN-03, IN-04)</li>
+<li>Fixed: 8</li>
+<li>Skipped: 0</li>
+</ul>
+<hr>
+<h2>Fixed Issues</h2>
+<h3>CR-01: Send-Safety Grep Gate — D-06 Invariant Self-Defeating</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/SKILL.md</code>
+<strong>Commit:</strong> cfa8f40
+<strong>Applied fix:</strong> Replaced <code>grep -ri &quot;send&quot;</code> with <code>grep -rinE &quot;mcp__gmail__(send|send_message|trash|delete|import|update_draft|modify|insert)&quot;</code>. The old pattern always matched the skill&#39;s own constraint prose (&quot;never sends&quot;, &quot;click Send&quot;, etc.), making &quot;confirm zero results&quot; permanently impossible. The new pattern targets only MCP tool call tokens; a clean skill produces zero output. Post-fix verification confirmed: running the corrected gate against the skill directory returns zero results.</p>
+<hr>
+<h3>WR-01: <code>CANDIDATE_ADDRESSES</code> Never Reset Between Contacts</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/SKILL.md</code>
+<strong>Commit:</strong> c29511c
+<strong>Applied fix:</strong> Added <code>CANDIDATE_ADDRESSES=()</code> at the top of the per-contact discovery loop body (before the thread search calls), with an explanatory comment. Addresses from contact N can no longer bleed into contact N+1&#39;s candidate pool.</p>
+<hr>
+<h3>WR-02: <code>Skipped (archived contact)</code> Counter Never Tracked</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/SKILL.md</code>
+<strong>Commit:</strong> fcef8a2
+<strong>Applied fix:</strong> Added <code>SKIPPED_LIST=()</code> to the initialization block and explicit <code>SKIPPED_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID)&quot;)</code> append in Step 4a&#39;s archived-contact guard. Updated the run-summary to use <code>${#SKIPPED_LIST[@]}</code> so the &quot;Skipped&quot; count is always real and accurate. Also converted the summary template from prose to executable bash.</p>
+<hr>
+<h3>WR-03: Contact Name Matched with <code>grep -qi</code> as BRE Pattern</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/SKILL.md</code>
+<strong>Commit:</strong> c29511c
+<strong>Applied fix:</strong> Changed <code>grep -qi &quot;$CONTACT_FULL_NAME_LOWER&quot;</code> to <code>grep -qiF &quot;$CONTACT_FULL_NAME_LOWER&quot;</code> with a comment explaining that <code>-F</code> disables BRE interpretation so names containing <code>.</code> (Dr., Jr., S.A.) are matched literally rather than as wildcards that could produce false-positive address acceptance. Committed atomically with WR-01.</p>
+<hr>
+<h3>IN-01: <code>DRAFTING_QUEUE</code> Not Updated in Discovery Code Example</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/SKILL.md</code>
+<strong>Commit:</strong> 7da24b5
+<strong>Applied fix:</strong> After a successful <code>/recipient</code> write-back, added the jq mutation to update the in-memory item&#39;s <code>recipientEmail</code> field and append it to <code>DRAFTING_QUEUE</code>. Without this, newly-discovered emails only reached the drafting loop on the next run. The skill is documented as discover-then-draft in one batch (D-05); the guidance now actually implements that invariant.</p>
+<hr>
+<h3>IN-02: All Loop Counter/Array Variables Uninitialized</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/SKILL.md</code>
+<strong>Commit:</strong> fcef8a2
+<strong>Applied fix:</strong> Added an initialization block (after the queue partition in Step 1) for all run counters and accumulator arrays: <code>DRAFTED_COUNT=0</code>, <code>DISCOVERED_COUNT=0</code>, <code>SKIPPED_LIST=()</code>, <code>AMBIGUOUS_LIST=()</code>, <code>LINKEDIN_FALLBACK_LIST=()</code>, <code>FAILED_LIST=()</code>. Committed atomically with WR-02.</p>
+<hr>
+<h3>IN-03: heimdall-api.md Documents &quot;Campaign not found&quot; 404 for PATCH /draft</h3>
+<p><strong>Files modified:</strong> <code>.claude/skills/draft-outreach-emails/references/heimdall-api.md</code>
+<strong>Commit:</strong> afcbeb2
+<strong>Applied fix:</strong> Clarified both 404 rows in the Error Envelopes table: &quot;Campaign not found&quot; is explicitly annotated as only returned by the <code>GET .../emails</code> list route; &quot;Email not found&quot; is annotated as returned by all three PATCH write-back endpoints. The route.ts SELECT scopes by both emailId and campaignId and calls <code>notFound(&#39;Email&#39;)</code> on no-row — never &quot;Campaign not found&quot;. An operator mis-diagnosing a campaign ID issue when the real problem is email ownership mismatch is now prevented.</p>
+<hr>
+<h3>IN-04: Verify Script Tests Only the Rejection Path</h3>
+<p><strong>Files modified:</strong> <code>scripts/verify-draft-route.sh</code>
+<strong>Commit:</strong> b8abcfa
+<strong>Applied fix:</strong> Added Test 2 (happy path): when <code>CAMPAIGN_ID_APPROVED</code> and <code>EMAIL_ID_APPROVED</code> env vars are provided, the script asserts PATCH .../draft on an approved email returns HTTP 200 with <code>status=&#39;drafted&#39;</code>. When the vars are omitted, Test 2 is skipped with an explicit coverage-gap warning (not a silent skip). The script header documents why a live approved row is needed (cannot be auto-seeded) and marks the test as destructive. <code>bash -n</code> syntax check passes.</p>
+<hr>
+<h2>Skipped Issues</h2>
+<p>None — all 8 findings were fixed.</p>
+<hr>
+<h2>Post-Fix Verification</h2>
+<p><strong>Send-safety gate result:</strong></p>
+<pre><code>$ grep -rinE &quot;mcp__gmail__(send|send_message|trash|delete|import|update_draft|modify|insert)&quot; \
+    .claude/skills/draft-outreach-emails/
+[zero output — gate is clean]
+</code></pre>
+<p><strong>Script syntax check:</strong></p>
+<pre><code>$ bash -n scripts/verify-draft-route.sh
+[exit 0 — parses cleanly]
+</code></pre>
+<p><strong>HTML companions:</strong> SKILL.html and heimdall-api.html regenerated via <code>md-to-html.mjs</code>; <code>_index.html</code> rebuilt.</p>
+<hr>
+<p><em>Fixed: 2026-06-22</em>
+<em>Fixer: Claude (gsd-code-fixer)</em>
+<em>Iteration: 1</em></p>
+
+
+
+<footer>
+Source of truth: <code>/tmp/sv-17-reviewfix-PtqwF9/.planning/phases/17-gmail-drafting-and-email-discovery-skill/17-REVIEW-FIX.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
