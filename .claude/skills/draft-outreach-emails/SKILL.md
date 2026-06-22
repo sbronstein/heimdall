@@ -292,9 +292,15 @@ RESULT=$(curl -s -X PATCH \
 SUCCESS=$(echo "$RESULT" | jq -r '.success')
 if [ "$SUCCESS" != "true" ]; then
   echo "Recipient write-back failed for $EMAIL_ID: $(echo "$RESULT" | jq -r '.error')"
-  # Add to failed list and continue
+  FAILED_LIST+=("$CONTACT_NAME ($EMAIL_ID): recipient write-back failed")
+  # continue to next discovery item; do NOT add to DRAFTING_QUEUE
 else
-  # Update the item's recipientEmail in memory and add to DRAFTING_QUEUE
+  # IN-01: append the updated item (with recipientEmail set) to DRAFTING_QUEUE so
+  # it is drafted in THIS run. Without this, newly-discovered emails only reach the
+  # drafting loop on the NEXT run (when they appear with recipientEmail already set).
+  UPDATED_ITEM=$(echo "$EMAIL_ITEM" | jq --arg addr "$DISCOVERED_ADDR" \
+    '.email.recipientEmail = $addr')
+  DRAFTING_QUEUE=$(echo "$DRAFTING_QUEUE" | jq --argjson item "$UPDATED_ITEM" '. += [$item]')
   DISCOVERED_COUNT=$((DISCOVERED_COUNT + 1))
 fi
 ```
