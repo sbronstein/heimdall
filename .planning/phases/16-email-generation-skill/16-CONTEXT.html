@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-CONTEXT</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-CONTEXT.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 16: Email Generation Skill - Context</h1>
+<p><strong>Gathered:</strong> 2026-06-22
+<strong>Status:</strong> Ready for planning</p>
+<domain>
+## Phase Boundary<p>A new <code>generate-outreach-emails</code> Claude Code skill at <code>.claude/skills/generate-outreach-emails/</code>. Running it against a campaign drains that campaign&#39;s <code>pending</code> outreach emails, authors a personalized subject + body for each in Steve&#39;s voice (conversational, calibrated lightly by closeness, anti-hallucination, LLM-tell-clean), and writes results back through the <strong>existing</strong> Phase 12 REST surface. The skill is the <strong>only</strong> place generation happens (GEN-05); the API only enqueues <code>pending</code> rows and accepts write-back.</p>
+<p>Delivers <strong>GEN-01, GEN-02, GEN-03, GEN-04</strong> (GEN-05 already shipped in Phase 12).</p>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>The skill package: <code>SKILL.md</code>, <code>references/heimdall-api.md</code> (skill&#39;s API contract), and a new <code>references/voice-guide.md</code>.</li>
+<li>Skill workflow: read the campaign&#39;s pending queue + per-contact context via the bulk <code>generation-context</code> endpoint, author emails inline (chunked), self-check for LLM tells, write back via <code>PATCH .../generation</code>, mark per-email failures via <code>PATCH .../status</code>.</li>
+<li><strong>One small API edit</strong> (the only code change outside <code>.claude/skills/</code>): make <code>PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation</code> also transition <code>status</code> to <code>generated</code> (gated by <code>canEmailTransition</code>) in the same UPDATE — see D-02.</li>
+</ul>
+<p><strong>Out of scope (do NOT build here):</strong></p>
+<ul>
+<li>Any Gmail draft creation, email discovery, OAuth — Phase 17 (<code>draft-outreach-emails</code>).</li>
+<li>The review/approval UI — Phase 15 (already shipped). The skill produces <code>generated</code> content the UI reviews; it does not render anything.</li>
+<li>New schema/migrations — the data model is locked (Phase 11). Explicitly <strong>no</strong> <code>lowContext</code>/<code>needsReview</code> column is added (D-08).</li>
+<li>A per-email single-regenerate skill mode — batch-only (D-13). Regenerate is the review UI resetting a row to <code>pending</code> + a skill re-run.</li>
+<li>Any campaign builder, contact filters, status state machine, or other route work (Phases 11–14).</domain></li>
+</ul>
+<decisions>
+## Implementation Decisions<h3>Generation Engine &amp; Status Mechanic</h3>
+<ul>
+<li><strong>D-01:</strong> <strong>Inline authoring, chunked.</strong> The Claude agent running the skill writes every email directly in-context (same craft as <code>tailor-application-materials</code>), processing in bounded batches — fetch context, author N at a time, write each back, repeat — so a large campaign (50–200 contacts) drains across several focused passes without exhausting one context window. <strong>Not</strong> per-email Claude API sub-calls (rejected: loses the running agent&#39;s voice/judgment, needs an API key + model pin). Each write-back is durable the moment it lands, so an interruption just leaves the rest <code>pending</code> for a re-run.</li>
+<li><strong>D-02:</strong> <strong>Fix the <code>/generation</code> write-back route to set <code>status=&#39;generated&#39;</code>.</strong> The shipped route (<code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code>) writes <code>generatedSubject/generatedBody/generatedAt/updatedAt</code> but <strong>does not change <code>status</code></strong> — so emails would stay <code>pending</code> after generation, contradicting success criterion #1. The route must additionally set <code>status=&#39;generated&#39;</code>, gated through <code>canEmailTransition(email.status, &#39;generated&#39;)</code>, in the same UPDATE (one call, one timeline event). This is the single code change outside the skill directory. The skill makes <strong>one</strong> call per email (<code>PATCH .../generation</code>), not a content-then-status pair.</li>
+<li><strong>D-03:</strong> <strong>Confirm count before draining.</strong> On invocation the skill reports <code>N pending emails found</code> and waits for the owner to proceed — guards against accidentally generating a whole campaign.</li>
+<li><strong>D-04:</strong> <strong>Sample-review gate (5 emails) before the full drain.</strong> After the count confirm, the skill generates a <strong>sample of 5</strong> spanning the spread of relationship types (a friend, a former colleague, and distant contacts), shows them to the owner, and waits for a thumbs-up (or tone tweaks) before authoring the rest. This is how the owner &quot;sees it in action&quot; and calibrates tone without committing 150 emails to an unreviewed voice. Pairs with D-03 as one upfront gate.</li>
+</ul>
+<h3>Voice &amp; Email Anatomy</h3>
+<ul>
+<li><strong>D-05:</strong> <strong>New <code>references/voice-guide.md</code>, specific to 1:1 networking emails.</strong> Do not reuse <code>cover-letter-style.md</code> verbatim — it is cover-letter-shaped (<code>Hey &lt;Company&gt; folks!</code>, the 3-paragraph arc, sign as full &quot;Steve Bronstein&quot;). The new guide borrows the <strong>honesty rules</strong> and the <strong>LLM-tell scrub</strong> from <code>cover-letter-style.md</code> and the durable facts from <code>steve-fact-bank.md</code>, but defines the email format (first-name greeting, shared-history hook, the ask, casual sign-off).</li>
+<li><strong>D-06:</strong> <strong>Conversational by default — closeness is light modulation, not hard registers.</strong> Per the owner: he is &quot;always conversational&quot;; the only real variation is a touch warmer/more personal for an actual <em>friend</em> and a touch more professional-but-still-casual for a <em>former colleague</em>. The ROADMAP success-criterion #3 tier bands (1–2 conversational / 3–5 professional-warm / 7–8 brief-direct) are a <strong>starting point to calibrate against real sample output (D-04), NOT a literal spec to implement</strong>. The author leans on <code>howMet</code> + interaction history more than the numeric closeness tier.</li>
+<li><strong>D-07:</strong> <strong>Tier-dependent length.</strong> Body length scales with closeness — roughly 1–2 sentences for distant/brief contacts, up to ~2 short paragraphs for warmer ones. Subject line, greeting (<code>Hey &lt;FirstName&gt;,</code>), and sign-off (<code>Steve</code> / <code>Thanks, Steve</code>) are chosen <strong>per email within voice-guide rules</strong> (casual, first-name, short) rather than a fixed template — natural variation across a campaign, less templated feel. First name comes from the contact brief.</li>
+<li><strong>D-09 (the ask):</strong> <strong>Soft ask, always present.</strong> Every email closes with a clear but low-pressure ask derived from the campaign <code>goalInstruction</code> (e.g. &quot;would you be open to a quick call?&quot; / &quot;any VP Data folks come to mind?&quot;), phrased warmly and adapted to the person. <code>goalInstruction</code> is the campaign-wide intent; each email adapts it to the contact.</li>
+</ul>
+<h3>Low-Context Handling</h3>
+<ul>
+<li><strong>D-08:</strong> <strong>Generate anyway, flag in the run summary — no schema change.</strong> For contacts the <code>generation-context</code> endpoint marks <code>lowContext: true</code> (fewer than 2 logged interactions, GEN-04), the skill still generates (drawing only on <code>howMet</code>/company/role — never inventing shared history) and lists those contacts in the <strong>end-of-run summary</strong> and the <strong>sample review</strong>. The flag stays ephemeral (skill output); <strong>no <code>lowContext</code>/<code>needsReview</code> column is added</strong> to <code>outreach_emails</code> (rejected: pulls a Phase 11/12 schema+API change into this phase; the owner reviews these in the UI anyway).</li>
+</ul>
+<h3>Guardrails &amp; Run Behavior</h3>
+<ul>
+<li><strong>D-10:</strong> <strong>LLM-tell scan = hard self-correct gate on the criteria minimums; broader list advisory.</strong> After authoring each email the skill scans it (grep-style + judgment). <strong>Blocking</strong> hits (must rewrite in-place before write-back): em/en-dashes, &quot;leverage&quot;, &quot;robust&quot;, and generic openers like &quot;I hope this message finds you well&quot; — the success-criterion #4 minimums. The fuller <code>tailor-application-materials</code> banned-term list (&quot;delve&quot;, &quot;seamless&quot;, &quot;it&#39;s not X it&#39;s Y&quot;, etc.) is <strong>advisory</strong> — surface but don&#39;t block. No email is written back until it passes the blocking scan.</li>
+<li><strong>D-11:</strong> <strong>Anti-hallucination contract (GEN-04).</strong> Emails reference <strong>only</strong> facts present in the provided contact context (<code>howMet</code>, company/role at connection + current, closeness, the ~3 recent interactions). No invented shared history. The <code>generation-context</code> payload (Phase 12 D-02) is the complete, sole source of per-contact truth — the skill does not fetch more.</li>
+<li><strong>D-12 (failure handling):</strong> <strong>Mark <code>failed</code> and continue (success criterion #5).</strong> On a per-email failure the skill calls <code>PATCH .../emails/[emailId]/status</code> with <code>{ status: &#39;failed&#39;, lastError: &#39;&lt;first ~200 chars&gt;&#39; }</code> and proceeds to the next without crashing; failures are reported in the end-of-run summary.</li>
+<li><strong>D-13 (invocation):</strong> <strong>Batch-only.</strong> <code>generate-outreach-emails &lt;campaign-id&gt;</code> drains all <code>pending</code> (with the D-03 confirm + D-04 sample gate). <strong>No</strong> <code>--email &lt;id&gt;</code> single-regenerate mode — the review UI&#39;s regenerate button resets a row to <code>pending</code>, and a plain re-run of the batch re-drains pending rows (the skill drains purely on <code>status=&#39;pending&#39;</code>, per Phase 12 D-05/D-06).</li>
+</ul>
+<h3>Claude&#39;s Discretion</h3>
+<ul>
+<li>Exact chunk size for D-01 (e.g. ~10–15 per pass) — planner/skill picks; the only hard constraint is each email is written back before the next is authored so progress is durable.</li>
+<li>Exact strings/format of the end-of-run summary (counts: generated / failed / low-context).</li>
+<li>Precise sample-selection logic for D-04 (how it picks &quot;a friend / former colleague / distant&quot; from the pending set) — pick a reasonable spread; fall back gracefully if the campaign lacks one of the categories.</li>
+<li>Exact grep patterns / wording of <code>voice-guide.md</code> — mirror the <code>cover-letter-style.md</code> scrub block.</li>
+</ul>
+</decisions><canonical_refs>
+## Canonical References<p><strong>Downstream agents MUST read these before planning or implementing.</strong></p>
+<h3>v1.2 milestone trail</h3>
+<ul>
+<li><code>.planning/REQUIREMENTS.md</code> §&quot;GEN-01&quot;..&quot;GEN-05&quot; — the requirements this phase delivers (run a skill that generates subject+body per pending email; personalize from CRM context + campaign goal; tone-by-closeness + owner voice + LLM-tell scan reusing the <code>tailor-application-materials</code> conventions; reference only provided history, flag low-context; generation lives only in the skill).</li>
+<li><code>.planning/ROADMAP.md</code> §&quot;Phase 16: Email Generation Skill&quot; — goal + the 5 success criteria. <strong>Note the calibration caveat (D-06):</strong> criterion #3&#39;s tier bands are a starting point, not a literal spec.</li>
+</ul>
+<h3>Phase 12 API surface this skill consumes (read before planning)</h3>
+<ul>
+<li><code>.planning/phases/12-api-routes/12-CONTEXT.md</code> — the full outreach REST surface. Key carry-forwards: <strong>D-01/D-02</strong> (the bulk <code>generation-context</code> endpoint — ONE call returning every pending email&#39;s contact brief + ~3 interactions + <code>lowContext</code>; this <strong>overrides</strong> the ARCHITECTURE.md per-email N+1 flow), <strong>D-05/D-06</strong> (regenerate resets to <code>pending</code> keeping stale <code>generated*</code>; the skill drains on <code>status=&#39;pending&#39;</code>).</li>
+<li><code>src/app/api/outreach-campaigns/[id]/generation-context/route.ts</code> — the endpoint the skill reads once per run (campaign <code>goalInstruction</code> + array of pending emails with embedded contact brief + recent interactions + <code>lowContext</code>).</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route.ts</code> — the write-back route. <strong>Must be edited per D-02</strong> to also set <code>status=&#39;generated&#39;</code> via <code>canEmailTransition</code>.</li>
+<li><code>src/app/api/outreach-campaigns/[id]/emails/[emailId]/status/route.ts</code> — the <code>/status</code> route the skill calls to mark <code>failed</code> (D-12). Closest analog for the D-02 transition logic (validate via <code>canEmailTransition</code>, 400 on invalid).</li>
+<li><code>src/features/outreach/lib/email-status.ts</code> — <code>canEmailTransition()</code> / <code>validEmailTransitions</code>. The D-02 edit calls this; do NOT reimplement.</li>
+<li><code>drizzle/schema/outreach-emails.ts</code> — exact columns the skill reads/writes. Confirms there is <strong>no</strong> <code>lowContext</code>/<code>needsReview</code> column (D-08) and the <code>editedX ?? generatedX</code> content model.</li>
+</ul>
+<h3>Voice + skill-pattern sources (read before writing the skill)</h3>
+<ul>
+<li><code>.claude/skills/tailor-application-materials/references/cover-letter-style.md</code> — source for the <strong>honesty rules</strong> and the <strong>LLM-tell scrub</strong> block (the grep patterns in D-10) that <code>voice-guide.md</code> adapts. Do NOT copy its cover-letter arc/greeting/sign-off (D-05).</li>
+<li><code>.claude/skills/tailor-application-materials/references/steve-fact-bank.md</code> — durable, reusable career facts; the email author draws from here + the contact context only (no invented facts).</li>
+<li><code>.claude/skills/scrape-linkedin-connections/SKILL.md</code> + <code>references/heimdall-api.md</code> — the <strong>skill model</strong> to mirror: read queue via authenticated REST → act → write back via REST; never touch the DB. <code>heimdall-api.md</code> defines the <code>Authorization: Bearer $(cat ~/.heimdall/api-token)</code> convention, the <code>http://localhost:4000</code> dev base, and the <code>{ success, data, error, meta }</code> envelope the new skill&#39;s <code>references/heimdall-api.md</code> reuses.</li>
+<li><code>.planning/research/ARCHITECTURE.md</code> §&quot;Skill 1: generate-outreach-emails&quot; — the original skill sketch. <strong>Heed the corrections:</strong> its per-email <code>GET /api/contacts</code> + <code>GET /api/interactions</code> loop is replaced by the single <code>generation-context</code> call (Phase 12 D-01); its claim that the API &quot;transitions status → generated&quot; is the gap D-02 fixes.</li>
+</ul>
+<h3>Project anchors</h3>
+<ul>
+<li><code>CLAUDE.md</code> / <code>.planning/PROJECT.md</code> — REST-only (no server actions), Zod on every route, <code>{ success, data, error, meta }</code> envelope, Drizzle query builder, <code>updatedAt: new Date()</code> set manually on UPDATE, every write logs a timeline event.</li>
+<li><code>.planning/codebase/CONVENTIONS.md</code> — kebab-case files, async route handlers named after HTTP verb, enum value arrays shared between Zod and UI.</li>
+</ul>
+</canonical_refs><code_context>
+## Existing Code Insights<h3>Reusable Assets</h3>
+<ul>
+<li><strong><code>tailor-application-materials</code> skill</strong> (<code>cover-letter-style.md</code>, <code>steve-fact-bank.md</code>, the grep-based LLM-tell scrub) — the voice + honesty + scrub source material <code>voice-guide.md</code> adapts (D-05/D-10).</li>
+<li><strong><code>scrape-linkedin-connections</code> skill</strong> — the structural template for a Heimdall write-back skill (SKILL.md shape, <code>references/heimdall-api.md</code>, bearer-token auth, queue→act→write-back loop, mark-failed-and-continue terminal pattern).</li>
+<li><strong><code>generation-context</code> endpoint</strong> — already returns everything the skill needs in one round-trip (D-01/D-02 from Phase 12); no N+1.</li>
+<li><strong><code>canEmailTransition()</code></strong> (<code>src/features/outreach/lib/email-status.ts</code>) — reused by the D-02 route edit.</li>
+</ul>
+<h3>Established Patterns</h3>
+<ul>
+<li><strong>Generation runs only in the skill (GEN-05).</strong> The API enqueues <code>pending</code> and accepts write-back; no generation logic in any route.</li>
+<li><strong>Skill drains on <code>status=&#39;pending&#39;</code></strong> and a <code>pending</code> row may carry stale <code>generated*</code> (Phase 12 D-05/D-06) — the skill overwrites on its pass; &quot;regenerate&quot; = UI resets to <code>pending</code> + re-run (D-13).</li>
+<li><strong><code>updatedAt: new Date()</code> set manually on every UPDATE</strong> — the D-02 route edit must preserve this (already does).</li>
+<li><strong>Bearer-token auth already covers all <code>/api/*</code></strong> (<code>src/proxy.ts</code>) — no middleware change; the skill authenticates with <code>~/.heimdall/api-token</code>.</li>
+</ul>
+<h3>Integration Points</h3>
+<ul>
+<li><strong>Reads:</strong> <code>GET /api/outreach-campaigns/[id]/generation-context</code>.</li>
+<li><strong>Writes:</strong> <code>PATCH .../emails/[emailId]/generation</code> (content + the new <code>status=&#39;generated&#39;</code>); <code>PATCH .../emails/[emailId]/status</code> (<code>{ status:&#39;failed&#39;, lastError }</code> on failure).</li>
+<li><strong>Upstream gate (Phase 15):</strong> the review UI consumes the <code>generated</code> content this skill produces and is the human approve gate; regenerate (UI → <code>pending</code>) feeds the skill&#39;s next run.</li>
+</ul>
+</code_context><specifics>
+## Specific Ideas<ul>
+<li><strong>Sample-review gate (D-04):</strong> generate <strong>5</strong> emails spanning a friend, a former colleague, and distant contacts; show them; wait for thumbs-up/tone tweaks before draining the rest. (Owner: &quot;I will really have to see this in action… for the most part I am always conversational. Maybe a bit different if it&#39;s a friend vs former colleague — but I&#39;d need to review examples.&quot;)</li>
+<li><strong>Conversational-default voice (D-06):</strong> baseline is always conversational; modulation is small (friend = warmer/personal; former colleague = professional-warm-but-casual; distant = shorter/lower-pressure). Numeric tier bands are calibration scaffolding, reviewed against real output.</li>
+<li><strong>LLM-tell blocking set (D-10):</strong> em/en-dashes, &quot;leverage&quot;, &quot;robust&quot;, generic openers (e.g. &quot;I hope this message finds you well&quot;). Broader <code>cover-letter-style.md</code> list = advisory.</li>
+<li><strong>The D-02 route gap:</strong> <code>PATCH .../generation</code> currently sets content but not <code>status</code> — make it transition to <code>generated</code> so success criterion #1 (&quot;advances all pending to generated&quot;) actually holds.</li>
+</ul>
+</specifics><deferred>
+## Deferred Ideas<ul>
+<li><strong>Persisted low-context / needs-review flag</strong> — a <code>lowContext</code>/<code>needsReview</code> column on <code>outreach_emails</code> (+ migration + write-back field) so the review UI can badge low-context emails durably. Deferred (D-08): out of phase scope; ephemeral run-summary flag is sufficient for v1.2. Revisit if the owner wants the badge to survive in the browser.</li>
+<li><strong>Per-email <code>--email &lt;id&gt;</code> single-regenerate skill mode</strong> — considered (D-13) and dropped in favor of batch-only + UI-reset-to-pending + re-run. Revisit only if re-running the whole batch to redo one email becomes annoying in practice.</li>
+<li><strong>Per-email Claude API sub-calls / configurable generation model</strong> — rejected for v1.2 (D-01) in favor of inline authoring. Would only matter if campaign sizes outgrow what chunked inline authoring can handle comfortably.</li>
+</ul>
+<h3>Reviewed Todos (not folded)</h3>
+<p>None — no pending todos matched this phase.</p>
+</deferred><hr>
+<p><em>Phase: 16-Email Generation Skill</em>
+<em>Context gathered: 2026-06-22</em></p>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-CONTEXT.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>

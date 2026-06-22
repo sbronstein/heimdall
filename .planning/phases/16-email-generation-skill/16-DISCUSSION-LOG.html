@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16-DISCUSSION-LOG</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/phases/16-email-generation-skill/16-DISCUSSION-LOG.md</code> · Rendered from markdown · May lag behind</div>
+
+<h1>Phase 16: Email Generation Skill - Discussion Log</h1>
+<blockquote>
+<p><strong>Audit trail only.</strong> Do not use as input to planning, research, or execution agents.
+Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.</p>
+</blockquote>
+<p><strong>Date:</strong> 2026-06-22
+<strong>Phase:</strong> 16-Email Generation Skill
+<strong>Areas discussed:</strong> Generation engine + status, Email voice &amp; anatomy, Tone &amp; low-context, Guardrails &amp; run behavior</p>
+<hr>
+<h2>Generation engine + status</h2>
+<h3>How each email gets written</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Inline, Claude authors</td>
+<td>Agent writes every email in-context; best voice, no API key; risk at large campaign sizes</td>
+<td></td>
+</tr>
+<tr>
+<td>Per-email API sub-calls</td>
+<td>Loop calling Claude API per email; scales but needs API key + model pin, loses agent judgment</td>
+<td></td>
+</tr>
+<tr>
+<td>Inline, but chunked</td>
+<td>Inline authoring in bounded batches; keeps voice, manages scale</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<h3>Landing emails in &#39;generated&#39; state (the /generation route doesn&#39;t set status today)</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill calls both routes</td>
+<td>PATCH .../generation then PATCH .../status; no API change, two round-trips</td>
+<td></td>
+</tr>
+<tr>
+<td>Fix /generation to set status</td>
+<td>Route sets status=&#39;generated&#39; (gated) in same UPDATE; one call, cleaner</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>You decide</td>
+<td>Planner picks</td>
+<td></td>
+</tr>
+</tbody></table>
+<h3>Handling a large pending queue</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fixed chunk, auto-continue</td>
+<td>Drain in fixed batches, no prompts</td>
+<td></td>
+</tr>
+<tr>
+<td>Confirm count first</td>
+<td>Report &#39;N pending — proceed?&#39; then drain in chunks</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Fixed chunk + final summary</td>
+<td>Drain + end summary, no upfront confirm</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Notes:</strong> The sample-review gate (below, under Tone) was added on top of the count confirm.</p>
+<hr>
+<h2>Email voice &amp; anatomy</h2>
+<h3>Where the voice/guardrails live</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New networking voice-guide.md</td>
+<td>Email-specific guide borrowing honesty + scrub rules</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Reuse cover-letter-style.md</td>
+<td>Point at existing file verbatim</td>
+<td></td>
+</tr>
+<tr>
+<td>New guide + cite the original</td>
+<td>Short deltas file + cite original</td>
+<td></td>
+</tr>
+</tbody></table>
+<h3>Body length / shape</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Very short: 1 short para</td>
+<td>A few sentences, opener + ask</td>
+<td></td>
+</tr>
+<tr>
+<td>Short: 2 short paras</td>
+<td>Reconnect hook + ask/context</td>
+<td></td>
+</tr>
+<tr>
+<td>Tier-dependent length</td>
+<td>Length scales with closeness</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<h3>Subject / greeting / sign-off</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Casual, first-name, light subject</td>
+<td>Fixed casual template</td>
+<td></td>
+</tr>
+<tr>
+<td>Goal-driven subject, first-name</td>
+<td>Subject reflects campaign goal</td>
+<td></td>
+</tr>
+<tr>
+<td>You decide per email</td>
+<td>Agent chooses within voice-guide rules; natural variation</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<h3>The ask</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Soft ask, always present</td>
+<td>Low-pressure ask from campaign goal, adapted per person</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Ask scales with tier</td>
+<td>Direct for close, softer for distant</td>
+<td></td>
+</tr>
+<tr>
+<td>Goal verbatim is the instruction</td>
+<td>Follow goalInstruction literally</td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tone &amp; low-context</h2>
+<h3>Tone bands across tiers</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow criteria, fill gaps sensibly</td>
+<td>Use ROADMAP bands, tier 6 → brief/direct</td>
+<td></td>
+</tr>
+<tr>
+<td>Map by enum, not number</td>
+<td>Tone per closeness enum value</td>
+<td></td>
+</tr>
+<tr>
+<td>Three registers, agent decides</td>
+<td>Agent picks register from context</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Other (free text)</strong></td>
+<td>Owner: mostly always conversational; small friend-vs-colleague difference; needs to review examples</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>User&#39;s choice:</strong> Free-text. Conversational by default; closeness is light modulation only; the tier bands are calibration scaffolding, not a literal spec. Confirmed (plain text): voice-guide leads with &quot;always conversational&quot; + a <strong>5-email sample-review gate</strong> before the full drain. Owner approved a sample size of 5.</p>
+<h3>Low-context (&lt;2 interactions) handling + where the flag lives</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Generate + flag via run summary</td>
+<td>Generate facts-only, flag in summary + sample; no schema change</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Generate + persist a flag</td>
+<td>Add needsReview/lowContext column + migration + write-back</td>
+<td></td>
+</tr>
+<tr>
+<td>Generate, conservative, note in body</td>
+<td>More generic email + body marker</td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Guardrails &amp; run behavior</h2>
+<h3>LLM-tell enforcement</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hard gate, self-correct</td>
+<td>Block on full tailor banned list, rewrite until clean</td>
+<td></td>
+</tr>
+<tr>
+<td>Hard gate, criteria list only</td>
+<td>Block on criteria minimums (em/en-dash, leverage, robust, generic openers); broader list advisory</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Scan + flag, no auto-rewrite</td>
+<td>Write back regardless, flag tells in summary</td>
+<td></td>
+</tr>
+</tbody></table>
+<h3>Invocation + failure handling</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Selected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Batch + single-regenerate</td>
+<td>Drain-all + --email <id> single mode</td>
+<td></td>
+</tr>
+<tr>
+<td>Batch only</td>
+<td>Drain-all only; regenerate via UI reset to pending + re-run</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>You decide</td>
+<td>Planner chooses</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>Notes:</strong> Per-email failure → PATCH .../status {failed, lastError}, continue, report in summary (success criterion #5).</p>
+<hr>
+<h2>Claude&#39;s Discretion</h2>
+<ul>
+<li>Exact chunk size for inline batches (constraint: write back each email before authoring the next).</li>
+<li>Exact end-of-run summary format (generated / failed / low-context counts).</li>
+<li>Sample-selection logic for the 5-email gate (reasonable friend/former-colleague/distant spread; graceful fallback).</li>
+<li>Exact grep patterns / wording of <code>voice-guide.md</code> (mirror the cover-letter-style.md scrub).</li>
+</ul>
+<h2>Deferred Ideas</h2>
+<ul>
+<li>Persisted low-context / needs-review column on <code>outreach_emails</code> (durable UI badge) — out of scope; revisit if needed.</li>
+<li>Per-email <code>--email &lt;id&gt;</code> single-regenerate skill mode — dropped for batch-only; revisit if re-running the batch for one email becomes annoying.</li>
+<li>Per-email Claude API sub-calls / configurable generation model — rejected in favor of inline authoring; revisit only if campaign sizes outgrow chunked inline authoring.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.planning/phases/16-email-generation-skill/16-DISCUSSION-LOG.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
