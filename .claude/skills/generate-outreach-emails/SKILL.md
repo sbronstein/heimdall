@@ -157,3 +157,186 @@ Sample ready. Thumbs up to drain the remaining N-5, or share tone tweaks first.
 
 Wait for the owner's response before proceeding. Apply any requested tone adjustments to the
 authoring approach (not just to the 5 samples) before the full drain.
+
+---
+
+## Step 4: Chunked drain -- remaining emails (D-01)
+
+After the sample is approved, process the remaining pending emails (those not in the 5-email
+sample) in bounded passes of ~10-15 emails per pass.
+
+**The hard durability rule (D-01):** write each email back to the API before authoring the
+next one. Progress is durable -- if the run is interrupted, the remaining emails stay `pending`
+and the skill picks them up cleanly on re-run.
+
+All per-contact facts come from the already-fetched `data.emails` payload. Do NOT re-fetch
+`generation-context` or call any other read endpoint mid-run.
+
+### 4a. Per-email authoring (GEN-02)
+
+For each email entry from `data.emails` (skipping the 5 already written back in the sample):
+
+1. Read the contact brief: `firstName`, `howMet`, `companyAtConnection`, `roleAtConnection`,
+   `currentCompany`, `title`, `closeness`.
+2. Read the interactions array (up to 3 entries: `type`, `summary`, `occurredAt`).
+3. Note `lowContext: true/false` and the campaign `goalInstruction`.
+
+Author the email following `references/voice-guide.md`:
+
+- **Subject:** casual, specific, short (see voice-guide.md §2 for examples). Vary naturally
+  across the campaign -- no uniform template.
+- **Greeting:** always `Hey <firstName>,`
+- **Hook:** draw only on `howMet`, `companyAtConnection`, `roleAtConnection`, `currentCompany`,
+  `title`, and the `interactions` array. If `lowContext: true`, draw only on `howMet`,
+  `companyAtConnection`, `roleAtConnection` -- keep the email short and the hook brief; do
+  not add context you do not have.
+- **Ask:** a soft, low-pressure close adapted from `goalInstruction` to this person's
+  closeness tier (see voice-guide.md §1 and §2 for the ask variants).
+- **Sign-off:** `Steve` or `Thanks, Steve` (first name only, no surname).
+- **Anti-hallucination (D-11/GEN-04):** reference ONLY facts present in the contact brief or
+  `steve-fact-bank.md`. Never invent shared history, past conversations, or projects not in
+  the `interactions` array. When `howMet` is blank, say so lightly ("We connected a while
+  back...") rather than fabricating an origin.
+
+### 4b. Vary length by closeness
+
+| Closeness | Target length |
+|-----------|---------------|
+| Distant (6-8) | 2-4 sentences: greeting, brief hook, soft ask, sign-off |
+| Colleague (3-5) | 3-5 sentences or a short paragraph + ask |
+| Friend (1-2) | Up to 2 short paragraphs -- warmer hook, more context |
+
+Use judgment. Rich interaction history warrants a warmer tone even for a nominally distant
+closeness score.
+
+### 4c. Blocking LLM-tell gate (D-10)
+
+Before writing back any email, scan it for the blocking set. No email is written back until it
+passes every check:
+
+```bash
+# Check for em-dashes (U+2014) and en-dashes (U+2013) -- use plain hyphens only
+grep -nP '\x{2014}|\x{2013}' email.txt || echo "no em/en dashes"
+
+# Check for blocking words and generic opener
+grep -niE "leverage|robust|I hope this (message|email) finds you" email.txt || echo "no blocking terms"
+```
+
+If any blocking hit is found, rewrite the offending phrase in-place and re-scan. Repeat until
+the email passes. Use plain hyphens, replace "leverage" with "use"/"apply", replace "robust"
+with "solid"/"strong", replace the generic opener by starting directly with the person.
+
+After a blocking pass, also run the advisory scan (do not block on these, but surface them
+if they appear so you can rewrite where natural):
+
+```bash
+grep -niE "delve|tapestry|navigate the|in today's|boast|underscore|testament|realm|not just|isn't just|it's not|not only|seamless|cutting-edge|game-chang|elevate|unlock|pivotal|moreover|furthermore" email.txt || echo "no advisory tells"
+```
+
+### 4d. Success write-back -- one call per email
+
+Once the email passes the blocking scan, write it back with a **single** PATCH call:
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X PATCH \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d "{\"generatedSubject\":\"$SUBJECT\",\"generatedBody\":\"$BODY\"}" \
+  "http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/generation"
+```
+
+This single PATCH persists `generatedSubject`, `generatedBody`, and `generatedAt`, AND
+advances the email's `status` to `'generated'` server-side (via `canEmailTransition`). Do NOT
+make a separate `/status` PATCH call to mark success -- the `/generation` route handles the
+transition internally.
+
+Check the response: if `success: false`, fall through to the failure path (Step 4e) rather
+than continuing silently.
+
+### 4e. Failure handling -- mark failed and continue (D-12)
+
+On any per-email failure (authoring error, API error, unresolvable blocking scan after
+multiple rewrite attempts), call the status endpoint with `{ status:'failed', lastError }` and
+continue to the next email without crashing:
+
+```bash
+TOKEN=$(cat ~/.heimdall/api-token)
+curl -s -X PATCH \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d "{\"status\":\"failed\",\"lastError\":\"$LAST_ERROR\"}" \
+  "http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/status"
+```
+
+Keep `lastError` to the first ~200 chars of the error message (500-char Zod limit on the
+route). Then **continue to the next email** -- do not abort the full run on a single failure.
+
+Track the `emailId`, `firstName`, and error reason for the end-of-run summary.
+
+API error handling by status code:
+
+| Code | Meaning | Skill action |
+|------|---------|--------------|
+| 400 (Invalid transition) | State-machine guard | Log and continue to next email |
+| 400 (Zod field error) | Bug in skill payload | Surface error string and exit |
+| 401 | Token / env misconfiguration | Surface and exit |
+| 404 (Campaign not found) | Campaign ID invalid | Surface and exit |
+| 404 (Email not found) | Email ID mismatch | Log and continue |
+| 500 | Server error | Surface and exit |
+
+### 4f. Low-context tracking (D-08)
+
+When `lowContext: true`, generate the email as above (drawing only on `howMet`/company/role),
+write it back normally (the email is not blocked by `lowContext`), and collect the contact for
+the run summary. **No `lowContext` or `needsReview` column is added to the database** -- the
+flag is ephemeral in the run output only (D-08).
+
+---
+
+## Step 5: End-of-run summary
+
+After all emails are processed (sample + drain), print:
+
+```
+--- Run complete ---
+Campaign: <campaign-id>
+
+Generated:   N
+Failed:      M
+Low-context: K (generated, but flagged for review)
+
+Low-context contacts:
+  - <firstName> <lastName> (<emailId>)
+  ...
+
+Failed emails:
+  - <firstName> <lastName> (<emailId>): <lastError first 100 chars>
+  ...
+```
+
+If all generated and no failures: "Generated: N / Failed: 0 / Low-context: K"
+
+The owner reviews generated emails in the Heimdall UI. Low-context emails appear in the
+review queue alongside all others -- no special badge (ephemeral flag only, D-08).
+
+---
+
+## Constraints
+
+- **REST-only.** Never touch the database directly. Every read and every write goes through
+  the REST API at `http://localhost:4000`. This is the architectural invariant that ensures
+  CLI parity.
+- **Never log the bearer token.** Use `$(cat ~/.heimdall/api-token)` inline in every curl
+  call so the resolved token value never appears in shell history or run output.
+- **No email is written back until it passes the blocking LLM-tell scan.** Rewrite first,
+  then call `/generation`.
+- **No `--email <id>` single-regenerate mode (D-13).** Batch-only. Use the review UI to
+  reset a row to `pending` and re-run if you need to redo one email.
+- **No new database columns (D-08).** The `lowContext` flag is ephemeral in the run summary;
+  no `needsReview` or `lowContext` column is added to `outreach_emails`.
+- **No invented shared history (D-11/GEN-04).** Reference only facts from the
+  `generation-context` payload and `steve-fact-bank.md`.
+- **One `generation-context` read per run (D-01).** Fetch once at the start, author all
+  emails from that payload. Do not re-fetch mid-run.
+
