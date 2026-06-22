@@ -235,10 +235,17 @@ name matches the contact's full name.** This guards against threads where the co
 appears in the body text (forwarded emails, newsletters) but they are not an actual participant.
 
 ```bash
+# Reset candidate addresses at the start of EACH contact's iteration (WR-01).
+# Without this reset, addresses discovered for contact N bleed into contact N+1's
+# candidate pool and can produce wrong-recipient write-backs.
+CANDIDATE_ADDRESSES=()
+
 CONTACT_FULL_NAME_LOWER=$(echo "$FIRST_NAME $LAST_NAME" | tr '[:upper:]' '[:lower:]')
 # For each header value, extract display name and compare:
 DISPLAY_NAME_LOWER=$(parse_display_name "$HEADER_VALUE" | tr '[:upper:]' '[:lower:]')
-if echo "$DISPLAY_NAME_LOWER" | grep -qi "$CONTACT_FULL_NAME_LOWER"; then
+# Use -F (fixed-string) so names containing "." (Dr., Jr., S.A.) are matched literally,
+# not as BRE wildcards that could produce false-positive address acceptance (WR-03).
+if echo "$DISPLAY_NAME_LOWER" | grep -qiF "$CONTACT_FULL_NAME_LOWER"; then
   ADDR=$(parse_email_from_header "$HEADER_VALUE")
   # Skip Steve's own address
   if [ "$ADDR" != "steve@bronstein.org" ]; then
