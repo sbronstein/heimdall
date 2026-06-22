@@ -26,10 +26,10 @@ Requirements for this milestone. Each maps to exactly one roadmap phase (see Tra
 
 ### Generation (GEN) — AI email drafting skill
 
-- [ ] **GEN-01**: User can run a skill that generates a subject line + body for every pending email in a campaign
-- [ ] **GEN-02**: Generated emails are personalized from CRM context (`howMet`, company/role, closeness, prior interactions) plus the campaign goal
-- [ ] **GEN-03**: Generation calibrates tone to closeness tier and follows the owner's voice conventions, including an LLM-tell scan (reusing `tailor-application-materials` style references)
-- [ ] **GEN-04**: Generation references only history present in the provided contact context (no hallucinated shared history); low-context contacts are flagged for extra review
+- [x] **GEN-01**: User can run a skill that generates a subject line + body for every pending email in a campaign
+- [x] **GEN-02**: Generated emails are personalized from CRM context (`howMet`, company/role, closeness, prior interactions) plus the campaign goal
+- [x] **GEN-03**: Generation calibrates tone to closeness tier and follows the owner's voice conventions, including an LLM-tell scan (reusing `tailor-application-materials` style references)
+- [x] **GEN-04**: Generation references only history present in the provided contact context (no hallucinated shared history); low-context contacts are flagged for extra review
 - [x] **GEN-05**: All generation runs in the skill (never in an API route); the API only enqueues `pending` rows and accepts write-back
 
 ### Review & Approval (REV)
@@ -103,10 +103,10 @@ Which phases cover which requirements. Updated during roadmap creation (2026-06-
 | CAMP-07 | Phase 12 | Complete |
 | CAMP-08 | Phase 12 | Complete |
 | TRGE-01 | Phase 13 | Complete |
-| GEN-01 | Phase 16 | Pending |
-| GEN-02 | Phase 16 | Pending |
-| GEN-03 | Phase 16 | Pending |
-| GEN-04 | Phase 16 | Pending |
+| GEN-01 | Phase 16 | Complete |
+| GEN-02 | Phase 16 | Complete |
+| GEN-03 | Phase 16 | Complete |
+| GEN-04 | Phase 16 | Complete |
 | GEN-05 | Phase 12 | Complete |
 | REV-01 | Phase 15 | Pending |
 | REV-02 | Phase 15 | Pending |

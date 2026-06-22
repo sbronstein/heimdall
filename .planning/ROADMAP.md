@@ -172,7 +172,7 @@ _Full Phase 7–10 detail: `.planning/milestones/v1.1-ROADMAP.md`._
 | 13. Triage Connection-Date Filter | v1.2 | 2/2 | Complete    | 2026-06-21 |
 | 14. Campaign Builder UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
 | 15. Review and Approval UI | v1.2 | 3/3 | Complete   | 2026-06-21 |
-| 16. Email Generation Skill | v1.2 | 3/3 | Complete   | 2026-06-22 |
+| 16. Email Generation Skill | v1.2 | 3/3 | Complete    | 2026-06-22 |
 | 17. Gmail Drafting and Email Discovery Skill | v1.2 | 0/TBD | Not started | - |
 
 ---
