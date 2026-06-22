@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SKILL</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.claude/skills/draft-outreach-emails/SKILL.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<p>name: draft-outreach-emails
+description: &gt;
+  Discover missing recipient addresses for a campaign&#39;s approved emails via Gmail thread
+  search, then create a Gmail draft per approved email that has a recipient address, and
+  write each result back via REST. Discover-then-draft in one batch run. The skill never
+  sends email -- it only ever creates drafts.
+argument-hint: &#39;<campaign-id>&#39;
+allowed-tools:</p>
+<ul>
+<li>Read</li>
+<li>Bash</li>
+<li>mcp__gmail__search_threads</li>
+<li>mcp__gmail__get_thread</li>
+<li>mcp__gmail__create_draft</li>
+<li>mcp__gmail__list_drafts</li>
+</ul>
+<hr>
+<h2>Overview</h2>
+<p><code>draft-outreach-emails &lt;campaign-id&gt;</code> runs a single batch that (1) discovers missing recipient
+addresses for the campaign&#39;s approved emails using Gmail thread search, then (2) creates a
+Gmail draft for each approved email that has a recipient address, and (3) writes each result
+back through the Heimdall REST API.</p>
+<p><strong>This skill never sends email.</strong> It calls only <code>create_draft</code> -- never <code>send</code>, <code>trash</code>,
+<code>delete</code>, or any modify tool. The Gmail tool allowlist is enforced in the frontmatter above
+and verified by a mandatory pre-run grep gate (see Constraints).</p>
+<p><strong>REST-only.</strong> All reads and writes go through the Heimdall API at <code>http://localhost:4000</code>.
+The skill never touches the database directly.</p>
+<p><strong>Idempotent.</strong> Already-drafted emails (<code>status=&#39;drafted&#39;</code>) never appear in the approved
+work queue -- they are automatically skipped. An email that was drafted, then edited and
+re-approved (returning to <code>status=&#39;approved&#39;</code> with a stale <code>gmailDraftId</code>) is re-drafted
+via create-and-repoint: a fresh draft is created and <code>gmailDraftId</code> is overwritten. The old
+draft is left harmless in Gmail&#39;s drafts folder -- no update or delete tool is needed.</p>
+<p><strong>Read these references before running:</strong></p>
+<ul>
+<li><a href="references/heimdall-api.md"><code>references/heimdall-api.md</code></a> -- the four endpoints this skill
+calls (work-queue read, recipient write-back, draft write-back, failure path), bearer-token
+auth pattern, and response envelope.</li>
+</ul>
+<hr>
+<h2>Setup</h2>
+<p>Verify all prerequisites before proceeding. Surface the gap and stop if any are missing -- do
+NOT attempt to fix automatically.</p>
+<ul>
+<li><code>~/.heimdall/api-token</code> exists (chmod 600; created by <code>npm run token:generate</code>).</li>
+<li><code>.env.local</code> has <code>API_TOKEN_HASH=&lt;sha256 of the token&gt;</code> and
+<code>SINGLE_USER_EMAIL=steve@bronstein.org</code>.</li>
+<li>Heimdall dev server running on <code>http://localhost:4000</code> (<code>npm run dev</code>).</li>
+<li><code>jq</code> available on <code>PATH</code> (used to safely build JSON write-back payloads).</li>
+<li>Gmail MCP tools in scope: <code>mcp__gmail__search_threads</code>, <code>mcp__gmail__get_thread</code>,
+<code>mcp__gmail__create_draft</code> must be available in the current Claude Code session. This skill
+requires an <strong>interactive</strong> Claude Code session with the Gmail MCP connected. If any Gmail
+tool is missing from scope, stop and surface the gap -- do NOT proceed without them.</li>
+</ul>
+<pre><code class="language-bash"># Verify jq is installed (required for correct JSON escaping of multi-line bodies)
+command -v jq &gt;/dev/null &amp;&amp; echo &quot;jq found&quot; || echo &quot;MISSING: jq (brew install jq)&quot;
+
+# Verify token file exists
+[ -f ~/.heimdall/api-token ] &amp;&amp; echo &quot;token found&quot; || echo &quot;MISSING: ~/.heimdall/api-token&quot;
+
+# Verify env vars
+grep -q &#39;API_TOKEN_HASH&#39; .env.local &amp;&amp; echo &quot;API_TOKEN_HASH set&quot; || echo &quot;MISSING: API_TOKEN_HASH in .env.local&quot;
+grep -q &#39;SINGLE_USER_EMAIL&#39; .env.local &amp;&amp; echo &quot;SINGLE_USER_EMAIL set&quot; || echo &quot;MISSING: SINGLE_USER_EMAIL in .env.local&quot;
+</code></pre>
+<p>Then confirm Gmail MCP availability: attempt <code>mcp__gmail__search_threads</code> with a minimal test
+query (e.g., <code>query: &quot;test&quot;</code>, <code>maxResults: 1</code>) and <code>mcp__gmail__list_drafts</code> to confirm both
+read and draft-create tools are in scope. If the tool call returns an error indicating the
+MCP is not connected, stop and instruct the user to start an interactive Claude Code session
+with the Gmail MCP active.</p>
+<hr>
+<h2>Step 1: Read the approved queue</h2>
+<p>Call <code>GET /api/outreach-campaigns/&lt;id&gt;/emails?status=approved&amp;limit=100</code> with cursor
+pagination until <code>meta.hasMore = false</code>. The default limit is 20; campaigns with more than
+20 approved emails are silently truncated if <code>&amp;limit=100</code> is omitted or the pagination loop
+is skipped (Pitfall 6).</p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+CAMPAIGN_ID=&quot;$ARGUMENTS&quot;
+ALL_EMAILS=&quot;[]&quot;
+CURSOR=&quot;&quot;
+
+while true; do
+  URL=&quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails?status=approved&amp;limit=100&quot;
+  if [ -n &quot;$CURSOR&quot; ]; then URL=&quot;${URL}&amp;cursor=${CURSOR}&quot;; fi
+  PAGE=$(curl -s -H &quot;Authorization: Bearer $TOKEN&quot; &quot;$URL&quot;)
+  SUCCESS=$(echo &quot;$PAGE&quot; | jq -r &#39;.success&#39;)
+  if [ &quot;$SUCCESS&quot; != &quot;true&quot; ]; then
+    echo &quot;Error: $(echo &quot;$PAGE&quot; | jq -r &#39;.error&#39;)&quot;
+    exit 1
+  fi
+  ALL_EMAILS=$(echo &quot;$ALL_EMAILS $PAGE&quot; | jq -s &#39;.[0] + .[1].data&#39;)
+  HAS_MORE=$(echo &quot;$PAGE&quot; | jq -r &#39;.meta.hasMore&#39;)
+  if [ &quot;$HAS_MORE&quot; != &quot;true&quot; ]; then break; fi
+  CURSOR=$(echo &quot;$PAGE&quot; | jq -r &#39;.meta.cursor&#39;)
+done
+</code></pre>
+<p>Check the response envelope: if <code>success: false</code>, surface the <code>error</code> string and exit.</p>
+<ul>
+<li><code>401</code> -- token / env misconfiguration; surface and exit.</li>
+<li><code>404</code> -- campaign not found; surface and exit.</li>
+<li><code>500</code> -- server error; surface and exit.</li>
+</ul>
+<p><strong>Partition into two sub-queues:</strong></p>
+<pre><code class="language-bash"># Discovery queue: recipientEmail is null -- must discover or fall back to LinkedIn
+DISCOVERY_QUEUE=$(echo &quot;$ALL_EMAILS&quot; | jq &#39;[.[] | select(.email.recipientEmail == null)]&#39;)
+
+# Drafting queue: recipientEmail is set -- proceed to create draft
+DRAFTING_QUEUE=$(echo &quot;$ALL_EMAILS&quot; | jq &#39;[.[] | select(.email.recipientEmail != null)]&#39;)
+
+TOTAL=$(echo &quot;$ALL_EMAILS&quot; | jq &#39;length&#39;)
+MISSING_RECIPIENT=$(echo &quot;$DISCOVERY_QUEUE&quot; | jq &#39;length&#39;)
+</code></pre>
+<p>Each item in <code>ALL_EMAILS</code> has shape:
+<code>{ email: { id, status, channel, recipientEmail, gmailDraftId, generatedSubject, generatedBody, editedSubject, editedBody, contactId, ... }, contact: { id, firstName, lastName, email, outreachStatus, archivedAt, ... } | null }</code></p>
+<p>Key fields to note:</p>
+<ul>
+<li><code>email.recipientEmail</code> -- <code>null</code> means address not yet discovered (discovery queue)</li>
+<li><code>email.gmailDraftId</code> -- <code>null</code> for a never-drafted email; non-null means re-draft path (D-02)</li>
+<li><code>email.editedSubject</code> / <code>email.editedBody</code> -- take precedence over generated variants</li>
+<li><code>contact.archivedAt</code> -- skip drafting if non-null</li>
+<li><code>contact</code> may be <code>null</code> if contact was hard-deleted (skip this email)</li>
+</ul>
+<hr>
+<h2>Step 2: Confirm gate (D-05)</h2>
+<p>Report the counts and wait for explicit confirmation before acting:</p>
+<pre><code>N approved emails found for campaign &lt;id&gt;.
+M are missing a recipient address (will attempt discovery).
+Proceed with discover-then-draft? (yes / no)
+</code></pre>
+<p>Wait for explicit confirmation. If the owner replies &quot;no&quot; or anything other than &quot;yes&quot;,
+exit cleanly without making any changes.</p>
+<p>If <code>N = 0</code>, report &quot;No approved emails -- run complete.&quot; and exit cleanly.</p>
+<hr>
+<h2>Step 3: Discovery loop (DISC-01 / D-03 / D-04 / D-04b)</h2>
+<p>For each item in <code>DISCOVERY_QUEUE</code>, search Gmail for threads that include the contact as a
+direct participant, extract their email address, and apply the LOCKED accept rule.</p>
+<p><strong>IMPORTANT: Gmail MCP tool signatures are [ASSUMED] from Gmail API v1 conventions.</strong> Validate
+exact parameter names (<code>query</code> vs <code>q</code>, <code>maxResults</code> vs <code>max</code>) at run time on the first call.
+If a parameter name is wrong, the tool will error -- adjust and retry.</p>
+<h3>3a. Search for threads</h3>
+<pre><code>mcp__gmail__search_threads {
+  query: &quot;&lt;firstName&gt; &lt;lastName&gt;&quot;,   // e.g., &quot;Alex Chen&quot;
+  maxResults: 20                      // cap at 20 most-recent threads [ASSUMED param name]
+}
+// Expected response [ASSUMED from Gmail API v1]:
+// { threads: [{ id: &quot;thread-id&quot;, snippet: &quot;...&quot; }, ...] }
+// If threadIds are returned directly (different wrapper shape), adjust extraction.
+</code></pre>
+<p>If <code>search_threads</code> returns no threads, skip to step 3d (LinkedIn fallback).</p>
+<h3>3b. Extract participant addresses from each thread</h3>
+<p>For each thread ID returned, call <code>get_thread</code> to retrieve the message headers:</p>
+<pre><code>mcp__gmail__get_thread {
+  threadId: &quot;&lt;thread-id&gt;&quot;    // [ASSUMED param name -- may be &quot;id&quot; or &quot;thread_id&quot;]
+}
+// Expected response [ASSUMED]:
+// {
+//   id: &quot;thread-id&quot;,
+//   messages: [
+//     {
+//       id: &quot;msg-id&quot;,
+//       payload: {
+//         headers: [
+//           { name: &quot;From&quot;, value: &quot;Alex Chen &lt;alex@example.com&gt;&quot; },
+//           { name: &quot;To&quot;,   value: &quot;Steve Bronstein &lt;steve@bronstein.org&gt;&quot; },
+//           { name: &quot;Cc&quot;,   value: &quot;&quot; }
+//         ]
+//       }
+//     }
+//   ]
+// }
+</code></pre>
+<p>Walk <code>messages[].payload.headers</code>, collecting values for <code>From</code>, <code>To</code>, and <code>Cc</code> headers.
+Parse the <code>Display Name &lt;email@domain&gt;</code> RFC 2822 format to extract the email address:</p>
+<pre><code class="language-bash">parse_email_from_header() {
+  local header_value=&quot;$1&quot;
+  if echo &quot;$header_value&quot; | grep -q &#39;&lt;&#39;; then
+    echo &quot;$header_value&quot; | sed &#39;s/.*&lt;\([^&gt;]*\)&gt;.*/\1/&#39; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39; | xargs
+  else
+    echo &quot;$header_value&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39; | xargs
+  fi
+}
+
+parse_display_name() {
+  local header_value=&quot;$1&quot;
+  if echo &quot;$header_value&quot; | grep -q &#39;&lt;&#39;; then
+    echo &quot;$header_value&quot; | sed &#39;s/&lt;[^&gt;]*&gt;//&#39; | xargs
+  else
+    echo &quot;&quot;
+  fi
+}
+</code></pre>
+<p><strong>Apply the D-03 name-matching filter (Pitfall 3):</strong></p>
+<p>After extracting each address, check whether the display name in the header case-insensitively
+matches <code>contact.firstName + &#39; &#39; + contact.lastName</code>. <strong>Only keep addresses where the display
+name matches the contact&#39;s full name.</strong> This guards against threads where the contact&#39;s name
+appears in the body text (forwarded emails, newsletters) but they are not an actual participant.</p>
+<pre><code class="language-bash">CONTACT_FULL_NAME_LOWER=$(echo &quot;$FIRST_NAME $LAST_NAME&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39;)
+# For each header value, extract display name and compare:
+DISPLAY_NAME_LOWER=$(parse_display_name &quot;$HEADER_VALUE&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39;)
+if echo &quot;$DISPLAY_NAME_LOWER&quot; | grep -qi &quot;$CONTACT_FULL_NAME_LOWER&quot;; then
+  ADDR=$(parse_email_from_header &quot;$HEADER_VALUE&quot;)
+  # Skip Steve&#39;s own address
+  if [ &quot;$ADDR&quot; != &quot;steve@bronstein.org&quot; ]; then
+    CANDIDATE_ADDRESSES+=(&quot;$ADDR&quot;)
+  fi
+fi
+</code></pre>
+<p>Collect candidate addresses across ALL threads for this contact. After processing all threads,
+<strong>deduplicate by normalized (lowercased) email address</strong> (Pitfall 4 -- the same address
+appearing in multiple threads must count as ONE distinct address):</p>
+<pre><code class="language-bash">DISTINCT_ADDRESSES=$(printf &#39;%s\n&#39; &quot;${CANDIDATE_ADDRESSES[@]}&quot; | sort -u)
+DISTINCT_COUNT=$(echo &quot;$DISTINCT_ADDRESSES&quot; | grep -c &#39;.&#39; || echo &quot;0&quot;)
+</code></pre>
+<h3>3c. Apply the LOCKED accept rule (D-03)</h3>
+<p><strong>Exactly one distinct address found:</strong></p>
+<p>Write back via <code>PATCH .../recipient { channel: &#39;email&#39;, recipientEmail: &lt;addr&gt; }</code>, then add
+this item to the drafting queue for this run:</p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+PAYLOAD=$(jq -n --arg addr &quot;$DISCOVERED_ADDR&quot; \
+  &#39;{channel: &quot;email&quot;, recipientEmail: $addr}&#39;)
+RESULT=$(curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$PAYLOAD&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/recipient&quot;)
+SUCCESS=$(echo &quot;$RESULT&quot; | jq -r &#39;.success&#39;)
+if [ &quot;$SUCCESS&quot; != &quot;true&quot; ]; then
+  echo &quot;Recipient write-back failed for $EMAIL_ID: $(echo &quot;$RESULT&quot; | jq -r &#39;.error&#39;)&quot;
+  # Add to failed list and continue
+else
+  # Update the item&#39;s recipientEmail in memory and add to DRAFTING_QUEUE
+  DISCOVERED_COUNT=$((DISCOVERED_COUNT + 1))
+fi
+</code></pre>
+<p><strong>Two or more distinct addresses found -- AMBIGUOUS (D-04):</strong></p>
+<p>Leave <code>recipientEmail</code> UNSET. Do NOT call the <code>/recipient</code> endpoint. Do NOT force
+<code>channel=&#39;linkedin_message&#39;</code> (an email likely exists -- the owner must resolve manually).
+Add to the ambiguous list for the run summary:</p>
+<pre><code class="language-bash">AMBIGUOUS_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID): $DISTINCT_ADDRESSES&quot;)
+</code></pre>
+<p>The email is NOT drafted this run. The owner resolves manually (e.g., via a direct
+<code>PATCH .../recipient</code> call with the correct address) and re-runs.</p>
+<p><strong>Zero distinct addresses found (D-04b / DISC-03):</strong></p>
+<p>Write back via <code>PATCH .../recipient { channel: &#39;linkedin_message&#39; }</code>. The route forces
+<code>recipientEmail = null</code> server-side. The existing <code>needsLinkedinMessage()</code> badge in the review
+UI will render this state automatically:</p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+RESULT=$(curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;channel&quot;:&quot;linkedin_message&quot;}&#39; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/recipient&quot;)
+SUCCESS=$(echo &quot;$RESULT&quot; | jq -r &#39;.success&#39;)
+if [ &quot;$SUCCESS&quot; != &quot;true&quot; ]; then
+  echo &quot;LinkedIn fallback write-back failed for $EMAIL_ID: $(echo &quot;$RESULT&quot; | jq -r &#39;.error&#39;)&quot;
+fi
+LINKEDIN_FALLBACK_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID)&quot;)
+</code></pre>
+<h3>3d. Proceed to drafting</h3>
+<p>After completing the discovery loop, the <code>DRAFTING_QUEUE</code> now includes:</p>
+<ol>
+<li>Items that originally had a <code>recipientEmail</code> set (from Step 1 partition), AND</li>
+<li>Items newly added from the discovery loop (exactly-one-address path)</li>
+</ol>
+<hr>
+<h2>Step 4: Drafting loop (DRFT-01 / D-02 idempotency)</h2>
+<p>For each item in the drafting queue, create a Gmail draft and write back the draft ID.</p>
+<h3>4a. Pre-draft checks</h3>
+<p>Skip the email and report if:</p>
+<ul>
+<li><code>contact</code> is <code>null</code> (contact hard-deleted): add to failed list, continue</li>
+<li><code>contact.archivedAt != null</code> (contact archived): add to skipped list, continue</li>
+</ul>
+<p>Resolve final content using the canonical precedence (Pitfall 2):</p>
+<pre><code class="language-bash">FINAL_SUBJECT=$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.email.editedSubject // .email.generatedSubject&#39;)
+FINAL_BODY=$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.email.editedBody // .email.generatedBody&#39;)
+</code></pre>
+<p>If both <code>FINAL_SUBJECT</code> and <code>FINAL_BODY</code> are null or empty after this, skip the email and
+add to the failed list (edge case: approved before generation ran).</p>
+<h3>4b. Determine new-draft vs. re-draft (D-02)</h3>
+<pre><code class="language-bash">GMAIL_DRAFT_ID=$(echo &quot;$EMAIL_ITEM&quot; | jq -r &#39;.email.gmailDraftId&#39;)
+
+if [ &quot;$GMAIL_DRAFT_ID&quot; = &quot;null&quot; ] || [ -z &quot;$GMAIL_DRAFT_ID&quot; ]; then
+  DRAFT_ACTION=&quot;new&quot;
+else
+  # Email was drafted, then edited → returned to approved with stale gmailDraftId
+  # Re-draft: create a fresh draft and repoint. Old draft left harmless in Gmail.
+  DRAFT_ACTION=&quot;redraft&quot;
+fi
+# In both cases: call create_draft, then PATCH .../draft with the new ID
+</code></pre>
+<h3>4c. Create the Gmail draft</h3>
+<pre><code>mcp__gmail__create_draft {
+  to: &quot;&lt;recipientEmail&gt;&quot;,
+  subject: &quot;&lt;FINAL_SUBJECT&gt;&quot;,
+  body: &quot;&lt;FINAL_BODY&gt;&quot;
+}
+// Expected response [ASSUMED from Gmail API v1 drafts.create]:
+// { id: &quot;r&lt;draft-id&gt;&quot;, message: { id: &quot;msg-id&quot;, threadId: &quot;...&quot; } }
+// The skill uses the top-level `id` as gmailDraftId.
+// Validate: if the response has a different shape (e.g., `draftId` or nested `draft.id`),
+// read the actual key from the returned object and adjust accordingly.
+</code></pre>
+<p><strong>RECIPIENT_EMAIL</strong> comes from the work-queue item&#39;s <code>email.recipientEmail</code> field (confirmed
+to be non-null because this item is in the drafting queue).</p>
+<p>If <code>create_draft</code> fails for an <strong>approved</strong> email:</p>
+<ul>
+<li><strong>DO NOT call <code>PATCH .../status { status: &#39;failed&#39; }</code></strong> -- <code>approved → failed</code> is an ILLEGAL
+state-machine transition that returns 400 (Pitfall 1).</li>
+<li>Add the email to the failed list in memory: <code>FAILED_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID): $ERROR&quot;)</code></li>
+<li>Leave the email in <code>approved</code> state (it will appear in the next run&#39;s queue).</li>
+<li>Continue to the next email.</li>
+</ul>
+<h3>4d. Write back the draft ID</h3>
+<p>Once <code>create_draft</code> returns a draft ID, immediately call <code>PATCH .../draft</code> with the new ID.
+Each write-back must complete before moving to the next email, so an interrupted run re-queues
+the remaining items cleanly on the next invocation.</p>
+<pre><code class="language-bash">TOKEN=$(cat ~/.heimdall/api-token)
+NEW_GMAIL_DRAFT_ID=&quot;&lt;id from create_draft response&gt;&quot;
+PAYLOAD=$(jq -n --arg gmailDraftId &quot;$NEW_GMAIL_DRAFT_ID&quot; \
+  &#39;{gmailDraftId: $gmailDraftId}&#39;)
+RESULT=$(curl -s -X PATCH \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &quot;$PAYLOAD&quot; \
+  &quot;http://localhost:4000/api/outreach-campaigns/$CAMPAIGN_ID/emails/$EMAIL_ID/draft&quot;)
+SUCCESS=$(echo &quot;$RESULT&quot; | jq -r &#39;.success&#39;)
+if [ &quot;$SUCCESS&quot; != &quot;true&quot; ]; then
+  ERROR=$(echo &quot;$RESULT&quot; | jq -r &#39;.error&#39;)
+  echo &quot;Draft write-back failed for $EMAIL_ID: $ERROR&quot;
+  FAILED_LIST+=(&quot;$CONTACT_NAME ($EMAIL_ID): $ERROR&quot;)
+  # Do NOT call /status for an approved email -- leave as approved, continue
+else
+  DRAFTED_COUNT=$((DRAFTED_COUNT + 1))
+fi
+</code></pre>
+<p>The <code>PATCH .../draft</code> route (D-01) atomically:</p>
+<ol>
+<li>Validates <code>canEmailTransition(email.status, &#39;drafted&#39;)</code> -- returns 400 if not approved</li>
+<li>Sets <code>gmailDraftId</code>, <code>status = &#39;drafted&#39;</code>, <code>draftedAt</code>, <code>updatedAt</code> on the email</li>
+<li>Sets <code>contact.outreachStatus = &#39;reached_out&#39;</code>, <code>updatedAt</code> on the contact</li>
+<li>Logs an <code>outreach_email_drafted</code> timeline event</li>
+</ol>
+<p>One call does all four effects. Do NOT make a separate <code>/status</code> PATCH call after this.</p>
+<hr>
+<h2>Step 5: End-of-run summary</h2>
+<p>After all discovery and drafting is complete, print the full run summary:</p>
+<pre><code>--- Run complete ---
+Campaign: &lt;campaign-id&gt;
+
+Drafted:                    N
+Skipped (archived contact): S
+Discovered:                 K
+Ambiguous:                  J  (listed below -- resolve manually then re-run)
+LinkedIn fallback:          L
+Failed:                     F  (left as &#39;approved&#39; -- listed below)
+
+Ambiguous contacts (2+ candidate addresses -- recipientEmail left unset):
+  - &lt;firstName&gt; &lt;lastName&gt; (&lt;emailId&gt;): &lt;addr1&gt;, &lt;addr2&gt;, ...
+
+LinkedIn fallback contacts (no email found -- channel set to linkedin_message):
+  - &lt;firstName&gt; &lt;lastName&gt; (&lt;emailId&gt;)
+  ...
+
+Failed emails (left as &#39;approved&#39; -- draft or write-back error):
+  - &lt;firstName&gt; &lt;lastName&gt; (&lt;emailId&gt;): &lt;error first 100 chars&gt;
+  ...
+</code></pre>
+<p>If all succeeded with no failures, ambiguous, or LinkedIn fallbacks: &quot;Drafted: N / Discovered: K / Failed: 0&quot;</p>
+<p>The owner reviews drafted emails directly in Gmail. Ambiguous contacts must be resolved
+manually via a direct <code>PATCH .../recipient</code> API call with the correct address, then re-run
+this skill. LinkedIn-flagged contacts show the &quot;needs LinkedIn message&quot; badge in the Heimdall
+review UI automatically.</p>
+<hr>
+<h2>Constraints</h2>
+<ul>
+<li><strong>REST-only.</strong> Never touch the database directly. Every read and every write goes through
+the REST API at <code>http://localhost:4000</code>. This is the architectural invariant that ensures
+CLI parity.</li>
+<li><strong>Never log the bearer token.</strong> Use <code>$(cat ~/.heimdall/api-token)</code> inline in every curl
+call so the resolved token value never appears in shell history or run output.</li>
+<li><strong>Gmail tool allowlist (D-06).</strong> This skill may ONLY call these Gmail MCP tools:
+<code>mcp__gmail__search_threads</code>, <code>mcp__gmail__get_thread</code>, <code>mcp__gmail__create_draft</code>,
+<code>mcp__gmail__list_drafts</code>. It NEVER calls any send, trash, import, delete, or modify tool.</li>
+<li><strong>Pre-run grep gate (D-06).</strong> Before any real campaign run, run:<pre><code class="language-bash">grep -ri &quot;send&quot; .claude/skills/draft-outreach-emails/
+</code></pre>
+Confirm zero send-family results. Any match is a safety violation -- investigate before
+proceeding. The connected MCP exposes no send tool at all; this gate is defense-in-depth.</li>
+<li><strong>Never sends. Only creates drafts.</strong> Hard invariant. A human must open Gmail and manually
+click Send on each draft. The skill has no path to trigger sending.</li>
+<li><strong>Batch-only (D-05).</strong> The only argument is <code>&lt;campaign-id&gt;</code>. No <code>--discover-only</code> or
+<code>--draft-only</code> flags. Both phases run in a single invocation.</li>
+<li><strong>No database columns for transient state (D-04).</strong> Ambiguous candidates live in the run
+summary only -- no <code>candidates</code> column exists or will be added. If you need durable tracking
+of ambiguous candidates, resolve them manually and re-run.</li>
+<li><strong>approved → failed is ILLEGAL.</strong> The state machine does not permit this transition
+(<code>email-status.ts</code>: <code>approved: [&#39;drafted&#39;, &#39;edited&#39;]</code>). Never call <code>PATCH .../status { status: &#39;failed&#39; }</code> for an approved email that fails to draft. Leave it <code>approved</code> and
+report in the summary.</li>
+<li><strong>No per-email contact re-fetch.</strong> All contact data is in the work-queue response. Do NOT
+make separate <code>GET /api/contacts/&lt;id&gt;</code> calls per email -- the contacts LEFT JOIN is already
+returned by the list endpoint.</li>
+<li><strong>jq for all JSON payloads.</strong> Use <code>jq -n --arg</code> for every PATCH body. Never interpolate
+email subjects, bodies, or error strings directly into a raw <code>-d &quot;{...}&quot;</code> string -- multi-line
+content breaks raw JSON and produces 500 errors server-side.</li>
+</ul>
+
+
+
+<footer>
+Source of truth: <code>.claude/skills/draft-outreach-emails/SKILL.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
