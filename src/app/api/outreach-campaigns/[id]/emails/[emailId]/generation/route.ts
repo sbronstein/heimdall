@@ -54,6 +54,10 @@ export async function PATCH(
       )
       .returning();
 
+    // Row confirmed by the SELECT above could be deleted before this UPDATE —
+    // guard the empty .returning() so we never respond success with no data.
+    if (!updated) return notFound('Email');
+
     await logTimeline({
       eventType: 'outreach_email_generated',
       title: 'Email content generated',
@@ -64,6 +68,11 @@ export async function PATCH(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return validationError(err.issues[0].message);
+    }
+    // Absent/non-JSON request body throws SyntaxError from request.json() —
+    // that is a client error (400), not a server fault (500).
+    if (err instanceof SyntaxError) {
+      return validationError('Invalid JSON body');
     }
     return serverError(err);
   }

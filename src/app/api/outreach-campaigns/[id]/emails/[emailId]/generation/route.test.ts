@@ -165,4 +165,56 @@ describe('PATCH /api/outreach-campaigns/[id]/emails/[emailId]/generation (T-16-0
       error: 'Email not found'
     });
   });
+
+  it('Test 4 (CD-06): emailId belonging to a different campaign returns 404 and does not mutate it', async () => {
+    // A second campaign with its own pending email
+    const [otherCampaign] = await dbRef
+      .current!.insert(outreachCampaigns)
+      .values({
+        name: 'Other Campaign',
+        goalInstruction: 'Different goal'
+      })
+      .returning();
+    const [foreignEmail] = await dbRef
+      .current!.insert(outreachEmails)
+      .values({
+        campaignId: otherCampaign.id,
+        contactId,
+        status: 'pending'
+      })
+      .returning();
+
+    const { PATCH } = await import(
+      '@/app/api/outreach-campaigns/[id]/emails/[emailId]/generation/route'
+    );
+
+    // PATCH the foreign email while scoping the URL to the FIRST campaign
+    const { status, body } = await callRoute(
+      PATCH as unknown as Parameters<typeof callRoute>[0],
+      {
+        method: 'PATCH',
+        body: {
+          generatedSubject: 'Cross-campaign attempt',
+          generatedBody: 'Should not write across campaign boundaries'
+        },
+        params: { id: campaignId, emailId: foreignEmail.id }
+      }
+    );
+
+    expect(status).toBe(404);
+    expect(body).toMatchObject({ success: false, error: 'Email not found' });
+
+    // Foreign email must remain untouched — still pending, no content written
+    const { eq } = await import('drizzle-orm');
+    const [unchanged] = await dbRef
+      .current!.select()
+      .from(outreachEmails)
+      .where(eq(outreachEmails.id, foreignEmail.id));
+    expect(unchanged.status).toBe('pending');
+    expect(unchanged.generatedBody).toBeNull();
+
+    // No timeline event
+    const rows = await dbRef.current!.select().from(timelineEvents);
+    expect(rows).toHaveLength(0);
+  });
 });
