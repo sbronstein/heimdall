@@ -238,11 +238,18 @@ curl -s -X PATCH \
 
 1. Call `GET .../generation-context` **once** -- store `goalInstruction` and `emails` array.
 2. Report count: "N pending emails found." Confirm before proceeding.
-3. For each email in the array:
+3. **Sample gate (D-04):** author 5 sample emails (spread across closeness tiers), run the
+   blocking LLM-tell scrub on each, show them inline, and wait for owner approval (apply tone
+   tweaks if requested). Then `PATCH .../generation` each approved sample so it is persisted
+   and skipped in step 4.
+4. For each remaining `pending` email in the array:
    a. Author subject + body using `voice-guide.md`.
    b. Run LLM-tell scrub (blocking set). Rewrite if needed.
    c. On success: `PATCH .../generation` with subject + body (sets `status='generated'`).
    d. On failure: `PATCH .../status` with `{ status:'failed', lastError }`.
-4. Report end-of-run summary: generated / failed / low-context counts.
+5. Report end-of-run summary: generated / failed / low-context counts.
+
+Build every JSON write-back body with `jq -n --arg` -- never interpolate email subject/body
+or error strings directly into a `-d "{...}"` string (multi-line content breaks raw JSON).
 
 The skill never reads the DB directly. All reads and writes go through REST.
