@@ -124,6 +124,16 @@ DRAFTING_QUEUE=$(echo "$ALL_EMAILS" | jq '[.[] | select(.email.recipientEmail !=
 
 TOTAL=$(echo "$ALL_EMAILS" | jq 'length')
 MISSING_RECIPIENT=$(echo "$DISCOVERY_QUEUE" | jq 'length')
+
+# Initialize all run counters and accumulator arrays (IN-02).
+# Integers default to 0 in bash arithmetic but arrays must be explicitly declared;
+# without this block the first += append fails under set -u (unbound variable).
+DRAFTED_COUNT=0
+DISCOVERED_COUNT=0
+SKIPPED_LIST=()
+AMBIGUOUS_LIST=()
+LINKEDIN_FALLBACK_LIST=()
+FAILED_LIST=()
 ```
 
 Each item in `ALL_EMAILS` has shape:
@@ -340,6 +350,21 @@ Skip the email and report if:
 - `contact` is `null` (contact hard-deleted): add to failed list, continue
 - `contact.archivedAt != null` (contact archived): add to skipped list, continue
 
+```bash
+# contact hard-deleted guard:
+if [ "$(echo "$EMAIL_ITEM" | jq -r '.contact')" = "null" ]; then
+  FAILED_LIST+=("$CONTACT_NAME ($EMAIL_ID): contact hard-deleted")
+  continue
+fi
+
+# archived contact guard (WR-02): track in SKIPPED_LIST so the run summary
+# "Skipped (archived contact): S" reflects a real count, not a phantom value.
+if [ "$(echo "$EMAIL_ITEM" | jq -r '.contact.archivedAt')" != "null" ]; then
+  SKIPPED_LIST+=("$CONTACT_NAME ($EMAIL_ID)")
+  continue
+fi
+```
+
 Resolve final content using the canonical precedence (Pitfall 2):
 
 ```bash
@@ -431,30 +456,29 @@ One call does all four effects. Do NOT make a separate `/status` PATCH call afte
 
 After all discovery and drafting is complete, print the full run summary:
 
-```
---- Run complete ---
-Campaign: <campaign-id>
-
-Drafted:                    N
-Skipped (archived contact): S
-Discovered:                 K
-Ambiguous:                  J  (listed below -- resolve manually then re-run)
-LinkedIn fallback:          L
-Failed:                     F  (left as 'approved' -- listed below)
-
-Ambiguous contacts (2+ candidate addresses -- recipientEmail left unset):
-  - <firstName> <lastName> (<emailId>): <addr1>, <addr2>, ...
-
-LinkedIn fallback contacts (no email found -- channel set to linkedin_message):
-  - <firstName> <lastName> (<emailId>)
-  ...
-
-Failed emails (left as 'approved' -- draft or write-back error):
-  - <firstName> <lastName> (<emailId>): <error first 100 chars>
-  ...
+```bash
+echo "--- Run complete ---"
+echo "Campaign: $CAMPAIGN_ID"
+echo ""
+echo "Drafted:                    $DRAFTED_COUNT"
+echo "Skipped (archived contact): ${#SKIPPED_LIST[@]}"
+echo "Discovered:                 $DISCOVERED_COUNT"
+echo "Ambiguous:                  ${#AMBIGUOUS_LIST[@]}  (listed below -- resolve manually then re-run)"
+echo "LinkedIn fallback:          ${#LINKEDIN_FALLBACK_LIST[@]}"
+echo "Failed:                     ${#FAILED_LIST[@]}  (left as 'approved' -- listed below)"
+echo ""
+echo "Ambiguous contacts (2+ candidate addresses -- recipientEmail left unset):"
+for item in "${AMBIGUOUS_LIST[@]}"; do echo "  - $item"; done
+echo ""
+echo "LinkedIn fallback contacts (no email found -- channel set to linkedin_message):"
+for item in "${LINKEDIN_FALLBACK_LIST[@]}"; do echo "  - $item"; done
+echo ""
+echo "Failed emails (left as 'approved' -- draft or write-back error):"
+for item in "${FAILED_LIST[@]}"; do echo "  - $item"; done
 ```
 
-If all succeeded with no failures, ambiguous, or LinkedIn fallbacks: "Drafted: N / Discovered: K / Failed: 0"
+If all succeeded with no failures, ambiguous, or LinkedIn fallbacks, the lists above will be
+empty. The script echoes an empty block for each -- that is expected and correct.
 
 The owner reviews drafted emails directly in Gmail. Ambiguous contacts must be resolved
 manually via a direct `PATCH .../recipient` API call with the correct address, then re-run
