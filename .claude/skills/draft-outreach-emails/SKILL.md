@@ -13,7 +13,20 @@ allowed-tools:
   - mcp__gmail__get_thread
   - mcp__gmail__create_draft
   - mcp__gmail__list_drafts
+  - mcp__claude_ai_Gmail__search_threads
+  - mcp__claude_ai_Gmail__get_thread
+  - mcp__claude_ai_Gmail__create_draft
+  - mcp__claude_ai_Gmail__list_drafts
 ---
+
+> **Gmail MCP tool names are connector-dependent.** The read/draft tools may be exposed as
+> `mcp__gmail__*` or, depending on how the Gmail connector is registered, as
+> `mcp__claude_ai_Gmail__*` (the form the Anthropic Gmail connector uses). Both name families
+> are allowlisted above. Use whichever `search_threads` / `get_thread` / `create_draft` /
+> `list_drafts` tools are actually in scope this session; everywhere below they are written as
+> `<gmail>__search_threads` etc. — substitute the real prefix. These tools are deferred, so load
+> their schemas with ToolSearch (`select:mcp__claude_ai_Gmail__search_threads,...`) before the
+> first call.
 
 ## Overview
 
@@ -53,10 +66,15 @@ NOT attempt to fix automatically.
   `SINGLE_USER_EMAIL=steve@bronstein.org`.
 - Heimdall dev server running on `http://localhost:4000` (`npm run dev`).
 - `jq` available on `PATH` (used to safely build JSON write-back payloads).
-- Gmail MCP tools in scope: `mcp__gmail__search_threads`, `mcp__gmail__get_thread`,
-  `mcp__gmail__create_draft` must be available in the current Claude Code session. This skill
-  requires an **interactive** Claude Code session with the Gmail MCP connected. If any Gmail
-  tool is missing from scope, stop and surface the gap -- do NOT proceed without them.
+- Gmail MCP tools in scope: `<gmail>__search_threads`, `<gmail>__get_thread`,
+  `<gmail>__create_draft`, `<gmail>__list_drafts` must be available in the current Claude Code
+  session (under either the `mcp__gmail__*` or `mcp__claude_ai_Gmail__*` prefix — see the note
+  at the top of this file). This skill requires an **interactive** Claude Code session with the
+  Gmail MCP connected. If any Gmail tool is missing from scope, stop and surface the gap -- do
+  NOT proceed without them. **`create_draft` requires a compose/manage-drafts scope** — a
+  read-only Gmail grant passes the read probes below but fails the first `create_draft` with
+  "Request had insufficient authentication scopes". If that happens, re-authorize the Gmail
+  connector with the compose permission and re-run; the skill is idempotent.
 
 ```bash
 # Verify jq is installed (required for correct JSON escaping of multi-line bodies)
@@ -70,11 +88,12 @@ grep -q 'API_TOKEN_HASH' .env.local && echo "API_TOKEN_HASH set" || echo "MISSIN
 grep -q 'SINGLE_USER_EMAIL' .env.local && echo "SINGLE_USER_EMAIL set" || echo "MISSING: SINGLE_USER_EMAIL in .env.local"
 ```
 
-Then confirm Gmail MCP availability: attempt `mcp__gmail__search_threads` with a minimal test
-query (e.g., `query: "test"`, `maxResults: 1`) and `mcp__gmail__list_drafts` to confirm both
-read and draft-create tools are in scope. If the tool call returns an error indicating the
-MCP is not connected, stop and instruct the user to start an interactive Claude Code session
-with the Gmail MCP active.
+Then confirm Gmail MCP availability: attempt `<gmail>__search_threads` with a minimal test
+query (`query: "test"`, `pageSize: 1`) and `<gmail>__list_drafts` (`pageSize: 1`) to confirm
+the read tools are in scope. If a tool call returns an error indicating the MCP is not
+connected, stop and instruct the user to start an interactive Claude Code session with the
+Gmail MCP active. (Compose scope is only exercised later at `create_draft` — see the scope note
+above.)
 
 ---
 
@@ -170,108 +189,112 @@ If `N = 0`, report "No approved emails -- run complete." and exit cleanly.
 For each item in `DISCOVERY_QUEUE`, search Gmail for threads that include the contact as a
 direct participant, extract their email address, and apply the LOCKED accept rule.
 
-**IMPORTANT: Gmail MCP tool signatures are [ASSUMED] from Gmail API v1 conventions.** Validate
-exact parameter names (`query` vs `q`, `maxResults` vs `max`) at run time on the first call.
-If a parameter name is wrong, the tool will error -- adjust and retry.
+**Response shape (verified against the connected Anthropic Gmail MCP, 2026-06).** `search_threads`
+and `get_thread` return each message's participants as **bare email-address strings** in
+`sender` (one address) and `toRecipients` / `ccRecipients` (arrays) — there is **no**
+`payload.headers` array and **no display names** anywhere in the structured response (display
+names appear only inside `plaintextBody` / `htmlBody`, even at `messageFormat: "FULL_CONTENT"`).
+The earlier design's display-name match (`From: "Name <email>"`) therefore cannot run. Discovery
+below identifies the contact's address **without** display names, using a clean-1:1 heuristic.
+
+**What this buys and what it costs (read before trusting a result):**
+- *Precision (never wrong):* a co-participant on a group or calendar thread (e.g. a colleague
+  cc'd alongside the contact) is **never** attributed to the contact — group threads are skipped
+  entirely. Automated/bulk senders (LinkedIn, newsletters, calendar bots) are excluded.
+- *Cost 1 (group-only contacts):* a contact who only ever appears in multi-party threads with
+  Steve (never a clean 1:1) yields zero candidates → LinkedIn fallback. Safe, not wrong.
+- *Cost 2 (shared surname):* because there are no display names, a different person who shares
+  the contact's search terms **and** also corresponds 1:1 with Steve (e.g. "Tim Mitchell" vs a
+  "…mitchell@…" address) surfaces as a second distinct candidate → the contact is flagged
+  **ambiguous** for manual resolution rather than auto-drafted. Safe, not wrong.
+
+The accept rule (exactly-one → draft; two-or-more → ambiguous/manual; zero → LinkedIn) is
+unchanged — only the candidate-gathering method changed.
 
 ### 3a. Search for threads
 
+Call `search_threads` with the contact's full name. Use `THREAD_VIEW_METADATA_ONLY` — that view
+already returns each message's `sender` / `toRecipients` / `ccRecipients`, so a separate
+`get_thread` per thread is not required for participant extraction.
+
 ```
-mcp__gmail__search_threads {
-  query: "<firstName> <lastName>",   // e.g., "Alex Chen"
-  maxResults: 20                      // cap at 20 most-recent threads [ASSUMED param name]
+<gmail>__search_threads {
+  query: "<firstName> <lastName>",        // e.g. "Marc Dupuis" — full-text match on name
+  pageSize: 25,                           // max 50; 25 covers the recent history that matters
+  view: "THREAD_VIEW_METADATA_ONLY"
 }
-// Expected response [ASSUMED from Gmail API v1]:
-// { threads: [{ id: "thread-id", snippet: "..." }, ...] }
-// If threadIds are returned directly (different wrapper shape), adjust extraction.
+// Verified response shape:
+// { threads: [ { id, messages: [ {
+//       sender: "marc@fabi.ai",                       // ONE bare address, no display name
+//       toRecipients: ["steve@bronstein.org"],        // array of bare addresses
+//       ccRecipients: ["lei@fabi.ai"]                 // array (often absent/empty)
+//   }, ... ] }, ... ] }
 ```
 
-If `search_threads` returns no threads, skip to step 3d (LinkedIn fallback).
+If `search_threads` returns no threads, skip to step 3d (LinkedIn fallback). Save the raw JSON
+response to a temp file (e.g. `/tmp/disc_<emailId>.json`) for the extractor in 3b — do NOT pipe
+it through `echo`, which mangles the JSON.
 
-### 3b. Extract participant addresses from each thread
+`get_thread` (same connector prefix, `{ threadId, messageFormat: "MINIMAL" }`) is available for
+spot-checking a single thread, but is not part of the normal path.
 
-For each thread ID returned, call `get_thread` to retrieve the message headers:
+### 3b. Extract the contact's distinct addresses (clean-1:1 heuristic)
 
-```
-mcp__gmail__get_thread {
-  threadId: "<thread-id>"    // [ASSUMED param name -- may be "id" or "thread_id"]
-}
-// Expected response [ASSUMED]:
-// {
-//   id: "thread-id",
-//   messages: [
-//     {
-//       id: "msg-id",
-//       payload: {
-//         headers: [
-//           { name: "From", value: "Alex Chen <alex@example.com>" },
-//           { name: "To",   value: "Steve Bronstein <steve@bronstein.org>" },
-//           { name: "Cc",   value: "" }
-//         ]
-//       }
-//     }
-//   ]
-// }
-```
-
-Walk `messages[].payload.headers`, collecting values for `From`, `To`, and `Cc` headers.
-Parse the `Display Name <email@domain>` RFC 2822 format to extract the email address:
+Reset per contact (WR-01: addresses must not bleed across contacts), then run the extractor over
+the saved `search_threads` JSON. The extractor keeps an address **only** when it is the sole
+external, non-bulk participant of a thread (a clean 1:1 between Steve and one other person) —
+this is what replaces the missing display-name match.
 
 ```bash
-parse_email_from_header() {
-  local header_value="$1"
-  if echo "$header_value" | grep -q '<'; then
-    echo "$header_value" | sed 's/.*<\([^>]*\)>.*/\1/' | tr '[:upper:]' '[:lower:]' | xargs
-  else
-    echo "$header_value" | tr '[:upper:]' '[:lower:]' | xargs
-  fi
-}
+# OWN_ADDRESS_RE: every address on Steve's own domain is "self" (covers steve@, Steve@,
+#   steve-gilder@, steve+uat@, etc.). Add work aliases here if needed (e.g. stephen.bronstein@id.me).
+# BULK_RE: automated / non-personal senders that can never be the contact. Extend as new
+#   notification domains appear; matching here only ever EXCLUDES, so it is safe to be generous.
+python3 - "$DISCOVERY_JSON_FILE" <<'PY'
+import json, re, sys
+data = json.load(open(sys.argv[1]))
+OWN_ADDRESS_RE = re.compile(r'@bronstein\.org$', re.I)
+BULK_RE = re.compile(
+    r'(no-?reply|do-?not-?reply|notification|invitation|mailer-daemon|postmaster|bounce|'
+    r'@linkedin\.|@substack\.|calendar-notification|@docusign|@zoom\.us|via google|automated|notify)',
+    re.I)
 
-parse_display_name() {
-  local header_value="$1"
-  if echo "$header_value" | grep -q '<'; then
-    echo "$header_value" | sed 's/<[^>]*>//' | xargs
-  else
-    echo ""
-  fi
-}
+def external_personal(a):
+    a = (a or '').strip().lower()
+    if not a or OWN_ADDRESS_RE.search(a) or BULK_RE.search(a):
+        return None
+    return a
+
+candidates = set()
+for th in data.get('threads', []):
+    ext = set()
+    for m in th.get('messages', []):
+        for a in [m.get('sender'), *(m.get('toRecipients') or []), *(m.get('ccRecipients') or [])]:
+            e = external_personal(a)
+            if e:
+                ext.add(e)
+    # Clean 1:1 only: Steve + exactly ONE external person. Group/calendar/cc threads
+    # (len(ext) >= 2) are skipped — they cannot be attributed without display names.
+    if len(ext) == 1:
+        candidates |= ext
+
+for a in sorted(candidates):
+    print(a)
+PY
 ```
 
-**Apply the D-03 name-matching filter (Pitfall 3):**
-
-After extracting each address, check whether the display name in the header case-insensitively
-matches `contact.firstName + ' ' + contact.lastName`. **Only keep addresses where the display
-name matches the contact's full name.** This guards against threads where the contact's name
-appears in the body text (forwarded emails, newsletters) but they are not an actual participant.
+Capture the output into `DISTINCT_ADDRESSES` (already deduped and lowercased — Pitfall 4 handled
+by the `set`) and count it:
 
 ```bash
-# Reset candidate addresses at the start of EACH contact's iteration (WR-01).
-# Without this reset, addresses discovered for contact N bleed into contact N+1's
-# candidate pool and can produce wrong-recipient write-backs.
-CANDIDATE_ADDRESSES=()
-
-CONTACT_FULL_NAME_LOWER=$(echo "$FIRST_NAME $LAST_NAME" | tr '[:upper:]' '[:lower:]')
-# For each header value, extract display name and compare:
-DISPLAY_NAME_LOWER=$(parse_display_name "$HEADER_VALUE" | tr '[:upper:]' '[:lower:]')
-# Use -F (fixed-string) so names containing "." (Dr., Jr., S.A.) are matched literally,
-# not as BRE wildcards that could produce false-positive address acceptance (WR-03).
-if echo "$DISPLAY_NAME_LOWER" | grep -qiF "$CONTACT_FULL_NAME_LOWER"; then
-  ADDR=$(parse_email_from_header "$HEADER_VALUE")
-  # Skip Steve's own address
-  if [ "$ADDR" != "steve@bronstein.org" ]; then
-    CANDIDATE_ADDRESSES+=("$ADDR")
-  fi
-fi
+DISTINCT_ADDRESSES=$(python3 - "$DISCOVERY_JSON_FILE" <<'PY'
+... (the extractor above) ...
+PY
+)
+DISTINCT_COUNT=$(printf '%s' "$DISTINCT_ADDRESSES" | grep -c '.' || echo "0")
 ```
 
-Collect candidate addresses across ALL threads for this contact. After processing all threads,
-**deduplicate by normalized (lowercased) email address** (Pitfall 4 -- the same address
-appearing in multiple threads must count as ONE distinct address):
-
-```bash
-DISTINCT_ADDRESSES=$(printf '%s\n' "${CANDIDATE_ADDRESSES[@]}" | sort -u)
-DISTINCT_COUNT=$(echo "$DISTINCT_ADDRESSES" | grep -c '.' || echo "0")
-```
+(Run the extractor once and reuse its output; it is shown twice above only for readability.)
 
 ### 3c. Apply the LOCKED accept rule (D-03)
 
@@ -399,16 +422,15 @@ fi
 ### 4c. Create the Gmail draft
 
 ```
-mcp__gmail__create_draft {
-  to: "<recipientEmail>",
+<gmail>__create_draft {
+  to: ["<recipientEmail>"],     // ARRAY of plain addresses (no "Name <addr>" form)
   subject: "<FINAL_SUBJECT>",
-  body: "<FINAL_BODY>"
+  body: "<FINAL_BODY>"          // plain text; the connector handles newlines
 }
-// Expected response [ASSUMED from Gmail API v1 drafts.create]:
-// { id: "r<draft-id>", message: { id: "msg-id", threadId: "..." } }
-// The skill uses the top-level `id` as gmailDraftId.
-// Validate: if the response has a different shape (e.g., `draftId` or nested `draft.id`),
-// read the actual key from the returned object and adjust accordingly.
+// Verified response shape:
+// { id: "r6433905474510638465" }
+// Use the top-level `id` as gmailDraftId. (Some Gmail connectors instead return
+// { id, message: { id, threadId } }; if so, still use the top-level `id`.)
 ```
 
 **RECIPIENT_EMAIL** comes from the work-queue item's `email.recipientEmail` field (confirmed
@@ -500,12 +522,15 @@ review UI automatically.
   CLI parity.
 - **Never log the bearer token.** Use `$(cat ~/.heimdall/api-token)` inline in every curl
   call so the resolved token value never appears in shell history or run output.
-- **Gmail tool allowlist (D-06).** This skill may ONLY call these Gmail MCP tools:
-  `mcp__gmail__search_threads`, `mcp__gmail__get_thread`, `mcp__gmail__create_draft`,
-  `mcp__gmail__list_drafts`. It NEVER calls any send, trash, import, delete, or modify tool.
-- **Pre-run grep gate (D-06).** Before any real campaign run, run:
+- **Gmail tool allowlist (D-06).** This skill may ONLY call these Gmail MCP read/draft tools
+  (under either the `mcp__gmail__*` or `mcp__claude_ai_Gmail__*` prefix): `search_threads`,
+  `get_thread`, `create_draft`, `list_drafts`. It NEVER calls any send, trash, import, delete,
+  or modify tool.
+- **Pre-run grep gate (D-06).** Before any real campaign run, run (the `[a-z0-9_]*` segment
+  matches any connector prefix, e.g. `gmail` or `claude_ai_Gmail`, so a send-family tool is
+  caught regardless of how the Gmail MCP is registered):
   ```bash
-  grep -rinE "mcp__gmail__(send|send_message|trash|delete|import|update_draft|modify|insert)" \
+  grep -rinE "mcp__[a-z0-9_]*gmail[a-z0-9_]*__(send|send_message|trash|delete|import|update_draft|modify|insert)" \
     .claude/skills/draft-outreach-emails/
   ```
   Confirm zero results (no output). Any match means a send-family Gmail MCP tool token is
