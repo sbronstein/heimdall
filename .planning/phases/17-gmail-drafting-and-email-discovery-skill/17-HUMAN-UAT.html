@@ -53,33 +53,40 @@ img { max-width: 100%; height: auto; }
 phase: 17-gmail-drafting-and-email-discovery-skill
 source: [17-VERIFICATION.md]
 started: 2026-06-22
-updated: 2026-06-22</h2>
+updated: 2026-06-23</h2>
 <h2>Current Test</h2>
-<p>[awaiting human testing — requires a live, interactively-connected Gmail MCP session + the dev server on port 4000]</p>
+<p>[All five tests executed. UAT 2 stands as an open issue (Gmail MCP response-shape mismatch);
+the other four pass. No tests awaiting action.]</p>
 <h2>Tests</h2>
 <h3>1. End-to-end draft creation (DRFT-01, DRFT-04, DRFT-05 / SC #1)</h3>
 <p>expected: Running <code>draft-outreach-emails &lt;campaign-id&gt;</code> against a campaign with ≥1 approved email that has a recipient creates a Gmail draft; the email row shows <code>gmailDraftId</code> set, <code>status=&#39;drafted&#39;</code>, the linked contact&#39;s <code>outreachStatus=&#39;reached_out&#39;</code>, and an <code>outreach_email_drafted</code> timeline event is logged. The draft is visible in Gmail and is NOT sent.
-result: [pending]</p>
+result: [pass] 2026-06-23 — Live run on campaign 2329c548 (ID.me colleagues), contact Robyn Miller-Berger. <code>create_draft</code> returned draft id <code>r6433905474510638465</code>; <code>PATCH .../draft</code> returned 200 with <code>status=&#39;drafted&#39;</code> and <code>gmailDraftId</code> set; contact <code>outreachStatus</code> advanced to <code>reached_out</code>. Draft confirmed present in Gmail (to <a href="mailto:robynberger4@gmail.com">robynberger4@gmail.com</a>) and NOT sent (skill only ever calls create_draft).</p>
 <h3>2. Single-match address discovery (DISC-01, DISC-02 / SC #2)</h3>
 <p>expected: For an approved email whose contact has no stored email but who was a direct participant in exactly one Gmail thread with Steve, the skill writes back the discovered address via <code>PATCH .../recipient {channel:&#39;email&#39;}</code> and then drafts it in the SAME run. A contact with ≥2 distinct candidate addresses is left undrafted with the candidates listed in the run summary (no auto-pick, not forced to LinkedIn).
-result: [pending]</p>
+result: [issue] 2026-06-23 — BLOCKED by a response-shape mismatch with the connected Gmail MCP. The skill&#39;s D-03 name-match (the core of the LOCKED accept rule) assumes a Gmail API v1 shape where each message exposes <code>payload.headers</code> with <code>From: &quot;Display Name &lt;email&gt;&quot;</code>, and matches the display name against the contact&#39;s full name to keep only that contact&#39;s address. The connected <code>mcp__claude_ai_Gmail__*</code> server returns <code>sender</code>/<code>toRecipients</code>/<code>ccRecipients</code> as <strong>bare email addresses with no display names</strong> — confirmed even at <code>messageFormat=FULL_CONTENT</code> (display names appear only inside the HTML/plaintext body, not in any structured header field; there is no <code>payload.headers</code> array). Consequence: the display-name filter cannot run as written, so discovery must fall back to extracting bare participant addresses, which over-includes genuine co-participants on group/calendar threads. Evidence: searching &quot;Marc Dupuis&quot; (Heimdall contact, Fabi.ai, no stored email) returns a Google Calendar invite whose participants are <code>marc@fabi.ai</code> + <code>lei@fabi.ai</code>, so naive extraction yields 2 addresses and misclassifies a clear single-correspondent as AMBIGUOUS; searching &quot;Tim Mitchell&quot; (Heimdall contact, SemOps.ai, no stored email) returns his clean 1:1 thread <code>tim@timjmitchell.com</code> but also group threads pulling in <code>sasakimitchell@gmail.com</code> / <code>horsebrand@gmail.com</code>, which the absent name-match filter would have excluded. The single-match and ambiguous branches were therefore NOT exercised against the live MCP (per owner decision: log as issue, do not stage curated test data). Remediation: adapt the skill&#39;s discovery to this MCP&#39;s flat address fields — e.g. scope candidate threads via search-by-name and parse the display name out of the message body, or otherwise reconstruct the name→address association the bare fields drop — then re-test both branches. Candidates available when re-tested: Tim Mitchell (single-match), Carly Sandstrom (ambiguous — two real addresses <a href="mailto:carly@sandstromstrategies.com">carly@sandstromstrategies.com</a> / <a href="mailto:carly.sandstrom@gmail.com">carly.sandstrom@gmail.com</a>).</p>
 <h3>3. LinkedIn fallback with zero threads (DISC-03 / SC #3)</h3>
 <p>expected: For a contact with no stored email and no direct Gmail thread, the skill sets <code>channel=&#39;linkedin_message&#39;</code> via <code>PATCH .../recipient</code>; the &quot;needs LinkedIn message&quot; badge renders in the Phase 15 review UI; the contact appears in the run summary and is never silently dropped.
-result: [pending]</p>
+result: [pass] 2026-06-23 — Contacts Scott Foote and Alex von Reyn (no stored email; Gmail search returned only LinkedIn invite/notification threads, confirmed zero real participant addresses by opening the threads). Both written via <code>PATCH .../recipient {channel:&#39;linkedin_message&#39;}</code> (recipientEmail forced null), both surfaced in the run summary&#39;s LinkedIn-fallback list, neither dropped. &quot;needs LinkedIn message&quot; badge renders in the review UI.</p>
 <h3>4. Idempotency across two runs (DRFT-03 / SC #4)</h3>
 <p>expected: Re-running the skill creates no duplicate drafts (already-<code>drafted</code> emails are skipped). An email edited after drafting (returns to <code>status=&#39;approved&#39;</code> with a stale <code>gmailDraftId</code>) is re-drafted by creating a fresh Gmail draft and repointing <code>gmailDraftId</code> (no send, old draft left harmless).
-result: [pending]</p>
+result: [pass] 2026-06-23 — Part (a) PASS: after Robyn was drafted, a fresh read of <code>?status=approved</code> excludes her (only Scott/Alex remain, both linkedin_message with null recipient → nothing to draft), so a re-run produces no new draft; Gmail <code>list_drafts to:robynberger4@gmail.com</code> shows exactly one draft (<code>r6433905474510638465</code>), no duplicate. Part (b) PASS: verified on a throwaway campaign + contact (drafting to <a href="mailto:steve+uat@bronstein.org">steve+uat@bronstein.org</a>, archived after). Drafted the email (id <code>r-141871414214235063</code>), moved it drafted→edited→approved (stale gmailDraftId retained), then re-ran the draft step: create_draft minted a fresh id (<code>r-5172824486057692411</code> ≠ original), <code>PATCH .../draft</code> repointed <code>gmailDraftId</code> to the new id, and Gmail <code>list_drafts</code> confirmed BOTH drafts still present (old one left harmless, never sent). Throwaway campaign + contact soft-deleted afterward (HTTP 204); two test drafts to <a href="mailto:steve+uat@bronstein.org">steve+uat@bronstein.org</a> remain in Gmail Drafts and can be deleted manually.</p>
 <h3>5. Live <code>/draft</code> route regression + send-safety gate (DRFT-02 / SC #5)</h3>
 <p>expected: <code>bash scripts/verify-draft-route.sh</code> (with the dev server running + a non-approved seed email) asserts HTTP 400 + &quot;Invalid transition&quot; on the guard; with <code>CAMPAIGN_ID_APPROVED</code>/<code>EMAIL_ID_APPROVED</code> env vars set, the happy path returns 200 + <code>drafted</code>. The send-safety grep gate <code>grep -rinE &quot;mcp__gmail__(send|send_message|trash|delete|import|update_draft|modify|insert)&quot; .claude/skills/draft-outreach-emails/</code> returns zero (already confirmed in static verification).
-result: [pending]</p>
+result: [pass] 2026-06-23 — Test 1 (rejection) via <code>verify-draft-route.sh</code> against drafted email 8d8547f1: HTTP 400 + &quot;Invalid transition: drafted -&gt; drafted&quot;. Test 2 (happy path, 200 + <code>drafted</code> on an approved row) satisfied by the live end-to-end run in Test 1 above — Robyn&#39;s real <code>PATCH .../draft</code> on an approved email returned 200 + <code>status=&#39;drafted&#39;</code> with a real Gmail draft id (strictly stronger than the script&#39;s synthetic verify-test-happy id, which was therefore not injected). Both guard directions thus confirmed (non-approved→400, approved→200), ruling out an inverted guard. Send-safety grep gate returns zero matches.</p>
 <h2>Summary</h2>
 <p>total: 5
-passed: 0
-issues: 0
-pending: 5
+passed: 4
+issues: 1
+pending: 0
 skipped: 0
 blocked: 0</p>
 <h2>Gaps</h2>
+<ul>
+<li>UAT 2 (discovery) is unverified end-to-end because the connected Gmail MCP does not expose
+per-message display-name headers that the skill&#39;s name-match relies on. The skill needs a
+discovery adaptation before single-match / ambiguous branches can be validated. Tracked as an
+issue above, not a pass.</li>
+</ul>
 
 
 
