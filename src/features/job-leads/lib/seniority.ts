@@ -13,7 +13,12 @@ const rules: SeniorityRule[] = [
     weight: 100
   },
   {
-    patterns: /\b(vp|vice\s+president)\b/i,
+    // [se]?vp matches vp / svp / evp; the spelled-out forms cover "Senior/Executive
+    // Vice President". "Assistant Vice President" intentionally matches the bare
+    // vice-president alternative (vp), not promoted — and "AVP" (no 'a' in the class)
+    // falls through rather than being over-ranked.
+    patterns:
+      /\b([se]?vp|senior\s+vice\s+president|executive\s+vice\s+president|vice\s+president)\b/i,
     level: 'vp',
     weight: 85
   },
@@ -47,7 +52,10 @@ const rules: SeniorityRule[] = [
 const roleWordPattern =
   /\b(engineer|developer|analyst|scientist|designer|architect|consultant|coordinator|specialist|strategist|recruiter|accountant|marketing|sales|product|program|project|operations|support)\b/i;
 
-export function inferSeniority(title: string): { level: SeniorityLevel; weight: number } {
+export function inferSeniority(title: string): {
+  level: SeniorityLevel;
+  weight: number;
+} {
   if (!title) return { level: 'unknown', weight: 15 };
 
   const normalized = title.trim();
