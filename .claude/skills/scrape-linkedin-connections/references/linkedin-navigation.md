@@ -99,6 +99,55 @@ search-filtered people endpoint.
 
 ---
 
+## Company-scope shortcut — DO NOT use `/company/<slug>/people/`
+
+**Confirmed 2026-05-27 on `the-hartford`:** the company's `/people/` tab renders
+a "People you may know" feed (with a "Show more results" button) but **does not
+show 2nd-degree filtering or mutual-connection names**. Those facets only exist
+on the people-search results page (`/search/results/people/?currentCompany=…`).
+
+For any company-scope navigation (Company-URL flow, bare-name flow after the
+user picks a company, drain-mode company-scope leg, and the D-14 mid-drain
+fallback), do this instead:
+
+1. Open `https://www.linkedin.com/company/<slug>/` (or `/people/`) just long
+   enough to extract the numeric company id.
+2. Pull it from the page HTML — both of these work and have been observed live:
+   - `urn:li:fsd_company:(\d+)` in the page source
+   - An `a[href*="currentCompany"]` "canned search" anchor whose href already
+     contains the numeric ids (often two — primary plus affiliated page).
+3. Navigate directly to:
+   ```
+   https://www.linkedin.com/search/results/people/?currentCompany=%5B%22<id>%22%5D&network=%5B%22S%22%5D
+   ```
+   (If both primary + affiliated ids were present, include both in the
+   `currentCompany` array — matches LinkedIn's own canned-search behavior.)
+
+   **⚠ Sanity-check affiliated ids before trusting them (confirmed 2026-06-24 on
+   `welch's`).** The canned-search anchor sometimes bundles a second id that is
+   an *unrelated* company that merely shares the name — not a showcase/affiliate
+   of the target. On `welch's` the anchor carried `currentCompany=[12388,
+   5336618]`: `12388` is Welch's the food company; `5336618` is a completely
+   different "Welch's" (a Python / open-source community page — PSF Fellows,
+   Astral, JetBrains). Including the second id polluted the results with ~10
+   wrong people.
+
+   When the anchor yields more than one id, **verify each id maps to the same
+   real company before merging them.** Cheapest check: query each id alone
+   (`currentCompany=%5B%22<id>%22%5D&network=%5B%22S%22%5D`), glance at the first
+   page of headlines, and keep only the id(s) whose results match the target
+   company's industry/role profile. Drop any id whose results are clearly a
+   different organization. When in doubt, scrape the **primary id only** (the
+   first one, which is the one the company `/about/` page is actually about).
+4. Resume at Shared Step 5 (paginate + extract). Shared Step 4 is already
+   satisfied by the `network=["S"]` URL param.
+
+Do not try to filter the company `/people/` tab and hope for mutual-connection
+data — it never appears there. This skips one navigation hop and avoids a
+guaranteed dead-end snapshot.
+
+---
+
 ## Profile-page path (per-connection enrichment)
 
 Used by the profile-enrichment mode and batch-sweep mode when scraping a **single
@@ -253,6 +302,26 @@ company/employee-scrape path — there is no 2nd-degree filter or pagination ste
 
 **Goal:** Walk every result page (up to page 10), capturing prospects in the
 five-field `ScrapedProspect` shape.
+
+**Locating result cards (two DOM gotchas — confirmed 2026-06-24 on `welch's`):**
+
+- **Do NOT scope the card query to `<main>`.** Page 1 results render inside
+  `<main>`, but on later pages (page 2+) LinkedIn renders the result cards
+  *outside* `<main>` — a `<main>`-scoped query silently returns 0 and the
+  pagination loop terminates one page too early. Query the **whole document**
+  for card-wrapper anchors instead: `document.querySelectorAll('a[href*="/in/"]')`
+  filtered to those containing a `<p>` (the wrapper anchor that holds the
+  name/title/mutuals paragraphs).
+- **Filter out the "recent entity history" widget.** When a results page is
+  empty (or still loading), LinkedIn injects a recently-viewed-profiles widget
+  whose `/in/` cards look like results but have **no degree badge, no title, and
+  no mutual-connections line** — their text is just `"<Name> recent entity
+  history"` / `"<Name>"`. These produce false positives that look like a
+  non-empty page. Require each card's text to contain a **degree badge**
+  (`/[•·]\s*\d(?:st|nd|rd|th)\b/i`, e.g. "• 2nd") **or** a "mutual connection"
+  line before treating it as a genuine result. With this guard, a page that
+  contains only the history widget correctly reads as 0 → pagination stops on a
+  true empty page, not a false one.
 
 **Per page:**
 
