@@ -110,6 +110,7 @@ Recent decisions affecting current work:
 | 260521-dwi | Add LinkedIn link rectangle next to names and titles on job lead drilldown page | 2026-05-21 | 48acb3d | [260521-dwi-add-linkedin-link-rectangle-next-to-name](./quick/260521-dwi-add-linkedin-link-rectangle-next-to-name/) |
 | 260611-kqi | Add do-not-use-for-intros override flag to contacts (schema + REST + form toggle) with hard exclusion in buildRecommendations | 2026-06-11 | 9766e5b | [260611-kqi-add-do-not-use-for-intros-override-flag-](./quick/260611-kqi-add-do-not-use-for-intros-override-flag-/) |
 | 260611-l44 | Clickable contact names (link to contact record) + Override button next to LinkedIn badge in RecommendationCard, optimistic removal on override | 2026-06-11 | b1a20b3 | [260611-l44-make-contact-names-clickable-and-add-ove](./quick/260611-l44-make-contact-names-clickable-and-add-ove/) |
+| 260624-eht | Fix two job-leads bugs: decode HTML entities in scraped job-page fields (Walker & Dunlop) + recognize SVP/EVP as VP in seniority inference (SVP-as-IC); +tests, +targeted backfill (11 prospects → vp, 2 leads decoded) | 2026-06-24 | c4d3f13, f257039 | [260624-eht-fix-two-job-leads-bugs-html-entity-compa](./quick/260624-eht-fix-two-job-leads-bugs-html-entity-compa/) |
 
 ### Roadmap Evolution
 

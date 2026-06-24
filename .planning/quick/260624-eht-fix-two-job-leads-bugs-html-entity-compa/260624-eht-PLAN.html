@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>260624-eht-PLAN</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted: #6b6b6b;
+  --accent: #6b8e6b;
+  --accent-2: #c97a4a;
+  --warn: #b85a3a;
+  --line: #e4ddd2;
+  --code-bg: #f4efe7;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 30px; margin: 28px 0 4px; letter-spacing: -0.01em; }
+h1:first-of-type { margin-top: 0; }
+h2 { font-size: 22px; margin: 36px 0 12px; letter-spacing: -0.005em; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { font-size: 18px; margin: 24px 0 8px; color: var(--ink); }
+h4 { font-size: 15px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+p { margin: 10px 0; }
+ul, ol { margin: 8px 0 12px 22px; padding: 0; }
+li { margin: 4px 0; }
+strong { color: var(--ink); }
+em { font-style: italic; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; padding: 0; border-radius: 0; }
+blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--accent-2); background: #fff8f1; color: var(--muted); font-style: italic; border-radius: 0 8px 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 14px; }
+thead th { background: var(--code-bg); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+a { color: var(--accent-2); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+a:hover { border-bottom-style: solid; }
+footer { color: var(--muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.meta { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="meta">Source of truth: <code>.planning/quick/260624-eht-fix-two-job-leads-bugs-html-entity-compa/260624-eht-PLAN.md</code> · Rendered from markdown · May lag behind</div>
+
+<hr>
+<h2>quick_id: 260624-eht
+slug: fix-two-job-leads-bugs
+date: 2026-06-24
+status: in-progress</h2>
+<h1>Quick Task: Fix two job-leads page bugs</h1>
+<p>Two display bugs on the job-leads page, both root-caused.</p>
+<h2>Bug 1 — HTML entity in company name (&quot;Walker &amp; Dunlop&quot; shows literal code)</h2>
+<p><strong>Root cause:</strong> <code>src/features/job-leads/lib/scrape-job-page.ts</code> reads <code>companyName</code> from JSON-LD
+via <code>JSON.parse($(el).html())</code>. LinkedIn HTML-encodes ampersands inside its
+<code>application/ld+json</code>, and <code>JSON.parse</code> does NOT decode HTML entities, so <code>&amp;amp;</code> is stored
+literally. The <code>og:title</code> <code>.attr()</code> and <code>$(&#39;title&#39;).text()</code> fallback paths decode via cheerio,
+so only the JSON-LD path is affected. Verified: 2 <code>job_leads</code> rows have
+<code>company_name = &#39;Walker &amp;amp; Dunlop&#39;</code>; prospects are clean.</p>
+<p><strong>Fix:</strong></p>
+<ul>
+<li>Add an exported, dependency-free <code>decodeHtmlEntities()</code> helper in <code>scrape-job-page.ts</code>.</li>
+<li>Apply it to the final <code>companyName</code>, <code>roleTitle</code>, <code>location</code> before returning.</li>
+<li>Order: numeric (<code>&amp;#nn;</code>, <code>&amp;#xnn;</code>), <code>&amp;lt;</code>/<code>&amp;gt;</code>/<code>&amp;quot;</code>/<code>&amp;#39;</code>/<code>&amp;apos;</code>, then <code>&amp;amp;</code> LAST
+(so a double-encoded <code>&amp;amp;lt;</code> is not mangled into <code>&lt;</code>). Idempotent on already-clean strings.</li>
+<li>New unit test <code>scrape-job-page.test.ts</code> exercising the decoder.</li>
+</ul>
+<p><strong>Backfill:</strong> decode literal entities in existing <code>job_leads</code> text columns
+(<code>company_name</code>, <code>role_title</code>, <code>location</code>).</p>
+<h2>Bug 2 — SVP categorized as IC</h2>
+<p><strong>Root cause:</strong> <code>src/features/job-leads/lib/seniority.ts</code> VP rule <code>/\b(vp|vice\s+president)\b/i</code>.
+<code>\bvp\b</code> cannot match &quot;SVP&quot; (no word boundary inside &quot;SVP&quot;), so an SVP title falls through to the
+role-word pattern (matches &quot;Operations&quot;/&quot;Strategy&quot;) → <code>level: &#39;ic&#39;</code>.</p>
+<p><strong>Fix:</strong> broaden the VP rule to <code>/\b([se]?vp|senior\s+vice\s+president|executive\s+vice\s+president|vice\s+president)\b/i</code>
+— matches <code>svp</code>/<code>evp</code>/<code>vp</code>. Do NOT add <code>a</code> (Assistant VP should not become <code>vp</code>; &quot;Assistant Vice
+President&quot; already matches the <code>vice\s+president</code> alternative). Add tests: SVP/EVP → <code>vp</code> (85),
+and &quot;SVP, Strategy &amp; Operations&quot; ≠ <code>ic</code>.</p>
+<p><strong>Backfill:</strong> <code>prospects.seniorityLevel</code> is computed + stored at ingest
+(<code>src/app/api/job-leads/[id]/prospects/route.ts</code>) and read downstream by
+<code>prioritization.ts:39</code>. Re-run the (fixed) inference over existing prospects and update rows
+whose stored level is wrong.</p>
+<h2>Verification</h2>
+<ul>
+<li><code>npx vitest run</code> on <code>seniority.test.ts</code> + <code>scrape-job-page.test.ts</code> → green.</li>
+<li>Backfill: confirm zero remaining <code>&amp;amp;</code>/<code>&amp;#</code> in <code>job_leads</code>; confirm SVP/EVP prospects now <code>vp</code>.</li>
+</ul>
+<h2>Commits (atomic)</h2>
+<ol>
+<li><code>fix(job-leads): recognize SVP/EVP as VP in seniority inference</code> (+ tests)</li>
+<li><code>fix(job-leads): decode HTML entities in scraped job-page fields</code> (+ test)</li>
+<li>data backfill run (reported in SUMMARY; no committed migration — one-off)</li>
+</ol>
+
+
+
+<footer>
+Source of truth: <code>.planning/quick/260624-eht-fix-two-job-leads-bugs-html-entity-compa/260624-eht-PLAN.md</code> · This HTML companion may lag behind the markdown.
+</footer>
+</div>
+</body>
+</html>
