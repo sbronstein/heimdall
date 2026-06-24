@@ -7,6 +7,28 @@ export type ScrapedJobData = {
   companyLinkedinUrl: string | null;
 };
 
+// Decode HTML entities in scraped text. The JSON-LD path (`JSON.parse($(el).html())`)
+// preserves entities literally because JSON.parse does not decode them, and LinkedIn
+// HTML-encodes ampersands inside its application/ld+json — so a value like
+// "Walker &amp; Dunlop" would otherwise be stored and displayed with the literal code.
+// Decode &amp; LAST (after numeric and the other named entities) so a double-encoded
+// sequence like "&amp;lt;" is not collapsed into "<". Idempotent on already-decoded
+// strings (the cheerio .attr()/.text() fallback paths), so it is safe to apply to every field.
+export function decodeHtmlEntities(value: string | null): string | null {
+  if (value == null) return value;
+  return value
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16))
+    )
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&(?:apos|#0*39);/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+}
+
 export async function scrapeJobPage(url: string): Promise<ScrapedJobData> {
   const res = await fetch(url, {
     headers: {
@@ -52,8 +74,10 @@ export async function scrapeJobPage(url: string): Promise<ScrapedJobData> {
   // Fallback: meta tags
   if (!companyName) {
     companyName =
-      $('meta[property="og:title"]').attr('content')?.split(' hiring ')?.[0]?.trim() ||
-      null;
+      $('meta[property="og:title"]')
+        .attr('content')
+        ?.split(' hiring ')?.[0]
+        ?.trim() || null;
   }
 
   // Fallback: title tag
@@ -87,5 +111,10 @@ export async function scrapeJobPage(url: string): Promise<ScrapedJobData> {
     if (locMatch) location = locMatch[1].trim();
   }
 
-  return { companyName, roleTitle, location, companyLinkedinUrl };
+  return {
+    companyName: decodeHtmlEntities(companyName),
+    roleTitle: decodeHtmlEntities(roleTitle),
+    location: decodeHtmlEntities(location),
+    companyLinkedinUrl
+  };
 }
