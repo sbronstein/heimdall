@@ -36,6 +36,33 @@ Read first:
 - [`references/heimdall-api.md`](references/heimdall-api.md) — all endpoints, bearer-token auth, response envelope.
 - [`references/troubleshooting.md`](references/troubleshooting.md) — known anti-bot patterns mapped to the five error categories, including pacing / back-off strategy.
 
+## Extraction scripts (use these — do not recreate from memory)
+
+Committed, tested helpers live in [`scripts/`](scripts/). Copy them into the working
+(scratchpad) directory and run from there; do NOT rewrite them inline each session.
+
+- **`scripts/companyid.js`** — `agent-browser eval` payload. On a `/company/<slug>/people/`
+  page, returns `{ cannedSearchIds, urnIdsSample, sampleAnchor }`. Use `cannedSearchIds[0]`
+  as the numeric company id, then navigate to
+  `/search/results/people/?currentCompany=%5B%22<id>%22%5D&network=%5B%22S%22%5D` (network=S = 2nd-degree).
+- **`scripts/extract.js`** — `agent-browser eval` payload. Per-card extractor for a people-search
+  results page. Results are `div[role="listitem"]` (NOT `<li>`). Returns a JSON-stringified array
+  of `{ name, url, lines }`.
+- **`scripts/parse_prospects.py`** — reads `page_*_str.json` (each the JSON-quoted string that
+  `extract.js` returns), dedupes by profile URL, and writes `prospects.json` in the five-field
+  `ScrapedProspect` shape. Handles the name+degree-on-one-line variant, standalone degree badges,
+  CTA lines, and strips post-nominal credential tokens (MBA / PhD / CPA / …) so they never leak
+  into `mutualConnectionNames`. Run it from the dir holding the page files: `python3 parse_prospects.py`.
+
+**Two gotchas these scripts encode (don't relearn them the hard way):**
+1. `agent-browser eval` returns a JSON-*quoted* string → decode twice
+   (`json.loads(json.load(f))`). Never interpolate raw eval output into an inline
+   `python3 -c "..."` string — the `\"` escapes get eaten and the JSON corrupts. Write eval
+   output to a file and `json.load` it.
+2. The Bash tool's shell is **zsh**, which does not word-split unquoted `$vars`. Multi-field
+   loops must use `while read -r a b; do … done <<< "$lines"` (or run under `bash`), not
+   `set -- $entry`.
+
 ## Setup
 
 User-side prerequisites (surface the gap and stop if any are missing — do NOT
